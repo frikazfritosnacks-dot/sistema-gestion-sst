@@ -57,24 +57,24 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
     const n = nombre.toLowerCase();
     if (n.includes('ministerio') || n.includes('secretaría') || n.includes('secretaria')) {
       return {
-        label: 'Autoridad / Entidad de Vigilancia',
+        label: 'Autoridad que Vigila y Revisa',
         cls: 'bg-rose-100 text-rose-800 border-rose-200',
       };
     }
     if (n.includes('ingeniero') || n.includes('staff')) {
       return {
-        label: 'Asesor Técnico Especializado',
+        label: 'Asesor Técnico en Seguridad',
         cls: 'bg-emerald-100 text-emerald-800 border-emerald-200',
       };
     }
     if (n.includes('proveedor')) {
       return {
-        label: 'Cadena de Suministro',
+        label: 'Quienes Traen Insumos',
         cls: 'bg-amber-100 text-amber-800 border-amber-200',
       };
     }
     return {
-      label: 'Mercado y Consumidores',
+      label: 'Clientes y Consumidores',
       cls: 'bg-sky-100 text-sky-800 border-sky-200',
     };
   };
@@ -86,13 +86,13 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <span className="text-sky-300 font-bold text-xs uppercase tracking-wider block">
-              Sección B · Contexto Externo y Cumplimiento Legal
+              Grupo B · Personas y Entidades de Afuera
             </span>
             <h2 className="text-xl font-black text-white">
-              Partes Interesadas Externas de Frikaz S.A.S.
+              Entidades, Proveedores y Clientes de Frikaz S.A.S.
             </h2>
             <p className="text-xs text-sky-200/80 max-w-2xl leading-relaxed">
-              Mapeo de autoridades de inspección, vigilancia y control (MinTrabajo, MinSalud, Sec. Salud), asesores técnicos en SST, proveedores de materias primas y clientes/consumidores finales.
+              Aquí ves qué esperan de nosotros las autoridades que nos visitan (MinTrabajo, MinSalud, Secretaría de Salud), nuestro ingeniero asesor, los proveedores que traen insumos y nuestros clientes.
             </p>
           </div>
 
@@ -103,7 +103,7 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
                 type="text"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar parte externa..."
+                placeholder="Buscar entidad o persona..."
                 className="pl-9 pr-4 py-2 rounded-xl bg-white/10 text-white placeholder-slate-400 border border-white/20 text-xs focus:outline-hidden focus:bg-white/20"
               />
             </div>
@@ -146,7 +146,7 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
                 {/* Necesidades y expectativas */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                   <span className="font-bold text-[11px] text-slate-900 block">
-                    Necesidades y Expectativas Normativas:
+                    Qué espera o pide de la empresa:
                   </span>
                   <p className="text-xs text-slate-700 leading-relaxed">
                     {parte.necesidadesExpectativas}
@@ -158,7 +158,7 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
                   <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 space-y-1">
                     <div className="flex items-center gap-1.5 text-amber-900 font-bold text-[11px]">
                       <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
-                      <span>Riesgos o Situaciones Críticas:</span>
+                      <span>Situaciones de peligro o falla:</span>
                     </div>
                     <p className="text-[11px] text-amber-950 leading-relaxed">
                       {parte.peligrosSituaciones}
@@ -167,7 +167,7 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
 
                   <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/60 space-y-1">
                     <span className="font-bold text-[11px] text-rose-900 block">
-                      Posibles Afectaciones a Frikaz S.A.S.:
+                      Qué puede pasarle a Frikaz S.A.S.:
                     </span>
                     <p className="text-[11px] text-rose-950 leading-relaxed">
                       {parte.posiblesAfectaciones}
@@ -179,7 +179,7 @@ export const PartesExternasTab: React.FC<PartesExternasTabProps> = ({ partes }) 
                 <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60 space-y-1">
                   <div className="flex items-center gap-1.5 text-emerald-950 font-bold text-[11px]">
                     <Shield className="h-3 w-3 text-emerald-600 shrink-0" />
-                    <span>Medidas de Prevención y Cumplimiento:</span>
+                    <span>Cómo lo prevenimos y cumplimos:</span>
                   </div>
                   <p className="text-[11px] text-emerald-900 leading-relaxed">
                     {parte.medidasPrevencionControl}

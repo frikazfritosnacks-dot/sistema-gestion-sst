@@ -41,7 +41,7 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
             </div>
             <div>
               <span className="text-[10px] font-mono text-amber-400 block">
-                DOCUMENTO CONTROLADO SG-SST · {politica.codigoCalidad}
+                REGLA OFICIAL DE SEGURIDAD · {politica.codigoCalidad}
               </span>
               <h3 className="text-base font-bold text-white truncate max-w-lg">
                 {politica.titulo}
@@ -76,7 +76,7 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
                 <strong className="text-white">{politica.version}</strong>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block">EMISIÓN:</span>
+                <span className="text-[10px] text-slate-400 block">FECHA:</span>
                 <strong className="text-white">{politica.fechaEmision}</strong>
               </div>
             </div>
@@ -85,7 +85,7 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
           {/* Declaración */}
           <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
             <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">
-              Declaración Institucional de la Alta Dirección:
+              Nuestro compromiso principal contigo:
             </h4>
             <p className="text-slate-200 leading-relaxed italic">
               "{politica.resumenEjecutivo}"
@@ -96,7 +96,7 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-amber-400" />
-              Compromisos Oficiales de la Política:
+              Reglas clave que aplicamos todos los días:
             </h4>
             <div className="space-y-3">
               {politica.compromisosClave.map((comp) => (
@@ -109,7 +109,7 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
                   </div>
                   <p className="text-slate-300 text-xs leading-relaxed">{comp.descripcion}</p>
                   <p className="text-[11px] text-amber-400/90 mt-2">
-                    <strong>Aplicación práctica en planta:</strong> {comp.aplicacionEnPlanta}
+                    <strong>Cómo lo hacemos en planta:</strong> {comp.aplicacionEnPlanta}
                   </p>
                 </div>
               ))}
@@ -119,7 +119,7 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
           {/* Responsabilidades por Cargo */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
-              Matriz de Responsabilidades por Nivel:
+              Qué hace cada persona del equipo:
             </h4>
             <div className="space-y-2">
               {politica.responsabilidadesPorNivel.map((resp, idx) => (
@@ -138,12 +138,12 @@ export const PoliticaOficialModal: React.FC<PoliticaOficialModalProps> = ({
 
         {/* Pie */}
         <div className="bg-slate-950 px-6 py-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
-          <span>Sistema de Gestión de Seguridad y Salud en el Trabajo · Frikaz S.A.S.</span>
+          <span>Sistema de Seguridad y Salud en el Trabajo (SG-SST) · Frikaz S.A.S.</span>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs"
           >
-            Volver al Videojuego
+            Volver al recorrido
           </button>
         </div>
 

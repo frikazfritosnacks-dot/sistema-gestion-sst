@@ -4,6 +4,7 @@ import {
 } from '../types/presentationConfig';
 
 const STORAGE_KEY = 'frikaz_presentacion_config_v1';
+const PLAIN_LANG_FLAG = 'frikaz_presentacion_plain_lang_v1';
 
 function cleanEvidencia1(val: string | undefined, fallback: string): string {
   if (!val) return fallback;
@@ -20,6 +21,14 @@ function cleanEvidencia1(val: string | undefined, fallback: string): string {
 
 export function getPresentationConfig(): ConfiguracionPresentacion {
   try {
+    const migrated = localStorage.getItem(PLAIN_LANG_FLAG);
+    if (!migrated) {
+      const fresh = JSON.parse(JSON.stringify(CONFIG_PRESENTACION_DEFAULT));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+      localStorage.setItem(PLAIN_LANG_FLAG, '1');
+      return fresh;
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);

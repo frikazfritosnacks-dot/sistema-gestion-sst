@@ -57,13 +57,13 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <span className="text-orange-400 font-extrabold text-xs uppercase tracking-wider block">
-              Dashboard Analítico del SG-SST
+              Resumen de Avances en Seguridad
             </span>
             <h2 className="text-2xl font-black text-white">
-              Indicadores de Cumplimiento de Necesidades
+              Cómo Vamos con las Necesidades del Equipo
             </h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Métricas dinámicas de atención a las necesidades de las partes interesadas internas de Frikaz S.A.S. en Bosa. Se recalculan en tiempo real con cada cambio en el checklist.
+              Mira en tiempo real qué tanto hemos cumplido con lo que necesitan el Gerente, los Operarios y el Conductor en nuestra planta de Bosa. Cada cambio en las listas actualiza estos números al instante.
             </p>
           </div>
 
@@ -75,10 +75,10 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             </div>
             <div>
               <span className="block text-xs font-bold text-white uppercase tracking-wider">
-                Cumplimiento Global
+                Avance General
               </span>
               <span className="block text-[11px] text-slate-300 font-mono">
-                {stats.cumplidas} de {stats.totalNecesidades} Necesidades Cerradas
+                {stats.cumplidas} de {stats.totalNecesidades} puntos ya cumplidos
               </span>
             </div>
           </div>
@@ -91,7 +91,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-              Total Identificadas
+              Total de Puntos
             </span>
             <div className="p-2 rounded-xl bg-slate-100 text-slate-700">
               <BarChart3 className="h-4 w-4" />
@@ -101,7 +101,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             {stats.totalNecesidades}
           </div>
           <span className="text-[11px] text-slate-400 block">
-            Distribuidas en Gerente, Operarios y Conductor
+            Entre Gerente, Operarios y Conductor
           </span>
         </div>
 
@@ -109,7 +109,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
         <div className="bg-white p-5 rounded-2xl border border-emerald-200 bg-emerald-50/20 shadow-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
-              Necesidades Cumplidas
+              Ya Cumplidos
             </span>
             <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
@@ -122,7 +122,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             {stats.totalNecesidades > 0
               ? Math.round((stats.cumplidas / stats.totalNecesidades) * 100)
               : 0}
-            % de efectividad verificada
+            % ya revisado y en marcha
           </span>
         </div>
 
@@ -140,7 +140,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             {stats.enProceso}
           </div>
           <span className="text-[11px] text-amber-700 block font-medium">
-            Con acciones en ejecución o trámites
+            Se están trabajando actualmente
           </span>
         </div>
 
@@ -148,7 +148,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
         <div className="bg-white p-5 rounded-2xl border border-rose-200 bg-rose-50/20 shadow-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-rose-800 uppercase tracking-wide">
-              Pendientes
+              Por Hacer (Pendientes)
             </span>
             <div className="p-2 rounded-xl bg-rose-100 text-rose-700">
               <AlertCircle className="h-4 w-4" />
@@ -158,7 +158,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             {stats.pendientes}
           </div>
           <span className="text-[11px] text-rose-700 block font-medium">
-            Requieren atención o asignación urgente
+            Necesitan atención pronto
           </span>
         </div>
       </div>
@@ -168,10 +168,10 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 className="font-black text-sm text-slate-900">
-              Desglose de Cumplimiento por Puesto de Trabajo
+              Cumplimiento por Cada Cargo
             </h3>
             <p className="text-xs text-slate-500">
-              Comportamiento individual de necesidades cerradas vs pendientes en Frikaz S.A.S.
+              Compara cuántos puntos ya están listos y cuáles faltan en cada puesto de Frikaz S.A.S.
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
@@ -222,15 +222,15 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
 
                   <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono pt-1">
                     <div className="p-2 rounded-lg bg-white border border-slate-100">
-                      <span className="text-slate-400 block">OK</span>
+                      <span className="text-slate-400 block">LISTOS</span>
                       <strong className="text-emerald-700 text-xs">{data.cumplidas}</strong>
                     </div>
                     <div className="p-2 rounded-lg bg-white border border-slate-100">
-                      <span className="text-slate-400 block">PROCESO</span>
+                      <span className="text-slate-400 block">EN CURSO</span>
                       <strong className="text-amber-700 text-xs">{data.enProceso}</strong>
                     </div>
                     <div className="p-2 rounded-lg bg-white border border-slate-100">
-                      <span className="text-slate-400 block">PENDIENTE</span>
+                      <span className="text-slate-400 block">FALTAN</span>
                       <strong className="text-rose-700 text-xs">{data.pendientes}</strong>
                     </div>
                   </div>
@@ -241,7 +241,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
                   onClick={() => onSeleccionarCargoChecklist && onSeleccionarCargoChecklist(cargoKey)}
                   className="w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-900 hover:text-white border border-slate-300 text-slate-700 text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>Ver Checklist de este Cargo</span>
+                  <span>Abrir Lista de este Cargo</span>
                   <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
@@ -258,18 +258,18 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-rose-600" />
               <h4 className="font-extrabold text-xs text-rose-950 uppercase tracking-wide">
-                Necesidades Pendientes ({necesidadesPendientes.length})
+                Puntos Pendientes por Atender ({necesidadesPendientes.length})
               </h4>
             </div>
             <span className="text-[10px] bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full font-bold">
-              Prioridad Alta
+              Atender Pronto
             </span>
           </div>
 
           <div className="space-y-2 text-xs max-h-64 overflow-y-auto pr-1">
             {necesidadesPendientes.length === 0 ? (
               <div className="py-6 text-center text-slate-400 text-xs">
-                ¡Excelente! No hay necesidades en estado pendiente.
+                ¡Muy bien! No hay puntos pendientes en este momento.
               </div>
             ) : (
               necesidadesPendientes.map((item) => (
@@ -279,7 +279,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
                 >
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="font-extrabold text-rose-950 uppercase">
-                      {item.cargo.toUpperCase()} · Ítem #{item.numero}
+                      {item.cargo.toUpperCase()} · Punto #{item.numero}
                     </span>
                     <span className="font-mono text-slate-500 text-[10px]">
                       {item.fechaVerificacion || 'Sin fecha'}
@@ -287,7 +287,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
                   </div>
                   <p className="text-slate-800 font-semibold text-xs">{item.necesidad}</p>
                   <p className="text-slate-600 text-[11px] italic">
-                    {item.observaciones || 'Requiere definir plan de acción inmediato.'}
+                    {item.observaciones || 'Falta definir qué hacer y quién lo resuelve.'}
                   </p>
                 </div>
               ))
@@ -301,7 +301,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-amber-600" />
               <h4 className="font-extrabold text-xs text-amber-950 uppercase tracking-wide">
-                Necesidades en Proceso ({necesidadesEnProceso.length})
+                Puntos que Están en Marcha ({necesidadesEnProceso.length})
               </h4>
             </div>
             <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
@@ -312,7 +312,7 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
           <div className="space-y-2 text-xs max-h-64 overflow-y-auto pr-1">
             {necesidadesEnProceso.length === 0 ? (
               <div className="py-6 text-center text-slate-400 text-xs">
-                No hay necesidades en proceso actualmente.
+                No hay puntos en proceso en este momento.
               </div>
             ) : (
               necesidadesEnProceso.map((item) => (
@@ -322,15 +322,15 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
                 >
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="font-extrabold text-amber-950 uppercase">
-                      {item.cargo.toUpperCase()} · Ítem #{item.numero}
+                      {item.cargo.toUpperCase()} · Punto #{item.numero}
                     </span>
                     <span className="font-mono text-slate-500 text-[10px]">
-                      Resp: {item.responsable || 'Asignado'}
+                      Encargado: {item.responsable || 'Por asignar'}
                     </span>
                   </div>
                   <p className="text-slate-800 font-semibold text-xs">{item.necesidad}</p>
                   <p className="text-slate-600 text-[11px]">
-                    {item.observaciones || 'En trámite de soporte y cumplimiento.'}
+                    {item.observaciones || 'Se está completando la tarea.'}
                   </p>
                 </div>
               ))

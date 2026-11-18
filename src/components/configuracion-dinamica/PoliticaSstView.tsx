@@ -40,6 +40,8 @@ export const PoliticaSstView: React.FC = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [isDownloadingWord, setIsDownloadingWord] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [isModalEnviarOpen, setIsModalEnviarOpen] = useState(false);
 
   // Formulario temporal de edición
@@ -139,12 +141,13 @@ export const PoliticaSstView: React.FC = () => {
   // Descargar Word
   const handleDescargarWord = async () => {
     try {
+      setErrorBanner(null);
       setIsDownloadingWord(true);
       await exportarPoliticaWord(politica);
-      triggerToast('Documento Word (.DOCX) de la Política generado con Caja de Calidad Frikaz en Times New Roman 12 pt con éxito.');
+      triggerToast('¡Listo! Se descargó el documento Word con nuestra Política de Seguridad.');
     } catch (error) {
       console.error('Error generando Word de Política:', error);
-      alert('Ocurrió un error al generar el archivo .DOCX.');
+      setErrorBanner('No pudimos crear el archivo Word en este momento. Intenta de nuevo.');
     } finally {
       setIsDownloadingWord(false);
     }
@@ -155,18 +158,17 @@ export const PoliticaSstView: React.FC = () => {
     window.print();
   };
 
-  // Restablecer política original
+  // Restablecer política original (abre confirmación en pantalla)
   const handleResetearOriginal = () => {
-    if (
-      window.confirm(
-        '¿Desea restablecer la Política de SST al texto institucional canónico de Frikaz S.A.S.?'
-      )
-    ) {
-      const reset = resetStoredPoliticaSST();
-      setPolitica(reset);
-      setIsEditing(false);
-      triggerToast('Política de SST restablecida a los valores iniciales.');
-    }
+    setConfirmResetOpen(true);
+  };
+
+  const confirmResetearPolitica = () => {
+    const reset = resetStoredPoliticaSST();
+    setPolitica(reset);
+    setIsEditing(false);
+    setConfirmResetOpen(false);
+    triggerToast('La política volvió a su texto inicial en lenguaje sencillo.');
   };
 
   // Toggle rápido de estado de aprobación
@@ -213,6 +215,16 @@ export const PoliticaSstView: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Banner de error */}
+      {errorBanner && (
+        <div className="rounded-xl border border-rose-500/40 bg-rose-950/90 text-rose-200 px-4 py-3 flex items-center justify-between gap-3 text-xs font-semibold">
+          <span>{errorBanner}</span>
+          <button onClick={() => setErrorBanner(null)} className="text-rose-300 hover:text-white cursor-pointer">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Toast de confirmación */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/50 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold animate-fadeIn">
@@ -227,14 +239,14 @@ export const PoliticaSstView: React.FC = () => {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 rounded-md bg-orange-500/20 px-3 py-1 text-xs font-black tracking-wider uppercase text-orange-300 border border-orange-500/30">
               <ShieldCheck className="h-3.5 w-3.5 text-orange-400" />
-              Directriz Estratégica del SG-SST
+              Compromiso Principal de Frikaz S.A.S.
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-              <span>Políticas del SG-SST</span>
+              <span>Política de Seguridad y Salud</span>
               <span className="text-orange-400 font-mono text-base">[Frikaz S.A.S.]</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Consulte, edite, apruebe y descargue el documento oficial de la Política de Seguridad y Salud en el Trabajo, estructurada conforme al Decreto 1072 de 2015 con los compromisos prioritarios para la producción y comercialización de snacks.
+              Aquí puedes leer, actualizar, aprobar y descargar los compromisos de cuidado y protección que Frikaz S.A.S. asume con todos los trabajadores (según el Decreto 1072 de 2015).
             </p>
           </div>
 
@@ -758,6 +770,43 @@ export const PoliticaSstView: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL DE CONFIRMACIÓN PARA RESTABLECER LA POLÍTICA */}
+      {confirmResetOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-2xl space-y-4 text-white">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white">
+                  ¿Volver al texto inicial de la Política?
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Si confirmas, el documento volverá a los 4 compromisos originales de Frikaz S.A.S. en lenguaje claro.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmResetOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetearPolitica}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold cursor-pointer"
+              >
+                Sí, volver al texto inicial
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL PARA ENVIAR POLÍTICA POR CORREO ELECTRÓNICO */}
       {isModalEnviarOpen && (
         <ModalEnviarDocumento
@@ -768,7 +817,7 @@ export const PoliticaSstView: React.FC = () => {
           nombreDocumentoAdjunto="Politica_SST_Frikaz_SAS_2026.docx"
           nombreTrabajadorSugerido=""
           onEnvioExitoso={(envioId, dest) => {
-            triggerToast(`Política institucional enviada por correo a ${dest} [${envioId}]`);
+            triggerToast(`Enviamos la política por correo a ${dest} [${envioId}]`);
           }}
         />
       )}

@@ -94,7 +94,7 @@ export const ModalVisorDocumentoFirmado: React.FC<ModalVisorDocumentoFirmadoProp
       if (res) {
         setDoc(res);
         if (onEstadoActualizado) onEstadoActualizado(res);
-        setMensajeExito(`Estado actualizado a "${nuevoEstado}" exitosamente.`);
+        setMensajeExito(`El estado cambió a "${nuevoEstado}".`);
         setTimeout(() => setMensajeExito(null), 3500);
       }
       setGuardando(false);
@@ -102,33 +102,33 @@ export const ModalVisorDocumentoFirmado: React.FC<ModalVisorDocumentoFirmadoProp
   };
 
   const handleDescargarSimulado = () => {
-    // Generar un archivo de texto con encabezado oficial simulando el PDF firmado
+    // Generar un archivo de texto con encabezado de respaldo del documento firmado
     const contenido = `================================================================================
-FRIKAZ S.A.S. — SISTEMA DE GESTIÓN DE SEGURIDAD Y SALUD EN EL TRABAJO (SG-SST)
+FRIKAZ S.A.S. — SEGURIDAD Y SALUD EN EL TRABAJO (SG-SST)
 NIT: 901.458.723-1 — PLANTA BOSA, BOGOTÁ D.C.
 ================================================================================
-DOCUMENTO RECIBIDO FIRMADO POR CORREO ELECTRÓNICO
-Código de Trazabilidad: ${doc.envioId}
-Fecha de Envío Original: ${doc.fechaEnvioOriginal}
-Fecha de Recepción en Gmail: ${doc.fechaRecepcion}
-Cuenta Receptora: ${doc.cuentaReceptora}
+DOCUMENTO FIRMADO RECIBIDO POR CORREO
+Código de seguimiento: ${doc.envioId}
+Fecha de envío: ${doc.fechaEnvioOriginal}
+Fecha en que llegó: ${doc.fechaRecepcion}
+Correo donde se recibió: ${doc.cuentaReceptora}
 
 DATOS DEL TRABAJADOR:
 Nombre: ${doc.nombreTrabajador}
-Correo Electrónico: ${doc.correoTrabajador}
+Correo: ${doc.correoTrabajador}
 Cargo: ${doc.cargo}
-Documento de Identidad: ${doc.detallesFirma.numeroDocumento || 'C.C. Registrada'}
-Tipo de Documento: ${doc.tipoDocumento.toUpperCase()}
+Cédula / Documento: ${doc.detallesFirma.numeroDocumento || 'C.C. Registrada'}
+Tipo de documento: ${doc.tipoDocumento.toUpperCase()}
 
-DECLARACIÓN FORMAL DE CONOCIMIENTO Y ACEPTACIÓN:
+LO QUE ACEPTÓ EL TRABAJADOR:
 "${doc.detallesFirma.declaracionAceptacion}"
 
-ESTADO DOCUMENTAL ACTUAL: ${doc.estado.toUpperCase()}
-Revisado por: ${doc.revisadoPor || 'Pendiente de asignación'}
-Observaciones de Auditoría: ${doc.observacionesRevision}
+ESTADO ACTUAL: ${doc.estado.toUpperCase()}
+Revisado por: ${doc.revisadoPor || 'Falta revisar'}
+Notas de revisión: ${doc.observacionesRevision}
 
-FIRMA DIGITALIZADA: [REGISTRADA Y VALIDADA]
-Fecha de Firma: ${doc.detallesFirma.fechaFirma}
+FIRMA: [RECIBIDA Y VALIDADA]
+Fecha de firma: ${doc.detallesFirma.fechaFirma}
 ================================================================================`;
 
     const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
@@ -159,10 +159,10 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                 {renderBadgeEstado(doc.estado)}
                 <span className="text-xs text-slate-400">
                   {doc.tipoDocumento === 'responsabilidades'
-                    ? 'Responsabilidades del cargo'
+                    ? 'Cuidados y roles del cargo'
                     : doc.tipoDocumento === 'politicas'
-                    ? 'Políticas institucionales'
-                    : 'Otros documentos recibidos'}
+                    ? 'Compromiso de seguridad (Política SST)'
+                    : 'Otros documentos'}
                 </span>
               </div>
 
@@ -180,15 +180,15 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
             <button
               onClick={handleDescargarSimulado}
               className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
-              title="Descargar copia del documento firmado"
+              title="Descargar copia de este documento firmado"
             >
               <Download className="h-4 w-4 text-emerald-400" />
-              <span className="hidden sm:inline">Descargar</span>
+              <span className="hidden sm:inline">Descargar copia</span>
             </button>
             <button
               onClick={onClose}
               className="p-2.5 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
-              title="Cerrar visor"
+              title="Cerrar"
             >
               <X className="h-5 w-5" />
             </button>
@@ -226,7 +226,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
             }`}
           >
             <Mail className="h-4 w-4 text-sky-400" />
-            <span>Detalles del Correo y Respuesta</span>
+            <span>Correo y Mensaje del Trabajador</span>
           </button>
 
           <button
@@ -238,7 +238,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
             }`}
           >
             <History className="h-4 w-4 text-purple-400" />
-            <span>Historial y Trazabilidad ({doc.trazabilidad.length})</span>
+            <span>Paso a Paso ({doc.trazabilidad.length})</span>
           </button>
         </div>
 
@@ -280,15 +280,15 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                 {/* Título del Documento */}
                 <div className="text-center py-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-orange-400 block font-bold">
-                    SISTEMA DE GESTIÓN DE SEGURIDAD Y SALUD EN EL TRABAJO (SG-SST)
+                    SEGURIDAD Y SALUD EN EL TRABAJO (SG-SST)
                   </span>
                   <h3 className="text-base sm:text-lg font-black text-white mt-1">
                     {doc.tipoDocumento === 'responsabilidades'
-                      ? `ACTA FORMAL DE ASIGNACIÓN Y FIRMA DE RESPONSABILIDADES: ${doc.cargo.toUpperCase()}`
-                      : 'DIVULGACIÓN Y COMPROMISO FIRMADO DE LA POLÍTICA DE SEGURIDAD Y SALUD EN EL TRABAJO'}
+                      ? `CONSTANCIA DE FIRMA DE RESPONSABILIDADES: ${doc.cargo.toUpperCase()}`
+                      : 'CONSTANCIA DE FIRMA DEL COMPROMISO DE SEGURIDAD (POLÍTICA SST)'}
                   </h3>
                   <span className="text-[11px] text-slate-400 block mt-1">
-                    Conforme al Decreto 1072 de 2015 y Resolución 0312 de 2019
+                    Cumpliendo con el Decreto 1072 de 2015 y la Resolución 0312 de 2019
                   </span>
                 </div>
 
@@ -296,7 +296,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                      Nombre Completo del Trabajador:
+                      Nombre del Trabajador:
                     </span>
                     <span className="text-xs font-black text-white block mt-0.5">
                       {doc.nombreTrabajador}
@@ -304,15 +304,15 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                      Número de Documento (C.C.):
+                      Número de Cédula (C.C.):
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-200 block mt-0.5">
-                      {doc.detallesFirma.numeroDocumento || 'C.C. Cotejada en Hoja de Vida'}
+                      {doc.detallesFirma.numeroDocumento || 'C.C. en carpeta del trabajador'}
                     </span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                      Cargo Desempeñado:
+                      Puesto o Cargo:
                     </span>
                     <span className="text-xs font-bold text-orange-300 block mt-0.5">
                       {doc.cargo}
@@ -320,7 +320,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                      Correo Electrónico Registrado:
+                      Correo del Trabajador:
                     </span>
                     <span className="text-xs font-mono text-slate-300 block mt-0.5">
                       {doc.correoTrabajador}
@@ -332,7 +332,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                 <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
                   <h5 className="font-bold text-white text-xs uppercase tracking-wider flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                    <span>Declaración Juramentada de Conocimiento y Conformidad:</span>
+                    <span>Lo que leyó y aceptó el trabajador:</span>
                   </h5>
                   <p className="text-xs text-slate-300 leading-relaxed italic border-l-2 border-emerald-500 pl-3">
                     &quot;{doc.detallesFirma.declaracionAceptacion}&quot;
@@ -353,7 +353,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                         {doc.nombreTrabajador}
                       </span>
                       <span className="text-[10px] text-slate-500 font-mono block">
-                        Firma manuscrita digitalizada / Token {doc.envioId}
+                        Firma recibida · Código {doc.envioId}
                       </span>
                     </div>
 
@@ -365,14 +365,14 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   {/* Sello de Recepción Talento Humano */}
                   <div className="p-4 rounded-xl border border-slate-700 bg-slate-900/50 flex flex-col justify-between h-36">
                     <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                      <span>CUSTODIA TALENTO HUMANO / SG-SST</span>
+                      <span>ARCHIVO DE SEGURIDAD (SG-SST)</span>
                       <span className="text-orange-400 font-bold">SEDE BOSA</span>
                     </div>
 
                     <div className="text-center py-2 space-y-1">
                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-black">
                         <Building2 className="h-3.5 w-3.5" />
-                        <span>FRIKAZ S.A.S. — ARCHIVO CENTRAL</span>
+                        <span>FRIKAZ S.A.S. — ARCHIVO DIGITAL</span>
                       </div>
                       <span className="text-[10px] text-slate-400 block font-mono">
                         {doc.cuentaReceptora}
@@ -380,7 +380,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                     </div>
 
                     <div className="text-center border-t border-slate-800 pt-1 text-[10px] text-slate-400 font-mono">
-                      Recepción Oficial: {doc.fechaRecepcion}
+                      Recibido el: {doc.fechaRecepcion}
                     </div>
                   </div>
                 </div>
@@ -392,40 +392,40 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-orange-400" />
                     <h4 className="font-extrabold text-sm text-white">
-                      Control y Revisión Técnica por Talento Humano / SST
+                      Revisión de la Firma y Aprobación
                     </h4>
                   </div>
                   <span className="text-[11px] text-slate-400">
-                    Cambio manual de estado con registro de trazabilidad
+                    Cada cambio queda guardado en el historial
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                      Estado actual del documento:
+                      ¿Cómo está este documento?
                     </label>
                     <select
                       value={nuevoEstado}
                       onChange={(e) => setNuevoEstado(e.target.value as EstadoDocumentoFirmado)}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500 font-bold"
                     >
-                      <option value="Recibido">Recibido (En bandeja sin clasificar)</option>
-                      <option value="Pendiente de revisión">Pendiente de revisión (En verificación)</option>
-                      <option value="Aprobado">Aprobado (Conforme y archivado)</option>
-                      <option value="Requiere corrección">Requiere corrección (Devolver al trabajador)</option>
+                      <option value="Recibido">Recibido (Recién llegó, falta revisar)</option>
+                      <option value="Pendiente de revisión">Pendiente de revisión (En cola para revisar)</option>
+                      <option value="Aprobado">Aprobado (Firma clara y ya archivado)</option>
+                      <option value="Requiere corrección">Requiere corrección (Pedir foto o firma más clara)</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                      Responsable de la revisión:
+                      Quién lo revisó:
                     </label>
                     <input
                       type="text"
                       value={nombreRevisor}
                       onChange={(e) => setNombreRevisor(e.target.value)}
-                      placeholder="Nombre del auditor o analista SST"
+                      placeholder="Nombre de quien revisa"
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
                     />
                   </div>
@@ -433,13 +433,13 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                    Observaciones técnicas de la revisión:
+                    Notas de la revisión:
                   </label>
                   <textarea
                     rows={2}
                     value={observaciones}
                     onChange={(e) => setObservaciones(e.target.value)}
-                    placeholder="Detalles del cotejo de firma, legibilidad o motivo de aprobación/corrección..."
+                    placeholder="Escribe si la firma se ve bien o qué debe corregir el trabajador..."
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-300 focus:outline-none focus:border-orange-500 resize-none"
                   />
                 </div>
@@ -458,7 +458,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                     ) : (
                       <>
                         <Save className="h-4 w-4" />
-                        <span>Actualizar estado documental</span>
+                        <span>Guardar Revisión</span>
                       </>
                     )}
                   </button>
@@ -477,7 +477,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-sky-400" />
                     <h4 className="font-extrabold text-sm text-white">
-                      Hilo de Correo Institucional (Gmail)
+                      Correo Recibido del Trabajador
                     </h4>
                   </div>
                   <span className="font-mono text-[11px] text-slate-400">
@@ -487,14 +487,14 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
 
                 <div className="space-y-2 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <span className="text-slate-400 font-bold">De (Trabajador):</span>
+                    <span className="text-slate-400 font-bold">Enviado por:</span>
                     <span className="sm:col-span-3 font-mono text-white">
                       {doc.nombreTrabajador} &lt;{doc.correoTrabajador}&gt;
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <span className="text-slate-400 font-bold">Para (Institucional):</span>
+                    <span className="text-slate-400 font-bold">Recibido en:</span>
                     <span className="sm:col-span-3 font-mono text-emerald-400 font-semibold">
                       Frikaz S.A.S. &lt;{doc.cuentaReceptora}&gt;
                     </span>
@@ -508,14 +508,14 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <span className="text-slate-400 font-bold">Fecha Recepción:</span>
+                    <span className="text-slate-400 font-bold">Fecha de llegada:</span>
                     <span className="sm:col-span-3 font-mono text-slate-300">
                       {doc.fechaRecepcion}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                    <span className="text-slate-400 font-bold">Archivo Adjunto:</span>
+                    <span className="text-slate-400 font-bold">Archivo adjunto:</span>
                     <span className="sm:col-span-3 text-orange-300 font-mono font-bold flex items-center gap-1.5">
                       <FileText className="h-4 w-4" />
                       <span>{doc.nombreArchivoRecibido} ({doc.tamanoArchivo})</span>
@@ -525,7 +525,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
 
                 <div className="mt-4 pt-3 border-t border-slate-800">
                   <span className="block text-[11px] font-bold text-slate-400 mb-2">
-                    Cuerpo del mensaje devuelto por el trabajador:
+                    Mensaje que escribió el trabajador:
                   </span>
                   <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">
                     {doc.mensajeTrabajador}
@@ -545,7 +545,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                   <div className="flex items-center gap-2">
                     <History className="h-4 w-4 text-purple-400" />
                     <h4 className="font-extrabold text-sm text-white">
-                      Línea de Vida y Trazabilidad del Documento
+                      Qué ha pasado con este documento (Paso a Paso)
                     </h4>
                   </div>
                   <span className="text-[11px] font-mono text-purple-300">
@@ -570,7 +570,7 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
                           {item.detalles}
                         </p>
                         <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400">
-                          <span>Responsable: <strong className="text-slate-300">{item.responsable}</strong></span>
+                          <span>Quién lo hizo: <strong className="text-slate-300">{item.responsable}</strong></span>
                           <span>Estado: <strong className="text-purple-300">{item.estadoResultante}</strong></span>
                         </div>
                       </div>
@@ -586,14 +586,14 @@ Fecha de Firma: ${doc.detallesFirma.fechaFirma}
         <div className="p-5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <Building2 className="h-4 w-4 text-orange-400" />
-            <span>Frikaz S.A.S. — Repositorio Digital de Documentos Firmados</span>
+            <span>Frikaz S.A.S. — Archivo de Documentos Firmados</span>
           </div>
 
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
           >
-            Cerrar visor
+            Cerrar
           </button>
         </div>
       </div>

@@ -154,10 +154,10 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   navHeader.alignment = { horizontal: 'center', vertical: 'middle' };
 
   const navButtons = [
-    { label: '➔ Abrir Matriz PHVA Unificada (74 Normas)', link: "#'Matriz PHVA Unificada'!A1", row: 6 },
-    { label: '➔ Consultar Gestión SST (Seguridad y Salud)', link: "#'Gestión SST'!A1", row: 8 },
-    { label: '➔ Consultar Gestión Ambiental (Impactos y ACU)', link: "#'Gestión ambiental'!A1", row: 10 },
-    { label: '➔ Consultar Plan de Acción (Hallazgos y Mejoras)', link: "#'Plan de acción'!A1", row: 12 },
+    { label: `➔ Abrir Lista Completa PHVA (${items.length} Normas)`, link: "#'Matriz PHVA Unificada'!A1", row: 6 },
+    { label: '➔ Ver Cuidados de Seguridad y Salud (SST)', link: "#'Gestión SST'!A1", row: 8 },
+    { label: '➔ Ver Cuidado Ambiental (Aceite ACU y Residuos)', link: "#'Gestión ambiental'!A1", row: 10 },
+    { label: '➔ Ver Plan de Mejoras y Tareas Pendientes', link: "#'Plan de acción'!A1", row: 12 },
   ];
 
   navButtons.forEach((btn) => {
@@ -465,13 +465,13 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
     const [tipoNorma, numAnio] = parseNormaType(it.normaOficial);
 
     // Planear estructurado
-    const planearDesc = `Objetivo: Cumplir ${it.normaOficial} en Frikaz S.A.S. | Responsable: ${it.responsable} | Meta: 100% implementación`;
+    const planearDesc = `Meta: Cumplir ${it.normaOficial} en Frikaz S.A.S. | Encargado: ${it.responsable} | Meta: 100%`;
     // Hacer estructurado
-    const hacerDesc = `Actividad: ${it.tituloSituacion}. Evidencia: ${it.evidenciaCumplimiento}`;
+    const hacerDesc = `Lo que hacemos: ${it.tituloSituacion}. Soporte: ${it.evidenciaCumplimiento}`;
     // Verificar estructurado
-    const verificarDesc = `Método: Inspección periódica y cotejo documental. Fecha: ${it.fechaVerificacion || '2026-10-01'}. Resultado: Conforme`;
+    const verificarDesc = `Cómo revisamos: Recorrido en planta y revisión de soportes. Fecha: ${it.fechaVerificacion || '2026-10-01'}.`;
     // Actuar estructurado
-    const actuarDesc = `Acción: Mantener controles operacionales en planta Bosa y actualizar matriz anual. Seg.: ${it.responsable}`;
+    const actuarDesc = `Mejora: Mantener medidas seguras en planta Bosa y actualizar el plan anual. Encargado: ${it.responsable}`;
 
     const row = wsMatriz.addRow([
       codigo,
@@ -764,41 +764,41 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
     [
       'ACT-2026-001',
       'OBL-SST-003',
-      'Certificado de 50 horas del líder SG-SST pendiente de renovación de 20 horas.',
-      'Vencimiento de ciclo bianual del curso legal ante MinTrabajo.',
-      'Inscribir al responsable en la plataforma ARL y completar el curso de actualización de 20 horas.',
+      'Renovar el curso de actualización de 20 horas de la persona encargada de seguridad (SG-SST).',
+      'Se cumplió el plazo de 2 años para renovar el certificado.',
+      'Inscribir al encargado en la plataforma de la ARL (aseguradora de riesgos) para completar las 20 horas.',
       'Gestión Humana / Líder SST',
       '2026-09-01',
       '2026-11-30',
       'En proceso',
-      'Certificado de matrícula y constancia de avance 80%.',
+      'Comprobante de inscripción y avance del 80% en el curso.',
       'En seguimiento',
     ],
     [
       'ACT-2026-002',
       'OBL-AMB-008',
-      'Falta actualizar bitácora de entrega de Aceite de Cocina Usado (ACU) del mes anterior.',
-      'Retraso en el envío de la constancia digital por parte del gestor autorizado.',
-      'Requerir al gestor autorizado el manifiesto y radicarlo en el libro oficial de la SDA Bogotá.',
+      'Completar la planilla de entrega de Aceite de Cocina Usado (ACU) del mes pasado.',
+      'La empresa recolectora autorizada aún no enviaba el recibo digital.',
+      'Pedir al recolector autorizado el certificado de entrega y guardarlo en la carpeta ambiental.',
       'Coordinador Ambiental',
       '2026-09-15',
       '2026-10-30',
       'Abierta',
-      'Manifiesto de recolección de 220 litros de ACU con sello.',
+      'Recibo sellado por entrega de 220 litros de aceite usado.',
       'Pendiente de cierre',
     ],
     [
       'ACT-2026-003',
       'OBL-SST-006',
-      'Inspección periódica de extintores Solkaflam y CO2 en zona de freidoras industriales.',
-      'Revisión semestral programada.',
-      'Efectuar prueba de presión y verificación de precintos en los 4 extintores de planta.',
+      'Revisión periódica de extintores especiales (Clase K / CO2) junto a las freidoras.',
+      'Revisión programada cada seis meses para mantenerlos listos.',
+      'Revisar presión, sellos y fecha de recarga de los 4 extintores de la planta.',
       'Responsable SG-SST / Jefe Planta',
       '2026-08-01',
       '2026-08-20',
       'Verificada / Cerrada',
-      'Hoja de vida de extintores y tarjeta de recarga con vigencia 2027.',
-      'Eficaz (100% operativo)',
+      'Ficha de inspección y etiqueta de recarga vigente hasta 2027.',
+      'Funcionando al 100%',
     ],
   ];
 

@@ -57,6 +57,7 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
   const [sheetsUrl, setSheetsUrl] = useState('');
   const [sincronizando, setSincronizando] = useState(false);
   const [syncStatusMsg, setSyncStatusMsg] = useState<{ tipo: 'ok' | 'err'; texto: string } | null>(null);
+  const [csvNotice, setCsvNotice] = useState<string | null>(null);
   const [filtroBusqueda, setFiltroBusqueda] = useState('');
 
   // Refrescar métricas periódicamente
@@ -118,7 +119,8 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
   const handleExportarCSV = () => {
     const intentos = metricas.ultimosIntentos;
     if (intentos.length === 0) {
-      alert('No hay intentos de evaluación registrados aún para exportar.');
+      setCsvNotice('Aún no hay evaluaciones guardadas para descargar en la tabla.');
+      setTimeout(() => setCsvNotice(null), 4000);
       return;
     }
 
@@ -169,11 +171,11 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black tracking-widest uppercase text-purple-400">FRIKAZ S.A.S.</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
-                  PANEL DE CONTROL SST
+                  SEGUIMIENTO DE CAPACITACIÓN SST
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white">
-                Supervisión de Misión Frikaz y Acreditación
+                Seguimiento de Misión Frikaz (Avance del Equipo)
               </h2>
             </div>
           </div>
@@ -225,6 +227,18 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
 
         {/* Contenido según pestaña */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
+          {csvNotice && (
+            <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3">
+              <span>{csvNotice}</span>
+              <button
+                type="button"
+                onClick={() => setCsvNotice(null)}
+                className="text-amber-300 hover:text-white font-bold"
+              >
+                Cerrar
+              </button>
+            </div>
+          )}
           
           {/* ================================================================ */}
           {/* 1. INDICADORES GLOBALES                                         */}
@@ -251,26 +265,26 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
                 </div>
 
                 <div className="bg-slate-950 p-4 rounded-2xl border border-amber-500/30">
-                  <span className="text-xs text-amber-400 block font-medium">En Acreditación</span>
+                  <span className="text-xs text-amber-400 block font-medium">Aún en recorrido</span>
                   <span className="text-2xl font-black text-amber-300 mt-1 block">
                     {metricas.totalEnProceso}
                   </span>
-                  <span className="text-[10px] text-amber-500/80">Políticas pendientes</span>
+                  <span className="text-[10px] text-amber-500/80">Con temas por completar</span>
                 </div>
 
                 <div className="bg-slate-950 p-4 rounded-2xl border border-purple-500/30">
-                  <span className="text-xs text-purple-400 block font-medium">Efectividad Global</span>
+                  <span className="text-xs text-purple-400 block font-medium">Promedio de Aprobación</span>
                   <span className="text-2xl font-black text-purple-300 mt-1 block">
                     {metricas.tasaAprobacionGlobal}%
                   </span>
-                  <span className="text-[10px] text-purple-400/80">Tasa de aprobación (≥80%)</span>
+                  <span className="text-[10px] text-purple-400/80">Intentos aprobados (80% o más)</span>
                 </div>
               </div>
 
               {/* Promedios por política */}
               <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-                  Puntaje Promedio por Política Evaluada:
+                  Puntaje promedio por cada tema visto:
                 </h3>
                 <div className="space-y-3">
                   {politicas.map((pol) => {
@@ -295,14 +309,14 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* Preguntas más falladas (para capacitación SST) */}
+              {/* Preguntas que requieren más refuerzo (para charlas de seguridad) */}
               <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" /> Preguntas con Mayor Tasa de Error (Oportunidades de Capacitación):
+                  <AlertTriangle className="w-4 h-4" /> Temas para reforzar en las charlas diarias:
                 </h3>
                 {metricas.preguntasMasFalladas.length === 0 ? (
                   <p className="text-xs text-slate-500">
-                    Aún no hay suficientes datos de evaluaciones para calcular preguntas críticas.
+                    Todavía no hay suficientes respuestas para mostrar qué temas necesitan refuerzo.
                   </p>
                 ) : (
                   <div className="space-y-2.5">
@@ -319,7 +333,7 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
                         </div>
                         <div className="shrink-0 text-right">
                           <span className="text-sm font-black text-red-400">{item.tasaFallo}%</span>
-                          <span className="text-[10px] text-slate-500 block">Tasa de fallo</span>
+                          <span className="text-[10px] text-slate-500 block">Por reforzar</span>
                         </div>
                       </div>
                     ))}
@@ -555,7 +569,7 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
           {pestanaActiva === 'politicas' && (
             <div className="space-y-4">
               <p className="text-xs text-slate-400">
-                Define cuáles políticas son de acreditación <strong>OBLIGATORIA</strong> para los trabajadores antes de ingresar a la plataforma principal:
+                Elige cuáles temas deben completar <strong>todos los trabajadores</strong> antes de usar las demás opciones de la plataforma:
               </p>
 
               <div className="space-y-3">

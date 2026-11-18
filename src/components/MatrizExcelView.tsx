@@ -31,6 +31,7 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
   const [activeSheet, setActiveSheet] = useState<ExcelSheetTab>('inicio');
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterArea, setFilterArea] = useState<'TODAS' | 'SST' | 'AMBIENTAL'>('TODAS');
   const [filterEstado, setFilterEstado] = useState<'TODOS' | 'CUMPLE' | 'PARCIAL' | 'NO_CUMPLE' | 'PENDIENTE'>('TODOS');
@@ -52,6 +53,7 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
   const handleDownloadExcel = async () => {
     try {
       setIsExporting(true);
+      setExportError(null);
       const blob = await generateFrikazExcelWorkbook(items);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -65,7 +67,7 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
       setTimeout(() => setExportSuccess(false), 4500);
     } catch (err) {
       console.error('Error generando archivo Excel:', err);
-      alert('Ocurrió un error al generar el archivo Excel.');
+      setExportError('No se pudo crear el archivo Excel en este momento. Intenta de nuevo.');
     } finally {
       setIsExporting(false);
     }
@@ -100,20 +102,20 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-black uppercase tracking-wider">
                 <FileSpreadsheet className="h-3.5 w-3.5" />
-                Módulo Oficial .xlsx
+                Archivo en Excel (.xlsx)
               </span>
               <span className="rounded-md bg-orange-500/20 px-2.5 py-0.5 text-xs font-bold text-orange-300 border border-orange-400/30">
-                100% Sin Macros VBA (Fórmulas Nativas)
+                Con cuentas automáticas (sin macros)
               </span>
               <span className="rounded-md bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-300 border border-slate-700">
-                6 Hojas Estructuradas · {items.length} Obligaciones Reales
+                6 Hojas · {items.length} Normas Registradas
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Matriz Excel Automatizada — Frikaz S.A.S.
+              Lista de Normas en Excel — Frikaz S.A.S.
             </h1>
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Herramienta integral de cumplimiento con fórmulas automáticas de Excel (<code className="text-emerald-300 font-mono text-xs">COUNTIF</code>, <code className="text-emerald-300 font-mono text-xs">SUM</code>, <code className="text-emerald-300 font-mono text-xs">IF</code>), tablas estructuradas, listas desplegables y navegación por hipervínculos internos. Totalmente compatible con Microsoft Excel, LibreOffice Calc y Google Sheets.
+              Aquí puedes revisar y descargar todas las normas de seguridad y ambiente en un libro de Excel organizado en 6 pestañas. Trae listas desplegables y sumas automáticas que funcionan en Microsoft Excel, LibreOffice o Google Sheets.
             </p>
           </div>
 
@@ -126,12 +128,12 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
               {isExporting ? (
                 <>
                   <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Generando Libro Excel...</span>
+                  <span>Preparando archivo Excel...</span>
                 </>
               ) : (
                 <>
                   <Download className="h-5 w-5" />
-                  <span>Descargar Matriz Excel (.xlsx)</span>
+                  <span>Descargar Lista en Excel (.xlsx)</span>
                 </>
               )}
             </button>
@@ -142,8 +144,14 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
           <div className="mt-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-400 text-emerald-200 text-xs font-medium flex items-center gap-2 animate-fadeIn">
             <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
             <span>
-              ¡Archivo Excel descargado con éxito! Contiene las 6 hojas con fórmulas dinámicas, listas desplegables e hipervínculos internos listos para abrir en tu computadora.
+              ¡Listo! Ya se descargó el archivo Excel con las 6 hojas, listas desplegables y cuentas automáticas para abrir en tu computador.
             </span>
+          </div>
+        )}
+        {exportError && (
+          <div className="mt-4 p-3 rounded-xl bg-rose-950/80 border border-rose-400 text-rose-200 text-xs font-medium flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>{exportError}</span>
           </div>
         )}
       </div>
@@ -253,10 +261,10 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                   </div>
                   <div>
                     <h2 className="text-xl font-black text-white tracking-tight">
-                      FRIKAZ S.A.S. — SISTEMA DE GESTIÓN INTEGRAL SST Y AMBIENTAL
+                      FRIKAZ S.A.S. — RESUMEN DE SEGURIDAD, SALUD Y AMBIENTE
                     </h2>
                     <p className="text-xs text-orange-200 font-medium">
-                      Tablero de Control y Matriz Legal Automatizada con Fórmulas Nativas de Excel
+                      Panel claro con sumas automáticas para seguir nuestro cumplimiento en Excel
                     </p>
                   </div>
                 </div>
@@ -270,10 +278,10 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                 </div>
               </div>
 
-              {/* Botones de navegación interna (Simulación de hipervínculos) */}
+              {/* Botones de navegación interna */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                 <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-3">
-                  Botones de Navegación Rápida de Excel (Sin Macros — Mediante Hipervínculos Internos)
+                  Accesos Rápidos a cada Pestaña del Excel
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <button
@@ -282,9 +290,9 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                   >
                     <span className="text-[11px] text-orange-300 font-bold block">Hoja 2</span>
                     <span className="text-xs font-black block group-hover:text-orange-200">
-                      Matriz PHVA Unificada ➔
+                      Lista Completa PHVA ➔
                     </span>
-                    <span className="text-[10px] text-slate-400">74 obligaciones en 21 columnas</span>
+                    <span className="text-[10px] text-slate-400">{items.length} normas explicadas paso a paso</span>
                   </button>
 
                   <button
@@ -808,14 +816,14 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
               <div className="bg-slate-100 border border-slate-300 rounded-xl p-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-black text-slate-900 uppercase">
-                    Hoja 6: Tablas Maestras para Validación de Datos (Listas Desplegables)
+                    Hoja 6: Opciones Fijas para Elegir en Excel (Listas Desplegables)
                   </h3>
                   <p className="text-xs text-slate-600">
-                    Valores predeterminados en Excel que previenen errores tipográficos al registrar nuevas obligaciones
+                    Opciones predefinidas en Excel para evitar errores al escribir el estado o responsable de cada norma
                   </p>
                 </div>
                 <span className="px-3 py-1 bg-slate-700 text-white font-bold rounded-lg text-xs">
-                  Data Validation Rules
+                  Listas de Opciones
                 </span>
               </div>
 

@@ -39,135 +39,135 @@ export interface ConfiguracionPresentacion {
 export const CONFIG_PRESENTACION_DEFAULT: ConfiguracionPresentacion = {
   appHeader: {
     empresa: 'FRIKAZ S.A.S.',
-    subtitulo: 'Herramienta Automatizada SST y Ambiental (PHVA)',
+    subtitulo: 'Guía Práctica de Seguridad y Cuidado Ambiental (PHVA)',
     badge: 'Bosa · 10 Trab.',
   },
   banner: {
-    etiqueta: 'SISTEMA DE GESTIÓN PHVA',
-    subetiqueta: 'HERRAMIENTA AUTOMATIZADA',
+    etiqueta: 'CICLO PHVA DE CUIDADO',
+    subetiqueta: 'LENGUAJE CLARO Y PRÁCTICO',
     empresaInfo: 'Frikaz S.A.S. (Bosa, Bogotá — 10 Trabajadores)',
-    titulo: 'Sistema Automatizado PHVA — Normativa SST y Ambiental',
+    titulo: 'Ciclo PHVA — Normas Claras de Seguridad, Salud y Ambiente',
     descripcion:
-      'Seguimiento inteligente en tiempo real para Frikaz S.A.S. en las 4 fases del ciclo PHVA. Cada norma integra los 6 requisitos obligatorios: Descripción, Importancia, Aplicabilidad, Vigencia oficial, Jurisdicción/Alcance y Evidencia probatoria.',
+      'Aquí encuentras, paso a paso y en palabras sencillas, las normas que cuidan tu salud, evitan accidentes en planta y protegen el medio ambiente en Frikaz S.A.S. Cada norma explica 6 puntos clave: qué pide la ley, por qué nos cuida, qué hacemos en nuestro trabajo, si está vigente, dónde aplica y qué soporte lo demuestra.',
   },
   fases: {
     PLANEAR: {
-      tituloFase: 'PLANEAR — Identificar Normativa (vigente) que regula cada situación y aplique a la pyme:',
+      tituloFase: '1. PLANEAR — ¿Qué normas nos ayudan a organizar el trabajo seguro y limpio?',
       subtituloFase:
-        'Estructura del sistema de gestión PHVA. Haga clic en cualquier situación para ver o editar los 6 círculos obligatorios de evaluación.',
+        'Antes de empezar la jornada, planeamos cómo prevenir accidentes y cuidar el entorno. Haz clic en cualquier tarjeta para ver sus 6 puntos explicados de forma sencilla.',
       modulos: [
         {
           subtema: 'DIAGNÓSTICO',
-          titulo: 'Módulo 1: Diagnóstico',
-          desc: 'Diagnóstico y clasificación de riesgo (Decreto 1072/2015, ISO 14001:2026) y Política/objetivos ambientales y SST (Ley 99/1993).',
+          titulo: 'Módulo 1: Revisión Inicial y Compromisos',
+          desc: 'Revisamos qué peligros existen en la planta (Decreto 1072/2015), qué impacta al ambiente (ISO 14001:2026) y firmamos nuestras políticas y metas de cuidado (Ley 99/1993).',
         },
         {
           subtema: 'PELIGROS Y ASPECTOS AMBIENTALES',
-          titulo: 'Módulo 2: Peligros y Aspectos Ambientales',
-          desc: 'Identificación de peligros (Decreto 1443/2014, ISO 14001:2026) y uso adecuado de recursos naturales (Ley 99/1993).',
+          titulo: 'Módulo 2: Peligros en el Trabajo y Cuidado de Recursos',
+          desc: 'Identificamos riesgos como aceite caliente o cuchillas (Decreto 1443/2014 compilado en Decreto 1072/2015) y cuidamos el agua, la energía y las materias primas (Ley 99/1993).',
         },
         {
           subtema: 'ASIGNACIÓN',
-          titulo: 'Módulo 3: Asignación',
-          desc: 'Responsable del SG-SST (Decreto 1443/2014 compilado en Decreto 1072/2015, perfil y curso 50 horas).',
+          titulo: 'Módulo 3: Persona Encargada de Seguridad y Salud',
+          desc: 'Nombramos a la persona encargada del SG-SST (Sistema de Gestión de Seguridad y Salud en el Trabajo) con su curso obligatorio de 50 horas (Decreto 1072/2015).',
         },
         {
           subtema: 'MATRIZ LEGAL Y PLAN ANUAL',
-          titulo: 'Módulo 4: Matriz Legal y Plan Anual',
-          desc: 'Residuos RESPEL (Dec. 4741/2005), emisiones/ruido (Res. 0627/2006, Ley 2450/2025), matriz legal y plan anual (Dec. 1072/2015, Dec. 1076/2015).',
+          titulo: 'Módulo 4: Lista de Normas y Plan del Año',
+          desc: 'Organizamos el manejo seguro de residuos peligrosos —RESPEL— (Dec. 4741/2005), control de ruido (Res. 0627/2006, Ley 2450/2025), lista de leyes y Plan Anual de actividades.',
         },
       ],
     },
     HACER: {
-      tituloFase: 'HACER — Identificar Normativa (vigente) que regula cada situación y aplique a la pyme:',
+      tituloFase: '2. HACER — ¿Qué hacemos cada día para cuidarnos y trabajar bien?',
       subtituloFase:
-        'Implementación operativa del sistema en planta de snacks fritos. Cobertura de comités, EPP térmico y residuos.',
+        'Acciones diarias en nuestra planta de snacks fritos: afiliación, exámenes médicos, elementos de protección, comités, manejo seguro de máquinas y separación de residuos.',
       modulos: [
         {
           subtema: 'INGRESO',
-          titulo: 'Ingreso, Exámenes & Capacitación',
-          desc: 'Afiliaciones al SGSS, exámenes médicos ocupacionales de alimentos e inducción.',
+          titulo: 'Ingreso, Exámenes Médicos y Capacitación',
+          desc: 'Afiliación a EPS, pensión y ARL antes de empezar, exámenes médicos para manipular alimentos e inducción práctica sobre el puesto de trabajo.',
         },
         {
           subtema: 'DOTACIÓN Y COMITÉS',
-          titulo: 'Dotación & Comités',
-          desc: 'Creación de Vigía de SST, Comité de Convivencia y dotación con EPP térmico para freidoras.',
+          titulo: 'Dotación, Elementos de Protección y Comités',
+          desc: 'Elección del Vigía SST (compañero que apoya la seguridad) y Comité de Convivencia, más entrega de uniforme y EPP (guantes, botas y delantal contra calor).',
         },
         {
           subtema: 'RIESGOS',
-          titulo: 'Riesgos Laborales Específicos',
-          desc: 'Riesgo psicosocial (Batería Res. 2764) y riesgos específicos: cuchillas, calor y alturas.',
+          titulo: 'Cuidado de Riesgos en Planta y Bienestar',
+          desc: 'Cuidamos el estrés laboral y las pausas (Res. 2764), y prevenimos accidentes con cuchillas, aceite a 180 °C, espacios cerrados y líquidos de aseo.',
         },
         {
           subtema: 'RESIDUOS Y EMERGENCIAS',
-          titulo: 'Residuos & Emergencias',
-          desc: 'Gestor autorizado de ACU (Res. 316), código de colores (Res. 2184) y extintor Clase K.',
+          titulo: 'Residuos, Aceite Usado y Emergencias',
+          desc: 'Entrega de aceite de cocina usado (ACU, Res. 316) a gestor autorizado, canecas por colores (Res. 2184) y extintor Clase K junto a freidoras.',
         },
       ],
     },
     VERIFICAR: {
-      tituloFase: 'VERIFICAR — Identificar Normativa (vigente) que regula cada situación y aplique a la pyme:',
+      tituloFase: '3. VERIFICAR — ¿Cómo comprobamos que todo esté funcionando bien?',
       subtituloFase:
-        'Evaluación objetiva, auditoría interna, monitoreo ambiental y revisión directiva por los estándares mínimos.',
+        'Revisamos con calma nuestras metas, recorremos la planta, controlamos el agua y los residuos, y la gerencia verifica que las medidas estén dando resultados.',
       modulos: [
         {
           subtema: 'EVALUACIÓN',
-          titulo: 'Evaluación & Indicadores',
-          desc: 'Desarrollo de indicadores de gestión y autoevaluación anual de estándares mínimos.',
+          titulo: 'Medición de Resultados e Indicadores',
+          desc: 'Revisamos en números sencillos si bajaron los incidentes, si hicimos las capacitaciones y cómo vamos con los 7 estándares mínimos de la ley.',
         },
         {
           subtema: 'AUDITORÍA',
-          titulo: 'Auditoría & Seguimiento',
-          desc: 'Auditoría interna anual y seguimiento a vertimientos EAAB, manifiestos ACU y emisiones.',
+          titulo: 'Revisiones Internas y Control Ambiental',
+          desc: 'Recorrido de revisión anual para verificar la trampa de grasas, las entregas de aceite usado, el agua residual y los extractores de humo.',
         },
         {
           subtema: 'EVALUACIÓN DEL CUMPLIMIENTO LEGAL',
-          titulo: 'Cumplimiento Legal & Código Dorado',
-          desc: 'Revisión semestral de la matriz legal y política de salud mental "Código Dorado".',
+          titulo: 'Revisión de Leyes y Cuidado Emocional',
+          desc: 'Confirmamos cada seis meses que cumplimos las normas vigentes y aplicamos la ruta de apoyo emocional y salud mental "Código Dorado".',
         },
         {
           subtema: 'REVISIÓN POR LA DIRECCIÓN',
-          titulo: 'Revisión por la Dirección',
-          desc: 'Revisión y compromiso de la alta dirección, reforma laboral y contrato de aprendizaje.',
+          titulo: 'Revisión de la Gerencia y Aprendices',
+          desc: 'La gerencia revisa cómo funcionó el sistema en el año, asegura presupuesto y verifica la protección completa de trabajadores y aprendices.',
         },
       ],
     },
     ACTUAR: {
-      tituloFase: 'ACTUAR — Identificar Normativa (vigente) que regula cada situación y aplique a la pyme:',
+      tituloFase: '4. ACTUAR — ¿Cómo corregimos fallas y mejoramos cada día?',
       subtituloFase:
-        'Acciones correctivas, investigación de accidentes ATEL, respuesta a requerimientos y ciclo de mejora continua.',
+        'Cuando ocurre un incidente, un casi accidente o encontramos algo por mejorar, actuamos rápido para corregirlo y evitar que vuelva a pasar.',
       modulos: [
         {
           subtema: 'ACCIDENTES Y ENFERMEDADES',
-          titulo: 'Accidentes & Enfermedades (ATEL)',
-          desc: 'Reporte FURAT en 48h, informe de investigación con Vigía de SST y reubicación laboral.',
+          titulo: 'Atención y Reporte de Accidentes (FURAT)',
+          desc: 'Si alguien se accidenta, primero se atiende su salud, se reporta en 2 días hábiles (formato FURAT), se investigan las causas y se adapta su regreso al trabajo.',
         },
         {
           subtema: 'SANCIONES',
-          titulo: 'Sanciones & No Conformidades',
-          desc: 'Prevención de multas administrativas MinTrabajo/SDA y plan de acciones correctivas.',
+          titulo: 'Prevención de Multas y Responsabilidades',
+          desc: 'Mantenemos afiliaciones, guardas de máquinas y cuidado ambiental al día para proteger la vida del equipo y evitar sanciones o cierres a la empresa.',
         },
         {
           subtema: 'REQUERIMIENTOS DE LA AUTORIDAD',
-          titulo: 'Requerimientos de la Autoridad',
-          desc: 'Respuesta formal a inspecciones y prevención de responsabilidad penal y civil patronal.',
+          titulo: 'Atención a Visitas e Inspecciones',
+          desc: 'Tenemos en orden los documentos y soportes para responder con transparencia ante visitas del Ministerio del Trabajo o la Secretaría de Ambiente.',
         },
         {
           subtema: 'CIERRE DE CICLO',
-          titulo: 'Cierre de Ciclo & Mejora Continua',
-          desc: 'Actualización de matrices GTC 45 y ambiental, mejora de procesos y normas técnicas.',
+          titulo: 'Mejora Continua y Actualización Anual',
+          desc: 'Cada año actualizamos nuestra lista de peligros, revisamos procedimientos según lo aprendido y aplicamos mejoras prácticas en planta.',
         },
       ],
     },
   },
   guiaDocente: {
-    titulo: 'Guía de Evaluación Normativa: Los 6 Círculos Obligatorios',
+    titulo: 'Guía Rápida: ¿Cómo entender los 6 puntos de cada norma?',
     descripcion:
-      'Cada norma identificada en esta herramienta responde a los 6 elementos evaluados en el proyector: 1. Descripción (qué regula), 2. Importancia (por qué es clave para Frikaz S.A.S. con 10 trabajadores y freidoras), 3. Aplicabilidad (qué debe hacer la pyme), 4. Vigente (comprobación de vigencia en la normativa colombiana), 5. Jurisdicción y Alcance (ámbito distrital Bogotá SDA / MinTrabajo nacional), y 6. Evidencia para Cumplimiento (soporte documental exigido).',
+      'Cada tarjeta explica la norma en 6 pasos sencillos para cualquier trabajador de Frikaz S.A.S.: 1. Qué pide la norma (en palabras claras), 2. Por qué nos protege (importancia en nuestro trabajo diario), 3. Qué hacemos en planta (pasos prácticos en freidoras, empaque o reparto), 4. Vigencia actual (si la ley sigue aplicando hoy en Colombia), 5. Dónde y a quiénes aplica (planta Bosa, trabajadores y aprendices), y 6. Cómo lo demostramos (actas, planillas, certificados o fotos).',
   },
   matrizTabla: {
-    titulo: 'Matriz Normativa Completa de Requisitos Legales',
+    titulo: 'Lista Completa de Normas de Seguridad y Ambiente',
     descripcion:
-      'Total de disposiciones legales colombianas vigentes aplicables a Frikaz S.A.S.',
+      'Resumen claro de todas las leyes y reglas vigentes en Colombia que cuidan el trabajo y el medio ambiente en Frikaz S.A.S.',
   },
 };

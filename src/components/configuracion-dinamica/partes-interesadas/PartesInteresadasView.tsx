@@ -67,37 +67,37 @@ export const PartesInteresadasView: React.FC = () => {
     {
       id: 'matriz',
       numero: '1',
-      nombre: 'Matriz de Partes Interesadas',
+      nombre: 'Tabla General',
       icon: <Table className="h-4 w-4" />,
     },
     {
       id: 'internas',
       numero: '2',
-      nombre: 'Partes Interesadas Internas',
+      nombre: 'Equipo de la Empresa',
       icon: <Building2 className="h-4 w-4" />,
     },
     {
       id: 'externas',
       numero: '3',
-      nombre: 'Partes Interesadas Externas',
+      nombre: 'Entidades y Clientes',
       icon: <Globe2 className="h-4 w-4" />,
     },
     {
       id: 'checklist',
       numero: '4',
-      nombre: 'Checklist de Necesidades Internas',
+      nombre: 'Lista de Necesidades',
       icon: <ClipboardCheck className="h-4 w-4" />,
     },
     {
       id: 'indicadores',
       numero: '5',
-      nombre: 'Indicadores de Cumplimiento',
+      nombre: 'Avance y Resultados',
       icon: <BarChart2 className="h-4 w-4" />,
     },
     {
       id: 'descargas',
       numero: '6',
-      nombre: 'Descarga de Documentos',
+      nombre: 'Descargar Archivos',
       icon: <Download className="h-4 w-4" />,
     },
   ];
@@ -111,7 +111,7 @@ export const PartesInteresadasView: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-md bg-purple-500/20 px-2.5 py-0.5 text-xs font-bold text-purple-300 border border-purple-500/30">
                 <Users2 className="h-3.5 w-3.5 text-purple-400" />
-                Subcategoría Oficial · Configuración Dinámica
+                Personas y Entidades Clave · Mi Empresa
               </span>
               <span className="rounded-md bg-orange-500/20 px-2.5 py-0.5 text-xs font-bold text-orange-300 border border-orange-500/30">
                 Decreto 1072/2015 · Res. 0312/2019 · ISO 45001
@@ -119,24 +119,24 @@ export const PartesInteresadasView: React.FC = () => {
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-              <span>Gestión de Partes Interesadas</span>
+              <span>Personas y Entidades Interesadas</span>
               <span className="text-orange-400 text-lg font-mono">[FRIKAZ S.A.S.]</span>
             </h1>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Mapeo integral de partes interesadas internas (Gerente, Operarios, Conductor) y externas (Proveedores, Ingeniero Staff, MinTrabajo, MinSalud, Sec. Salud, Clientes). Evaluación de necesidades específicas de SST, seguimiento con autoguardado, indicadores automáticos y exportación en Excel y PDF.
+              Aquí ves quiénes hacen parte de nuestra seguridad: nuestro equipo interno (Gerente, Operarios y Conductor) y quienes se relacionan desde afuera (proveedores, ingeniero asesor, ministerios, Secretaría de Salud y clientes). Revisa qué necesita cada uno para trabajar sin peligros y descarga listas en Excel o PDF.
             </p>
           </div>
 
           <div className="flex items-center gap-3 bg-slate-800/80 p-3 rounded-xl border border-slate-700 shrink-0 text-xs">
             <div className="text-right font-mono">
-              <span className="block text-slate-400 text-[10px]">Total Partes Mapeadas</span>
-              <span className="text-white font-bold text-sm">{partes.length} Entidades</span>
+              <span className="block text-slate-400 text-[10px]">Total Registradas</span>
+              <span className="text-white font-bold text-sm">{partes.length} Personas/Entidades</span>
             </div>
             <div className="h-8 w-px bg-slate-700" />
             <div className="text-left font-mono">
-              <span className="block text-slate-400 text-[10px]">Necesidades Internas</span>
-              <span className="text-orange-400 font-bold text-sm">{checklistItems.length} Requerimientos</span>
+              <span className="block text-slate-400 text-[10px]">Puntos por Revisar</span>
+              <span className="text-orange-400 font-bold text-sm">{checklistItems.length} Necesidades</span>
             </div>
           </div>
         </div>

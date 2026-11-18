@@ -97,7 +97,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
   // Evaluación de impacto activa
   const [evaluacionActual, setEvaluacionActual] = useState<ResumenEvaluacionImpacto | null>(() => {
     const actual = getCaracterizacionActual();
-    return evaluarImpactoCambio(actual, actual, normas, 'Auditor SG-SST Frikaz');
+    return evaluarImpactoCambio(actual, actual, normas, 'Encargado SST Frikaz');
   });
 
   // Modal de revisión de propuestas
@@ -129,7 +129,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
       anteriorCfg,
       nuevaConfig,
       normas,
-      'Auditor SG-SST Frikaz'
+      'Encargado SST Frikaz'
     );
     setEvaluacionActual(impacto);
     setPropuestasEditables(impacto.propuestas);
@@ -170,13 +170,13 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     if (sector === 'secundario') {
       ciiu = '1089 - Elaboración de otros productos alimenticios n.c.p. (Snacks fritos)';
       actividad =
-        'Producción y comercialización de productos fritos tipo snack (papas, plátanos y chicharrones)';
+        'Preparación y venta de snacks fritos (papas, plátanos y chicharrones)';
     } else if (sector === 'terciario') {
       ciiu = '4630 - Comercio al por mayor de alimentos, bebidas y tabaco';
-      actividad = 'Distribución logística comercial de paquetes y abarrotes';
+      actividad = 'Reparto y venta de alimentos empacados';
     } else if (sector === 'primario') {
       ciiu = '0119 - Cultivo de otros cultivos no perennes (Tubérculos y plátano)';
-      actividad = 'Producción agropecuaria y cosecha de tubérculos en campo';
+      actividad = 'Cultivo y cosecha de papa y plátano en el campo';
     }
 
     const nueva = {
@@ -229,11 +229,11 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             decisionUsuario: {
               accion,
               fecha: new Date().toISOString(),
-              responsable: 'Auditor SG-SST Frikaz',
+              responsable: 'Encargado SST Frikaz',
               justificacion:
                 accion === 'APROBAR'
-                  ? 'Aprobado formalmente tras verificar evidencia técnica legal.'
-                  : 'Rechazado por criterio técnico del auditor SG-SST.',
+                  ? 'Aprobado luego de revisar que sí aplica en la planta.'
+                  : 'Descartado porque no aplica a nuestra forma de trabajo actual.',
             },
           };
         }
@@ -254,7 +254,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
       normas,
       propuestasParaAplicar,
       config,
-      'Auditor SG-SST Frikaz'
+      'Encargado SST Frikaz'
     );
 
     // Actualizar estado general en App
@@ -269,7 +269,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     const registro: RegistroHistorialCambio = {
       id: `hist-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      usuario: 'Auditor SG-SST Frikaz',
+      usuario: 'Encargado SST Frikaz',
       caracteristicaModificada: evaluacionActual.variableModificada,
       valorAnterior: JSON.stringify(evaluacionActual.valorAnterior).slice(0, 80),
       valorNuevo: JSON.stringify(evaluacionActual.valorNuevo).slice(0, 80),
@@ -290,7 +290,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     saveCaracterizacion(config);
 
     setMensajeExito(
-      `¡Cambios aplicados con éxito! Se actualizaron ${conteoActualizadas} normas oficiales en el Ciclo PHVA y la Matriz Legal.`
+      `¡Listo! Se actualizaron ${conteoActualizadas} reglas en el Ciclo PHVA y en la Lista de Normas.`
     );
     setTimeout(() => setMensajeExito(null), 5000);
     setIsRevisionModalOpen(false);
@@ -371,10 +371,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           </div>
           <div className="text-left">
             <span className="block leading-tight text-white font-black text-xs sm:text-sm">
-              1. Organigrama y Responsabilidades SST
+              1. Equipo y Responsabilidades SST
             </span>
             <span className="block text-[10px] font-normal opacity-85 text-purple-200">
-              3 Niveles · 7 Cargos · Descarga Individual Word (.DOCX)
+              Quién cuida qué en los 7 cargos · Descarga en Word (.DOCX)
             </span>
           </div>
         </button>
@@ -392,10 +392,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           </div>
           <div className="text-left">
             <span className="block leading-tight text-white font-black text-xs sm:text-sm">
-              2. Políticas del SG-SST
+              2. Compromiso y Política de Seguridad
             </span>
             <span className="block text-[10px] font-normal opacity-85 text-orange-200">
-              Política Oficial · Word · PDF / Imprimir · Historial
+              Compromisos de Frikaz · Word · Imprimir · Cambios
             </span>
           </div>
         </button>
@@ -413,10 +413,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           </div>
           <div className="text-left">
             <span className="block leading-tight text-white font-black text-xs sm:text-sm">
-              3. Partes Interesadas
+              3. Personas y Entidades Relacionadas
             </span>
             <span className="block text-[10px] font-normal opacity-85 text-blue-200">
-              Matriz · Checklists · Indicadores · Excel/PDF
+              Compañeros · Entidades · Listas de revisión · Excel/PDF
             </span>
           </div>
         </button>
@@ -437,7 +437,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               4. Documentos devueltos por correo
             </span>
             <span className="block text-[10px] font-normal opacity-85 text-sky-200">
-              Buzón frikaz.fritosnacks@gmail.com · Recepción y Envíos Reales
+              Correo frikaz.fritosnacks@gmail.com · Envíos y firmas
             </span>
           </div>
         </button>
@@ -455,10 +455,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           </div>
           <div className="text-left">
             <span className="block leading-tight text-white font-black text-xs sm:text-sm">
-              5. Caracterización y Motor de Reglas
+              5. Cómo Funciona la Planta y sus Reglas
             </span>
             <span className="block text-[10px] font-normal opacity-85 text-emerald-200">
-              Parámetros Vivos · Simulación PHVA · Estándares
+              Trabajadores · Contratos · Máquinas · Simular cambios
             </span>
           </div>
         </button>
@@ -499,22 +499,22 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-md bg-orange-500/20 px-3 py-1 text-xs font-black tracking-wider uppercase text-orange-300 border border-orange-500/30">
                 <SlidersHorizontal className="h-3.5 w-3.5 text-orange-400" />
-                Módulo Oficial de Caracterización Dinámica
+                Datos Vivos de la Empresa
               </span>
               <span className="rounded-md bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/30">
-                Motor de Reglas Verificadas SST & Ambiente
+                Revisión Automática de Seguridad y Ambiente
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-              <span>Configuración Dinámica de la Empresa</span>
+              <span>Cómo Funciona Frikaz S.A.S. Hoy</span>
               <span className="text-orange-400 text-lg font-mono">
-                [FRIKAZ S.A.S.]
+                [Planta Bosa]
               </span>
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Modifique los parámetros operativos, contractuales y productivos de la planta de snacks. Cada cambio dispara un análisis normativo inmediato con reglas legales colombianas verificables, actualizando en tiempo real el Ciclo PHVA, la Matriz de Requisitos Legales y los indicadores de cumplimiento.
+              Si cambia el número de trabajadores, los contratos o las máquinas de la planta, actualízalo aquí. El sistema revisa al instante qué reglas cambian en el Ciclo PHVA y en la lista de obligaciones para que nunca falte ningún cuidado.
             </p>
           </div>
 
@@ -525,7 +525,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               className="relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-orange-500 to-amber-600 text-white text-xs font-black hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg shadow-orange-500/30 cursor-pointer active:scale-95"
             >
               <Scale className="h-4 w-4" />
-              <span>Ver Comparación Normativa</span>
+              <span>Ver Qué Cambia en las Reglas</span>
               {evaluacionActual && evaluacionActual.totalNormasAfectadas > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white text-orange-600 font-extrabold text-[10px]">
                   {evaluacionActual.totalNormasAfectadas}
@@ -538,16 +538,16 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer"
             >
               <History className="h-4 w-4 text-slate-400" />
-              <span>Historial ({historial.length})</span>
+              <span>Cambios guardados ({historial.length})</span>
             </button>
 
             <button
               onClick={onOpenMatrizExcel}
               className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-xs font-bold border border-emerald-500/40 transition-all cursor-pointer"
-              title="Abrir la Matriz Excel Oficial"
+              title="Abrir la Tabla Excel de normas"
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-              <span>Matriz Excel</span>
+              <span>Tabla Excel</span>
             </button>
           </div>
         </div>
@@ -558,7 +558,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <div className="flex items-start sm:items-center gap-2 text-slate-200">
               <Zap className="h-4 w-4 text-orange-400 shrink-0 mt-0.5 sm:mt-0" />
               <span className="font-semibold text-slate-300">
-                Último Análisis:
+                Resultado de la última revisión:
               </span>
               <span className="text-orange-200 font-medium">
                 {evaluacionActual.resumenEjecutivo}
@@ -566,8 +566,8 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             </div>
 
             <div className="flex items-center gap-4 text-[11px] text-slate-400 font-mono">
-              <span>Normas Afectadas: <strong className="text-orange-400">{evaluacionActual.totalNormasAfectadas}</strong></span>
-              <span>Normas Estables: <strong className="text-emerald-400">{evaluacionActual.normasSinCambios.length}</strong></span>
+              <span>Reglas que cambian: <strong className="text-orange-400">{evaluacionActual.totalNormasAfectadas}</strong></span>
+              <span>Siguen igual: <strong className="text-emerald-400">{evaluacionActual.normasSinCambios.length}</strong></span>
             </div>
           </div>
         )}
@@ -597,7 +597,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-orange-500" />
             <h3 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">
-              Pruebas Rápidas Automatizadas de Escenarios Normativos:
+              Simular ejemplos de cambio en la planta:
             </h3>
           </div>
 
@@ -606,9 +606,9 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               onClick={() => handleEjecutarPruebaControlada(1)}
               className="px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-700 text-xs font-bold border border-orange-200 hover:bg-orange-100 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <span>1. 10 a 15 Trabajadores</span>
+              <span>1. Subir a 15 Trabajadores</span>
               <span className="text-[10px] bg-orange-200 px-1 rounded text-orange-900">
-                (21 Estándares / COPASST)
+                (21 Reglas / COPASST)
               </span>
             </button>
 
@@ -616,9 +616,9 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               onClick={() => handleEjecutarPruebaControlada(2)}
               className="px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-bold border border-sky-200 hover:bg-sky-100 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <span>2. 15 a 8 Trabajadores</span>
+              <span>2. Bajar a 8 Trabajadores</span>
               <span className="text-[10px] bg-sky-200 px-1 rounded text-sky-900">
-                (7 Estándares / Vigía)
+                (7 Reglas / Vigía)
               </span>
             </button>
 
@@ -626,7 +626,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               onClick={() => handleEjecutarPruebaControlada(3)}
               className="px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-bold border border-purple-200 hover:bg-purple-100 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <span>3. Varios Contratos</span>
+              <span>3. Sumar Otros Contratos</span>
               <span className="text-[10px] bg-purple-200 px-1 rounded text-purple-900">
                 (Aprendices SENA + Servicios)
               </span>
@@ -636,19 +636,19 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               onClick={() => handleEjecutarPruebaControlada(4)}
               className="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200 hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
             >
-              <span>4. 55 Trabajadores</span>
+              <span>4. Crecer a 55 Trabajadores</span>
               <span className="text-[10px] bg-rose-200 px-1 rounded text-rose-900">
-                (60 Estándares / Clase III)
+                (60 Reglas / Riesgo III)
               </span>
             </button>
 
             <button
               onClick={() => handleEjecutarPruebaControlada(5)}
               className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold border border-slate-300 hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-              title="Restablecer Frikaz S.A.S. Inicial"
+              title="Volver a los datos actuales de Frikaz S.A.S."
             >
               <RotateCcw className="h-3 w-3" />
-              <span>Restablecer Frikaz</span>
+              <span>Volver al estado real</span>
             </button>
           </div>
         </div>
@@ -669,23 +669,23 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">
-                  Cantidad de Trabajadores
+                  Cuántas Personas Trabajan Hoy
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Umbrales legales de Estándares Mínimos, COPASST y Comités
+                  Define las reglas de seguridad, si hay Vigía o COPASST y el Comité de Convivencia
                 </p>
               </div>
             </div>
 
             <span className="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
-              {config.numeroTrabajadores} vinculados
+              {config.numeroTrabajadores} en planta
             </span>
           </div>
 
           {/* Control Numérico Interactivo [-] 10 Trabajadores [+] */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
             <span className="block text-xs font-semibold text-slate-700">
-              Selector numérico de personal en planta:
+              Cantidad actual de trabajadores:
             </span>
 
             <div className="flex items-center justify-center gap-3">
@@ -693,7 +693,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                 type="button"
                 onClick={() => handleCambioTrabajadores(config.numeroTrabajadores - 1)}
                 className="h-11 w-12 rounded-xl bg-white border border-slate-300 text-slate-800 text-xl font-black hover:bg-slate-100 active:scale-95 transition-all shadow-xs flex items-center justify-center cursor-pointer"
-                title="Disminuir trabajadores"
+                title="Quitar trabajadores"
               >
                 −
               </button>
@@ -718,7 +718,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                 type="button"
                 onClick={() => handleCambioTrabajadores(config.numeroTrabajadores + 1)}
                 className="h-11 w-12 rounded-xl bg-orange-500 text-white text-xl font-black hover:bg-orange-600 active:scale-95 transition-all shadow-md shadow-orange-500/20 flex items-center justify-center cursor-pointer"
-                title="Aumentar trabajadores"
+                title="Sumar trabajadores"
               >
                 +
               </button>
@@ -726,7 +726,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
             {/* Presets Rápidos */}
             <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-              <span>Atajos de prueba:</span>
+              <span>Números rápidos para probar:</span>
               <div className="flex items-center gap-1.5 font-mono">
                 <button
                   onClick={() => handleCambioTrabajadores(8)}
@@ -766,7 +766,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           <div className="space-y-2.5 text-xs">
             <h4 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
               <Scale className="h-3.5 w-3.5 text-slate-500" />
-              Efectos Normativos Derivados del Tamaño:
+              Qué nos pide la ley según el tamaño de la planta:
             </h4>
 
             {/* 1. Estándares Mínimos Res 0312/2019 */}
@@ -774,14 +774,14 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               <Shield className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-slate-900 block">
-                  Estándares SG-SST (Res. 0312 de 2019):
+                  Reglas de Seguridad y Salud (Res. 0312 de 2019):
                 </span>
                 <span className="text-slate-600 text-[11px]">
                   {config.numeroTrabajadores <= 10
-                    ? '7 Estándares Mínimos (Microempresa Clase I, II o III).'
+                    ? '7 Reglas básicas (para empresas de hasta 10 trabajadores en riesgo I, II o III).'
                     : config.numeroTrabajadores <= 50
-                      ? '21 Estándares Mínimos (Pequeña empresa 11 a 50 trabajadores).'
-                      : '60 Estándares Mínimos (Empresa grande >50 trabajadores o Alto Riesgo).'}
+                      ? '21 Reglas de seguridad (para empresas de 11 a 50 trabajadores).'
+                      : '60 Reglas completas (para empresas de más de 50 trabajadores o riesgo alto).'}
                 </span>
               </div>
             </div>
@@ -791,12 +791,12 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               <Users className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-slate-900 block">
-                  Participación y Consulta (Res. 2013/1986):
+                  Quién vigila la seguridad (Res. 2013/1986):
                 </span>
                 <span className="text-slate-600 text-[11px]">
                   {config.numeroTrabajadores < 10
-                    ? 'Vigía de SST obligatorio designado directamente por el empleador.'
-                    : 'COPASST Paritario obligatorio (mínimo 1 representante por el empleador y 1 por trabajadores).'}
+                    ? '1 Vigía de SST (compañero nombrado para ayudar a revisar la seguridad).'
+                    : 'COPASST obligatorio (equipo donde participa 1 representante elegido por los trabajadores y 1 por la empresa).'}
                 </span>
               </div>
             </div>
@@ -806,12 +806,12 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               <Award className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-slate-900 block">
-                  Comité de Convivencia (Res. 652/2012):
+                  Comité de Convivencia y Buen Trato (Res. 652/2012):
                 </span>
                 <span className="text-slate-600 text-[11px]">
                   {config.numeroTrabajadores <= 10
-                    ? '2 Miembros (1 por empleador y 1 por trabajadores).'
-                    : '4 Miembros (2 por empleador y 2 por trabajadores).'}
+                    ? '2 Integrantes (1 por la empresa y 1 por los trabajadores).'
+                    : '4 Integrantes (2 por la empresa y 2 por los trabajadores).'}
                 </span>
               </div>
             </div>
@@ -829,16 +829,16 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">
-                  Tipo de Contrato y Vinculación
+                  Tipos de Contrato en Frikaz S.A.S.
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Selección múltiple de modalidades reales en Frikaz S.A.S.
+                  Marca los contratos que existen hoy en la empresa
                 </p>
               </div>
             </div>
 
             <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-              {config.modalidadesContrato.length} seleccionadas
+              {config.modalidadesContrato.length} marcados
             </span>
           </div>
 
@@ -847,42 +847,42 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             {[
               {
                 id: 'indefinido' as ModalidadContrato,
-                label: 'A término indefinido',
-                desc: 'Cobertura integral directa en ARL, EPS y Fondo de Pensiones.',
+                label: 'Contrato a término indefinido',
+                desc: 'Tiene ARL, salud (EPS) y pensión pagas por la empresa todo el tiempo.',
               },
               {
                 id: 'fijo' as ModalidadContrato,
-                label: 'A término fijo',
-                desc: 'Control de prórrogas y exámenes ocupacionales periódicos.',
+                label: 'Contrato a término fijo',
+                desc: 'Con fechas de renovación y exámenes médicos periódicos al día.',
               },
               {
                 id: 'obra_labor' as ModalidadContrato,
                 label: 'Por obra o labor',
-                desc: 'Afiliaciones previas al primer día de producción en planta.',
+                desc: 'Con afiliación a salud y ARL lista antes del primer día de trabajo.',
               },
               {
                 id: 'aprendizaje' as ModalidadContrato,
-                label: 'Contrato de aprendizaje (SENA)',
-                desc: 'ARL obligatoria en etapa práctica. Prohibido menores en freidoras.',
+                label: 'Aprendiz del SENA',
+                desc: 'ARL obligatoria en práctica. Si es menor de edad, no puede operar freidoras.',
               },
               {
                 id: 'servicios' as ModalidadContrato,
                 label: 'Prestación de servicios',
-                desc: 'Verificación mensual PILA de ARL/Salud y permisos para áreas calientes.',
+                desc: 'Revisar cada mes su planilla PILA paga (ARL y salud) antes de entrar a planta.',
               },
               {
                 id: 'temporal_mision' as ModalidadContrato,
-                label: 'Trabajo temporal o en misión',
-                desc: 'Empresa usuaria responsable de condiciones locativas y EPP.',
+                label: 'Personal temporal o en misión',
+                desc: 'Debemos entregarle el mismo cuidado, lugar seguro y elementos de protección.',
               },
               {
                 id: 'teletrabajo' as ModalidadContrato,
-                label: 'Teletrabajo / Trabajo remoto',
-                desc: 'Autoevaluación de puesto en casa y reporte dirección ARL.',
+                label: 'Trabajo desde casa / remoto',
+                desc: 'Revisar que su silla, mesa y luz en casa sean cómodas y seguras.',
               },
               {
                 id: 'otra' as ModalidadContrato,
-                label: 'Otras modalidades configurables',
+                label: 'Otros acuerdos de trabajo',
                 desc: 'Personal por días o convenios especiales.',
               },
             ].map((mod) => {
@@ -924,10 +924,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-xs space-y-1.5">
             <div className="flex items-center gap-1.5 font-bold text-slate-800 text-[11px]">
               <Info className="h-3.5 w-3.5 text-orange-500" />
-              <span>Análisis de Relación Contractual y SST:</span>
+              <span>Por qué importa el tipo de contrato en seguridad:</span>
             </div>
             <p className="text-[11px] text-slate-600 leading-relaxed">
-              Las obligaciones fundamentales del SG-SST protegen a toda persona que preste servicios físicos en la planta (Art. 2.2.4.6.1 Dec 1072/2015). Modalidades como <strong>aprendizaje SENA</strong> activan la protección especial de menores de edad y <strong>prestación de servicios</strong> activa la validación obligatoria de planillas PILA antes del ingreso a la nave de fritura.
+              Las reglas de seguridad protegen a todas las personas que trabajan dentro de la planta, sin importar su contrato (Decreto 1072 de 2015). Si hay <strong>aprendices SENA</strong> debemos cuidarlos más en zonas calientes, y si entran contratistas por <strong>servicios</strong> siempre pedimos su planilla PILA antes de entrar cerca de las freidoras.
             </p>
           </div>
         </div>
@@ -943,16 +943,16 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">
-                  Sector Económico y Actividad Concreta
+                  A Qué Se Dedica la Empresa
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Clasificación macroeconómica combinada con procesos industriales reales
+                  Actividad económica principal y trabajo real de nuestra planta
                 </p>
               </div>
             </div>
 
             <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-              {config.sectorEconomico.toUpperCase()} · CIIU {config.ciiuPrincipal.slice(0, 4)}
+              {config.sectorEconomico.toUpperCase()} · Código {config.ciiuPrincipal.slice(0, 4)}
             </span>
           </div>
 
@@ -962,25 +962,25 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               {
                 id: 'primario' as SectorEconomico,
                 label: 'Sector Primario',
-                desc: 'Extracción de materias primas y cultivo agropecuario.',
+                desc: 'Cultivo y trabajo directo en el campo o la tierra.',
                 icon: Factory,
               },
               {
                 id: 'secundario' as SectorEconomico,
                 label: 'Sector Secundario (FRIKAZ)',
-                desc: 'Transformación y manufactura industrial de snacks fritos.',
+                desc: 'Fabricación y fritura de snacks para consumo.',
                 icon: Flame,
               },
               {
                 id: 'terciario' as SectorEconomico,
                 label: 'Sector Terciario',
-                desc: 'Comercio, logística de distribución y servicios.',
+                desc: 'Ventas, entregas en camioneta y servicios.',
                 icon: Building2,
               },
               {
                 id: 'otro' as SectorEconomico,
                 label: 'Otro Sector',
-                desc: 'Clasificación especial o actividades mixtas.',
+                desc: 'Otras actividades o trabajos combinados.',
                 icon: Layers,
               },
             ].map((sec) => {
@@ -1025,7 +1025,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
             <div>
               <label className="block font-bold text-slate-700 mb-1">
-                Código CIIU Principal (DANE):
+                Código de actividad (CIIU):
               </label>
               <input
                 type="text"
@@ -1038,13 +1038,13 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                 className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 font-mono text-xs focus:border-orange-500 focus:outline-hidden"
               />
               <span className="text-[10px] text-slate-400 mt-1 block">
-                Determina las tarifas de cotización a la ARL y normativa ambiental aplicable.
+                Con este código la ARL define cuánto se paga de seguro y qué reglas ambientales nos tocan.
               </span>
             </div>
 
             <div>
               <label className="block font-bold text-slate-700 mb-1">
-                Actividad Económica Específica:
+                Qué hacemos en Frikaz S.A.S.:
               </label>
               <input
                 type="text"
@@ -1060,7 +1060,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                 className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs focus:border-orange-500 focus:outline-hidden"
               />
               <span className="text-[10px] text-slate-400 mt-1 block">
-                Frikaz S.A.S.: Producción y fritura artesanal/industrial de papas, plátanos y chicharrón.
+                Ejemplo Frikaz S.A.S.: Preparación y fritura de papas, plátanos y chicharrones.
               </span>
             </div>
           </div>
@@ -1077,16 +1077,16 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               </div>
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">
-                  Otras Características Condicionantes de Aplicabilidad
+                  Máquinas, Productos de Limpieza y Nivel de Riesgo
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Clase de riesgo ARL, maquinaria, sustancias químicas y aspectos ambientales
+                  Nivel de riesgo ARL, equipos que usamos y químicos de aseo en la planta
                 </p>
               </div>
             </div>
 
             <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-              Evaluación Multivariable
+              Revisión completa
             </span>
           </div>
 
@@ -1223,10 +1223,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <div className="bg-[#0f172a] p-5 text-white flex items-center justify-between shrink-0">
               <div className="space-y-1">
                 <span className="rounded-md bg-orange-500/30 text-orange-300 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border border-orange-500/40">
-                  Pantalla Oficial de Comparación Normativa
+                  Revisión de Cambios en las Reglas
                 </span>
                 <h2 className="text-xl font-black text-white flex items-center gap-2">
-                  <span>Revisión de Impacto Legal y Solicitud de Aprobación</span>
+                  <span>Qué Cambia Según los Datos de la Planta</span>
                 </h2>
                 <p className="text-xs text-slate-300 max-w-2xl">
                   {evaluacionActual.resumenEjecutivo}
@@ -1251,7 +1251,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Todas las Propuestas ({propuestasEditables.length})
+                Todas ({propuestasEditables.length})
               </button>
 
               <button
@@ -1262,7 +1262,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Obligaciones Modificadas ({evaluacionActual.obligacionesModificadas.length})
+                Reglas que Cambian ({evaluacionActual.obligacionesModificadas.length})
               </button>
 
               <button
@@ -1273,7 +1273,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Revisar Aplicabilidad ({evaluacionActual.normasParaRevisar.length})
+                Por Revisar ({evaluacionActual.normasParaRevisar.length})
               </button>
 
               <button
@@ -1284,7 +1284,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Datos Faltantes ({evaluacionActual.datosPendientes.length})
+                Faltan Datos ({evaluacionActual.datosPendientes.length})
               </button>
 
               <button
@@ -1295,7 +1295,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Sin Cambios ({evaluacionActual.normasSinCambios.length})
+                Siguen Igual ({evaluacionActual.normasSinCambios.length})
               </button>
             </div>
 
@@ -1303,7 +1303,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {propuestasFiltradas.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 text-xs">
-                  No hay propuestas en esta categoría.
+                  No hay reglas en este grupo.
                 </div>
               ) : (
                 propuestasFiltradas.map((prop) => {
@@ -1352,10 +1352,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                             }`}
                           >
                             {esAprobada
-                              ? 'PROPUESTA APROBADA'
+                              ? 'APROBADA'
                               : esRechazada
-                                ? 'PROPUESTA RECHAZADA'
-                                : 'PENDIENTE DE DECISIÓN'}
+                                ? 'DESCARTADA'
+                                : 'POR DECIDIR'}
                           </span>
                         </div>
                       </div>
@@ -1364,7 +1364,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 text-xs">
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                            Evaluación Anterior / Condición Previa:
+                            Cómo estaba antes:
                           </span>
                           <p className="text-slate-600 text-[11px] bg-slate-50 p-2 rounded-lg border border-slate-200">
                             {prop.valorAnteriorTexto}
@@ -1373,7 +1373,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block">
-                            Nueva Propuesta del Motor Legal:
+                            Cómo quedaría ahora:
                           </span>
                           <p className="text-slate-800 text-[11px] bg-orange-50/70 p-2 rounded-lg border border-orange-200 font-medium">
                             {prop.valorPropuestoTexto}
@@ -1384,7 +1384,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                       {/* Justificación y Botones */}
                       <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                         <div className="text-[11px] text-slate-500 max-w-xl">
-                          <strong className="text-slate-700">Fundamento: </strong>
+                          <strong className="text-slate-700">Por qué aplica: </strong>
                           {prop.justificacionLegal}
                         </div>
 
@@ -1412,7 +1412,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                             }`}
                           >
                             <X className="h-3.5 w-3.5" />
-                            <span>Rechazar</span>
+                            <span>Descartar</span>
                           </button>
                         </div>
                       </div>
@@ -1425,7 +1425,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             {/* Modal Footer con Aprobación Definitiva */}
             <div className="bg-slate-50 p-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               <span className="text-xs text-slate-500">
-                Al aplicar, se actualizarán las obligaciones reales en el Ciclo PHVA y el Dashboard.
+                Al guardar, estos cambios pasan de una vez al Ciclo PHVA y a los indicadores de la planta.
               </span>
 
               <div className="flex items-center gap-2.5">
@@ -1434,7 +1434,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                   onClick={() => setIsRevisionModalOpen(false)}
                   className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
-                  Cerrar sin Aplicar
+                  Salir sin guardar
                 </button>
 
                 <button
@@ -1443,7 +1443,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                   className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black shadow-md shadow-orange-600/30 flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>Aprobar y Aplicar a Matrices Oficiales</span>
+                  <span>Guardar y Actualizar Reglas</span>
                 </button>
               </div>
             </div>
@@ -1460,11 +1460,11 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <div className="bg-[#0f172a] p-5 text-white flex items-center justify-between shrink-0">
               <div className="space-y-0.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
-                  Trazabilidad e Inmutabilidad de Datos
+                  Registro de Cambios
                 </span>
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
                   <History className="h-4 w-4 text-orange-500" />
-                  <span>Historial Cronológico de Modificaciones y Decisiones</span>
+                  <span>Historial de Cambios Hechos en la Empresa</span>
                 </h3>
               </div>
 
@@ -1479,7 +1479,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {historial.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 text-xs">
-                  No se han registrado modificaciones todavía.
+                  Todavía no se ha guardado ningún cambio.
                 </div>
               ) : (
                 historial.map((item) => (
@@ -1507,9 +1507,9 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                     </p>
 
                     <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 font-mono">
-                      <span>Variable: {item.caracteristicaModificada}</span>
+                      <span>Qué cambió: {item.caracteristicaModificada}</span>
                       <span>
-                        Aprobadas: <strong className="text-emerald-600">{item.propuestasAprobadas}</strong> | Rechazadas: <strong className="text-rose-600">{item.propuestasRechazadas}</strong>
+                        Aprobadas: <strong className="text-emerald-600">{item.propuestasAprobadas}</strong> | Descartadas: <strong className="text-rose-600">{item.propuestasRechazadas}</strong>
                       </span>
                     </div>
                   </div>
@@ -1522,7 +1522,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                 onClick={() => setShowHistorialModal(false)}
                 className="px-4 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-bold cursor-pointer"
               >
-                Cerrar Historial
+                Cerrar
               </button>
             </div>
           </div>

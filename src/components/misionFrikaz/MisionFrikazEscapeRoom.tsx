@@ -82,6 +82,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
   // Evaluación y Resultado
   const [tiempoInicio, setTiempoInicio] = useState<number>(Date.now());
   const [evaluando, setEvaluando] = useState(false);
+  const [errorEvaluacion, setErrorEvaluacion] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ResultadoEvaluacion | null>(null);
 
   // Reiniciar estado al cambiar de política
@@ -94,6 +95,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
     setOpcionTerminalSeleccionada(null);
     setPuertaAbierta(false);
     setTiempoInicio(Date.now());
+    setErrorEvaluacion(null);
     setResultado(null);
   }, [politica.id]);
 
@@ -154,6 +156,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
     });
 
     try {
+      setErrorEvaluacion(null);
       const res = await procesarEvaluacionMision({
         trabajadorId: trabajador.id,
         politicaId: politica.id,
@@ -169,7 +172,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
       }
       onCompletarMision(res.pasaporteActualizado);
     } catch (err: any) {
-      alert(`Error al procesar la evaluación: ${err.message || err}`);
+      setErrorEvaluacion(`No pudimos guardar tu resultado en este momento: ${err.message || err}. Por favor intenta de nuevo.`);
     } finally {
       setEvaluando(false);
     }
@@ -218,10 +221,10 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
-                  MISIÓN ACTIVA · {politica.codigoCalidad}
+                  RECORRIDO PRÁCTICO · {politica.codigoCalidad}
                 </span>
                 <span className="text-[10px] px-2 py-0.2 rounded-full bg-slate-800 text-slate-300 font-mono">
-                  +{politica.puntosXp} XP
+                  +{politica.puntosXp} Puntos
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -238,14 +241,14 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
             </div>
           </div>
 
-          {/* Selector de los 4 Desafíos */}
+          {/* Selector de los 4 Pasos */}
           {!resultado && (
             <div className="hidden md:flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
               {[
-                { num: 1, label: '1. Explora' },
-                { num: 2, label: '2. Encuentra' },
-                { num: 3, label: '3. Decide' },
-                { num: 4, label: '4. Abre Puerta' },
+                { num: 1, label: '1. Conoce' },
+                { num: 2, label: '2. Busca peligros' },
+                { num: 3, label: '3. Responde' },
+                { num: 4, label: '4. Paso final' },
               ].map((des) => {
                 const esActivo = desafioActual === des.num;
                 const esPasado = desafioActual > des.num;
@@ -273,7 +276,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
             </div>
           )}
 
-          {/* Controles HUD: Sonido, Consultar Política y Salir */}
+          {/* Controles: Sonido, Leer Regla Completa y Salir */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
@@ -283,7 +286,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
               className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
               <FileText className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Consultar Política</span>
+              <span className="hidden sm:inline">Leer Regla Completa</span>
             </button>
 
             <button
@@ -353,15 +356,15 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     : 'bg-red-500/20 text-red-300 border-red-500/40'
                 }`}
               >
-                {resultado.aprobado ? '¡MISIÓN COMPLETADA!' : 'MISIÓN NO SUPERADA'}
+                {resultado.aprobado ? '¡MUY BIEN, LO LOGRASTE!' : '¡CASI LO LOGRAS! INTÉNTALO DE NUEVO'}
               </span>
 
               <h2 className="text-2xl sm:text-4xl font-black text-white mt-1">
-                Puntuación de Seguridad: <span className={resultado.aprobado ? 'text-emerald-400' : 'text-red-400'}>{resultado.puntaje}%</span>
+                Tu resultado: <span className={resultado.aprobado ? 'text-emerald-400' : 'text-red-400'}>{resultado.puntaje}%</span>
               </h2>
 
               <p className="text-xs text-slate-400 mt-1">
-                +{politica.puntosXp} Puntos XP · Intento #{resultado.intento.numeroIntento} · Tiempo: {resultado.intento.duracionSegundos}s
+                +{politica.puntosXp} Puntos · Intento #{resultado.intento.numeroIntento} · Tiempo: {resultado.intento.duracionSegundos}s
               </p>
 
               {resultado.aprobado ? (
@@ -379,18 +382,18 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
-                      INSIGNIA OFICIAL DESBLOQUEADA · {trabajador.cargoNombre}
+                      SELLO OBTENIDO · {trabajador.cargoNombre}
                     </span>
                     <h4 className="font-bold text-base text-white">{politica.insigniaNombre}</h4>
                     <p className="text-xs text-slate-400 mt-0.5">{politica.insigniaDescripcion}</p>
                     <span className="inline-block mt-2 text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
-                      Sello registrado en Pasaporte Digital
+                      Guardado en tu Pasaporte Digital
                     </span>
                   </div>
                 </div>
               ) : (
                 <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto mt-3">
-                  Se requiere un mínimo de <strong>80%</strong> para proteger la planta y desbloquear la puerta del sector. Repasa la escena y reinténtalo.
+                  Necesitas al menos <strong>80%</strong> para ganar este sello de seguridad. Repasa los consejos de la zona y vuelve a intentar, ¡tú puedes!
                 </p>
               )}
 
@@ -406,7 +409,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                         }}
                         className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
                       >
-                        <span>Siguiente Zona: {siguientePolitica.codigoCalidad}</span>
+                        <span>Ir a la Siguiente Zona: {siguientePolitica.codigoCalidad}</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     ) : (
@@ -418,7 +421,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                         className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
                       >
                         <Unlock className="w-4 h-4" />
-                        <span>¡FELICITACIONES! HAS PROTEGIDO A FRIKAZ</span>
+                        <span>¡FELICITACIONES! COMPLETASTE TODAS LAS ZONAS</span>
                       </button>
                     )}
 
@@ -435,7 +438,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>Reintentar Desafío</span>
+                    <span>Volver a Intentar</span>
                   </button>
                 )}
               </div>
@@ -470,7 +473,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                       />
                       <div className="min-w-0 flex-1">
                         <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
-                          GUÍA SG-SST · SEGURIDAD INDUSTRIAL
+                          TU GUÍA DE SEGURIDAD EN PLANTA
                         </span>
                         <p className="text-xs sm:text-sm text-white font-medium leading-snug mt-0.5">
                           «{politica.dialogoGuiaBienvenida}»
@@ -480,7 +483,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                   </div>
                 </div>
 
-                {/* 3 Tarjetas Visuales de Compromisos Clave (Menos Texto) */}
+                {/* 3 Tarjetas Visuales de Compromisos Clave */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {politica.compromisosClave.slice(0, 3).map((comp) => (
                     <div
@@ -502,7 +505,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                   ))}
                 </div>
 
-                {/* Botón Siguiente Desafío */}
+                {/* Botón Siguiente Paso */}
                 <div className="flex justify-end pt-2">
                   <button
                     onClick={() => {
@@ -511,7 +514,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     }}
                     className="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-xl shadow-amber-500/30"
                   >
-                    <span>Ir a Desafío 2: Encuentra el Error</span>
+                    <span>Paso 2: Busca los peligros</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -520,7 +523,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
             )}
 
             {/* ============================================================== */}
-            {/* DESAFÍO 2: ENCUENTRA EL ERROR (HOTSPOTS INTERACTIVOS EN PLANTA) */}
+            {/* PASO 2: BUSCA LOS PELIGROS EN LA FOTO DE PLANTA                */}
             {/* ============================================================== */}
             {desafioActual === 2 && (
               <div className="space-y-6 animate-fadeIn">
@@ -532,16 +535,16 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     </div>
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-red-400">
-                        DESAFÍO 2: ENCUENTRA EL ERROR
+                        PASO 2: ENCUENTRA QUÉ PUEDE CAUSAR UN ACCIDENTE
                       </span>
                       <h3 className="text-sm font-black text-white">
-                        Haz clic sobre los puntos de riesgo en la escena
+                        Toca cada círculo en la imagen para ver si es un peligro o algo seguro
                       </h3>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block font-mono">PUNTOS INSPECCIONADOS:</span>
+                    <span className="text-[10px] text-slate-400 block font-mono">PUNTOS REVISADOS:</span>
                     <span className="text-sm font-black text-amber-400">
                       {hotspotsDescubiertos.length} de {politica.hotspots.length}
                     </span>
@@ -633,7 +636,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>Volver a Explorar</span>
+                    <span>Volver atrás</span>
                   </button>
 
                   <button
@@ -643,7 +646,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     }}
                     className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-xl shadow-amber-500/30"
                   >
-                    <span>Ir a Desafío 3: Elige tu Camino</span>
+                    <span>Paso 3: Responder preguntas</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -652,19 +655,19 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
             )}
 
             {/* ============================================================== */}
-            {/* DESAFÍO 3: ELIGE TU CAMINO (TARJETAS VISUALES DE DECISIÓN)     */}
+            {/* PASO 3: PREGUNTAS SENCILLAS DE CUIDADO EN PLANTA               */}
             {/* ============================================================== */}
             {desafioActual === 3 && (
               <div className="space-y-6 animate-fadeIn">
                 
-                {/* Selector de Pregunta Tipo Carta */}
+                {/* Selector de Pregunta */}
                 <div className="flex items-center justify-between bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
                   <div>
                     <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
-                      DESAFÍO 3: ELIGE TU CAMINO TÁCTICO
+                      PASO 3: ELIGE LA FORMA MÁS SEGURA DE ACTUAR
                     </span>
                     <h3 className="text-sm font-black text-white">
-                      Decisión {preguntaActivaIdx + 1} de {politica.preguntas.length}
+                      Pregunta {preguntaActivaIdx + 1} de {politica.preguntas.length}
                     </h3>
                   </div>
 
@@ -781,7 +784,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                             }}
                             className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase flex items-center gap-1.5 shadow-md shadow-amber-500/20"
                           >
-                            <span>Ir al Desafío 4: Abre la Puerta</span>
+                            <span>Paso 4: Confirmación Final</span>
                             <ArrowRight className="w-4 h-4" />
                           </button>
                         )}
@@ -794,14 +797,14 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
             )}
 
             {/* ============================================================== */}
-            {/* DESAFÍO 4: HACKEA EL TERMINAL Y ABRE LA PUERTA (PRUEBA FINAL) */}
+            {/* PASO 4: CONFIRMACIÓN FINAL DE SEGURIDAD                         */}
             {/* ============================================================== */}
             {desafioActual === 4 && (
               <div className="space-y-6 animate-fadeIn">
                 
                 <div className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
                   
-                  {/* Encabezado Terminal */}
+                  {/* Encabezado */}
                   <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
@@ -809,16 +812,16 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                       </div>
                       <div>
                         <span className="text-[10px] font-mono text-amber-400 block">
-                          DESAFÍO 4: TERMINAL DE SEGURIDAD INDUSTRIAL
+                          PASO 4: ÚLTIMO CONTROL ANTES DE INICIAR
                         </span>
                         <h3 className="text-base sm:text-lg font-black text-white">
-                          Abre la Compuerta del Sector
+                          Confirma la Regla Principal de esta Zona
                         </h3>
                       </div>
                     </div>
 
                     <div className="font-mono text-xs px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-amber-400">
-                      CÓDIGO: {politica.desafioTerminal.codigoProtocolo}
+                      CLAVE: {politica.desafioTerminal.codigoProtocolo}
                     </div>
                   </div>
 
@@ -879,6 +882,13 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                     </div>
                   </div>
 
+                  {/* Error inline si falla el guardado */}
+                  {errorEvaluacion && (
+                    <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/40 text-red-200 text-xs">
+                      {errorEvaluacion}
+                    </div>
+                  )}
+
                   {/* Botón Final de Calificación de Misión */}
                   <div className="pt-2 flex items-center justify-between">
                     <button
@@ -886,7 +896,7 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                       className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold flex items-center gap-2"
                     >
                       <ArrowLeft className="w-4 h-4" />
-                      <span>Revisar Decisión 3</span>
+                      <span>Revisar mis respuestas</span>
                     </button>
 
                     <button
@@ -901,12 +911,12 @@ export const MisionFrikazEscapeRoom: React.FC<MisionFrikazEscapeRoomProps> = ({
                       {evaluando ? (
                         <>
                           <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                          <span>Transmitiendo Misión al Servidor...</span>
+                          <span>Guardando tu resultado...</span>
                         </>
                       ) : (
                         <>
                           <Zap className="w-4 h-4 fill-current" />
-                          <span>¡COMPLETAR MISIÓN Y ESTAMPAR INSIGNIA!</span>
+                          <span>TERMINAR Y GUARDAR MI SELLO</span>
                         </>
                       )}
                     </button>

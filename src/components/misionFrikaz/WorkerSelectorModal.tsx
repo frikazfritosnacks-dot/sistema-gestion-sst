@@ -50,7 +50,7 @@ export const WorkerSelectorModal: React.FC<WorkerSelectorModalProps> = ({
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">FRIKAZ S.A.S.</span>
-              <h3 className="text-lg font-bold text-white">Seleccionar Colaborador / Sesión</h3>
+              <h3 className="text-lg font-bold text-white">Elegir Trabajador o Puesto</h3>
             </div>
           </div>
 
@@ -65,7 +65,7 @@ export const WorkerSelectorModal: React.FC<WorkerSelectorModalProps> = ({
         {/* Lista de trabajadores */}
         <div className="p-6 space-y-3 max-h-[70vh] overflow-y-auto">
           <p className="text-xs text-slate-400 mb-2">
-            Selecciona un colaborador para evaluar su estado de acreditación en la <em>Misión Frikaz</em>:
+            Elige a un compañero para ver su avance en los recorridos de <em>Misión Frikaz</em>:
           </p>
 
           {trabajadores.map((trab) => {

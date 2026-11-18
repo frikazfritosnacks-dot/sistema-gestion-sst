@@ -24,7 +24,10 @@ import {
   Plus,
   SlidersHorizontal,
   FileSpreadsheet,
+  CalendarCheck,
+  ArrowRight,
 } from 'lucide-react';
+import { PlanAnualView } from './plan-anual/PlanAnualView';
 
 interface PhvaSlideViewerProps {
   items: NormaPhvaItem[];
@@ -54,6 +57,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
   onOpenMatrizExcel,
 }) => {
   const [activeFase, setActiveFase] = useState<FasePhva>('PLANEAR');
+  const [showPlanAnual, setShowPlanAnual] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [areaFilter, setAreaFilter] = useState<'TODAS' | 'SST' | 'AMBIENTAL'>('TODAS');
 
@@ -152,10 +156,10 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                 type="button"
                 onClick={onOpenMatrizExcel}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 px-3 py-2 text-xs font-black text-white transition-all shadow-md cursor-pointer"
-                title="Abrir módulo oficial: Matriz Excel Automatizada (.xlsx con fórmulas)"
+                title="Abrir y descargar la lista completa en Excel (.xlsx)"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                <span>Matriz Excel (.xlsx)</span>
+                <span>Ver en Excel (.xlsx)</span>
               </button>
             )}
 
@@ -164,7 +168,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                 type="button"
                 onClick={() => onAddNewNorma(activeFase)}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f172a]/90 border border-orange-300/40 px-3.5 py-2 text-xs font-bold text-[#fed7aa] hover:bg-slate-800 transition-colors shadow-sm"
-                title="Agregar una nueva norma o situación para editar sus 6 círculos"
+                title="Agregar una nueva norma para explicar sus 6 puntos"
               >
                 <Plus className="h-4 w-4" />
                 <span>+ Agregar Norma</span>
@@ -174,7 +178,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
               type="button"
               onClick={onReset}
               className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-2 text-xs font-medium text-slate-300 hover:bg-white/20 transition-colors border border-white/10"
-              title="Restablecer datos a valores oficiales"
+              title="Volver a los textos y datos iniciales"
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </button>
@@ -186,7 +190,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
           {/* 1. Cumplimiento General */}
           <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Cumplimiento General
+              Avance General
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-2xl font-black text-white font-mono tabular-nums">
@@ -204,7 +208,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
           {/* 2. Cumplimiento SST */}
           <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Cumplimiento SST
+              Seguridad y Salud (SST)
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-2xl font-black text-[#fed7aa] font-mono tabular-nums">
@@ -222,7 +226,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
           {/* 3. Cumplimiento Ambiental */}
           <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Cumplimiento Ambiental
+              Cuidado Ambiental
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-2xl font-black text-emerald-300 font-mono tabular-nums">
@@ -240,7 +244,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
           {/* 4. Normas Vigentes */}
           <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Normas Vigentes
+              Normas al Día
             </span>
             <div className="flex items-baseline gap-1 mt-0.5">
               <span className="text-2xl font-black text-white font-mono tabular-nums">
@@ -249,7 +253,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
               <span className="text-[11px] text-slate-400">/ {indicadores.totalNormas}</span>
             </div>
             <span className="text-[10px] text-emerald-400 font-semibold block mt-1">
-              100% Verificadas
+              100% Revisadas
             </span>
           </div>
 
@@ -270,17 +274,20 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
         </div>
       </div>
 
-      {/* PHASE SELECTOR TABS MATCHING SLIDES 2, 3, 1, 4 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {/* PHASE SELECTOR TABS INSIDE CICLO PHVA + INTEGRATED «PLAN ANUAL» OPTION */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         {(['PLANEAR', 'HACER', 'VERIFICAR', 'ACTUAR'] as FasePhva[]).map((fase) => {
-          const isActive = activeFase === fase;
+          const isActive = !showPlanAnual && activeFase === fase;
           const stats = indicadores.porFase[fase];
 
           return (
             <button
               key={fase}
-              onClick={() => setActiveFase(fase)}
-              className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden ${
+              onClick={() => {
+                setActiveFase(fase);
+                setShowPlanAnual(false);
+              }}
+              className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden cursor-pointer ${
                 isActive
                   ? 'border-[#0f172a] bg-[#0f172a] text-white shadow-lg'
                   : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50'
@@ -313,36 +320,78 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                   isActive ? 'text-slate-300' : 'text-slate-500'
                 }`}
               >
-                {stats.cumplidas}/{stats.total} situaciones conformes
+                {stats.cumplidas} de {stats.total} normas al día
               </p>
             </button>
           );
         })}
+
+        {/* Opción dedicada «PLAN ANUAL» dentro de Ciclo PHVA */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveFase('PLANEAR');
+            setShowPlanAnual(true);
+          }}
+          className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden cursor-pointer col-span-2 sm:col-span-1 ${
+            showPlanAnual
+              ? 'border-[#f97316] bg-[#0f172a] text-white shadow-lg'
+              : 'border-orange-300 bg-linear-to-br from-orange-50 to-amber-50 text-[#0f172a] hover:border-[#f97316]'
+          }`}
+        >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#f97316]" />
+          <div className="flex items-center justify-between">
+            <span
+              className={`text-[10px] font-black uppercase tracking-wider ${
+                showPlanAnual ? 'text-[#fed7aa]' : 'text-[#f97316]'
+              }`}
+            >
+              FASE PLANEAR
+            </span>
+            <CalendarCheck
+              className={`h-4 w-4 ${showPlanAnual ? 'text-[#fed7aa]' : 'text-[#f97316]'}`}
+            />
+          </div>
+          <h3 className="text-base sm:text-lg font-black tracking-tight mt-1">
+            PLAN ANUAL
+          </h3>
+          <p
+            className={`text-[11px] mt-1 ${
+              showPlanAnual ? 'text-slate-300' : 'text-slate-600'
+            }`}
+          >
+            Riesgos, metas, calendario y soportes
+          </p>
+        </button>
       </div>
 
-      {/* SEARCH AND FILTERS BAR */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs print:hidden">
+      {showPlanAnual ? (
+        <PlanAnualView normas={items} />
+      ) : (
+        <>
+          {/* SEARCH AND FILTERS BAR */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs print:hidden">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={`Buscar en ${activeFase} (norma, tema, artículo)...`}
+            placeholder={`Buscar en ${activeFase} (tema, norma o palabra clave)...`}
             className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-1.5 text-xs focus:border-[#0f172a] focus:outline-hidden"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs font-bold text-slate-600">Filtrar por Área:</span>
+          <span className="text-xs font-bold text-slate-600">Ver área:</span>
           <select
             value={areaFilter}
             onChange={(e) => setAreaFilter(e.target.value as any)}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
           >
-            <option value="TODAS">Todas (SST y Ambiental)</option>
+            <option value="TODAS">Todas (Seguridad, Salud y Ambiente)</option>
             <option value="SST">Solo Seguridad y Salud (SST)</option>
-            <option value="AMBIENTAL">Solo Ambiental</option>
+            <option value="AMBIENTAL">Solo Cuidado Ambiental</option>
           </select>
         </div>
       </div>
@@ -417,7 +466,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
 
                         {/* Quick Interactive Automation Toggle */}
                         <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between gap-1 text-[10px]">
-                          <span className="text-slate-400 font-medium">Auto-cambio:</span>
+                          <span className="text-slate-400 font-medium">Estado rápido:</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
@@ -430,7 +479,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                                   ? 'bg-emerald-700 text-white'
                                   : 'bg-white border border-slate-300 text-slate-600 hover:bg-emerald-50'
                               }`}
-                              title="Marcar Cumple (100%)"
+                              title="Marcar que ya cumplimos (100%)"
                             >
                               ✓ Cumple
                             </button>
@@ -445,7 +494,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                                   ? 'bg-[#f97316] text-white'
                                   : 'bg-white border border-slate-300 text-slate-600 hover:bg-orange-50'
                               }`}
-                              title="Marcar Parcial (50%)"
+                              title="Marcar que vamos a medias (50%)"
                             >
                               ~ Parcial
                             </button>
@@ -460,7 +509,7 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                                   ? 'bg-[#991b1b] text-white'
                                   : 'bg-white border border-slate-300 text-slate-600 hover:bg-red-50'
                               }`}
-                              title="Marcar No Cumple (0%)"
+                              title="Marcar pendiente por cumplir (0%)"
                             >
                               ✕ No
                             </button>
@@ -474,9 +523,9 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                               type="button"
                               onClick={() => onSelectNorma(item)}
                               className="text-slate-600 hover:text-[#0f172a] font-bold hover:underline flex items-center gap-0.5 cursor-pointer text-[10px]"
-                              title="Ver los 6 círculos obligatorios de la evidencia"
+                              title="Ver la explicación sencilla en 6 puntos"
                             >
-                              <span>Ver detalles</span> <Eye className="h-2.5 w-2.5 ml-0.5" />
+                              <span>Ver los 6 puntos</span> <Eye className="h-2.5 w-2.5 ml-0.5" />
                             </button>
                           </div>
                         </div>
@@ -485,15 +534,31 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
-                  <span>Vigencia confirmada</span>
-                  <span className="text-emerald-700 font-bold">SUIN-Juriscol</span>
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between gap-2">
+                  {activeFase === 'PLANEAR' && (sub.subtema === 'MATRIZ LEGAL Y PLAN ANUAL' || sub.subtema === 'MATRIZ_LEGAL') ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowPlanAnual(true)}
+                      className="w-full py-1.5 px-2.5 rounded-lg bg-[#0f172a] text-[#fed7aa] font-black text-[11px] hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <CalendarCheck className="h-3.5 w-3.5" />
+                      <span>Abrir PLAN ANUAL</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  ) : (
+                    <>
+                      <span>Norma vigente hoy</span>
+                      <span className="text-emerald-700 font-bold">Revisada</span>
+                    </>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+        </>
+      )}
 
       {/* TEACHER SLIDE 5 PROMPT REMINDER INLINE */}
       <div className="rounded-xl border border-orange-200 bg-[#fff7ed] p-5 shadow-xs text-slate-800 text-xs">

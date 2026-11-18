@@ -28,6 +28,8 @@ import {
 
 const STORAGE_KEY_POLITICA = 'frikaz_politica_sgsst_v1';
 const STORAGE_KEY_CARGOS = 'frikaz_cargos_sgsst_v1';
+const PLAIN_LANG_POLITICA_FLAG = 'frikaz_politica_plain_lang_v1';
+const PLAIN_LANG_CARGOS_FLAG = 'frikaz_cargos_plain_lang_v1';
 
 // ============================================================================
 // DATOS CANÓNICOS DEL ORGANIGRAMA Y RESPONSABILIDADES SST (FRIKAZ S.A.S.)
@@ -38,8 +40,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-gerente-general',
     nombre: 'Gerente General',
     nivelJerarquico: 'ALTA_DIRECCION',
-    nivelNombre: 'Nivel 1. Alta Dirección',
-    areaProceso: 'Dirección General y Gestión Estratégica',
+    nivelNombre: 'Nivel 1. Dirección de la Empresa',
+    areaProceso: 'Dirección General y Toma de Decisiones',
     icono: 'Crown',
     colorTheme: {
       badgeBg: 'bg-purple-500/20',
@@ -50,20 +52,20 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Representante legal y máxima autoridad ejecutiva de Frikaz S.A.S. Responsable directo de liderar la política corporativa y asignar los recursos integrales para el SG-SST (Decreto 1072 de 2015, Art. 2.2.4.6.8).',
+      'Es la persona que dirige Frikaz S.A.S. Se encarga de respaldar la seguridad de todo el equipo y asegurar el dinero, los materiales y el tiempo necesarios para trabajar sin accidentes (Decreto 1072 de 2015, Art. 2.2.4.6.8).',
     responsabilidades: [
-      'Liderar, aprobar y rendir cuentas sobre el desempeño del SG-SST de Frikaz S.A.S. ante los trabajadores, las autoridades de inspección del Ministerio del Trabajo y la ARL.',
-      'Definir, firmar, divulgar y actualizar anualmente la Política Integral de Seguridad y Salud en el Trabajo.',
-      'Asignar oportunamente los recursos humanos, técnicos, locativos y financieros para la dotación de EPP térmico de alta temperatura (200°C), mantenimiento de freidoras y sistemas contra incendios Clase K.',
-      'Garantizar la elección democrática, posesión y funcionamiento permanente del Vigía de Seguridad y Salud en el Trabajo (Resolución 2013 de 1986).',
-      'Presidir la revisión anual por la alta dirección del SG-SST, adoptando medidas para la mejora continua del sistema y el bienestar laboral de los 10 colaboradores.',
-      'Garantizar el cumplimiento ambiental en la gestión y entrega de Aceite de Cocina Usado (ACU) a gestores autorizados por la Secretaría Distrital de Ambiente (SDA).',
+      'Dirigir el cuidado de la seguridad y salud en Frikaz S.A.S. y explicar cómo vamos cada año ante los trabajadores, el Ministerio del Trabajo y la ARL (aseguradora de riesgos laborales).',
+      'Firmar, dar a conocer a todos y revisar cada año la Política de Seguridad y Salud en el Trabajo.',
+      'Entregar a tiempo el dinero, herramientas y elementos de protección: guantes contra el calor (hasta 200 °C), caretas, botas antideslizantes, mantenimiento de freidoras y extintores Clase K.',
+      'Apoyar la elección y el trabajo diario del Vigía de Seguridad (o del equipo COPASST), dándole tiempo dentro de la jornada para revisar la planta.',
+      'Revisar una vez al año cómo va la seguridad en la fábrica junto con los trabajadores y aprobar mejoras reales para los 10 compañeros.',
+      'Asegurar que el Aceite de Cocina Usado (ACU) se entregue únicamente a una empresa autorizada por la Secretaría de Ambiente, sin botarlo nunca al sifón.',
     ],
     compromisos: [
-      'Presidir puntualmente las sesiones de rendición de cuentas del SG-SST y la revisión directiva anual.',
-      'Asegurar disponibilidad presupuestal continua para la reposición técnica de calzado antideslizante y protección térmica.',
-      'Mantener canales de comunicación directos y continuos con el Coordinador/Vigía de SST sin intermediarios.',
-      'Respaldar el derecho de cualquier trabajador a suspender actividades ante un peligro inminente para su integridad física (ej. fuga de gas combustible o sobrecalentamiento incontrolado de freidoras).',
+      'Participar puntualmente en las reuniones anuales donde revisamos cómo va la seguridad en la planta.',
+      'Mantener siempre presupuesto listo para cambiar botas antideslizantes, guantes y delantales dañados sin demora.',
+      'Escuchar de forma directa y rápida al Coordinador o Vigía de SST cuando avise de un peligro en la planta.',
+      'Apoyar a cualquier compañero que pare una máquina o tarea si ve un peligro grave (por ejemplo, olor a gas o una freidora sin control de temperatura).',
     ],
     ordenNivel: 1,
   },
@@ -73,8 +75,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-coordinador-vigia-sst',
     nombre: 'Coordinador / Vigía de SST',
     nivelJerarquico: 'RESPONSABLE_SST',
-    nivelNombre: 'Nivel 2. Responsable del SG-SST',
-    areaProceso: 'Seguridad y Salud en el Trabajo (SG-SST)',
+    nivelNombre: 'Nivel 2. Encargado de Seguridad y Salud',
+    areaProceso: 'Seguridad y Salud en el Trabajo (SST)',
     icono: 'ShieldCheck',
     colorTheme: {
       badgeBg: 'bg-emerald-500/20',
@@ -85,21 +87,21 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Encargado del diseño, administración, ejecución y verificación técnica del SG-SST en Frikaz S.A.S., garantizando el cumplimiento de los 7 Estándares Mínimos de la Resolución 0312 de 2019 y el Decreto 1072 de 2015.',
+      'Es quien organiza, acompaña y revisa que todas las medidas de cuidado funcionen cada día en Frikaz S.A.S., cumpliendo los 7 Estándares Básicos de la Resolución 0312 de 2019 y el Decreto 1072 de 2015.',
     responsabilidades: [
-      'Planificar, coordinar, implementar y auditar anualmente el Plan de Trabajo del SG-SST y el Plan de Capacitaciones con apoyo de la ARL.',
-      'Elaborar, validar y mantener actualizada la Matriz de Peligros y Valoración de Riesgos (GTC 45) y la Matriz Legal colombiana vigente.',
-      'Ejecutar inspecciones preoperacionales y periódicas a freidoras industriales a gas, ductos de extracción de humos, sistemas de corte y estado de pisos.',
-      'Investigar el 100% de los incidentes y accidentes de trabajo ocurridos en la empresa dentro de los 15 días hábiles conforme a la Resolución 1401 de 2007.',
-      'Supervisar la entrega, inspección técnica, uso obligatorio y reposición de Elementos de Protección Personal (EPP).',
-      'Coordinar con la ARL las capacitaciones en combate de fuegos Clase K (grasas y aceites vegetales), primeros auxilios en quemaduras y pausas activas.',
-      'Custodiar los manifiestos de disposición final de Aceite de Cocina Usado (ACU) registrados ante la Secretaría Distrital de Ambiente (SDA).',
+      'Organizar y hacer cumplir el Plan Anual de Seguridad y las charlas de capacitación con apoyo de la ARL.',
+      'Mantener al día la lista de peligros de cada puesto (Matriz de Riesgos GTC 45) y las normas que debe cumplir la planta.',
+      'Revisar con frecuencia las freidoras a gas, la campana extractora, las cuchillas y que los pisos estén secos y sin huecos.',
+      'Investigar todos los accidentes y sustos (incidentes) dentro de los 15 días hábiles siguientes (Resolución 1401 de 2007) para entender qué pasó y que no se repita.',
+      'Entregar, revisar y cambiar a tiempo los Elementos de Protección Personal (EPP) de cada compañero y enseñar cómo usarlos.',
+      'Coordinar con la ARL prácticas de qué hacer si se prende el aceite (uso del extintor Clase K), primeros auxilios en quemaduras y pausas activas.',
+      'Guardar en orden todos los recibos de entrega de Aceite de Cocina Usado (ACU) para presentarlos a la Secretaría de Ambiente.',
     ],
     compromisos: [
-      'Mantener vigente y actualizada la certificación del Curso Virtual de 50 Horas en el SG-SST avalado por el Ministerio del Trabajo.',
-      'Realizar inspecciones periódicas rigurosas en planta sin previo aviso para verificar el porte de EPP y condiciones de seguridad.',
-      'Actuar con imparcialidad técnica, confidencialidad médica y compromiso ético en la salvaguarda de los trabajadores.',
-      'Informar inmediatamente a la Gerencia General cualquier desviación crítica en los sistemas térmicos o de gas de la planta.',
+      'Tener al día el certificado del curso de 50 horas en Seguridad y Salud en el Trabajo del Ministerio del Trabajo.',
+      'Hacer recorridos sorpresa por la planta para revisar que todos trabajemos seguros y con la protección puesta.',
+      'Guardar total respeto y reserva con los exámenes médicos y la salud de cada compañero.',
+      'Avisar de inmediato a la Gerencia si encuentra fallas graves en el gas, las freidoras o la electricidad.',
     ],
     ordenNivel: 2,
   },
@@ -109,8 +111,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-operario-seleccion',
     nombre: 'Operario de Selección',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Nivel Operativo',
-    areaProceso: 'Planta de Producción – Área de Recepción, Selección y Lavado de Materia Prima',
+    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    areaProceso: 'Planta – Recibo, Selección y Lavado de Papa y Plátano',
     icono: 'CheckCircle2',
     colorTheme: {
       badgeBg: 'bg-blue-500/20',
@@ -121,19 +123,19 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Responsable de clasificar, inspeccionar y seleccionar papa, plátano y materias primas agrícolas para la línea de fritura, aplicando normas de higiene, ergonomía y seguridad locativa (Decreto 1072/2015 Art. 2.2.4.6.10).',
+      'Se encarga de recibir, escoger y lavar la papa y el plátano antes de cortarlos, cuidando su espalda, sus manos y evitando caídas en pisos húmedos (Decreto 1072 de 2015, Art. 2.2.4.6.10).',
     responsabilidades: [
-      'Cumplir los protocolos de selección, clasificación y lavado, aplicando técnicas ergonómicas seguras en la manipulación manual de canastillas de tubérculos.',
-      'Utilizar permanentemente los Elementos de Protección Personal suministrados: delantal impermeable, botas de seguridad impermeables antideslizantes, cofia y guantes de nitrilo.',
-      'Evitar el sobreesfuerzo biomecánico respetando las cargas máximas permitidas (25 kg hombres, 12.5 kg mujeres) con flexión de rodillas y columna recta.',
-      'Mantener el área de lavado limpia y con drenaje constante para evitar encharcamientos y caídas a nivel por pisos resbaladizos.',
-      'Reportar inmediatamente cualquier presencia de humedad descontrolada, fisuras en piletas de lavado o condiciones locativas inseguras.',
-      'Participar obligatoriamente en las pausas activas programadas y capacitaciones preventivas del SG-SST.',
+      'Escoger y lavar las canastillas cuidando su postura: doblar las rodillas y mantener la espalda recta al levantar peso.',
+      'Usar todo el turno su delantal impermeable, botas antideslizantes, cofia (gorro) y guantes de nitrilo.',
+      'No cargar más peso del permitido (máximo 25 kg en hombres y 12.5 kg en mujeres); si pesa más, usar la carretilla o pedir ayuda.',
+      'Mantener libre la rejilla del desagüe en la zona de lavado para que no se formen charcos ni resbalones.',
+      'Avisar de inmediato al encargado si hay fugas de agua, pisos lisos, rejas dañadas o canastillas rotas.',
+      'Participar en las pausas activas de estiramiento y en las charlas de seguridad.',
     ],
     compromisos: [
-      'Solicitar apoyo de un compañero o utilizar la carretilla zorra para el traslado de canastillas pesadas.',
-      'Realizar estiramientos periódicos de miembros superiores y zona lumbar para evitar fatiga osteomuscular.',
-      'Reportar de forma oportuna cualquier dolor lumbar o síntoma osteomuscular asociado al trabajo.',
+      'Pedir ayuda a un compañero o usar la zorra (carretilla) cuando deba mover bultos o canastillas pesadas.',
+      'Hacer los estiramientos cortos de espalda, brazos y manos para evitar dolores musculares.',
+      'Avisar a tiempo si siente dolor de cintura, hombros o muñecas al hacer su trabajo.',
     ],
     ordenNivel: 3,
   },
@@ -141,8 +143,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-operario-pelado',
     nombre: 'Operario de Pelado',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Nivel Operativo',
-    areaProceso: 'Planta de Producción – Área de Pelado, Descascarado y Corte Mecanizado',
+    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    areaProceso: 'Planta – Pelado y Corte en Rebanadora',
     icono: 'Scissors',
     colorTheme: {
       badgeBg: 'bg-cyan-500/20',
@@ -153,19 +155,19 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Encargado del pelado, acondicionamiento y rebanado manual o asistido por máquina de tubérculos y plátanos, expuesto a riesgos mecánicos cortopunzantes y movimientos repetitivos.',
+      'Se encarga de pelar y cortar la papa y el plátano en las peladoras y rebanadoras. Su mayor cuidado es proteger sus dedos y manos de cortes con cuchillas o partes en movimiento.',
     responsabilidades: [
-      'Operar con estricto apego técnico las rebanadoras, peladoras mecánicas y cuchillos de trabajo, verificando guardas de seguridad antes de su encendido.',
-      'Utilizar de manera obligatoria el guante de malla de acero inoxidable anticorte en la mano no dominante durante operaciones con cuchillos o peladores manuales.',
-      'Efectuar la limpieza de rebanadoras y cuchillas únicamente con la maquinaria desenergizada, apagada y desconectada de la red eléctrica.',
-      'Mantener el puesto de trabajo despejado, depositando las cáscaras y residuos en los recipientes orgánicos para evitar caídas y proliferación biológica.',
-      'Reportar inmediatamente desgaste, falta de filo, mangos deteriorados en herramientas de corte o anomalías en las guardas de protección.',
-      'Participar en las capacitaciones de prevención de riesgo mecánico y primeros auxilios en heridas cortantes.',
+      'Revisar antes de prender la peladora o rebanadora que todas las tapas y protecciones de las cuchillas estén bien puestas.',
+      'Usar siempre el guante anticorte de malla metálica en la mano que sostiene el producto cuando use cuchillos o peladores manuales.',
+      'Para lavar o destrabar la rebanadora, SIEMPRE apagarla y desenchufarla de la corriente antes de acercar las manos.',
+      'Echar las cáscaras de inmediato en los botes orgánicos para no pisarlas ni resbalarse.',
+      'Avisar enseguida si un cuchillo perdió filo, tiene el mango flojo o si una protección de la máquina está dañada.',
+      'Asistir a las charlas sobre cuidado de las manos y qué hacer ante una cortada.',
     ],
     compromisos: [
-      'Nunca operar máquinas rebanadoras sin las guardas de protección fijas ni aproximar las manos a las cuchillas giratorias.',
-      'Utilizar el empujador de alimentos homologado durante el rebanado de materias primas.',
-      'Almacenar las herramientas de corte en sus fundas protectoras y nunca dejarlas sobre superficies con filos expuestos.',
+      'Nunca encender la rebanadora sin sus tapas protectoras ni meter los dedos cerca del disco que gira.',
+      'Usar siempre el empujador plástico para meter la papa o el plátano en la rebanadora.',
+      'Guardar los cuchillos en su estuche o porta-cuchillos apenas termine de usarlos; nunca dejarlos sueltos en la mesa.',
     ],
     ordenNivel: 3,
   },
@@ -173,8 +175,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-operario-frito',
     nombre: 'Operario de Frito',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Nivel Operativo',
-    areaProceso: 'Planta de Producción – Área de Cocción y Freidoras Industriales a Gas',
+    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    areaProceso: 'Planta – Freidoras Industriales a Gas (170 °C a 180 °C)',
     icono: 'Flame',
     colorTheme: {
       badgeBg: 'bg-orange-500/20',
@@ -185,20 +187,20 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Operador especializado en la línea de freidoras industriales a gas (180°C). Expuesto a temperaturas extremas, aceite vegetal caliente en ebullición, gases de combustión y riesgo de quemaduras graves.',
+      'Maneja las freidoras a gas con aceite muy caliente (hasta 180 °C). Su trabajo exige cuidar la piel, los ojos y evitar incendios o fugas de gas.',
     responsabilidades: [
-      'Operar las freidoras industriales cumpliendo estrictamente los parámetros de temperatura (máximo 180°C) y nivel de aceite vegetal.',
-      'Utilizar de forma permanente y obligatoria el kit de protección térmica: guantes largos de carnaza/nitrilo térmico (200°C), careta de policarbonato con mentonera, delantal térmico y calzado de seguridad antideslizante con ranurado profundo.',
-      'Verificar rigurosamente que las rodajas de papa y plátano hayan sido escurridas y secadas antes de sumergirlas en la cuba de fritura, previniendo salpicaduras violentas por vapor de agua.',
-      'Inspeccionar diariamente quemadores, tuberías de gas, válvulas y campana de extracción de humos previo al encendido.',
-      'Conocer la ubicación exacta y técnica de accionamiento del extintor Clase K (acetato de potasio) y de la válvula de corte general de gas ante emergencias.',
-      'Efectuar el drenaje y filtrado de Aceite de Cocina Usado (ACU) ÚNICAMENTE cuando la temperatura haya descendido por debajo de 40°C, depositándolo en tambores herméticos para la SDA.',
+      'Mantener las freidoras en la temperatura correcta (máximo 180 °C) y con el nivel de aceite adecuado.',
+      'Usar todo el tiempo su equipo contra el calor: guantes largos térmicos (hasta 200 °C), careta transparente para la cara, delantal grueso contra salpicaduras y botas antideslizantes.',
+      'Escurrir y secar bien las tajadas de papa y plátano antes de meterlas al aceite para que no salte aceite hirviendo.',
+      'Revisar antes de prender cada turno que los quemadores, llaves de gas y campana extractora funcionen bien y no huelan a gas.',
+      'Saber exactamente dónde está el extintor plateado Clase K (especial para aceite) y la llave general para cerrar el gas en una emergencia.',
+      'Sacar o filtrar el Aceite de Cocina Usado (ACU) SOLO cuando el aceite esté tibio o frío (por debajo de 40 °C), pasándolo con cuidado a las canecas azules marcadas.',
     ],
     compromisos: [
-      'NUNCA verter agua sobre el aceite caliente ni utilizar agua para extinguir conatos de fuego en las freidoras.',
-      'Suspender inmediatamente la operación ante cualquier olor a gas o sobrecalentamiento visible del aceite.',
-      'Mantener el piso circundante a las freidoras rigurosamente seco y libre de películas grasas.',
-      'Acudir puntualmente a las pausas activas para disipar la carga térmica corporal.',
+      'NUNCA echar agua al aceite caliente ni intentar apagar fuego de freidora con agua.',
+      'Apagar los quemadores y avisar de inmediato si siente olor a gas o ve que el aceite empieza a echar humo anormal.',
+      'Mantener el piso alrededor de las freidoras totalmente seco y sin grasa para evitar caídas sobre el calor.',
+      'Tomar sus pausas de hidratación y descanso para bajar el calor del cuerpo.',
     ],
     ordenNivel: 3,
   },
@@ -206,8 +208,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-operario-empaque',
     nombre: 'Operario de Empaque',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Nivel Operativo',
-    areaProceso: 'Planta de Producción – Área de Empaque, Sellado Térmico y Embalaje',
+    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    areaProceso: 'Planta – Pesaje, Sellado Térmico y Empaque',
     icono: 'Package',
     colorTheme: {
       badgeBg: 'bg-amber-500/20',
@@ -218,19 +220,19 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Responsable de dosificar, sellar en mordazas calientes y embalar los snacks terminados en cajas y paquetes comerciales, expuesto a movimientos repetitivos, calor en selladoras y manipulación de cajas.',
+      'Pesa, sella las bolsas con calor y acomoda las cajas de producto listo. Cuida sus dedos frente a las mordazas calientes de la selladora y protege sus muñecas y hombros.',
     responsabilidades: [
-      'Operar con precaución las máquinas selladoras de polietileno por calor, evitando el contacto directo con las mordazas térmicas calientes.',
-      'Aplicar normas estrictas de Buenas Prácticas de Manufactura (BPM - Res. 2674/2013): uso de cofia, tapabocas, delantal limpio y guantes sanitarios.',
-      'Adoptar posturas ergonómicas neutrales durante el pesaje y embolsado, mitigando el riesgo de lesiones musculoesqueléticas en muñecas y hombros.',
-      'Efectuar el apilamiento de cajas de producto terminado de forma trabada, sin sobrepasar la altura segura de 1.5 metros para evitar desplomes.',
-      'Reportar averías eléctricas, desgaste en cables de selladoras o condiciones locativas deficientes en la mesa de empaque.',
-      'Participar activamente en las pausas activas programadas de estiramiento de extremidades superiores.',
+      'Usar con cuidado la selladora de banda térmica, manteniendo los dedos lejos de las resistencias calientes que sellan la bolsa.',
+      'Cumplir siempre las reglas de higiene (BPM — Resolución 2674 de 2013): cofia (gorro), tapabocas, uniforme limpio y guantes cuando toque el producto.',
+      'Cuidar la postura de sus brazos y muñecas al pesar y sellar, alternando tareas para no cansar siempre los mismos tendones.',
+      'Arrumar las cajas llenas bien trabadas y sin pasar de 1.5 metros de altura para que no se caigan encima de nadie.',
+      'Avisar enseguida si un cable de la selladora está pelado, si falla un enchufe o si la mesa estorba el paso.',
+      'Hacer las pausas activas de estiramiento de manos, muñecas y cuello durante el turno.',
     ],
     compromisos: [
-      'No tocar las resistencias ni mordazas calientes de las selladoras sin verificar su enfriamiento previo.',
-      'Respetar las pausas de descanso osteomuscular cada 2 horas de labor continua.',
-      'Mantener despejada el área de paso y la báscula de pesaje libre de obstáculos.',
+      'No tocar nunca las resistencias de la selladora si acaban de apagarla; esperar a que enfríen para limpiarla.',
+      'Hacer pausas cortas para descansar las manos y muñecas cada 2 horas.',
+      'Dejar siempre despejados los pasillos de salida y el espacio alrededor de la báscula.',
     ],
     ordenNivel: 3,
   },
@@ -238,8 +240,8 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
     id: 'cargo-conductor',
     nombre: 'Conductor',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Nivel Operativo',
-    areaProceso: 'Logística, Transporte y Distribución Comercial',
+    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    areaProceso: 'Entregas en Vehículo y Distribución en Bogotá',
     icono: 'Truck',
     colorTheme: {
       badgeBg: 'bg-emerald-500/20',
@@ -250,20 +252,20 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Encargado del transporte, distribución comercial y entrega de snacks a clientes en Bogotá y municipios vecinos, bajo lineamientos del Plan Estratégico de Seguridad Vial (PESV - Res. 40595/2022).',
+      'Lleva los pedidos de snacks a los clientes en Bogotá y municipios cercanos. Su prioridad es manejar con calma, revisar el carro antes de salir y cuidar su espalda al descargar.',
     responsabilidades: [
-      'Conducir bajo principios de manejo defensivo y estricto respeto a las normas de tránsito y límites de velocidad de la Ley 769 de 2002.',
-      'Diligenciar diariamente la lista de chequeo de inspección preoperacional del vehículo (frenos, luces, dirección, neumáticos, fluidos y cinturones).',
-      'Verificar la vigencia y porte obligatorio de documentos: SOAT, Revisión Técnico-Mecánica, Licencia de Conducción y equipo de carretera completo.',
-      'Realizar las maniobras de cargue, aseguramiento de carga y descargue en puntos de venta utilizando técnicas ergonómicas y calzado de seguridad.',
-      'Reportar inmediatamente cualquier siniestro vial, falla mecánica o incidente en carretera a la empresa y a la ARL.',
-      'Participar en los programas de capacitación en seguridad vial, fatiga y prevención de accidentes de tránsito.',
+      'Manejar siempre a la defensiva, respetando los límites de velocidad y las señales de tránsito (Ley 769 de 2002).',
+      'Revisar cada mañana antes de arrancar la lista rápida del vehículo: frenos, luces, llantas, espejos, niveles y cinturón de seguridad.',
+      'Llevar al día y dentro del vehículo el SOAT, la Técnico-Mecánica, su licencia de conducción y el kit de carretera completo.',
+      'Cargar y bajar las cajas cuidando la espalda (sin giros bruscos, doblando rodillas) y con botas de seguridad puestas.',
+      'Avisar enseguida a Frikaz S.A.S. y a la ARL si ocurre un choque, varada o accidente en la vía.',
+      'Asistir a las charlas sobre manejo seguro, descanso y prevención de accidentes de tránsito.',
     ],
     compromisos: [
-      'CERO TOLERANCIA al consumo de alcohol o sustancias psicoactivas antes y durante la conducción.',
-      'Prohibición total del uso de teléfonos celulares mientras el vehículo se encuentre en marcha sin sistema de manos libres autorizado.',
-      'Uso permanente del cinturón de seguridad y exigencia de su porte a cualquier acompañante.',
-      'Realizar pausas de descanso contra la fatiga vial en recorridos de alta congestión o trayectos mayores a dos horas.',
+      'CERO alcohol ni drogas antes o durante la jornada de manejo.',
+      'No usar el celular mientras el carro está en movimiento (si necesita llamar o mirar ruta, orillarse en lugar seguro).',
+      'Usar siempre el cinturón de seguridad y pedirle a cualquier acompañante que también se lo abroche.',
+      'Descansar unos minutos en rutas largas o con mucho trancón para manejar alerta y sin sueño.',
     ],
     ordenNivel: 3,
   },
@@ -278,38 +280,38 @@ export const POLITICA_SST_CANONICA: PoliticaSSTData = {
   nit: '901.234.567-8',
   direccion: 'Calle 65 Sur # 78-45, Bosa, Bogotá D.C., Colombia',
   actividadPrincipal:
-    'Fabricación y comercialización de snacks fritos tipo artesanal (papas, plátanos y chicharrones) · CIIU 1089',
+    'Preparación y venta de snacks fritos (papas, plátanos y chicharrones) · Código CIIU 1089',
   titulo: 'POLÍTICA DE SEGURIDAD Y SALUD EN EL TRABAJO',
   declaracionIntroductoria:
-    'En Frikaz S.A.S., empresa dedicada a la fabricación y comercialización de snacks, estamos convencidos de que nuestro capital más importante es nuestro personal. Por ello, la alta dirección se compromete a:',
+    'En Frikaz S.A.S., donde preparamos y repartimos snacks fritos, lo más valioso son las personas que hacen posible cada jornada. Por eso, la Gerencia se compromete de corazón a:',
   compromisos: [
     {
       id: 1,
-      titulo: 'Proteger la seguridad y salud',
+      titulo: 'Cuidar la vida y la salud de todos',
       descripcion:
-        'Proteger la seguridad y salud de todos los colaboradores (Gerente, operarios de selección, frito, pelado, empaque y conductores), proveedores y terceros mediante la prevención de lesiones, enfermedades laborales e incidentes, gestionando de manera prioritaria los peligros asociados a la producción de snacks (riesgo biomecánico por posturas prolongadas, riesgo físico por temperaturas altas en la zona de frito, riesgo locativo y condiciones de tránsito vial).',
+        'Proteger la salud y evitar accidentes de todos nuestros compañeros (Gerente, operarios de selección, pelado, frito, empaque y conductores), así como de visitantes y contratistas. Ponemos especial cuidado en prevenir quemaduras en las freidoras, cortadas en cuchillas, dolores de espalda o manos por cargas y posturas, caídas en pisos húmedos y accidentes en la vía.',
     },
     {
       id: 2,
-      titulo: 'Cumplir con la normatividad nacional vigente',
+      titulo: 'Cumplir las leyes que nos protegen',
       descripcion:
-        'Cumplir con la normatividad nacional vigente aplicable en materia de riesgos laborales y otros compromisos que suscriba la organización.',
+        'Cumplir todas las leyes colombianas de Seguridad y Salud en el Trabajo (como el Decreto 1072 de 2015 y la Resolución 0312 de 2019) y el cuidado del medio ambiente, como entregar el aceite usado a un gestor autorizado.',
     },
     {
       id: 3,
-      titulo: 'Garantizar la consulta y la participación activa',
+      titulo: 'Escuchar y trabajar en equipo con los trabajadores',
       descripcion:
-        'Garantizar la consulta y la participación activa de los trabajadores y sus representantes en todos los elementos del Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST).',
+        'Dar espacio para que todos los compañeros y su Vigía o Comité de Seguridad (COPASST) opinen, avisen peligros y participen en las mejoras del lugar de trabajo.',
     },
     {
       id: 4,
-      titulo: 'Mejorar continuamente',
+      titulo: 'Mejorar cada día la planta y el trabajo',
       descripcion:
-        'Mejorar continuamente el desempeño del SG-SST y su integración con los demás procesos de la empresa.',
+        'Revisar con frecuencia qué podemos hacer mejor en máquinas, orden, aseo y capacitación para que cada año trabajemos más seguros y tranquilos.',
     },
   ],
   comunicacionRevision:
-    'Esta política será comunicada a todos los niveles de la organización, estará disponible para las partes interesadas y se revisará como mínimo una vez al año.',
+    'Esta política se comparte con todos los trabajadores, está visible en la planta para quien quiera leerla y se revisa al menos una vez cada año.',
   nombreFirmante: 'Gerente General',
   cargoFirmante: 'Gerente General – Frikaz S.A.S.',
   estado: 'Pendiente de aprobación',
@@ -322,11 +324,11 @@ export const POLITICA_SST_CANONICA: PoliticaSSTData = {
       fecha: new Date().toISOString().split('T')[0],
       hora: '08:00 AM',
       version: 'Versión 1.0',
-      autor: 'Coordinador SG-SST / Frikaz S.A.S.',
-      motivoCambio: 'Elaboración y emisión inicial de la Política de SST para Frikaz S.A.S.',
+      autor: 'Encargado de SST / Frikaz S.A.S.',
+      motivoCambio: 'Redacción clara de los compromisos de seguridad de Frikaz S.A.S.',
       estado: 'Pendiente de aprobación',
       detallesModificacion:
-        'Estructuración inicial de los 4 compromisos legales prioritarios conforme al Decreto 1072 de 2015.',
+        'Se organizaron los 4 compromisos principales en lenguaje claro y sencillo conforme al Decreto 1072 de 2015.',
     },
   ],
 };
@@ -337,8 +339,26 @@ export const POLITICA_SST_CANONICA: PoliticaSSTData = {
 export function getStoredPoliticaSST(): PoliticaSSTData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_POLITICA);
-    if (!raw) return POLITICA_SST_CANONICA;
-    const parsed = JSON.parse(raw);
+    if (!raw) {
+      localStorage.setItem(PLAIN_LANG_POLITICA_FLAG, '1');
+      return POLITICA_SST_CANONICA;
+    }
+    const parsed: PoliticaSSTData = JSON.parse(raw);
+    const alreadyMigrated = localStorage.getItem(PLAIN_LANG_POLITICA_FLAG) === '1';
+    if (!alreadyMigrated) {
+      localStorage.setItem(PLAIN_LANG_POLITICA_FLAG, '1');
+      const esBorradorInicial =
+        parsed.estado === 'Pendiente de aprobación' &&
+        (!parsed.historialCambios || parsed.historialCambios.length <= 1);
+      if (esBorradorInicial) {
+        const refreshed = {
+          ...POLITICA_SST_CANONICA,
+          fechaUltimaActualizacion: parsed.fechaUltimaActualizacion || POLITICA_SST_CANONICA.fechaUltimaActualizacion,
+        };
+        localStorage.setItem(STORAGE_KEY_POLITICA, JSON.stringify(refreshed));
+        return refreshed;
+      }
+    }
     return parsed;
   } catch (e) {
     console.error('Error cargando política SST de localStorage:', e);
@@ -357,6 +377,7 @@ export function saveStoredPoliticaSST(data: PoliticaSSTData): void {
 export function resetStoredPoliticaSST(): PoliticaSSTData {
   try {
     localStorage.removeItem(STORAGE_KEY_POLITICA);
+    localStorage.setItem(PLAIN_LANG_POLITICA_FLAG, '1');
     return POLITICA_SST_CANONICA;
   } catch (e) {
     console.error('Error reiniciando política SST:', e);
@@ -367,9 +388,24 @@ export function resetStoredPoliticaSST(): PoliticaSSTData {
 export function getStoredCargosSST(): CargoSST[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CARGOS);
-    if (!raw) return CARGOS_SST_CANONICOS;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : CARGOS_SST_CANONICOS;
+    if (!raw) {
+      localStorage.setItem(PLAIN_LANG_CARGOS_FLAG, '1');
+      return CARGOS_SST_CANONICOS;
+    }
+    const parsed: CargoSST[] = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return CARGOS_SST_CANONICOS;
+    }
+    const alreadyMigrated = localStorage.getItem(PLAIN_LANG_CARGOS_FLAG) === '1';
+    if (!alreadyMigrated) {
+      localStorage.setItem(PLAIN_LANG_CARGOS_FLAG, '1');
+      const canonIds = new Set(CARGOS_SST_CANONICOS.map((c) => c.id));
+      const extras = parsed.filter((c) => !canonIds.has(c.id));
+      const merged = [...CARGOS_SST_CANONICOS, ...extras];
+      localStorage.setItem(STORAGE_KEY_CARGOS, JSON.stringify(merged));
+      return merged;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error cargando cargos SST de localStorage:', e);
     return CARGOS_SST_CANONICOS;
@@ -893,7 +929,7 @@ export function construirDocumentoResponsabilidadesDocx(
             spacing: { line: DOCX_LINE_SPACING_1_5, before: 200, after: 120 },
             children: [
               new TextRun({
-                text: '4. DECLARACIÓN DE CONOCIMIENTO Y ACEPTACIÓN',
+                text: '4. CONFIRMACIÓN Y COMPROMISO DEL TRABAJADOR',
                 bold: true,
                 size: DOCX_FONT_SIZE_12,
                 font: DOCX_FONT,
@@ -906,7 +942,7 @@ export function construirDocumentoResponsabilidadesDocx(
             spacing: { line: DOCX_LINE_SPACING_1_5, after: 260 },
             children: [
               new TextRun({
-                text: 'Yo, en calidad de colaborador(a) de FRIKAZ S.A.S., manifiesto expresamente que he recibido, leído, comprendido y aceptado las responsabilidades y compromisos en Seguridad y Salud en el Trabajo correspondientes a mi cargo. Me comprometo a cumplirlos a cabalidad, acatar los procedimientos seguros de trabajo, hacer uso adecuado y permanente de los elementos de protección personal suministrados, reportar oportunamente cualquier condición o acto inseguro, y participar activamente en las capacitaciones programadas por la empresa.',
+                text: 'Yo, como trabajador(a) de FRIKAZ S.A.S., confirmo que recibí, leí y entendí las responsabilidades y compromisos de seguridad y salud de mi cargo. Me comprometo a trabajar siguiendo las normas de cuidado, usar siempre mis elementos de protección personal, avisar a tiempo si veo algo peligroso o roto, y participar en las charlas de seguridad de la empresa.',
                 size: DOCX_FONT_SIZE_12,
                 italics: true,
                 font: DOCX_FONT,

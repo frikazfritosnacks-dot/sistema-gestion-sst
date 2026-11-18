@@ -38,6 +38,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
   const [selectedFase, setSelectedFase] = useState<FasePhva>('PLANEAR');
   const [formData, setFormData] = useState<ConfiguracionPresentacion | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -46,21 +47,22 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
       if (!cloned.appHeader) {
         cloned.appHeader = {
           empresa: 'FRIKAZ S.A.S.',
-          subtitulo: 'Herramienta Automatizada SST y Ambiental (PHVA)',
+          subtitulo: 'Guía Práctica de Seguridad y Cuidado Ambiental (PHVA)',
           badge: 'Bosa · 10 Trab.',
         };
       }
       if (!cloned.matrizTabla) {
         cloned.matrizTabla = {
-          titulo: 'Matriz Normativa Completa de Requisitos Legales',
+          titulo: 'Lista Completa de Normas de Seguridad y Ambiente',
           descripcion:
-            'Total de disposiciones legales colombianas vigentes aplicables a Frikaz S.A.S.',
+            'Resumen claro de todas las leyes y reglas vigentes en Colombia que cuidan el trabajo y el medio ambiente en Frikaz S.A.S.',
         };
       }
       setFormData(cloned);
       setActiveTab(initialTab);
       setSelectedFase(activeFaseDefault);
       setSaveSuccess(false);
+      setConfirmReset(false);
     }
   }, [isOpen, config, initialTab, activeFaseDefault]);
 
@@ -76,14 +78,12 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
   };
 
   const handleReset = () => {
-    if (
-      window.confirm(
-        '¿Desea restablecer todos los encabezados y descripciones de la presentación a los textos oficiales originales?'
-      )
-    ) {
-      onReset();
-      onClose();
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
     }
+    onReset();
+    onClose();
   };
 
   const updateAppHeaderField = (field: 'empresa' | 'subtitulo' | 'badge', value: string) => {
@@ -198,15 +198,15 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-md bg-[#fed7aa] px-2 py-0.5 text-[10px] font-black uppercase text-[#0f172a]">
-                  Personalización Total
+                  Personalizar Textos
                 </span>
                 <span className="text-xs text-orange-200 font-bold flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-[#fed7aa]" />
-                  Editor de Presentación
+                  Textos de Pantalla
                 </span>
               </div>
               <h3 className="text-base sm:text-lg font-black tracking-tight text-white leading-tight">
-                Editar Encabezados, Módulos y Textos de la Presentación
+                Editar Títulos y Explicaciones del Ciclo PHVA
               </h3>
             </div>
           </div>
@@ -215,11 +215,15 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             <button
               type="button"
               onClick={handleReset}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 text-xs font-semibold transition-colors"
-              title="Restablecer textos por defecto"
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                confirmReset
+                  ? 'bg-[#f97316] text-white'
+                  : 'bg-white/10 hover:bg-white/20 text-slate-300'
+              }`}
+              title="Volver a los textos originales en lenguaje sencillo"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Restablecer</span>
+              <span className="hidden sm:inline">{confirmReset ? 'Confirmar Restablecer' : 'Restablecer'}</span>
             </button>
             <button
               onClick={onClose}
@@ -243,7 +247,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             }`}
           >
             <Type className="h-3.5 w-3.5 text-[#fed7aa]" />
-            <span>1. Banner & Título Principal</span>
+            <span>1. Banner y Portada</span>
           </button>
 
           <button
@@ -256,7 +260,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             }`}
           >
             <Layers className="h-3.5 w-3.5 text-[#fed7aa]" />
-            <span>2. Títulos de las 4 Fases (P-H-V-A)</span>
+            <span>2. Las 4 Fases (P-H-V-A)</span>
           </button>
 
           <button
@@ -269,7 +273,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             }`}
           >
             <Sparkles className="h-3.5 w-3.5 text-[#fed7aa]" />
-            <span>3. Los 16 Módulos / Cuadrantes</span>
+            <span>3. Los 16 Bloques de Trabajo</span>
           </button>
 
           <button
@@ -282,7 +286,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             }`}
           >
             <BookOpen className="h-3.5 w-3.5 text-[#fed7aa]" />
-            <span>4. Guía Pedagógica / Docente</span>
+            <span>4. Guía de Lectura y Tabla</span>
           </button>
         </div>
 
@@ -438,10 +442,10 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             <div className="space-y-4">
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                 <span className="font-bold text-slate-900 text-xs uppercase block">
-                  Encabezados de las 4 Fases del Ciclo PHVA:
+                  Títulos de las 4 Fases del Ciclo PHVA:
                 </span>
                 <p className="text-[11px] text-slate-600 mt-0.5">
-                  Personalice el título y la instrucción pedagógica de cada fase (Planear, Hacer, Verificar, Actuar).
+                  Personaliza el título y la explicación breve de cada fase (Planear, Hacer, Verificar, Actuar).
                 </p>
               </div>
 
@@ -452,7 +456,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
                       FASE {fase}
                     </span>
                     <strong className="text-slate-800 text-xs">
-                      Configuración de la Diapositiva {fase}
+                      Encabezado de la Fase {fase}
                     </strong>
                   </div>
 
@@ -471,7 +475,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
 
                   <div>
                     <label className="font-bold text-slate-700 block mb-1">
-                      Subtítulo / Instrucción al Evaluador:
+                      Explicación breve para el equipo:
                     </label>
                     <input
                       type="text"
@@ -558,15 +562,15 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
             </div>
           )}
 
-          {/* TAB 4: GUÍA PEDAGÓGICA / DOCENTE */}
+          {/* TAB 4: GUÍA DE LECTURA Y TABLA */}
           {activeTab === 'guia' && (
             <div className="space-y-4">
               <div className="bg-[#fff7ed] border border-orange-200 rounded-xl p-3.5">
                 <span className="font-bold text-orange-950 text-xs uppercase block">
-                  Recuadro de la Guía de Evaluación del Docente:
+                  Recuadro de Ayuda al Pie de Pantalla:
                 </span>
                 <p className="text-[11px] text-orange-900 mt-0.5">
-                  Edite el texto que aparece al pie de la presentación explicando los 6 círculos obligatorios de la evidencia.
+                  Edita el texto que explica cómo leer los 6 puntos de cada norma en palabras sencillas.
                 </p>
               </div>
 
@@ -585,7 +589,7 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
 
               <div>
                 <label className="font-bold text-slate-700 block mb-1">
-                  Contenido / Instrucción Detallada:
+                  Contenido de Ayuda:
                 </label>
                 <textarea
                   rows={5}
@@ -596,13 +600,13 @@ export const PresentacionEditorModal: React.FC<PresentacionEditorModalProps> = (
                 />
               </div>
 
-              {/* Matriz Normativa Completa */}
+              {/* Tabla Completa */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 mt-6">
                 <span className="font-bold text-slate-900 text-xs uppercase block">
-                  Encabezado de la Vista "Matriz Normativa Completa":
+                  Encabezado de la Vista "Lista Completa de Normas":
                 </span>
                 <p className="text-[11px] text-slate-600 mt-0.5">
-                  Personalice el título y la descripción de la tabla general de requisitos legales.
+                  Personaliza el título y la descripción de la tabla general de normas.
                 </p>
               </div>
 

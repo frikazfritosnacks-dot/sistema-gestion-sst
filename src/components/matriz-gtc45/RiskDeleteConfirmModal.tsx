@@ -25,9 +25,9 @@ export function RiskDeleteConfirmModal({
             <AlertTriangle className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">¿Eliminar registro de peligro GTC 45?</h3>
+            <h3 className="text-base font-bold text-white">¿Quieres borrar este registro de peligro?</h3>
             <p className="text-xs text-slate-400">
-              Esta acción eliminará de forma permanente la evaluación del peligro de la matriz.
+              Si confirmas, este peligro se quitará de la matriz de riesgos de la empresa.
             </p>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function RiskDeleteConfirmModal({
             <span className="font-mono font-bold text-white">{riskItem.codigo || riskItem.id}</span>
           </div>
           <div className="flex items-center justify-between text-slate-400">
-            <span>Zona / Lugar:</span>
+            <span>Lugar de trabajo:</span>
             <span className="text-slate-200 font-medium">{riskItem.zonaLugar}</span>
           </div>
           <div className="text-slate-400 pt-1">
@@ -47,7 +47,7 @@ export function RiskDeleteConfirmModal({
             <span className="text-slate-200 line-clamp-2">{riskItem.peligroDescripcion}</span>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-slate-800">
-            <span className="text-slate-400">Nivel de Riesgo (NR):</span>
+            <span className="text-slate-400">Nivel de riesgo (NR):</span>
             <span className="font-bold text-rose-400">
               {riskItem.nivelRiesgo} (Nivel {riskItem.interpretacionNR})
             </span>

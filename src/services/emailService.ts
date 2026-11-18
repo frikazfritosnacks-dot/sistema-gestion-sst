@@ -161,7 +161,7 @@ export async function getEmailServiceStatus(): Promise<EmailServiceStatus> {
       smtpPort: null,
       smtpUser: null,
       senderAddress: 'frikaz.fritosnacks@gmail.com',
-      missingVars: ['Respuesta no JSON del servidor'],
+      missingVars: ['El sistema de correo dio una respuesta inesperada'],
       totalSentInHistory: 0,
       instructions: extractReadableError(parsed.rawText, res.status),
     };
@@ -173,9 +173,9 @@ export async function getEmailServiceStatus(): Promise<EmailServiceStatus> {
       smtpPort: null,
       smtpUser: null,
       senderAddress: 'frikaz.fritosnacks@gmail.com',
-      missingVars: ['Servidor no disponible o desconectado'],
+      missingVars: ['No hay conexión con el servicio de correo'],
       totalSentInHistory: 0,
-      instructions: `No se pudo conectar con el endpoint /api/email/status: ${error.message}`,
+      instructions: `No pudimos revisar el estado del correo en este momento: ${error.message}`,
     };
   }
 }
@@ -198,7 +198,7 @@ export async function verifySmtpConnection(): Promise<{
     if (parsed.isJson && parsed.data) {
       return {
         success: Boolean(parsed.data.success),
-        message: parsed.data.message || (parsed.data.success ? 'Conexión verificada.' : 'Fallo en la verificación.'),
+        message: parsed.data.message || (parsed.data.success ? 'El correo está listo para enviar.' : 'No pudimos comprobar el correo.'),
         missingVars: parsed.data.missingVars,
       };
     }
@@ -210,7 +210,7 @@ export async function verifySmtpConnection(): Promise<{
   } catch (error: any) {
     return {
       success: false,
-      message: `Error de red al intentar verificar el servidor SMTP: ${error.message}`,
+      message: `No hay internet o no pudimos conectarnos al servicio de correo: ${error.message}`,
     };
   }
 }
@@ -236,8 +236,8 @@ export async function sendEmailReal(payload: EmailSendPayload): Promise<EmailSen
       return {
         success: false,
         status: 'Error en el envío',
-        error: `Respuesta no JSON del servidor: ${serverMessage}`,
-        details: `El servidor respondió con código HTTP ${res.status} y contenido no estructurado (${parsed.contentType || 'desconocido'}).`,
+        error: `El servidor de correo respondió de forma inesperada: ${serverMessage}`,
+        details: `No pudimos confirmar el envío (código ${res.status}). Intenta de nuevo en unos momentos.`,
         httpStatus: res.status,
       };
     }
@@ -249,7 +249,7 @@ export async function sendEmailReal(payload: EmailSendPayload): Promise<EmailSen
         success: false,
         status: data.status || 'Error en el envío',
         trackingCode: data.trackingCode,
-        error: data.error || `Error HTTP ${res.status}: ${res.statusText}`,
+        error: data.error || `No pudimos enviar el correo (código ${res.status})`,
         details: data.details,
         missingVars: data.missingVars,
         record: data.record,
@@ -271,8 +271,8 @@ export async function sendEmailReal(payload: EmailSendPayload): Promise<EmailSen
     return {
       success: false,
       status: 'Error en el envío',
-      error: `Error de red al conectar con el servicio de correo: ${error.message}`,
-      details: 'El backend no respondió o la conexión falló antes de alcanzar el servidor SMTP.',
+      error: `No pudimos conectarnos para enviar el correo: ${error.message}`,
+      details: 'Revisa tu conexión a internet o intenta de nuevo en un momento.',
     };
   }
 }

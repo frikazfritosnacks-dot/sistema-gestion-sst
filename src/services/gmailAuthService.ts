@@ -18,7 +18,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
-// Scopes de Gmail autorizados
+// Scopes de Gmail autorizados (preservados)
 export const GMAIL_SCOPES = [
   'https://mail.google.com/',
   'https://www.googleapis.com/auth/gmail.send',
@@ -28,11 +28,26 @@ export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.labels',
 ];
 
+// Scopes de Google Drive y Google Sheets autorizados
+export const DRIVE_SHEETS_SCOPES = [
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/spreadsheets.readonly',
+];
+
+// Lista unificada de scopes de Google Workspace
+export const GOOGLE_WORKSPACE_SCOPES = [
+  ...GMAIL_SCOPES,
+  ...DRIVE_SHEETS_SCOPES,
+];
+
 export const CUENTA_OBJETIVO_GMAIL = 'frikaz.fritosnacks@gmail.com';
 
 const createGoogleProvider = (loginHint?: string) => {
   const p = new GoogleAuthProvider();
-  GMAIL_SCOPES.forEach((scope) => p.addScope(scope));
+  GOOGLE_WORKSPACE_SCOPES.forEach((scope) => p.addScope(scope));
   const customParams: Record<string, string> = {
     prompt: 'select_account',
   };
@@ -47,6 +62,26 @@ const createGoogleProvider = (loginHint?: string) => {
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
 let cachedUser: User | null = null;
+
+type TokenListener = (user: User | null, token: string | null) => void;
+const tokenListeners = new Set<TokenListener>();
+
+const notifyTokenListeners = () => {
+  tokenListeners.forEach((cb) => {
+    try {
+      cb(cachedUser, cachedAccessToken);
+    } catch (e) {
+      console.error('Error en token listener:', e);
+    }
+  });
+};
+
+export const subscribeTokenChange = (listener: TokenListener): (() => void) => {
+  tokenListeners.add(listener);
+  return () => {
+    tokenListeners.delete(listener);
+  };
+};
 
 // Escuchador de estado de autenticación
 export const initAuth = (
@@ -65,11 +100,12 @@ export const initAuth = (
       cachedAccessToken = null;
       if (onAuthFailure) onAuthFailure();
     }
+    notifyTokenListeners();
   });
 };
 
 /**
- * Iniciar sesión con Google para acceder a Gmail API
+ * Iniciar sesión con Google para acceder a Workspace APIs (Gmail, Drive, Sheets)
  * Se puede especificar loginHint (por defecto frikaz.fritosnacks@gmail.com)
  */
 export const googleSignIn = async (
@@ -86,6 +122,7 @@ export const googleSignIn = async (
 
     cachedAccessToken = credential.accessToken;
     cachedUser = result.user;
+    notifyTokenListeners();
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Error durante inicio de sesión con Google:', error);
@@ -127,4 +164,5 @@ export const logoutGoogle = async (): Promise<void> => {
   await signOut(auth);
   cachedAccessToken = null;
   cachedUser = null;
+  notifyTokenListeners();
 };

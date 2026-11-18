@@ -38,7 +38,7 @@ export function RiskAssistantModal({
   const [historial, setHistorial] = useState<MensajeAsistente[]>([
     {
       emisor: 'asistente',
-      texto: `¡Hola! Soy tu Asistente Técnico Especializado en la Matriz GTC 45 de Frikaz S.A.S. Actualmente tengo cargados ${dataset.length} peligros valorados. Puedes consultarme por puesto de trabajo (cargos), riesgos críticos Nivel I, controles en la fuente, medidas de ingeniería recomendadas o requisitos legales asociados.`,
+      texto: `¡Hola! Soy tu guía de consulta rápida de peligros en Frikaz S.A.S. Aquí tienes ${dataset.length} peligros evaluados con la guía GTC 45. Pregúntame por tu puesto de trabajo, los peligros más urgentes (Nivel I), cómo cuidarte o qué normas aplican.`,
     },
   ]);
 
@@ -50,9 +50,9 @@ export function RiskAssistantModal({
     let relacionados: RiesgoGTC45Item[] = [];
 
     // Query analysis
-    if (q.includes('nivel i') || q.includes('critico') || q.includes('no aceptable') || q.includes('graves')) {
+    if (q.includes('nivel i') || q.includes('critico') || q.includes('crítico') || q.includes('urgente') || q.includes('no aceptable') || q.includes('graves')) {
       relacionados = dataset.filter((r) => r.interpretacionNR === 'I');
-      respuesta = `Se identifican ${relacionados.length} peligro(s) en Nivel I (No Aceptables / Situación Crítica). Según la GTC 45, estos riesgos demandan suspender actividades o intervenir de forma perentoria e inmediata:`;
+      respuesta = `Hay ${relacionados.length} peligro(s) en Nivel I (Urgentes / No Aceptables). Según la guía GTC 45, estos requieren parar la tarea si no es segura y corregirlos de inmediato para protegerte:`;
     } else if (
       q.includes('fritura') ||
       q.includes('coccion') ||
@@ -66,7 +66,7 @@ export function RiskAssistantModal({
           r.tareas.toLowerCase().includes('freidora') ||
           r.peligroDescripcion.toLowerCase().includes('calor')
       );
-      respuesta = `Para el cargo de Operario de Fritura y Cocción se identifican ${relacionados.length} peligro(s) principales, destacando la exposición a temperaturas extremas de 180 °C (Nivel I) y conato de incendio en freidoras (Nivel II):`;
+      respuesta = `Para quien trabaja como Operario de Fritura y Cocción hay ${relacionados.length} peligro(s) clave, sobre todo el aceite caliente a 180 °C (Nivel I) y un posible incendio en la freidora (Nivel II):`;
     } else if (
       q.includes('bodega') ||
       q.includes('almacen') ||
@@ -82,7 +82,7 @@ export function RiskAssistantModal({
           r.zonaLugar.toLowerCase().includes('almacenamiento') ||
           r.peligroDescripcion.toLowerCase().includes('estanterías')
       );
-      respuesta = `Para los cargos de Auxiliar de Bodega, Almacenamiento y Logística se identifican ${relacionados.length} peligro(s) asociados, incluyendo colapso de estanterías metálicas (Nivel I), tránsito con transpaletas y manipulación de cargas:`;
+      respuesta = `Para Auxiliares de Bodega, Almacenamiento y Logística tenemos ${relacionados.length} peligro(s) identificados, como estanterías sin atornillar al piso (Nivel I), paso de transpaletas y levantamiento de cajas:`;
     } else if (
       q.includes('mantenimiento') ||
       q.includes('mecanico') ||
@@ -94,10 +94,11 @@ export function RiskAssistantModal({
         (r) =>
           (r.cargo && r.cargo.toLowerCase().includes('mantenimiento')) ||
           (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('mantenimiento')) ||
-          r.peligroDescripcion.toLowerCase().includes('eléctrico') ||
+          r.peligroDescripcion.toLowerCase().includes('eléctr') ||
+          r.peligroDescripcion.toLowerCase().includes('atrapar') ||
           r.peligroDescripcion.toLowerCase().includes('atrapamiento')
       );
-      respuesta = `Para el cargo de Técnico de Mantenimiento Electromecánico se identifican ${relacionados.length} peligro(s) de alta criticidad, principalmente contacto eléctrico con tableros de 220V/440V (Nivel I) y partes en movimiento sin resguardo:`;
+      respuesta = `Para el Técnico de Mantenimiento Electromecánico hay ${relacionados.length} peligro(s) muy importantes, principalmente descargas eléctricas en tableros de 220V/440V (Nivel I) y piezas que giran sin tapa protectora:`;
     } else if (
       q.includes('aseo') ||
       q.includes('limpieza') ||
@@ -110,10 +111,10 @@ export function RiskAssistantModal({
           (r.cargo && r.cargo.toLowerCase().includes('aseo')) ||
           (r.cargo && r.cargo.toLowerCase().includes('limpieza')) ||
           (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('aseo')) ||
-          r.peligroDescripcion.toLowerCase().includes('químico') ||
-          r.peligroDescripcion.toLowerCase().includes('resbaladizas')
+          r.peligroDescripcion.toLowerCase().includes('químic') ||
+          r.peligroDescripcion.toLowerCase().includes('resbal')
       );
-      respuesta = `Para el personal de Auxiliar de Servicios Generales y Limpieza se registran ${relacionados.length} peligro(s), destacando la manipulación de químicos corrosivos (hipoclorito/desengrasantes) y caídas en pisos húmedos:`;
+      respuesta = `Para el equipo de Aseo y Limpieza hay ${relacionados.length} peligro(s) registrados, sobre todo el manejo de químicos fuertes (hipoclorito y desengrasantes) y resbalones en pisos mojados:`;
     } else if (
       q.includes('empaque') ||
       q.includes('seleccion') ||
@@ -125,40 +126,42 @@ export function RiskAssistantModal({
           (r.cargo && r.cargo.toLowerCase().includes('empaque')) ||
           (r.cargo && r.cargo.toLowerCase().includes('selección')) ||
           (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('empaque')) ||
-          r.peligroDescripcion.toLowerCase().includes('repetitivos') ||
-          r.peligroDescripcion.toLowerCase().includes('paletizado')
+          r.peligroDescripcion.toLowerCase().includes('repet') ||
+          r.peligroDescripcion.toLowerCase().includes('paletizado') ||
+          r.peligroDescripcion.toLowerCase().includes('cajas')
       );
-      respuesta = `Para los cargos de Operarios de Selección, Empaque y Paletizado se tienen ${relacionados.length} peligro(s) identificados, concentrados en movimientos repetitivos de miembros superiores y levantamiento manual de cargas:`;
+      respuesta = `Para Operarios de Selección, Empaque y Paletizado hay ${relacionados.length} peligro(s) identificados, enfocados en movimientos repetitivos de manos/muñecas y levantamiento manual de cajas:`;
     } else if (
       q.includes('top cargos') ||
       q.includes('mayor riesgo') ||
       q.includes('mas expuestos') ||
-      q.includes('más expuestos')
+      q.includes('más expuestos') ||
+      q.includes('más cuidado')
     ) {
-      respuesta = `Los puestos de trabajo con mayor exposición a riesgos críticos (Nivel I y II) en Frikaz S.A.S. son:\n1. Operario de Fritura y Cocción (Calor extremo 180°C, conato de incendio).\n2. Técnico de Mantenimiento Electromecánico (Riesgo eléctrico 440V, atrapamiento mecánico).\n3. Operario de Maquinaria y Rebanado (Ruido > 85 dBA continuo).\n4. Auxiliar de Bodega y Almacenamiento (Colapso de estanterías, manipulación de cargas).`;
+      respuesta = `Los puestos de trabajo que necesitan más cuidado en Frikaz S.A.S. (Niveles I y II) son:\n1. Operario de Fritura y Cocción (aceite caliente a 180 °C y riesgo de incendio).\n2. Técnico de Mantenimiento Electromecánico (electricidad a 440V y piezas móviles sin tapa).\n3. Operario de Maquinaria y Rebanado (ruido fuerte continuo mayor a 85 dBA).\n4. Auxiliar de Bodega y Almacenamiento (estanterías sin anclar y levantamiento de peso).`;
       relacionados = dataset.filter((r) => r.interpretacionNR === 'I');
-    } else if (q.includes('ingenieria') || q.includes('ingeniería') || q.includes('guarda') || q.includes('sensor')) {
+    } else if (q.includes('ingenieria') || q.includes('ingeniería') || q.includes('mejoras') || q.includes('guarda') || q.includes('sensor')) {
       relacionados = dataset.filter(
         (r) =>
           r.medidaControlesIngenieria &&
           r.medidaControlesIngenieria !== 'Sin información registrada' &&
           r.medidaControlesIngenieria.toLowerCase() !== 'no aplica'
       );
-      respuesta = `Se han formulado ${relacionados.length} controles de ingeniería prioritarios en la matriz de Frikaz S.A.S. para aislar o eliminar el riesgo técnico:`;
+      respuesta = `Hay ${relacionados.length} mejoras físicas en máquinas e instalaciones (controles de ingeniería) planeadas en Frikaz S.A.S. para proteger a los trabajadores desde la raíz:`;
     } else if (q.includes('biomecanico') || q.includes('biomecánico') || q.includes('ergon') || q.includes('postura') || q.includes('carga')) {
       relacionados = dataset.filter((r) => r.peligroClasificacion === 'Biomecánico');
-      respuesta = `Se registran ${relacionados.length} peligros de clasificación Biomecánica en la planta (levantamiento manual de bultos y cajas, posturas sedentarias en digitación y movimientos repetitivos de selección):`;
+      respuesta = `Tenemos ${relacionados.length} peligros por postura, fuerza o movimientos repetitivos (Biomecánicos): levantar cajas del piso, estar de pie seleccionando y trabajar sentado frente al computador:`;
     } else if (q.includes('quimico') || q.includes('químico') || q.includes('aceite') || q.includes('gas') || q.includes('limpieza')) {
       relacionados = dataset.filter((r) => r.peligroClasificacion === 'Químico');
-      respuesta = `Se registran ${relacionados.length} peligros químicos identificados (productos de desengrase sin etiquetado SGA y soluciones desinfectantes corrosivas):`;
+      respuesta = `Tenemos ${relacionados.length} peligros por sustancias químicas: envases de limpieza sin etiqueta SGA y mezcla de cloro o desengrasantes fuertes:`;
     } else if (q.includes('consecuencia') || q.includes('nc 100') || q.includes('mortal') || q.includes('catastrofico')) {
       relacionados = dataset.filter((r) => r.nivelConsecuencia === 100);
-      respuesta = `Peligros con Nivel de Consecuencia NC = 100 (Mortal o Catastrófico con potencial de invalidez permanente o fatalidad): Se tienen ${relacionados.length} registros:`;
+      respuesta = `Peligros con gravedad máxima (NC = 100, que pueden causar accidentes muy graves o fatales si no se controlan): hay ${relacionados.length} registros:`;
     } else if (q.includes('legal') || q.includes('resolucion') || q.includes('decreto') || q.includes('norma')) {
       relacionados = dataset.filter(
         (r) => r.existenciaRequisitoLegal === 'SÍ' && r.requisitoLegalEspecifico
       );
-      respuesta = `Se cuenta con ${relacionados.length} peligros con requisitos legales obligatorios explícitos (Resolución 2400/1979, Decreto 1072/2015, Resolución 773/2021 de SGA, RETIE):`;
+      respuesta = `Hay ${relacionados.length} peligros respaldados por leyes obligatorias en Colombia (Resolución 2400/1979, Decreto 1072/2015, Resolución 773/2021 de etiquetas químicas SGA, reglamento eléctrico RETIE):`;
     } else {
       // General search across terms
       relacionados = dataset.filter(
@@ -172,9 +175,9 @@ export function RiskAssistantModal({
           r.peligroClasificacion.toLowerCase().includes(q)
       );
       if (relacionados.length > 0) {
-        respuesta = `Se encontraron ${relacionados.length} registros en la matriz relacionados con "${pregunta}":`;
+        respuesta = `Encontré ${relacionados.length} registros en la matriz relacionados con "${pregunta}":`;
       } else {
-        respuesta = `No encontré registros exactos para "${pregunta}". Puedes consultar por puesto de trabajo (Operario de Fritura, Auxiliar de Bodega, Mantenimiento, Aseo), por área de la planta, por clasificación de peligro o por nivel de riesgo (Nivel I, II, III, IV).`;
+        respuesta = `No encontré registros exactos para "${pregunta}". Prueba preguntando por tu puesto (Fritura, Bodega, Mantenimiento, Aseo, Empaque), por lugar de la planta, o por peligros urgentes (Nivel I).`;
       }
     }
 
@@ -198,12 +201,12 @@ export function RiskAssistantModal({
   };
 
   const consultasRapidas = [
-    'Riesgos del Operario de Fritura',
-    'Riesgos del Auxiliar de Bodega',
-    'Riesgos de Mantenimiento Electromecánico',
-    'Peligros Críticos (Nivel I - No Aceptables)',
-    'Top Cargos con Mayor Exposición',
-    'Controles de Ingeniería Formulados',
+    'Peligros del Operario de Fritura',
+    'Peligros de Bodega',
+    'Peligros de Mantenimiento',
+    'Peligros Urgentes (Nivel I)',
+    'Puestos que necesitan más cuidado',
+    'Mejoras físicas en máquinas',
   ];
 
   return (
@@ -217,13 +220,13 @@ export function RiskAssistantModal({
             </div>
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                Asistente Técnico Matriz GTC 45
+                Guía de Consulta Rápida de Peligros
                 <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30 font-semibold">
                   Frikaz S.A.S.
                 </span>
               </h3>
               <p className="text-[11px] text-slate-400">
-                Consultas inmediatas por cargo, área, criticidad y controles GTC 45
+                Pregunta por tu puesto de trabajo, área, peligros urgentes o cómo protegerte
               </p>
             </div>
           </div>
@@ -237,7 +240,7 @@ export function RiskAssistantModal({
 
         {/* Quick query chips */}
         <div className="px-4 py-2.5 bg-slate-950/60 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs">
-          <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Consultas rápidas:</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Preguntas rápidas:</span>
           {consultasRapidas.map((item, idx) => (
             <button
               key={idx}

@@ -80,18 +80,18 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
 
   const nombresCargos: Record<CargoChecklistInterno, { titulo: string; desc: string; icon: React.ReactNode }> = {
     gerente: {
-      titulo: 'Gerente (Alta Dirección)',
-      desc: '7 Necesidades prioritarias de dirección, recursos, cumplimiento legal y bienestar',
+      titulo: 'Gerente (Dirección)',
+      desc: '7 cosas clave sobre presupuesto, cumplimiento de leyes, salud y apoyo a la seguridad',
       icon: <Crown className="h-4 w-4" />,
     },
     operarios: {
       titulo: 'Operarios (Producción y Planta)',
-      desc: '9 Necesidades de maquinaria, EPP térmicos, BPM, pausas y procedimientos seguros de aceite',
+      desc: '9 cosas clave sobre máquinas, guantes para el calor, limpieza (BPM), pausas y freír sin quemaduras',
       icon: <Users className="h-4 w-4" />,
     },
     conductor: {
-      titulo: 'Conductor (Logística y Distribución)',
-      desc: '8 Necesidades de vehículo, seguridad vial, carga ergonómica, descanso y rutas',
+      titulo: 'Conductor (Entregas y Reparto)',
+      desc: '8 cosas clave sobre el carro, manejo seguro, cómo cargar cajas sin dañar la espalda y descansos',
       icon: <Truck className="h-4 w-4" />,
     },
   };
@@ -158,7 +158,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
       pendientes,
       observacionesGenerales:
         nuevasNotasGenerales.trim() ||
-        `Evaluación periódica de necesidades en SST para ${nombresCargos[cargoActivo].titulo}.`,
+        `Revisión periódica de lo que necesita ${nombresCargos[cargoActivo].titulo} para trabajar seguro.`,
     };
 
     const nuevoHistorial = [nuevoRegistro, ...historial];
@@ -208,7 +208,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                       {nombresCargos[c].titulo}
                     </span>
                     <span className={`block text-[10px] ${activo ? 'text-orange-100' : 'text-slate-400'}`}>
-                      {itemsC.length} Necesidades evaluadas
+                      {itemsC.length} puntos revisados
                     </span>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                     {pctC}%
                   </span>
                   <span className={`text-[9px] ${activo ? 'text-orange-200' : 'text-slate-500'}`}>
-                    {cumpC}/{itemsC.length} OK
+                    {cumpC}/{itemsC.length} Listos
                   </span>
                 </div>
               </button>
@@ -232,7 +232,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
         <div className="space-y-1.5 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-extrabold uppercase tracking-wide text-orange-600">
-              Evaluación Activa
+              Lista Activa
             </span>
             <span className="text-slate-300">·</span>
             <h3 className="font-black text-base text-slate-900">
@@ -246,7 +246,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
           {/* Barra de progreso */}
           <div className="pt-2 max-w-xl">
             <div className="flex items-center justify-between text-xs font-bold mb-1">
-              <span className="text-slate-700">Porcentaje de Cumplimiento:</span>
+              <span className="text-slate-700">Qué tanto hemos cumplido:</span>
               <span className="font-mono text-orange-600 font-black">{porcentaje}%</span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden flex">
@@ -289,17 +289,17 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
             type="button"
             onClick={() => setModalNuevaRevisionOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-            title="Registrar corte formal de evaluación en el historial"
+            title="Guardar cómo va esta revisión hoy en el historial"
           >
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span>Registrar Evaluación</span>
+            <span>Guardar Revisión</span>
           </button>
 
           <button
             type="button"
             onClick={() => setModalHistorialOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-            title="Ver historial de seguimiento y revisiones previas"
+            title="Ver revisiones guardadas antes"
           >
             <History className="h-4 w-4 text-slate-500" />
             <span>Historial ({historial.filter((h) => h.cargo === cargoActivo).length})</span>
@@ -310,17 +310,17 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
             onClick={handleDescargarExcel}
             disabled={isExportingExcel}
             className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Descargar este checklist en formato Excel (.xlsx)"
+            title="Descargar esta lista en formato Excel (.xlsx)"
           >
             <FileSpreadsheet className="h-4 w-4" />
-            <span>{isExportingExcel ? 'Generando...' : 'Descargar Excel'}</span>
+            <span>{isExportingExcel ? 'Preparando...' : 'Descargar Excel'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setModalPdfOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-            title="Vista previa e impresión formal en PDF con firmas"
+            title="Ver lista lista para imprimir o guardar en PDF con firmas"
           >
             <Printer className="h-4 w-4" />
             <span>Descargar PDF</span>
@@ -330,12 +330,12 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
 
       {/* Lista interactiva de necesidades */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">
-            Requerimientos Específicos de SST ({total} ítems)
+            Puntos por revisar ({total} en total)
           </span>
           <span className="text-[11px] text-slate-500">
-            Haz clic en los selectores de estado para actualizar o en el icono de lápiz para editar evidencias y responsable
+            Toca el estado (Cumplido, En proceso o Pendiente) para cambiarlo, o el lápiz para editar notas y pruebas
           </span>
         </div>
 
@@ -364,23 +364,23 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                   {/* Observaciones y evidencias */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-0.5">
                     <div className="text-slate-600">
-                      <strong className="text-slate-700">Observación: </strong>
-                      <span>{item.observaciones || 'Sin registrar'}</span>
+                      <strong className="text-slate-700">Nota: </strong>
+                      <span>{item.observaciones || 'Sin notas todavía'}</span>
                     </div>
                     <div className="text-slate-600 flex items-center gap-1 truncate">
                       <Paperclip className="h-3 w-3 text-slate-400 shrink-0" />
-                      <strong className="text-slate-700">Evidencia: </strong>
-                      <span className="truncate italic">{item.evidencias || 'Sin soporte'}</span>
+                      <strong className="text-slate-700">Prueba / soporte: </strong>
+                      <span className="truncate italic">{item.evidencias || 'Sin documento'}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-[10px] text-slate-500 pt-1 font-mono">
                     <span>
-                      <strong>Responsable:</strong> {item.responsable || 'Por asignar'}
+                      <strong>Encargado:</strong> {item.responsable || 'Por definir'}
                     </span>
                     <span>·</span>
                     <span>
-                      <strong>Verificación:</strong> {item.fechaVerificacion || 'Pendiente'}
+                      <strong>Revisado el:</strong> {item.fechaVerificacion || 'Pendiente'}
                     </span>
                   </div>
                 </div>
@@ -451,7 +451,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
               <div className="flex items-center gap-2">
                 <Edit3 className="h-4 w-4 text-orange-400" />
                 <h3 className="font-bold text-xs uppercase tracking-wide">
-                  Editar Detalle de la Necesidad #{itemEnEdicion.numero}
+                  Editar Detalle del Punto #{itemEnEdicion.numero}
                 </h3>
               </div>
               <button
@@ -469,53 +469,53 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Estado de Cumplimiento:</label>
+                <label className="font-bold text-slate-700 block">¿Cómo va este punto?</label>
                 <select
                   value={editEstado}
                   onChange={(e) => setEditEstado(e.target.value as EstadoCumplimientoChecklist)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-bold"
                 >
-                  <option value="Cumplido">Cumplido</option>
-                  <option value="En proceso">En proceso</option>
-                  <option value="Pendiente">Pendiente</option>
+                  <option value="Cumplido">Cumplido (Ya está listo)</option>
+                  <option value="En proceso">En proceso (Se está haciendo)</option>
+                  <option value="Pendiente">Pendiente (Falta hacerlo)</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Observaciones y Diagnóstico:</label>
+                <label className="font-bold text-slate-700 block">Notas y lo que se ha visto en planta:</label>
                 <textarea
                   rows={2}
                   value={editObservaciones}
                   onChange={(e) => setEditObservaciones(e.target.value)}
-                  placeholder="Detalla el estado real del requisito en planta..."
+                  placeholder="Cuenta brevemente cómo está funcionando en la planta o ruta..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Evidencias o Documentos de Soporte:</label>
+                <label className="font-bold text-slate-700 block">Prueba o documento que lo respalda:</label>
                 <input
                   type="text"
                   value={editEvidencias}
                   onChange={(e) => setEditEvidencias(e.target.value)}
-                  placeholder="Ej. Planilla de EPP firmada, certificado de curso, POE..."
+                  placeholder="Ej. Planilla firmada de guantes, foto, certificado del curso..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Responsable Asignado:</label>
+                  <label className="font-bold text-slate-700 block">Quién se encarga:</label>
                   <input
                     type="text"
                     value={editResponsable}
                     onChange={(e) => setEditResponsable(e.target.value)}
-                    placeholder="Ej. Coordinador SST, Gerencia"
+                    placeholder="Ej. Vigía SST, Gerencia"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Fecha de Verificación:</label>
+                  <label className="font-bold text-slate-700 block">Fecha de revisión:</label>
                   <input
                     type="date"
                     value={editFecha}
@@ -554,7 +554,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                 <h3 className="font-bold text-xs uppercase tracking-wide">
-                  Registrar Evaluación en Historial
+                  Guardar Revisión en el Historial
                 </h3>
               </div>
               <button
@@ -569,15 +569,15 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
             <form onSubmit={handleGuardarRevisionHistorial} className="p-5 space-y-3.5 text-xs">
               <div className="p-3 bg-orange-50 rounded-xl border border-orange-200 text-slate-800 space-y-1">
                 <div className="font-bold text-orange-900">
-                  Cargo Evaluado: {nombresCargos[cargoActivo].titulo}
+                  Cargo revisado: {nombresCargos[cargoActivo].titulo}
                 </div>
                 <div className="text-[11px] text-slate-600 font-mono">
-                  Cumplimiento Actual: <strong>{porcentaje}%</strong> ({cumplidas} de {total} cumplidas)
+                  Avance de hoy: <strong>{porcentaje}%</strong> ({cumplidas} de {total} cumplidos)
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Responsable Evaluador: *</label>
+                <label className="font-bold text-slate-700 block">Quién hizo esta revisión: *</label>
                 <input
                   type="text"
                   required
@@ -588,12 +588,12 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Observaciones y Conclusiones:</label>
+                <label className="font-bold text-slate-700 block">Resumen y acuerdos:</label>
                 <textarea
                   rows={3}
                   value={nuevasNotasGenerales}
                   onChange={(e) => setNuevasNotasGenerales(e.target.value)}
-                  placeholder="Resumen del estado, avances logrados y compromisos para el próximo período..."
+                  placeholder="Escribe qué mejoró y qué queda pendiente para la próxima revisión..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
                 />
               </div>
@@ -611,7 +611,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                   className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   <Save className="h-3.5 w-3.5" />
-                  <span>Guardar en Historial</span>
+                  <span>Guardar Revisión</span>
                 </button>
               </div>
             </form>
@@ -627,7 +627,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
               <div className="flex items-center gap-2">
                 <History className="h-4 w-4 text-orange-400" />
                 <h3 className="font-bold text-xs uppercase tracking-wide">
-                  Historial de Seguimiento — {nombresCargos[cargoActivo].titulo}
+                  Revisiones Anteriores — {nombresCargos[cargoActivo].titulo}
                 </h3>
               </div>
               <button
@@ -642,7 +642,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
             <div className="p-5 overflow-y-auto space-y-3 text-xs">
               {historial.filter((h) => h.cargo === cargoActivo).length === 0 ? (
                 <div className="py-8 text-center text-slate-500">
-                  No hay revisiones previas registradas para este cargo.
+                  Todavía no hay revisiones guardadas para este cargo.
                 </div>
               ) : (
                 historial
@@ -663,7 +663,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                           </span>
                         </div>
                         <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-800 font-mono font-bold text-[11px]">
-                          {reg.porcentajeCumplimiento}% Cumplimiento
+                          {reg.porcentajeCumplimiento}% Cumplido
                         </span>
                       </div>
 
@@ -687,7 +687,7 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                 onClick={() => setModalHistorialOpen(false)}
                 className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs cursor-pointer"
               >
-                Cerrar Historial
+                Cerrar
               </button>
             </div>
           </div>

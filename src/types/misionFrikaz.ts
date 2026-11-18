@@ -83,7 +83,13 @@ export interface PoliticaMisionFrikaz {
   // Propiedades de Videojuego
   imagenZona: string;
   sectorPlantaNombre: string;
-  dificultad: 'Nivel 1: Recluta' | 'Nivel 2: Operativo' | 'Nivel 3: Experto';
+  dificultad:
+    | 'Paso 1: Inicio'
+    | 'Paso 2: En Planta y Ruta'
+    | 'Paso 3: Operación Segura'
+    | 'Nivel 1: Recluta'
+    | 'Nivel 2: Operativo'
+    | 'Nivel 3: Experto';
   puntosXp: number;
   dialogoGuiaBienvenida: string;
   hotspots: PeligroHotspot[];

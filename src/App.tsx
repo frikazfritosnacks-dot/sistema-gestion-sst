@@ -103,6 +103,8 @@ export default function App() {
   const [politicasMision, setPoliticasMision] = useState<PoliticaMisionFrikaz[]>(() =>
     getStoredPoliticasMision()
   );
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [normaToDelete, setNormaToDelete] = useState<NormaPhvaItem | null>(null);
 
   // Recalcular pasaporte dinámicamente
   const pasaporte = useMemo(() => {
@@ -172,23 +174,23 @@ export default function App() {
         id: `norma-${Date.now()}`,
         fase: fase || 'PLANEAR',
         subtema: 'DIAGNÓSTICO',
-        tituloSituacion: 'Nueva Obligación Legal / Situación Regulada',
-        normaOficial: 'Resolución / Decreto Nuevo',
-        entidadEmisora: 'Ministerio del Trabajo / SDA Bogotá',
-        articulos: 'Artículos aplicables',
+        tituloSituacion: 'Nueva regla o compromiso de cuidado',
+        normaOficial: 'Resolución o Decreto por revisar',
+        entidadEmisora: 'Ministerio del Trabajo / Secretaría de Ambiente de Bogotá',
+        articulos: 'Artículos principales',
         area: 'SST',
-        descripcion: 'Describa qué regula esta disposición legal colombiana...',
+        descripcion: 'Cuente con palabras sencillas qué exige esta regla para cuidar a los trabajadores o al medio ambiente...',
         importancia:
-          'Explique por qué es crucial para Frikaz S.A.S. (10 trabajadores, freidoras industriales)...',
-        aplicabilidad: 'Indique qué debe hacer la pyme concretamente...',
+          'Explique por qué es importante en Frikaz S.A.S. (por ejemplo, para evitar quemaduras en freidoras, caídas o multas)...',
+        aplicabilidad: 'Indique qué debemos hacer en el día a día dentro de la planta...',
         vigente: true,
-        textoVigencia: 'Vigente en la normativa colombiana (SUIN-Juriscol).',
-        jurisdiccionAlcance: 'Nacional y Distrital (Bogotá D.C.).',
-        evidenciaCumplimiento: 'Acta, registro o procedimiento documentado.',
+        textoVigencia: 'Regla vigente hoy en Colombia.',
+        jurisdiccionAlcance: 'Aplica en toda Colombia y en Bogotá D.C.',
+        evidenciaCumplimiento: 'Acta firmada, foto, planilla o documento guardado.',
         estado: 'NO_CUMPLE',
-        responsable: 'Responsable SG-SST',
+        responsable: 'Encargado de SST (Seguridad y Salud en el Trabajo)',
         fechaVerificacion: new Date().toISOString().split('T')[0],
-        observaciones: 'Obligación ingresada para seguimiento normativo.',
+        observaciones: 'Nueva regla agregada para hacerle seguimiento.',
       };
       const updated = [newNorm, ...items];
       savePhvaNorms(updated);
@@ -212,18 +214,17 @@ export default function App() {
     [selectedNorma]
   );
 
-  // Reset to default seed
+  // Reset to default seed (opens inline confirmation modal)
   const handleReset = useCallback(() => {
-    if (
-      window.confirm(
-        '¿Desea restaurar las 21 normas obligatorias iniciales de Frikaz S.A.S.? Esta acción devolverá los textos y evidencias a los valores predeterminados.'
-      )
-    ) {
-      const defaultItems = resetPhvaNormsToDefault();
-      setItems(defaultItems);
-      setSelectedNorma(null);
-      setIsModalOpen(false);
-    }
+    setConfirmResetOpen(true);
+  }, []);
+
+  const confirmResetNorms = useCallback(() => {
+    const defaultItems = resetPhvaNormsToDefault();
+    setItems(defaultItems);
+    setSelectedNorma(null);
+    setIsModalOpen(false);
+    setConfirmResetOpen(false);
   }, []);
 
   // Open modal in read-only or edit mode
@@ -360,7 +361,7 @@ export default function App() {
             <button
               onClick={() => setIsWorkerSelectorOpen(true)}
               className="flex items-center gap-2 hover:text-white transition-colors group"
-              title="Cambiar de colaborador o modo de sesión"
+              title="Cambiar de compañero o de perfil"
             >
               <GameAvatar
                 cargoNombre={currentWorker.cargoNombre}
@@ -379,7 +380,7 @@ export default function App() {
 
             {isAdminMode && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
-                MODO SUPERVISOR ACTIVO
+                MODO ENCARGADO ACTIVO
               </span>
             )}
           </div>
@@ -403,7 +404,7 @@ export default function App() {
               className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Award className="w-3.5 h-3.5 text-amber-400" />
-              <span>Pasaporte ({pasaporte.porcentajeAvance}%)</span>
+              <span>Mi Pasaporte ({pasaporte.porcentajeAvance}%)</span>
             </button>
 
             {/* Botón de Panel Admin SST */}
@@ -412,7 +413,7 @@ export default function App() {
               className="px-2.5 py-1 rounded-lg bg-purple-950/60 hover:bg-purple-900 text-purple-200 border border-purple-500/40 font-semibold flex items-center gap-1.5 transition-colors"
             >
               <KeyRound className="w-3.5 h-3.5 text-purple-400" />
-              <span className="hidden sm:inline">Panel Admin SST</span>
+              <span className="hidden sm:inline">Control SST</span>
             </button>
           </div>
         </div>
@@ -435,11 +436,11 @@ export default function App() {
                     Frikaz S.A.S.
                   </h1>
                   <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f97316] text-white">
-                    Pyme Fritos
+                    Planta de Fritos
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 hidden sm:block">
-                  Gestión Normativa SST y Ambiental • Bosa, Bogotá D.C.
+                  Seguridad en el Trabajo (SST) y Cuidado Ambiental • Bosa, Bogotá D.C.
                 </p>
               </div>
             </div>
@@ -467,7 +468,7 @@ export default function App() {
                 }`}
               >
                 <TableProperties className="h-3.5 w-3.5" />
-                <span>Matriz Completa</span>
+                <span>Normas y Reglas</span>
               </button>
 
               <button
@@ -479,7 +480,7 @@ export default function App() {
                 }`}
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-300" />
-                <span>Matriz Excel</span>
+                <span>Tabla Excel</span>
               </button>
 
               <button
@@ -491,7 +492,7 @@ export default function App() {
                 }`}
               >
                 <SlidersHorizontal className="h-3.5 w-3.5 text-purple-300" />
-                <span>Configuración Dinámica</span>
+                <span>Mi Empresa</span>
               </button>
 
               <button
@@ -503,7 +504,7 @@ export default function App() {
                 }`}
               >
                 <ShieldAlert className="h-3.5 w-3.5 text-rose-300" />
-                <span>Matriz de Riesgos</span>
+                <span>Riesgos del Trabajo</span>
               </button>
             </nav>
 
@@ -512,7 +513,7 @@ export default function App() {
               <GoogleWorkspaceAuthButton compact={true} />
 
               <div className="hidden lg:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs">
-                <span className="text-slate-400">Cumplimiento:</span>
+                <span className="text-slate-400">Avance:</span>
                 <span
                   className={`font-black ${
                     indicadores.generalPorcentaje >= 70
@@ -526,7 +527,7 @@ export default function App() {
                 </span>
                 <span className="text-slate-500">•</span>
                 <span className="text-slate-300 font-medium">
-                  {indicadores.totalNormas} normas
+                  {indicadores.totalNormas} reglas
                 </span>
               </div>
 
@@ -542,7 +543,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Menú Móvil Desplegable */}
+            {/* Menú Móvil Desplegable */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#0f172a] border-t border-slate-800 px-4 pt-2 pb-4 space-y-1">
             <button
@@ -567,7 +568,7 @@ export default function App() {
               }`}
             >
               <TableProperties className="h-4 w-4" />
-              <span>Matriz Completa</span>
+              <span>Normas y Reglas</span>
             </button>
             <button
               onClick={() => {
@@ -579,7 +580,7 @@ export default function App() {
               }`}
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-300" />
-              <span>Matriz Excel</span>
+              <span>Tabla Excel</span>
             </button>
             <button
               onClick={() => {
@@ -591,7 +592,7 @@ export default function App() {
               }`}
             >
               <SlidersHorizontal className="h-4 w-4 text-purple-300" />
-              <span>Configuración Dinámica</span>
+              <span>Mi Empresa</span>
             </button>
             <button
               onClick={() => {
@@ -603,7 +604,7 @@ export default function App() {
               }`}
             >
               <ShieldAlert className="h-4 w-4 text-rose-300" />
-              <span>Matriz de Riesgos</span>
+              <span>Riesgos del Trabajo</span>
             </button>
           </div>
         )}
@@ -636,12 +637,12 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-bold text-[#0f172a]">
                     {presentationConfig.matrizTabla?.titulo ||
-                      'Matriz Normativa Completa de Requisitos Legales'}
+                      'Lista Completa de Reglas y Obligaciones'}
                   </h2>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {presentationConfig.matrizTabla?.descripcion ||
-                    `Total de ${items.length} disposiciones legales colombianas vigentes aplicables a Frikaz S.A.S.`}
+                    `Aquí puedes ver las ${items.length} reglas de seguridad y cuidado ambiental que aplican hoy a Frikaz S.A.S.`}
                 </p>
               </div>
 
@@ -651,7 +652,7 @@ export default function App() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#f97316] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#ea580c] transition-colors shadow-xs"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>+ Agregar Norma</span>
+                  <span>Agregar regla</span>
                 </button>
               </div>
             </div>
@@ -664,21 +665,21 @@ export default function App() {
                   type="text"
                   value={searchTermMatriz}
                   onChange={(e) => setSearchTermMatriz(e.target.value)}
-                  placeholder="Buscar norma, artículo o situación..."
+                  placeholder="Buscar por tema, ley o artículo..."
                   className="w-full rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 text-xs focus:border-[#0f172a] focus:outline-hidden"
                 />
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="font-bold text-slate-600">Área:</span>
+                <span className="font-bold text-slate-600">Tema:</span>
                 <select
                   value={areaFilterMatriz}
                   onChange={(e) => setAreaFilterMatriz(e.target.value as any)}
                   className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white"
                 >
-                  <option value="TODAS">Todas</option>
-                  <option value="SST">Solo SST</option>
-                  <option value="AMBIENTAL">Solo Ambiental</option>
+                  <option value="TODAS">Todos los temas</option>
+                  <option value="SST">Seguridad y Salud (SST)</option>
+                  <option value="AMBIENTAL">Cuidado Ambiental</option>
                 </select>
               </div>
             </div>
@@ -688,14 +689,14 @@ export default function App() {
                 <table className="w-full text-left text-xs text-slate-700">
                   <thead className="border-b-2 border-[#0f172a] bg-[#0f172a] text-white text-[11px] font-bold uppercase tracking-wider">
                     <tr>
-                      <th className="px-4 py-3">Fase PHVA</th>
-                      <th className="px-4 py-3">Situación Regulada</th>
-                      <th className="px-4 py-3">Disposición Oficial</th>
+                      <th className="px-4 py-3">Etapa PHVA</th>
+                      <th className="px-4 py-3">Qué debemos cuidar o hacer</th>
+                      <th className="px-4 py-3">Ley o Norma</th>
                       <th className="px-4 py-3">Artículos</th>
-                      <th className="px-4 py-3">Área</th>
+                      <th className="px-4 py-3">Tema</th>
                       <th className="px-4 py-3">Vigencia</th>
-                      <th className="px-4 py-3">Estado</th>
-                      <th className="px-4 py-3 text-right">Acciones de Edición</th>
+                      <th className="px-4 py-3">Cómo vamos</th>
+                      <th className="px-4 py-3 text-right">Opciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -772,17 +773,9 @@ export default function App() {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  if (
-                                    window.confirm(
-                                      `¿Eliminar la norma "${it.tituloSituacion}" de la matriz?`
-                                    )
-                                  ) {
-                                    handleDeleteNorma(it.id);
-                                  }
-                                }}
+                                onClick={() => setNormaToDelete(it)}
                                 className="p-1 rounded-md text-slate-400 hover:text-[#991b1b] hover:bg-red-50"
-                                title="Eliminar norma"
+                                title="Quitar esta regla"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -799,7 +792,7 @@ export default function App() {
 
         {/* VIEW 3: CONFIGURACIÓN DINÁMICA DE LA EMPRESA */}
         {activeTab === 'ficha_empresa' && (
-          <ErrorBoundary fallbackTitle="Configuración Dinámica — Frikaz S.A.S.">
+          <ErrorBoundary fallbackTitle="Datos de la Empresa — Frikaz S.A.S.">
             <ConfiguracionDinamicaEmpresaView
               normas={items}
               indicadores={indicadores}
@@ -876,6 +869,83 @@ export default function App() {
           }
         }}
       />
+
+      {/* MODAL DE CONFIRMACIÓN PARA RESTAURAR NORMAS INICIALES */}
+      {confirmResetOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  ¿Volver a las reglas iniciales?
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Si confirma, volverán a aparecer las 21 reglas iniciales de Frikaz S.A.S. con sus textos y pruebas de ejemplo originales.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmResetOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetNorms}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer"
+              >
+                Sí, volver a las iniciales
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN PARA ELIMINAR UNA NORMA */}
+      {normaToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-100 text-rose-700 shrink-0">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  ¿Quitar esta regla de la lista?
+                </h3>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Está por quitar <strong className="text-slate-900">«{normaToDelete.tituloSituacion}»</strong>. Si fue un error, puede cancelar ahora.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setNormaToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleDeleteNorma(normaToDelete.id);
+                  setNormaToDelete(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
+              >
+                Sí, quitar regla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

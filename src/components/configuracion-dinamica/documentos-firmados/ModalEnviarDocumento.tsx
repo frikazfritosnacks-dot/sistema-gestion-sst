@@ -117,36 +117,44 @@ export const ModalEnviarDocumento: React.FC<ModalEnviarDocumentoProps> = ({
     }
   };
 
-  // Textos oficiales requeridos por las directrices de Frikaz S.A.S.
+  // Textos claros y cercanos para los trabajadores de Frikaz S.A.S.
   const asuntoDefecto =
     tipoDocumento === 'responsabilidades'
-      ? 'Responsabilidades correspondientes a su cargo – Frikaz S.A.S.'
-      : 'Envío de política institucional – Frikaz S.A.S.';
+      ? 'Tus responsabilidades de seguridad en el trabajo – Frikaz S.A.S.'
+      : 'Compromiso de Seguridad y Salud (Política SST) – Frikaz S.A.S.';
 
   const cuerpoDefecto =
     tipoDocumento === 'responsabilidades'
-      ? `Estimado(a) trabajador(a),
+      ? `Hola, compañero(a):
 
-Adjunto a este correo encontrará el documento formal que describe las responsabilidades y compromisos en materia de Seguridad y Salud en el Trabajo (SG-SST) correspondientes a su cargo (${tituloEntidad}) dentro de la empresa Frikaz S.A.S.
+En este archivo te enviamos los cuidados y responsabilidades de seguridad (SG-SST) para tu puesto (${tituloEntidad}) en Frikaz S.A.S.
 
-Por favor proceda a revisarlo detenidamente, firmarlo en señal de conocimiento y conformidad, y responder a este mismo correo adjuntando el documento debidamente firmado para su custodia y registro documental en la carpeta digital de talento humano.
+¿Qué debes hacer con este documento?
+1. Ábrelo y léelo con calma para saber cómo cuidarte y prevenir accidentes en tu turno.
+2. Escribe tu nombre, número de cédula y fírmalo (puedes imprimirlo y tomarle una foto clara, o firmarlo en el archivo).
+3. Responde a este mismo correo enviando el documento ya firmado para guardarlo en tu carpeta de trabajador.
 
-Atentamente,
-Gestión del Talento Humano y SG-SST
-Frikaz S.A.S.
-Sede Bosa, Bogotá D.C.
-Correo institucional: ${CUENTA_INSTITUCIONAL}`
-      : `Estimado(a) trabajador(a),
+Si tienes alguna duda sobre cómo firmarlo o no entiendes algún punto, pregúntale con confianza al Vigía de SST o a tu jefe de planta.
 
-Adjunto a este correo encontrará la política institucional de Seguridad y Salud en el Trabajo de la empresa Frikaz S.A.S.
+Un saludo cordial,
+Equipo de Seguridad y Salud en el Trabajo (SG-SST)
+Frikaz S.A.S. — Planta Bosa, Bogotá D.C.
+Correo de contacto: ${CUENTA_INSTITUCIONAL}`
+      : `Hola, compañero(a):
 
-Por favor revise su contenido, fírmela en señal de compromiso y devuelva este correo con el documento firmado para su correspondiente archivo dentro del Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST).
+Te compartimos nuestro compromiso de Seguridad y Salud en el Trabajo (Política SST) de Frikaz S.A.S., donde explicamos cómo entre todos cuidamos la vida, la salud y la limpieza en la planta.
 
-Atentamente,
-Gestión del Talento Humano y SG-SST
-Frikaz S.A.S.
-Sede Bosa, Bogotá D.C.
-Correo institucional: ${CUENTA_INSTITUCIONAL}`;
+¿Qué debes hacer?
+1. Léelo con atención para conocer nuestras reglas de cuidado y prevención.
+2. Escribe tu nombre, cédula y fírmalo como señal de que lo conoces.
+3. Responde a este correo adjuntando el documento firmado para guardarlo en el archivo de la empresa.
+
+Cualquier pregunta, acércate al Vigía de SST o a la oficina.
+
+Un saludo cordial,
+Equipo de Seguridad y Salud en el Trabajo (SG-SST)
+Frikaz S.A.S. — Planta Bosa, Bogotá D.C.
+Correo de contacto: ${CUENTA_INSTITUCIONAL}`;
 
   const [asunto, setAsunto] = useState(asuntoDefecto);
   const [cuerpo, setCuerpo] = useState(cuerpoDefecto);
@@ -166,12 +174,12 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
 
     const emailLimpio = correoTrabajador.trim();
     if (!emailLimpio) {
-      setErrorDetallado('Por favor escriba el correo electrónico del trabajador.');
+      setErrorDetallado('Por favor escribe el correo electrónico del trabajador.');
       setEstadoOperacional('Error en el envío');
       return;
     }
     if (!validarEmail(emailLimpio)) {
-      setErrorDetallado('Por favor ingrese un correo electrónico válido (ejemplo: usuario@dominio.com).');
+      setErrorDetallado('Ese correo no parece válido. Revisa que tenga @ y dominio (ejemplo: nombre@gmail.com).');
       setEstadoOperacional('Error en el envío');
       return;
     }
@@ -236,12 +244,12 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             token = signResult.accessToken;
             setGoogleUser(signResult.user);
           } else {
-            setErrorDetallado('Se requiere autorización de Google para enviar vía Gmail.');
+            setErrorDetallado('Primero debes autorizar tu cuenta de Google para poder enviar por Gmail.');
             setEstadoOperacional('Error en el envío');
             return;
           }
         } catch (err: any) {
-          setErrorDetallado(`Error de autenticación Google: ${err.message || err}`);
+          setErrorDetallado(`No pudimos iniciar sesión con Google: ${err.message || err}`);
           setEstadoOperacional('Error en el envío');
           return;
         }
@@ -277,7 +285,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             status: 'Enviado correctamente al proveedor',
             messageId: resGmail.messageId,
             trackingCode: envioId,
-            details: `Enviado directamente mediante Google Workspace Gmail API desde ${googleUser?.email || CUENTA_INSTITUCIONAL}. Thread ID: ${resGmail.threadId}`,
+            details: `Correo enviado desde ${googleUser?.email || CUENTA_INSTITUCIONAL} usando Gmail.`,
           };
 
           setResultadoEnvio(resp);
@@ -288,11 +296,11 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
           }
         } else {
           setEstadoOperacional('Error en el envío');
-          setErrorDetallado(resGmail.error || resGmail.details || 'Error desconocido al enviar por Gmail API.');
+          setErrorDetallado(resGmail.error || resGmail.details || 'No se pudo enviar el correo por Gmail.');
         }
       } catch (errGmail: any) {
         setEstadoOperacional('Error en el envío');
-        setErrorDetallado(`Error en Gmail API: ${errGmail.message || errGmail}`);
+        setErrorDetallado(`Problema al enviar por Gmail: ${errGmail.message || errGmail}`);
       }
       return;
     }
@@ -363,19 +371,19 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-300 border border-orange-500/30">
-                  Despacho Real Gmail API / SMTP
+                  Envío Real por Correo
                 </span>
                 <span className="text-xs text-slate-400">
-                  {tipoDocumento === 'responsabilidades' ? 'Organigrama' : 'Políticas SST'}
+                  {tipoDocumento === 'responsabilidades' ? 'Roles y Cuidados del Cargo' : 'Compromiso de Seguridad'}
                 </span>
               </div>
               <h3 className="text-xl font-black text-white mt-1">
                 {tipoDocumento === 'responsabilidades'
-                  ? 'Enviar responsabilidades por correo real'
-                  : 'Enviar política institucional por correo real'}
+                  ? 'Enviar documento del cargo por correo'
+                  : 'Enviar compromiso de seguridad por correo'}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Despacho verificado sin simulaciones ficticias desde {CUENTA_INSTITUCIONAL}
+                Se envía de verdad desde {CUENTA_INSTITUCIONAL} con el archivo Word listo para firmar
               </p>
             </div>
           </div>
@@ -393,7 +401,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
         <div className="px-6 py-2.5 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between text-xs">
           <span className="text-slate-400 flex items-center gap-1.5 font-medium">
             <Server className="h-3.5 w-3.5 text-slate-400" />
-            Estado operacional:
+            Estado del envío:
           </span>
           <span
             className={`font-bold px-2.5 py-0.5 rounded-full text-[11px] border flex items-center gap-1.5 ${
@@ -428,12 +436,12 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
                 <Mail className="h-4 w-4 text-sky-400" />
-                Canal de despacho de correo:
+                ¿Por qué medio deseas enviar el correo?
               </span>
               {googleUser ? (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span>Gmail: {googleUser.email}</span>
+                  <span>Gmail conectado: {googleUser.email}</span>
                 </span>
               ) : (
                 <button
@@ -476,13 +484,13 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">Gmail API (Google Workspace)</span>
+                  <span className="font-bold text-xs text-white">Cuenta Gmail (Más fácil)</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-mono">
                     Recomendado
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Envío oficial directo mediante la API de Google con adjunto Word.
+                  Envía directo desde Gmail con el archivo Word adjunto.
                 </p>
               </button>
 
@@ -496,13 +504,13 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">Servidor SMTP Backend</span>
+                  <span className="font-bold text-xs text-white">Servidor Interno (SMTP)</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono">
-                    Nodemailer
+                    Alterno
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Despacho mediante servidor SMTP configurado con contraseña de aplicación.
+                  Envío automático usando el servidor configurado de correo.
                 </p>
               </button>
             </div>
@@ -515,7 +523,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                 <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <span className="font-bold text-rose-100">
-                    No se completó el envío real del correo electrónico:
+                    No se pudo enviar el correo:
                   </span>
                   <p className="text-rose-200 leading-relaxed font-mono text-[11px]">{errorDetallado}</p>
                 </div>
@@ -525,7 +533,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                 <div className="mt-2 pt-2 border-t border-rose-800/60 bg-rose-950/50 p-2.5 rounded-xl space-y-1">
                   <span className="font-bold text-rose-200 flex items-center gap-1.5">
                     <Info className="h-3.5 w-3.5 text-rose-300" />
-                    Variables de entorno SMTP requeridas en el servidor:
+                    Falta configurar estos datos en el servidor de correo:
                   </span>
                   <ul className="list-disc list-inside text-[11px] text-rose-300 space-y-0.5 font-mono">
                     {missingVars.map((v, idx) => (
@@ -533,7 +541,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                     ))}
                   </ul>
                   <p className="text-[10px] text-rose-300/80 pt-1">
-                    Consejo: También puede seleccionar "Gmail API (Google Workspace)" arriba para enviar directamente con su cuenta Google sin configurar SMTP.
+                    Consejo: Es más fácil elegir &quot;Cuenta Gmail&quot; arriba y conectar tu correo en un clic.
                   </p>
                 </div>
               )}
@@ -547,17 +555,12 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                 <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h4 className="font-bold text-emerald-100 text-sm">
-                    ¡Correo enviado exitosamente al proveedor de correo!
+                    ¡Correo enviado con éxito!
                   </h4>
                   <p className="text-emerald-200 leading-relaxed">
-                    El mensaje fue aceptado por el servidor de correo ({canalEnvio === 'gmail' ? 'Google Workspace Gmail API' : 'SMTP Server'}) y despachado hacia{' '}
+                    El mensaje salió correctamente ({canalEnvio === 'gmail' ? 'por Gmail' : 'por el servidor de correo'}) hacia{' '}
                     <strong className="text-white">{correoTrabajador}</strong>.
                   </p>
-                  {resultadoEnvio.messageId && (
-                    <p className="text-[11px] font-mono text-emerald-300">
-                      Message-ID: {resultadoEnvio.messageId}
-                    </p>
-                  )}
                   {resultadoEnvio.trackingCode && (
                     <p className="text-[11px] font-mono text-emerald-300">
                       Código de seguimiento: {resultadoEnvio.trackingCode}
@@ -578,7 +581,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400 flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                <span>Cargo / Asunto seleccionado:</span>
+                <span>Cargo o documento seleccionado:</span>
               </span>
               <span className="font-bold text-white bg-slate-800 px-2.5 py-1 rounded-lg">
                 {tituloEntidad}
@@ -588,7 +591,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             <div className="flex items-center justify-between text-xs border-t border-slate-800/80 pt-2.5">
               <span className="text-slate-400 flex items-center gap-1.5">
                 <Paperclip className="h-4 w-4 text-orange-400" />
-                <span>Documento Word (.docx) adjunto:</span>
+                <span>Archivo Word (.docx) que va adjunto:</span>
               </span>
               <span className="font-mono text-[11px] text-orange-300 bg-orange-950/40 px-2.5 py-1 rounded-lg border border-orange-500/30">
                 {nombreDocumentoAdjunto}
@@ -598,7 +601,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
             <div className="flex items-center justify-between text-xs border-t border-slate-800/80 pt-2.5">
               <span className="text-slate-400 flex items-center gap-1.5">
                 <Building2 className="h-4 w-4 text-purple-400" />
-                <span>Cuenta remitente:</span>
+                <span>Correo desde el que sale:</span>
               </span>
               <span className="font-mono text-xs text-emerald-400 font-semibold bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-500/30">
                 {canalEnvio === 'gmail' && googleUser?.email ? googleUser.email : CUENTA_INSTITUCIONAL}
@@ -610,7 +613,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Nombre del trabajador destinatario:
+                Nombre del trabajador que recibe:
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -619,7 +622,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                   disabled={estadoOperacional === 'Enviando'}
                   value={nombreTrabajador}
                   onChange={(e) => setNombreTrabajador(e.target.value)}
-                  placeholder="Ej. Colaborador: Operario de Frito"
+                  placeholder="Ej. Juan Pérez - Operario de Frito"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
               </div>
@@ -637,7 +640,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                   disabled={estadoOperacional === 'Enviando'}
                   value={correoTrabajador}
                   onChange={(e) => setCorreoTrabajador(e.target.value)}
-                  placeholder="trabajador@gmail.com / empleado@frikaz.co"
+                  placeholder="trabajador@gmail.com"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors disabled:opacity-60"
                 />
               </div>
@@ -647,7 +650,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
           {/* Asunto del Correo */}
           <div>
             <label className="block text-xs font-bold text-slate-300 mb-1.5">
-              Asunto del correo (Incluye tracking id oficial):
+              Título o asunto del correo:
             </label>
             <input
               type="text"
@@ -662,9 +665,9 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-bold text-slate-300">
-                Cuerpo del mensaje institucional:
+                Mensaje para el trabajador:
               </label>
-              <span className="text-[10px] text-slate-400">Instrucciones claras de firma y devolución</span>
+              <span className="text-[10px] text-slate-400">Explica paso a paso cómo firmar y responder</span>
             </div>
             <textarea
               rows={6}
@@ -694,7 +697,7 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                   className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-amber-500/40 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Reintentar envío</span>
+                  <span>Intentar de nuevo</span>
                 </button>
               )}
 
@@ -707,13 +710,13 @@ Correo institucional: ${CUENTA_INSTITUCIONAL}`;
                   {estadoOperacional === 'Enviando' ? (
                     <>
                       <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>{generandoAdjunto ? 'Generando Word adjunto...' : 'Despachando correo real...'}</span>
+                      <span>{generandoAdjunto ? 'Preparando archivo Word...' : 'Enviando correo...'}</span>
                     </>
                   ) : (
                     <>
                       <Send className="h-4 w-4" />
                       <span>
-                        Confirmar y enviar por {canalEnvio === 'gmail' ? 'Gmail' : 'SMTP'}
+                        Enviar por {canalEnvio === 'gmail' ? 'Gmail' : 'Servidor'}
                       </span>
                     </>
                   )}

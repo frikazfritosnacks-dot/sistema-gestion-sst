@@ -569,8 +569,8 @@ misionRouter.post('/evaluar', async (req, res) => {
   return res.json({
     success: true,
     message: registro.aprobado
-      ? `¡Felicitaciones! Has superado la misión de ${registro.politicaTitulo} con ${registro.puntaje}% de efectividad.`
-      : `Misión no superada (${registro.puntaje}%). Se requiere mínimo 80% para desbloquear la insignia. Repasa el material y reinténtalo.`,
+      ? `¡Felicitaciones! Completaste el recorrido de "${registro.politicaTitulo}" con ${registro.puntaje}% de aciertos.`
+      : `Obtuviste ${registro.puntaje}%. Necesitas al menos 80% para ganar el sello. Repasa los consejos y vuelve a intentar.`,
     aprobado: registro.aprobado,
     puntaje: registro.puntaje,
     sincronizadoGoogleSheets: registro.sincronizadoGoogleSheets,
@@ -702,8 +702,8 @@ misionRouter.all('/validar-acceso', (req, res) => {
     misionesPendientes,
     politicasSuperadas: Array.from(politicasSuperadas),
     mensaje: accesoAutorizado
-      ? 'Acceso plenamente autorizado a la plataforma SG-SST Frikaz S.A.S.'
-      : `Acceso restringido: El colaborador tiene ${misionesPendientes.length} misión(es) obligatoria(s) pendiente(s) por superar con mínimo 80%.`,
+      ? 'Ya puedes usar toda la plataforma de seguridad de Frikaz S.A.S.'
+      : `Tienes ${misionesPendientes.length} recorrido(s) obligatorio(s) por completar con mínimo 80% antes de continuar.`,
   });
 });
 

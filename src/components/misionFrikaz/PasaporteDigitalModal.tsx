@@ -58,14 +58,14 @@ export const PasaporteDigitalModal: React.FC<PasaporteDigitalModalProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-amber-400">FRIKAZ S.A.S.</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
-                  SG-SST ACREDITACIÓN
+                  CARNÉ DE SEGURIDAD
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                 PASAPORTE DIGITAL DE SEGURIDAD
               </h2>
               <p className="text-xs text-slate-400">
-                Registro oficial de competencias y acreditación de políticas institucionales
+                Aquí ves las capacitaciones y sellos de seguridad que ya completaste
               </p>
             </div>
           </div>
@@ -127,7 +127,7 @@ export const PasaporteDigitalModal: React.FC<PasaporteDigitalModalProps> = ({
                   <span className="text-white font-semibold truncate block">{trabajador.correo}</span>
                 </div>
                 <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
-                  <span className="text-slate-400 block font-medium">Estado de Acreditación:</span>
+                  <span className="text-slate-400 block font-medium">Estado de tu avance:</span>
                   <span
                     className={`font-bold inline-flex items-center gap-1.5 ${
                       esEmbajadorFrikaz ? 'text-emerald-400' : 'text-amber-400'
@@ -149,7 +149,7 @@ export const PasaporteDigitalModal: React.FC<PasaporteDigitalModalProps> = ({
               {/* Barra de Progreso */}
               <div>
                 <div className="flex justify-between items-center text-xs mb-1.5 font-semibold">
-                  <span className="text-slate-300">Progreso de Políticas Obligatorias:</span>
+                  <span className="text-slate-300">Avance en las reglas obligatorias:</span>
                   <span className="text-amber-400">{porcentajeAvance}% de 100%</span>
                 </div>
                 <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
@@ -187,19 +187,19 @@ export const PasaporteDigitalModal: React.FC<PasaporteDigitalModalProps> = ({
               <div className="text-center sm:text-left flex-1">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
                   <span className="text-xs font-black px-2.5 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                    GRAN DISTINCIÓN CORPORATIVA
+                    RECONOCIMIENTO ESPECIAL FRIKAZ
                   </span>
                   {esEmbajadorFrikaz && (
                     <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> ACREDITACIÓN OFICIAL ACTIVA
+                      <CheckCircle2 className="w-3.5 h-3.5" /> SELLO ACTIVO
                     </span>
                   )}
                 </div>
                 <h4 className="text-xl font-black text-white">EMBAJADOR FRIKAZ DE LA SEGURIDAD</h4>
                 <p className="text-xs text-slate-300 mt-1 max-w-xl">
                   {esEmbajadorFrikaz
-                    ? '¡Felicitaciones! Has demostrado conocimiento riguroso, actitud preventiva y compromiso irrestricto con la protección de la vida y el SG-SST de Frikaz S.A.S.'
-                    : 'Supera con puntaje igual o superior al 80% todas las políticas obligatorias de la empresa para desbloquear este sello supremo y el acceso ilimitado a la plataforma.'}
+                    ? '¡Felicitaciones! Ya conoces las reglas clave para cuidarte, prevenir accidentes y proteger a tus compañeros en Frikaz S.A.S.'
+                    : 'Responde bien al menos el 80% de cada recorrido obligatorio para ganar este sello y entrar sin restricciones a toda la plataforma.'}
                 </p>
               </div>
             </div>
@@ -209,7 +209,7 @@ export const PasaporteDigitalModal: React.FC<PasaporteDigitalModalProps> = ({
           <div>
             <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
               <Building2 className="w-4 h-4 text-amber-400" />
-              Políticas y Protocolos Acreditados
+              Tus Sellos y Reglas de Seguridad
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -321,7 +321,7 @@ export const PasaporteDigitalModal: React.FC<PasaporteDigitalModalProps> = ({
             <span>Frikaz S.A.S. · NIT 901.842.110 · Sede Bosa, Bogotá D.C.</span>
           </div>
           <p className="text-[11px] text-slate-500">
-            Acreditación certificada bajo Decreto 1072/2015 y Res. 0312/2019
+            Registro de capacitación en seguridad (Decreto 1072 de 2015 y Res. 0312 de 2019)
           </p>
         </div>
 

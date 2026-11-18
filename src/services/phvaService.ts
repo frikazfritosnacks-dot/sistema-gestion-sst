@@ -8,15 +8,39 @@ import {
 import { INITIAL_PHVA_NORMS } from '../data/phvaNormsData';
 
 const STORAGE_KEY = 'frikaz_phva_evidence_items_v3_74normas';
+const PLAIN_LANG_FLAG = 'frikaz_phva_plain_lang_v1';
 
 export function getPhvaNorms(): NormaPhvaItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_PHVA_NORMS));
+      localStorage.setItem(PLAIN_LANG_FLAG, '1');
       return INITIAL_PHVA_NORMS;
     }
     const parsed = JSON.parse(raw) as NormaPhvaItem[];
+    const migrated = localStorage.getItem(PLAIN_LANG_FLAG);
+
+    if (!migrated) {
+      const userMap = new Map(parsed.map((it) => [it.id, it]));
+      const defaultsById = new Set(INITIAL_PHVA_NORMS.map((d) => d.id));
+      const refreshedCanonical = INITIAL_PHVA_NORMS.map((def) => {
+        const existing = userMap.get(def.id);
+        if (!existing) return def;
+        return {
+          ...def,
+          estado: existing.estado,
+          fechaVerificacion: existing.fechaVerificacion || def.fechaVerificacion,
+          responsable: existing.responsable || def.responsable,
+        };
+      });
+      const customItems = parsed.filter((it) => !defaultsById.has(it.id));
+      const merged = [...refreshedCanonical, ...customItems];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      localStorage.setItem(PLAIN_LANG_FLAG, '1');
+      return merged;
+    }
+
     if (parsed.length < INITIAL_PHVA_NORMS.length) {
       const map = new Map(parsed.map((it) => [it.id, it]));
       const merged = INITIAL_PHVA_NORMS.map((def) => map.get(def.id) || def);
@@ -33,6 +57,9 @@ export function getPhvaNorms(): NormaPhvaItem[] {
 export function savePhvaNorms(items: NormaPhvaItem[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('frikaz:norms-updated'));
+    }
   } catch (err) {
     console.error('Error saving phva norms to localStorage', err);
   }
@@ -185,22 +212,22 @@ export function exportarMatrizPhvaCsv(items: NormaPhvaItem[]): void {
     [],
     [
       'FASE PHVA',
-      'SUBTEMA / COMPONENTE',
-      'SITUACIÓN QUE REGULA LA PYME',
-      'DISPOSICIÓN LEGAL OFICIAL',
-      'ENTIDAD EMISORA',
-      'ARTÍCULOS APLICABLES',
+      'BLOQUE DE TRABAJO',
+      'TEMA EN FRIKAZ',
+      'NORMA OFICIAL',
+      'ENTIDAD',
+      'ARTÍCULOS',
       'ÁREA',
-      '1. DESCRIPCIÓN (QUÉ REGULA)',
-      '2. IMPORTANCIA PARA FRIKAZ S.A.S.',
-      '3. APLICABILIDAD CONCRETA',
-      '4. ESTADO VIGENCIA',
-      '5. JURISDICCIÓN Y ALCANCE',
-      '6. EVIDENCIA DE CUMPLIMIENTO',
+      '1. ¿QUÉ PIDE LA NORMA?',
+      '2. ¿POR QUÉ NOS CUIDA EN FRIKAZ?',
+      '3. ¿QUÉ HACEMOS EN LA PLANTA?',
+      '4. ¿SIGUE VIGENTE?',
+      '5. ¿DÓNDE Y A QUIÉNES APLICA?',
+      '6. SOPORTE QUE LO DEMUESTRA',
       'ESTADO DE CUMPLIMIENTO',
-      'RESPONSABLE',
-      'FECHA VERIFICACIÓN',
-      'OBSERVACIONES',
+      'ENCARGADO',
+      'FECHA REVISIÓN',
+      'NOTAS',
     ],
   ];
 

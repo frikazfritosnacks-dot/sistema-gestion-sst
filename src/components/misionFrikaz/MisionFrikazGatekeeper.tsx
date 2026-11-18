@@ -104,10 +104,10 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
-                  FRIKAZ GAME ENGINE
+                  CAPACITACIÓN PRÁCTICA FRIKAZ
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                  SECTOR: BOSA HQ
+                  PLANTA BOSA
                 </span>
               </div>
               <h1 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
@@ -116,7 +116,7 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
             </div>
           </div>
 
-          {/* Tarjeta HUD del Jugador */}
+          {/* Tarjeta del Jugador */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl">
               <GameAvatar
@@ -136,7 +136,7 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
               </div>
               <div className="h-6 w-px bg-slate-800" />
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 block font-mono">ENERGÍA / PROGRESO</span>
+                <span className="text-[10px] text-slate-400 block font-mono">TU AVANCE</span>
                 <span className="text-xs font-black text-emerald-400">{porcentajeAvance}%</span>
               </div>
             </div>
@@ -235,19 +235,19 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
                 </div>
               </div>
 
-              {/* Globo de Diálogo de Videojuego */}
+              {/* Globo de Diálogo del Guía */}
               <div className="bg-slate-900/90 border-2 border-amber-400/60 rounded-2xl p-4 sm:p-5 shadow-2xl text-left relative max-w-md">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
-                    GUÍA SG-SST · SEGURIDAD INDUSTRIAL
+                    TU GUÍA DE SEGURIDAD EN PLANTA
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-mono">CONEXIÓN VITAL</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">EN LÍNEA</span>
                 </div>
                 <p className="text-base sm:text-lg font-black text-white leading-snug">
-                  «La misión comienza contigo. ¿Estás preparado?»
+                  «¡Hola! Cuidarnos en el trabajo empieza contigo. ¿Listo para empezar?»
                 </p>
                 <p className="text-xs text-slate-300 mt-1">
-                  Explora las zonas de la planta, detecta las conductas de riesgo y desbloquea tu pasaporte de seguridad.
+                  Recorre las zonas de la fábrica, identifica qué podría causar un accidente y gana tus sellos de seguridad.
                 </p>
               </div>
             </div>
@@ -256,22 +256,22 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
             <div className="inline-flex items-center gap-3 bg-slate-950/80 border border-slate-800 rounded-full px-5 py-2 mb-6 shadow-xl">
               <Target className="w-4 h-4 text-amber-400 animate-spin" />
               <span className="text-xs font-bold text-slate-300">
-                Radar de Planta: <strong className="text-amber-400">{totalObligatorias - totalSuperadas} zonas</strong> pendientes por asegurar
+                Te faltan: <strong className="text-amber-400">{totalObligatorias - totalSuperadas} recorridos</strong> por completar
               </span>
               <span className="h-4 w-px bg-slate-800" />
               <span className="text-xs font-bold text-emerald-400">
-                {totalSuperadas} / {totalObligatorias} Zonas Libres
+                {totalSuperadas} / {totalObligatorias} Zonas Listas
               </span>
             </div>
 
-            {/* Selector Rápido de los 6 Avatares Ilustrados Oficiales */}
+            {/* Selector Rápido de los 6 Cargos de la Empresa */}
             <div className="w-full max-w-2xl bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-6 backdrop-blur-md shadow-xl">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" /> AVATARES OFICIALES FRIKAZ (6 CARGOS CANÓNICOS)
+                  <Users className="w-3.5 h-3.5" /> ELIGE TU PUESTO DE TRABAJO EN FRIKAZ
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  Activo: <strong className="text-white">{trabajador.cargoNombre}</strong>
+                  Puesto elegido: <strong className="text-white">{trabajador.cargoNombre}</strong>
                 </span>
               </div>
 
@@ -317,18 +317,17 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
               </div>
             </div>
 
-            {/* Botón Gigante de Comienzo */}
             <button
               onClick={handleComenzarAventura}
               className="group relative inline-flex items-center justify-center gap-4 px-10 py-5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-lg sm:text-xl uppercase tracking-wider shadow-2xl shadow-amber-500/40 hover:shadow-amber-500/60 transform hover:-translate-y-1 transition-all duration-300 active:translate-y-0"
             >
               <Play className="w-7 h-7 fill-current" />
-              <span>COMENZAR AVENTURA</span>
+              <span>EMPEZAR RECORRIDO</span>
               <ArrowRight className="w-6 h-6 group-hover:translate-x-1.5 transition-transform" />
             </button>
 
             <p className="text-xs text-slate-400 mt-4 tracking-wide font-medium">
-              Frikaz S.A.S. · Planta de Snacks Bosa · Desafío de Cumplimiento SG-SST
+              Frikaz S.A.S. · Planta de Bosa · Aprende fácil cómo cuidarte en tu trabajo
             </p>
 
           </div>
@@ -336,7 +335,7 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* VISTA 2: MAPA DE MISIONES INTERACTIVO                               */}
+      {/* VISTA 2: MAPA DE RECORRIDOS EN PLANTA                               */}
       {/* ==================================================================== */}
       {vistaLobby === 'MAPA_MISIONES' && (
         <div className="relative flex-1 flex flex-col justify-start max-w-7xl w-full mx-auto px-4 py-6 sm:py-8 z-10 animate-fadeIn">
@@ -347,14 +346,14 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
               <div className="flex items-center gap-2 mb-1">
                 <Compass className="w-5 h-5 text-amber-400" />
                 <span className="text-xs font-black uppercase tracking-widest text-amber-400">
-                  MAPA GENERAL DE LA PLANTA DE SNACKS
+                  MAPA DE NUESTRA PLANTA DE SNACKS
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white">
-                Selecciona tu Zona de Operación
+                Elige la Zona que vas a Revisar
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Cada sector representa un área crítica de la empresa. Ingresa, analiza los peligros y desbloquea el sello de seguridad.
+                Cada tarjeta muestra un lugar importante de la empresa. Entra, mira los peligros y obtén tu sello de seguridad.
               </p>
             </div>
 
@@ -362,7 +361,7 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
               onClick={() => setVistaLobby('PORTADA_HERO')}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
             >
-              Volver a la Entrada
+              Volver al inicio
             </button>
           </div>
 
@@ -440,9 +439,9 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
                     {/* Barra de Progreso de la Zona */}
                     <div>
                       <div className="flex justify-between items-center text-[11px] mb-1.5 font-medium">
-                        <span className="text-slate-400">Dificultad: <strong className="text-slate-200">{pol.dificultad}</strong></span>
+                        <span className="text-slate-400">Paso: <strong className="text-slate-200">{pol.dificultad}</strong></span>
                         <span className={estaSuperada ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-                          {estaSuperada ? '100% Superada' : `${prog?.puntajeMaximo || 0}%`}
+                          {estaSuperada ? '100% Listo' : `${prog?.puntajeMaximo || 0}%`}
                         </span>
                       </div>
                       <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
@@ -467,12 +466,12 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
                       {estaSuperada ? (
                         <>
                           <Award className="w-4 h-4 text-emerald-400" />
-                          <span>Repasar Zona</span>
+                          <span>Repasar esta Zona</span>
                         </>
                       ) : (
                         <>
                           <Play className="w-4 h-4 fill-current" />
-                          <span>ENTRAR A LA MISIÓN</span>
+                          <span>ENTRAR A REVISAR</span>
                         </>
                       )}
                       <ChevronRight className="w-4 h-4" />
@@ -488,11 +487,11 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
             <div className="flex items-center gap-2 mb-2">
               <Factory className="w-5 h-5 text-amber-400" />
               <h3 className="text-base sm:text-lg font-black text-white">
-                Sectores Operativos de la Planta Frikaz (Bosa, Bogotá)
+                Áreas de Trabajo de Nuestra Planta (Bosa, Bogotá)
               </h3>
             </div>
             <p className="text-xs text-slate-400 mb-6">
-              Recorrido ilustrado por las 6 estaciones principales de fabricación y logística:
+              Conoce los 6 lugares principales donde trabajamos todos los días y cómo nos cuidamos en cada uno:
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -501,37 +500,37 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
                   nombre: 'Área de Fritura',
                   cargo: 'Operario de Frito',
                   img: '/assets/images/zone_frying_line.webp',
-                  detalle: 'Freidoras industriales a gas a 180°C y control de choque térmico',
+                  detalle: 'Freidoras a gas a 180°C y cuidado para que no caiga agua al aceite',
                 },
                 {
                   nombre: 'Área de Pelado',
                   cargo: 'Operario de Pelado',
                   img: '/assets/images/zone_pelado_prep.webp',
-                  detalle: 'Pelado mecanizado con guante de malla de acero inoxidable',
+                  detalle: 'Pelado y corte usando guante de malla metálica para cuidar las manos',
                 },
                 {
                   nombre: 'Área de Selección',
                   cargo: 'Operario de Selección',
                   img: '/assets/images/zone_selection_prep.webp',
-                  detalle: 'Inspección de materia prima, lavado y clasificación de tubérculos',
+                  detalle: 'Revisión, lavado y selección de la papa y el plátano',
                 },
                 {
                   nombre: 'Área de Empaque',
                   cargo: 'Operario de Empaque',
                   img: '/assets/images/zone_empaque_line.webp',
-                  detalle: 'Sellado vertical térmico y empaque automático de snacks',
+                  detalle: 'Sellado con calor y empaque cuidado de las bolsas de snacks',
                 },
                 {
-                  nombre: 'Muelle Logístico',
+                  nombre: 'Patio de Despacho',
                   cargo: 'Conductor',
                   img: '/assets/images/zone_logistics_patio.webp',
-                  detalle: 'Despacho de furgones, inspección PESV y cero alcohol/drogas',
+                  detalle: 'Revisión del furgón antes de salir y cero alcohol ni drogas',
                 },
                 {
-                  nombre: 'Sala de Control',
+                  nombre: 'Oficina de Control',
                   cargo: 'Gerente',
                   img: '/assets/images/zone_gerencia_control.webp',
-                  detalle: 'Gestión integral, auditoría SG-SST y supervisión directiva',
+                  detalle: 'Apoyo a todo el equipo y seguimiento para trabajar seguros',
                 },
               ].map((sec) => (
                 <div
@@ -575,10 +574,10 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
       <footer className="relative z-30 bg-slate-950/80 border-t border-slate-900 py-3 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-amber-500" />
-          <span>FRIKAZ S.A.S. · Videojuego de Cumplimiento y Seguridad Industrial</span>
+          <span>FRIKAZ S.A.S. · Capacitación Práctica de Seguridad para Trabajadores</span>
         </div>
         <p className="text-[11px] text-slate-600">
-          Decreto 1072 de 2015 · Resolución 0312 de 2019 · Todos los derechos reservados
+          Decreto 1072 de 2015 · Resolución 0312 de 2019 · Cuidamos la vida en el trabajo
         </p>
       </footer>
 

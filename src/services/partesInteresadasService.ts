@@ -17,6 +17,7 @@ import {
 const STORAGE_KEY_PARTES = 'frikaz_partes_interesadas_v1';
 const STORAGE_KEY_CHECKLIST = 'frikaz_checklist_partes_v1';
 const STORAGE_KEY_HISTORIAL = 'frikaz_historial_checklist_v1';
+const STORAGE_KEY_PLAIN_LANG = 'frikaz_partes_plain_lang_v1';
 
 // ----------------------------------------------------------------------------
 // DATOS SEMILLA: PARTES INTERESADAS (INTERNAS Y EXTERNAS)
@@ -26,20 +27,20 @@ export const PARTES_INTERESADAS_INICIALES: ParteInteresada[] = [
   // A. PARTES INTERESADAS INTERNAS
   {
     id: 'pi-int-01',
-    nombre: 'Gerente (Alta Dirección)',
+    nombre: 'Gerente (Dirección de la Empresa)',
     clasificacion: 'interna',
     descripcion:
-      'Representante legal y máxima autoridad directiva de Frikaz S.A.S. Responsable de la asignación de recursos y sostenibilidad del negocio.',
+      'Persona encargada de dirigir Frikaz S.A.S., aprobar el dinero para seguridad y cuidar que la empresa funcione bien y sin accidentes.',
     necesidadesExpectativas:
-      'Contar con información actualizada sobre los riesgos laborales, asegurar el cumplimiento legal integral, optimizar la inversión en SST y garantizar la continuidad operativa sin accidentes ni sanciones.',
+      'Saber cómo están los riesgos en la planta y las entregas, cumplir las leyes de trabajo, invertir bien el presupuesto de seguridad y evitar accidentes o multas.',
     peligrosSituaciones:
-      'Responsabilidad legal y penal por accidentes graves o mortales, sanciones económicas por incumplimiento de estándares mínimos (Res. 0312/2019), pérdidas financieras e interrupción de la producción.',
+      'Problemas legales o multas graves si ocurre un accidente serio, sanciones por no cumplir las reglas mínimas de la Resolución 0312 de 2019 y paradas en la producción.',
     posiblesAfectaciones:
-      'Demandas laborales, multas del Ministerio del Trabajo, daño a la reputación corporativa y sobrecostos por ausentismo o indemnizaciones.',
+      'Demandas, multas del Ministerio del Trabajo, mala imagen de la empresa y gastos altos por incapacidades o indemnizaciones.',
     medidasPrevencionControl:
-      'Asignación oportuna de presupuesto anual, revisión gerencial semestral del SG-SST, auditorías periódicas, asesoría técnica del ingeniero externo y seguimiento mensual de indicadores.',
+      'Aprobar a tiempo el presupuesto anual, revisar cada 6 meses cómo va la seguridad (SG-SST), hacer auditorías, contar con asesoría técnica externa y revisar los avances cada mes.',
     seguimiento:
-      'Comité directivo mensual, informe de rendición de cuentas anual y revisión de auditoría del SG-SST.',
+      'Reunión mensual de dirección, informe anual de cuentas claras y revisión de cómo va la seguridad en la empresa.',
     fechaActualizacion: '2026-03-01',
   },
   {
@@ -47,73 +48,73 @@ export const PARTES_INTERESADAS_INICIALES: ParteInteresada[] = [
     nombre: 'Operarios (Producción y Planta)',
     clasificacion: 'interna',
     descripcion:
-      'Personal operativo encargado de la selección, lavado, pelado abrasivo, tajado, freído en marmitas/pailas continuas (>160°C) y empaque térmico de snacks.',
+      'Trabajadores que seleccionan, lavan, pelan, rebanan, fríen en aceite caliente (más de 160 °C, hasta 180 °C) y empacan nuestros productos.',
     necesidadesExpectativas:
-      'Disponer de condiciones seguras de trabajo, maquinaria con guardas de protección, EPP certificados y térmicos, capacitación continua, pausas activas y primeros auxilios inmediatos.',
+      'Trabajar en un lugar seguro, tener máquinas con protectores puestos, recibir elementos de protección (EPP) adecuados para el calor y cortes, capacitación clara, pausas activas y botiquín listo.',
     peligrosSituaciones:
-      'Quemaduras de 1°, 2° y 3° grado por aceite caliente a alta temperatura, atrapamiento en rebanadoras o peladoras, caídas al mismo nivel por pisos resbalosos con grasa o agua, fatiga muscular por bipedestación prolongada y cortes con cuchillas.',
+      'Quemaduras graves por salpicaduras de aceite caliente, atraparse las manos en rebanadoras o peladoras, resbalones por pisos con grasa o agua, cansancio por estar de pie mucho tiempo y cortes con cuchillas.',
     posiblesAfectaciones:
-      'Quemaduras corporales graves, heridas abiertas, amputaciones traumáticas, fracturas, secuelas incapacitantes y desmotivación laboral.',
+      'Quemaduras en la piel, heridas profundas, pérdida de dedos o manos, fracturas, dolores fuertes de espalda o piernas y desánimo en el trabajo.',
     medidasPrevencionControl:
-      'Mantenimiento preventivo quincenal a freidoras y selladoras, suministro de guantes térmicos de caña larga, delantales impermeables, calzado antideslizante dieléctrico, campana de extracción con trampa de grasas y señalización de advertencia.',
+      'Revisar y hacer mantenimiento cada 15 días a freidoras y selladoras; entregar guantes largos contra el calor, delantales impermeables y botas antideslizantes; limpiar la campana y trampa de grasa; y poner avisos visibles de peligro.',
     seguimiento:
-      'Inspecciones de seguridad semanales, reportes diarios de condiciones inseguras por el Vigía de SST y charlas de 5 minutos al inicio del turno.',
+      'Revisiones semanales de seguridad en planta, reporte diario de cosas peligrosas con el Vigía de SST (compañero encargado de vigilar la seguridad) y charlas cortas de 5 minutos antes de empezar el turno.',
     fechaActualizacion: '2026-03-01',
   },
   {
     id: 'pi-int-03',
-    nombre: 'Conductor (Logística y Distribución)',
+    nombre: 'Conductor (Entregas y Reparto)',
     clasificacion: 'interna',
     descripcion:
-      'Personal encargado del cargue, aseguramiento, transporte y entrega física de productos fritos y snacks a clientes, tiendas y mayoristas.',
+      'Trabajador encargado de cargar, asegurar, transportar y entregar los paquetes de papas, plátanos y chicharrón a tiendas y clientes.',
     necesidadesExpectativas:
-      'Vehículo de carga en óptimas condiciones técnico-mecánicas, mantenimiento preventivo al día, rutas y tiempos de entrega realistas, elementos de seguridad vial y apoyo ergonómico en descargue.',
+      'Tener el furgón en buen estado mecánico, mantenimientos al día, rutas con tiempos reales para no ir con afán, equipo de seguridad en vía y apoyo para no cargar demasiado peso.',
     peligrosSituaciones:
-      'Accidentes de tránsito en vías urbanas y rurales, fallas mecánicas de frenos o dirección, sobreesfuerzo por levantamiento manual de canastillas pesadas, estrés vial y asaltos o inseguridad ciudadana.',
+      'Choques o accidentes de tránsito en la ciudad o carretera, fallas de frenos o dirección, dolor de espalda por levantar canastillas pesadas, estrés por el tráfico y robos en la calle.',
     posiblesAfectaciones:
-      'Politraumatismos, fracturas, latigazo cervical, lumbalgias agudas, hernias discales, pérdidas materiales del vehículo y producto.',
+      'Golpes fuertes en todo el cuerpo, fracturas, dolor de cuello o espalda baja, hernias y daños en el vehículo o la mercancía.',
     medidasPrevencionControl:
-      'Plan Estratégico de Seguridad Vial (PESV), inspección preoperacional diaria del vehículo, mantenimiento preventivo programado, faja ergonómica y guantes de agarre, capacitación en manejo defensivo y ergonomía en manipulación de cargas.',
+      'Plan de Seguridad Vial (PESV: reglas para manejar seguro), revisión rápida del carro todos los días antes de salir, mantenimiento a tiempo, guantes de buen agarre, curso de manejo preventivo y forma correcta de levantar cajas (máximo 25 kg hombres / 12,5 kg mujeres).',
     seguimiento:
-      'Revisión diaria de la lista preoperacional vehicular, control de kilometraje y reporte de incidentes en ruta con el Coordinador de Logística.',
+      'Revisión diaria de la hoja de chequeo del vehículo, control de kilómetros recorridos y reporte inmediato de cualquier susto o falla en la ruta.',
     fechaActualizacion: '2026-03-01',
   },
 
   // B. PARTES INTERESADAS EXTERNAS
   {
     id: 'pi-ext-01',
-    nombre: 'Proveedores (Materias Primas e Insumos)',
+    nombre: 'Proveedores (Quienes nos traen insumos)',
     clasificacion: 'externa',
     descripcion:
-      'Suministradores de papa, plátano, tocino para chicharrón, aceites vegetales comestibles, condimentos, empaques bilaminados, gas y químicos de limpieza.',
+      'Personas y empresas que nos traen papa, plátano, tocino, aceite, condimentos, bolsas de empaque, gas y productos de limpieza.',
     necesidadesExpectativas:
-      'Condiciones seguras en las zonas de descargue de Frikaz S.A.S., cumplimiento puntual de pedidos y pagos, especificaciones técnicas claras y protocolos de bioseguridad en recepción.',
+      'Tener una zona segura y despejada para descargar en Frikaz S.A.S., pagos y pedidos claros a tiempo, y reglas sencillas de higiene y cuidado al entrar.',
     peligrosSituaciones:
-      'Atropellamiento en patio de maniobras, caída de bultos o canastillas en recepción, contacto con zonas calientes de planta si ingresan sin autorización, derrames de aceite en descargue.',
+      'Atropellos en la zona de carga, caída de bultos o canastillas al descargar, entrar sin permiso cerca de las freidoras calientes o derrames de aceite en el piso.',
     posiblesAfectaciones:
-      'Lesiones a transportadores de proveedores, contaminación de materias primas por mala manipulación, retrasos en la cadena de suministros y reclamos comerciales.',
+      'Golpes o lesiones a los transportadores que traen mercancía, daños o suciedad en los alimentos, retrasos en la producción y quejas comerciales.',
     medidasPrevencionControl:
-      'Procedimiento seguro de recibo de materias primas, delimitación y demarcación de zonas de descargue, inducción básica de SST para visitantes y contratistas, uso obligatorio de calzado de seguridad y EPP.',
+      'Reglas claras para recibir mercancía, líneas pintadas en el piso de descarga, charla rápida de seguridad para visitantes y uso obligatorio de botas seguras al entrar.',
     seguimiento:
-      'Evaluación periódica de proveedores, lista de verificación en recepción y control de acceso de transportadores.',
+      'Revisión periódica de proveedores, lista de chequeo cuando llega mercancía y control en la puerta de entrada.',
     fechaActualizacion: '2026-03-01',
   },
   {
     id: 'pi-ext-02',
-    nombre: 'Ingeniero Externo de Seguridad y Salud en el Trabajo (Staff)',
+    nombre: 'Ingeniero Externo de Seguridad en el Trabajo',
     clasificacion: 'externa',
     descripcion:
-      'Profesional con licencia vigente en SST contratado por horas o asesoría técnica para el diseño, auditoría, formulación de planes y asesoramiento técnico normativo a Frikaz S.A.S.',
+      'Especialista con licencia en Seguridad y Salud en el Trabajo (SST) que asesora por horas a Frikaz S.A.S. para organizar planes, revisar riesgos y cumplir las normas.',
     necesidadesExpectativas:
-      'Acceso oportuno a la información y registros de la empresa, apoyo decidido de la gerencia para implementar controles, honestidad en los reportes de incidentes y cumplimiento de las recomendaciones técnicas.',
+      'Que la empresa le entregue la información a tiempo, que la Gerencia apoye los cambios necesarios, que se reporten todos los accidentes con honestidad y que se cumplan sus recomendaciones.',
     peligrosSituaciones:
-      'Ocultamiento de accidentes laborales por parte de la empresa, falta de asignación presupuestal para ejecutar las acciones correctivas, resistencia al cambio por parte de los operarios.',
+      'Que no le cuenten cuando pasa un accidente o casi accidente, que no haya dinero para arreglar fallas urgentes o que no se apliquen las medidas en planta.',
     posiblesAfectaciones:
-      'Sanciones éticas o legales al profesional si no se corrigen desviaciones críticas, desactualización del SG-SST frente a nuevas normas del Ministerio del Trabajo.',
+      'Problemas legales si no se corrigen peligros graves y que el plan de seguridad quede atrasado frente a nuevas leyes.',
     medidasPrevencionControl:
-      'Contrato de prestación de servicios con cronograma claro, reuniones mensuales formales con Gerencia y Vigía de SST, actas de compromiso firmadas y trazabilidad digital de recomendaciones.',
+      'Contrato claro con fechas de visita, reuniones mensuales con Gerencia y el Vigía de SST, actas firmadas con compromisos y registro digital de cada recomendación.',
     seguimiento:
-      'Cronograma anual de actividades de SST, matriz de seguimiento de acciones correctivas e informes de auditoría interna semestrales.',
+      'Plan anual de trabajo, revisión de tareas pendientes de mejora e inspecciones internas cada 6 meses.',
     fechaActualizacion: '2026-03-01',
   },
   {
@@ -121,17 +122,17 @@ export const PARTES_INTERESADAS_INICIALES: ParteInteresada[] = [
     nombre: 'Ministerio del Trabajo',
     clasificacion: 'externa',
     descripcion:
-      'Autoridad gubernamental en Colombia encargada de la inspección, vigilancia y control de las normas laborales y del Sistema de Gestión de la Seguridad y Salud en el Trabajo.',
+      'Entidad del gobierno en Colombia que vigila que las empresas respeten los derechos de los trabajadores y cumplan las reglas de seguridad (SG-SST).',
     necesidadesExpectativas:
-      'Cumplimiento estricto del Decreto 1072 de 2015 y la Resolución 0312 de 2019 (Estándares Mínimos), reporte oportuno de accidentes graves/mortales y autoevaluación anual registrada en la plataforma ministerial.',
+      'Cumplir el Decreto 1072 de 2015 y la Resolución 0312 de 2019 (reglas mínimas de seguridad), avisar rápido si pasa un accidente grave y subir cada año la autoevaluación oficial.',
     peligrosSituaciones:
-      'Visitas de inspección sorpresivas con hallazgo de no conformidades, omisión en la investigación de accidentes laborales, falta de afiliación al sistema de seguridad social integral.',
+      'Visitas sorpresa donde encuentren fallas sin corregir, no investigar los accidentes de trabajo o tener trabajadores sin afiliación completa a salud, pensión y ARL.',
     posiblesAfectaciones:
-      'Cierre temporal o definitivo del establecimiento, multas acumulativas de hasta 500 salarios mínimos legales vigentes, investigaciones administrativas sancionatorias.',
+      'Cierre temporal o definitivo de la planta, multas muy altas (hasta 500 salarios mínimos) y procesos legales contra la empresa.',
     medidasPrevencionControl:
-      'Cumplimiento verificable de los Estándares Mínimos, autoevaluación y plan de mejora anual registrado, investigación oportuna de todos los incidentes con el Vigía de SST y archivo documental riguroso.',
+      'Cumplir y guardar pruebas de todas las reglas mínimas, hacer cada año la revisión y el plan de mejora, investigar cualquier incidente con el Vigía de SST y mantener los papeles organizados.',
     seguimiento:
-      'Autoevaluación anual en la plataforma Fondo de Riesgos Laborales, auditoría de cumplimiento legal y simulacros de inspección.',
+      'Registro anual en la plataforma del Fondo de Riesgos Laborales, revisión de normas legales y simulacros de visita de inspección.',
     fechaActualizacion: '2026-03-01',
   },
   {
@@ -139,17 +140,17 @@ export const PARTES_INTERESADAS_INICIALES: ParteInteresada[] = [
     nombre: 'Ministerio de Salud y Protección Social',
     clasificacion: 'externa',
     descripcion:
-      'Entidad nacional rectora de las políticas de salud pública, salud laboral, prevención de enfermedades profesionales y articulación con ARL y EPS.',
+      'Entidad nacional que cuida la salud de los trabajadores, previene enfermedades causadas por el trabajo y coordina con la EPS (salud) y la ARL (riesgos laborales).',
     necesidadesExpectativas:
-      'Articulación de los programas de medicina preventiva y del trabajo con las políticas nacionales, vigilancia epidemiológica de enfermedades laborales y reporte de ausentismo médico.',
+      'Cuidar la salud física de los trabajadores, vigilar dolores musculares o enfermedades del trabajo y llevar el control de las incapacidades médicas.',
     peligrosSituaciones:
-      'Brote de enfermedades transmisibles en planta de alimentos, enfermedades osteomusculares crónicas no diagnosticadas, falta de exámenes médicos ocupacionales de ingreso y periódicos.',
+      'Contagios en la planta de alimentos, dolores crónicos de espalda o manos sin atender a tiempo y falta de exámenes médicos al entrar o cada año.',
     posiblesAfectaciones:
-      'Pérdida de capacidad laboral de trabajadores, calificación de origen laboral por la Junta de Calificación de Invalidez, demandas por reintegro laboral reforzado.',
+      'Trabajadores con pérdida de fuerza o capacidad para laborar, enfermedades reconocidas como laborales y reclamos por reubicación.',
     medidasPrevencionControl:
-      'Profesiograma actualizado para cada cargo, exámenes médicos ocupacionales con énfasis osteomuscular y cardiovascular, pausas activas programadas y seguimiento estricto a recomendaciones médicas.',
+      'Exámenes médicos según cada cargo (antes de entrar y periódicos), revisión especial de espalda y manos, pausas activas programadas y cumplir al pie de la letra las recomendaciones del médico.',
     seguimiento:
-      'Indicadores de ausentismo por causa médica trimestral, consolidado anual de condiciones de salud y custodia de historias clínicas por IPS externa autorizada.',
+      'Revisión cada 3 meses de incapacidades médicas, resumen anual de salud y archivo reservado de historias clínicas en centro médico autorizado.',
     fechaActualizacion: '2026-03-01',
   },
   {
@@ -157,17 +158,17 @@ export const PARTES_INTERESADAS_INICIALES: ParteInteresada[] = [
     nombre: 'Secretaría Distrital de Salud (Bogotá)',
     clasificacion: 'externa',
     descripcion:
-      'Autoridad distrital sanitaria con jurisdicción en Bosa encargada de la inspección higiénico-sanitaria, concepto técnico sanitario de alimentos y condiciones de salubridad laboral.',
+      'Autoridad de salud en Bogotá (y Bosa) que visita plantas de alimentos para revisar higiene, limpieza y condiciones sanas para preparar comida.',
     necesidadesExpectativas:
-      'Cumplimiento riguroso de la Resolución 2674 de 2013 (Buenas Prácticas de Manufactura - BPM), control de plagas, manejo de residuos sólidos y grasas, y manipulación higiénica de alimentos por personal sano.',
+      'Cumplir la Resolución 2674 de 2013 (Buenas Prácticas de Manufactura - BPM: reglas de limpieza e higiene para hacer alimentos), controlar plagas, manejar bien basuras y aceite usado, y tener personal sano.',
     peligrosSituaciones:
-      'Contaminación cruzada de snacks, acumulación excesiva de grasas en ductos o trampas, falta de carnets de manipulación de alimentos o exámenes médicos para manipuladores.',
+      'Que se ensucie o contamine el alimento, acumulación de grasa en ductos o trampas, o trabajadores sin carnet de manipulación de alimentos ni exámenes médicos vigentes.',
     posiblesAfectaciones:
-      'Concepto sanitario Desfavorable, decomiso de producto, suspensión temporal de actividades por medida sanitaria preventiva, multas económicas.',
+      'Calificación sanitaria negativa, decomiso de productos, cierre preventivo de la planta y multas económicas.',
     medidasPrevencionControl:
-      'Plan de Saneamiento Básico (limpieza, plagas, agua potable y residuos), exámenes médicos de frotis de garganta y coprológico a operarios, capacitación anual en BPM y mantenimiento de trampa de grasa.',
+      'Plan diario de limpieza, control de plagas, agua potable y manejo de residuos; exámenes médicos para manipuladores de alimentos; curso anual de higiene (BPM) y limpieza de trampa de grasas.',
     seguimiento:
-      'Auditorías mensuales internas de BPM, análisis microbiológico de superficies y producto terminado, y registros de disposición de aceite usado.',
+      'Revisiones mensuales de higiene y limpieza en planta, pruebas de laboratorio a superficies y producto, y recibos de entrega de aceite usado.',
     fechaActualizacion: '2026-03-01',
   },
   {
@@ -175,17 +176,17 @@ export const PARTES_INTERESADAS_INICIALES: ParteInteresada[] = [
     nombre: 'Clientes y Consumidores',
     clasificacion: 'externa',
     descripcion:
-      'Consumidores finales, tiendas de barrio, supermercados y distribuidores que adquieren y consumen los snacks de papas, plátanos y chicharrón Frikaz S.A.S.',
+      'Personas que compran nuestros snacks, tiendas de barrio, supermercados y distribuidores que confían en la calidad de Frikaz S.A.S.',
     necesidadesExpectativas:
-      'Productos inocuos, frescos, crujientes, con etiquetado nutricional claro, libres de cuerpos extraños y producidos en instalaciones limpias y seguras que respeten los derechos laborales.',
+      'Snacks ricos, crujientes, limpios y seguros para comer, con etiqueta clara y hechos en una empresa donde se cuida a la gente y la higiene.',
     peligrosSituaciones:
-      'Contaminación física (trozos de plástico, metal o cabello), rancidez prematura del aceite, presencia de alérgenos no declarados en el empaque.',
+      'Que caiga algún pedazo de plástico, metal o cabello en una bolsa, aceite viejo o dañado que dé mal sabor, o no avisar ingredientes que causan alergias.',
     posiblesAfectaciones:
-      'Intoxicaciones alimentarias, demandas por daños al consumidor, pérdida masiva de ventas, retiro forzoso de lotes de producto del mercado.',
+      'Malestar estomacal en clientes, reclamos o demandas, caída en las ventas y tener que recoger mercancía de las tiendas.',
     medidasPrevencionControl:
-      'Filtros y detectores visuales en empaque, rotación estricta de lotes (PEPS), control de temperatura y acidez de aceite de freído, uso obligatorio de cofia, tapabocas y batas sin botones en planta.',
+      'Revisión visual y filtros en empaque, sacar primero lo que se produjo primero (rotación de lotes), revisar temperatura y calidad del aceite, y usar siempre gorro/cofia, tapabocas y bata limpia sin botones.',
     seguimiento:
-      'Canal de Peticiones, Quejas y Reclamos (PQR), trazabilidad por número de lote y fecha de vencimiento en empaques y muestreos de calidad quincenales.',
+      'Línea de atención para quejas y sugerencias, control por número de lote y fecha de vencimiento en cada bolsa y pruebas de calidad cada 15 días.',
     fechaActualizacion: '2026-03-01',
   },
 ];
@@ -200,11 +201,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ger-01',
     cargo: 'gerente',
     numero: 1,
-    necesidad: 'Contar con información actualizada sobre los riesgos laborales.',
+    necesidad: 'Estar informado sobre los peligros y riesgos actuales en la empresa.',
     estado: 'Cumplido',
     observaciones:
-      'Matriz GTC 45 actualizada en 2026 con 6 secciones completas y panel de valoración de riesgo.',
-    evidencias: 'Matriz de Riesgos GTC 45 Frikaz S.A.S. versión digital 2026',
+      'Tabla de riesgos (Matriz GTC 45) al día en 2026 con las 6 áreas revisadas y su nivel de peligro.',
+    evidencias: 'Matriz de Riesgos Frikaz S.A.S. versión digital 2026',
     responsable: 'Coordinador / Vigía de SST',
     fechaVerificacion: '2026-02-15',
   },
@@ -212,23 +213,23 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ger-02',
     cargo: 'gerente',
     numero: 2,
-    necesidad: 'Garantizar el cumplimiento de los requisitos legales en SST.',
+    necesidad: 'Asegurar que la empresa cumpla todas las leyes de seguridad en el trabajo.',
     estado: 'En proceso',
     observaciones:
-      'Matriz legal con 15 normas evaluadas; en proceso de ajuste del nuevo estándar de riesgo psicosocial.',
-    evidencias: 'Matriz Legal SST con Res. 0312/2019 y Dec. 1072/2015',
-    responsable: 'Gerente General / Asesor Legal Externo',
+      '15 normas revisadas en la lista legal; falta ajustar el control sobre estrés y carga laboral.',
+    evidencias: 'Lista de Normas Legales SST (Res. 0312/2019 y Dec. 1072/2015)',
+    responsable: 'Gerente General / Asesor Externo',
     fechaVerificacion: '2026-02-28',
   },
   {
     id: 'chk-ger-03',
     cargo: 'gerente',
     numero: 3,
-    necesidad: 'Disponer de recursos económicos, humanos y técnicos para el SG-SST.',
+    necesidad: 'Aprobar dinero, personal y herramientas para cuidar la seguridad.',
     estado: 'Cumplido',
     observaciones:
-      'Presupuesto anual 2026 aprobado para compra de EPP térmicos, mantenimiento de campanas y asesoría.',
-    evidencias: 'Acta de Aprobación de Presupuesto SST 2026 firmada',
+      'Presupuesto 2026 aprobado para guantes térmicos, limpieza de campanas y asesoría en seguridad.',
+    evidencias: 'Acta firmada de aprobación del presupuesto SST 2026',
     responsable: 'Gerente General',
     fechaVerificacion: '2026-01-20',
   },
@@ -236,11 +237,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ger-04',
     cargo: 'gerente',
     numero: 4,
-    necesidad: 'Promover un ambiente laboral seguro y saludable.',
+    necesidad: 'Impulsar un ambiente de trabajo seguro, limpio y respetuoso.',
     estado: 'Cumplido',
     observaciones:
-      'Política de SST firmada, socializada e instalada en cartelera principal de planta.',
-    evidencias: 'Política SST Frikaz S.A.S. con firma y registro de asistencia a divulgación',
+      'Compromiso de seguridad (Política SST) firmado, explicado al equipo y publicado en la cartelera.',
+    evidencias: 'Política SST Frikaz S.A.S. firmada y lista de asistencia a charla',
     responsable: 'Gerente General / Coordinador SST',
     fechaVerificacion: '2026-02-10',
   },
@@ -248,11 +249,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ger-05',
     cargo: 'gerente',
     numero: 5,
-    necesidad: 'Realizar seguimiento a la implementación del SG-SST.',
+    necesidad: 'Revisar cada cierto tiempo cómo avanza el plan de seguridad.',
     estado: 'En proceso',
     observaciones:
-      'Revisión gerencial programada para cierre de semestre con análisis de indicadores automáticos.',
-    evidencias: 'Cronograma de Rendición de Cuentas y Revisiones por la Dirección 2026',
+      'Revisión de gerencia programada para mitad de año con los resultados de cumplimiento.',
+    evidencias: 'Calendario de reuniones de revisión 2026',
     responsable: 'Gerente General',
     fechaVerificacion: '2026-03-01',
   },
@@ -260,11 +261,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ger-06',
     cargo: 'gerente',
     numero: 6,
-    necesidad: 'Promover actividades de bienestar y prevención de riesgos.',
+    necesidad: 'Apoyar jornadas de salud, bienestar y prevención de accidentes.',
     estado: 'En proceso',
     observaciones:
-      'Convenio coordinado con la Caja de Compensación y ARL para jornadas de salud visual y pausas activas.',
-    evidencias: 'Plan de Bienestar y Salud Ocupacional Frikaz 2026',
+      'Coordinando con Caja de Compensación y ARL jornadas de examen visual y pausas activas.',
+    evidencias: 'Plan de Bienestar y Salud Frikaz 2026',
     responsable: 'Gestión Humana / Vigía de SST',
     fechaVerificacion: '2026-02-22',
   },
@@ -272,11 +273,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ger-07',
     cargo: 'gerente',
     numero: 7,
-    necesidad: 'Participar en las actividades de capacitación y seguimiento.',
+    necesidad: 'Participar en capacitaciones y reuniones de seguimiento de seguridad.',
     estado: 'Cumplido',
     observaciones:
-      'Gerente completó curso de 50 horas del SG-SST y asistió a la socialización de roles y responsabilidades.',
-    evidencias: 'Certificado de curso 50 horas SENA y acta de reunión directiva SST',
+      'El gerente completó el curso de 50 horas del SG-SST y participó en la reunión de responsabilidades.',
+    evidencias: 'Certificado del curso de 50 horas SENA y acta de reunión',
     responsable: 'Gerente General',
     fechaVerificacion: '2026-01-25',
   },
@@ -286,11 +287,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-01',
     cargo: 'operarios',
     numero: 1,
-    necesidad: 'Contar con maquinaria y herramientas en buenas condiciones.',
+    necesidad: 'Tener máquinas y herramientas funcionando bien y con protectores.',
     estado: 'Cumplido',
     observaciones:
-      'Peladora abrasiva y selladora continua con mantenimiento preventivo realizado en febrero 2026.',
-    evidencias: 'Hoja de vida de maquinaria y ficha técnica de mantenimiento preventivo',
+      'Peladora y selladora revisadas con mantenimiento preventivo en febrero de 2026.',
+    evidencias: 'Hoja de vida de máquinas y registro de mantenimiento',
     responsable: 'Técnico de Mantenimiento / Jefe de Planta',
     fechaVerificacion: '2026-02-18',
   },
@@ -298,11 +299,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-02',
     cargo: 'operarios',
     numero: 2,
-    necesidad: 'Recibir elementos de protección personal adecuados.',
+    necesidad: 'Recibir elementos de protección personal (EPP) adecuados para cada tarea.',
     estado: 'Cumplido',
     observaciones:
-      'Entrega de guantes de carnaza con aislamiento térmico para fritura, delantales impermeables y botas antideslizantes.',
-    evidencias: 'Formato firmado de entrega y dotación individual de EPP a operarios',
+      'Entrega de guantes largos resistentes al calor para fritura, delantales impermeables y botas antideslizantes.',
+    evidencias: 'Planilla firmada de entrega de EPP a cada operario',
     responsable: 'Coordinador / Vigía de SST',
     fechaVerificacion: '2026-02-05',
   },
@@ -310,11 +311,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-03',
     cargo: 'operarios',
     numero: 3,
-    necesidad: 'Disponer de espacios de trabajo limpios, organizados y seguros.',
+    necesidad: 'Trabajar en espacios limpios, ordenados y sin grasa en el piso.',
     estado: 'Cumplido',
     observaciones:
-      'Aplicación diaria de técnica 5S en áreas de tajado y empaque con desengrase de pisos.',
-    evidencias: 'Lista de chequeo de orden, aseo y desinfección de planta',
+      'Orden y aseo diario (técnica 5S) en tajado y empaque, con lavado desengrasante de pisos.',
+    evidencias: 'Lista diaria de orden, aseo y desinfección de planta',
     responsable: 'Jefe de Planta / Operarios',
     fechaVerificacion: '2026-03-02',
   },
@@ -322,11 +323,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-04',
     cargo: 'operarios',
     numero: 4,
-    necesidad: 'Recibir capacitaciones sobre manipulación de alimentos y prevención de riesgos.',
+    necesidad: 'Recibir charlas y cursos prácticos sobre higiene en alimentos (BPM) y cómo evitar accidentes.',
     estado: 'Cumplido',
     observaciones:
-      'Taller de 10 horas de Manipulación Higiénica de Alimentos y Buenas Prácticas de Manufactura (BPM).',
-    evidencias: 'Certificaciones individuales de manipulación de alimentos vigentes',
+      'Curso de 10 horas en Manipulación Higiénica de Alimentos y Buenas Prácticas (BPM) completado.',
+    evidencias: 'Certificados vigentes de manipulación de alimentos',
     responsable: 'Ingeniero de Alimentos / Asesor Externo',
     fechaVerificacion: '2026-01-30',
   },
@@ -334,11 +335,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-05',
     cargo: 'operarios',
     numero: 5,
-    necesidad: 'Contar con pausas y condiciones laborales adecuadas.',
+    necesidad: 'Tener pausas activas y descansos para cuidar el cuerpo.',
     estado: 'En proceso',
     observaciones:
-      'Implementadas pausas activas en el turno de la mañana (10:00 am); pendiente formalizar turno de tarde.',
-    evidencias: 'Registro fotográfico y planilla de pausas activas matutinas',
+      'Ya se hacen pausas activas en la mañana (10:00 a. m.); falta organizarlas igual en el turno de la tarde.',
+    evidencias: 'Fotos y planilla de pausas activas de la mañana',
     responsable: 'Vigía de SST / Líder de Producción',
     fechaVerificacion: '2026-02-25',
   },
@@ -346,11 +347,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-06',
     cargo: 'operarios',
     numero: 6,
-    necesidad: 'Conocer los procedimientos seguros para manipular aceite caliente.',
+    necesidad: 'Conocer paso a paso cómo trabajar con aceite caliente (170–180 °C) sin quemarse.',
     estado: 'Cumplido',
     observaciones:
-      'Procedimiento Estándar de Operación (POE) de fritura y filtrado seguro de aceite publicado en zona de pailas.',
-    evidencias: 'Instructivo visual POE-FRI-02 fijado en zona de marmitas y evaluación teórica',
+      'Guía visual de pasos seguros para freír y filtrar aceite (solo cuando baje de 40 °C) pegada junto a las freidoras.',
+    evidencias: 'Cartel de pasos seguros POE-FRI-02 en zona de freidoras',
     responsable: 'Coordinador SST / Maestro Fritador',
     fechaVerificacion: '2026-02-12',
   },
@@ -358,11 +359,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-07',
     cargo: 'operarios',
     numero: 7,
-    necesidad: 'Recibir información sobre los riesgos de cortes, quemaduras, atrapamientos y caídas.',
+    necesidad: 'Saber cómo prevenir cortes, quemaduras, atrapamientos y caídas en su puesto.',
     estado: 'Cumplido',
     observaciones:
-      'Inducción de riesgos específicos en el puesto y entrega de manual de seguridad por cargo.',
-    evidencias: 'Registro de inducción específica y entrega de manual de seguridad',
+      'Charla inicial de riesgos en cada máquina y entrega de guía sencilla de seguridad por cargo.',
+    evidencias: 'Registro de inducción al puesto y entrega de guía',
     responsable: 'Coordinador / Vigía de SST',
     fechaVerificacion: '2026-02-14',
   },
@@ -370,11 +371,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-08',
     cargo: 'operarios',
     numero: 8,
-    necesidad: 'Garantizar el mantenimiento preventivo de las máquinas.',
+    necesidad: 'Hacer mantenimiento a tiempo a todas las máquinas antes de que fallen.',
     estado: 'En proceso',
     observaciones:
-      'Mantenimiento de rebanadora y freidoras ejecutado; pendiente programar extractor y campana para fin de mes.',
-    evidencias: 'Cronograma preventivo de maquinaria 2026 con órdenes de servicio',
+      'Rebanadora y freidoras revisadas; falta hacer limpieza y revisión al extractor y la campana a fin de mes.',
+    evidencias: 'Calendario de mantenimiento 2026 y órdenes de trabajo',
     responsable: 'Jefe de Planta / Mantenimiento',
     fechaVerificacion: '2026-02-27',
   },
@@ -382,11 +383,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-ope-09',
     cargo: 'operarios',
     numero: 9,
-    necesidad: 'Contar con señalización adecuada en las áreas de producción.',
+    necesidad: 'Tener avisos visibles de peligro y piso resbaloso en las zonas de trabajo.',
     estado: 'Pendiente',
     observaciones:
-      'Falta reponer 3 avisos reflectivos de peligro por temperatura >160°C y demarcación de piso resbaloso en lavado.',
-    evidencias: 'Cotización aprobada para compra de señalética fotoluminiscente NTC 1461',
+      'Falta cambiar 3 avisos de peligro por calor (>160 °C) y pintar la señal de piso mojado en lavado.',
+    evidencias: 'Cotización aprobada para comprar nuevos avisos visibles',
     responsable: 'Coordinador SST / Compras',
     fechaVerificacion: '2026-03-03',
   },
@@ -396,11 +397,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-01',
     cargo: 'conductor',
     numero: 1,
-    necesidad: 'Contar con un vehículo en buenas condiciones.',
+    necesidad: 'Contar con el vehículo de entregas en buen estado mecánico.',
     estado: 'Cumplido',
     observaciones:
-      'Furgón de reparto con revisión técnico-mecánica vigente y cambio de llantas realizado.',
-    evidencias: 'Certificado de Revisión Técnico-Mecánica RUNT y factura de mantenimiento',
+      'Furgón con revisión técnico-mecánica al día y cambio reciente de llantas.',
+    evidencias: 'Certificado técnico-mecánico RUNT y factura de taller',
     responsable: 'Conductor / Administrador de Flota',
     fechaVerificacion: '2026-02-16',
   },
@@ -408,11 +409,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-02',
     cargo: 'conductor',
     numero: 2,
-    necesidad: 'Tener documentación vigente y elementos de seguridad vial.',
+    necesidad: 'Tener papeles al día y equipo completo de carretera y emergencias.',
     estado: 'Cumplido',
     observaciones:
-      'SOAT, tarjeta de propiedad, licencia C2 al día y kit de carretera reglamentario verificado con extintor cargado.',
-    evidencias: 'Póliza SOAT vigente hasta nov 2026 e inspección de kit de carretera',
+      'SOAT, tarjeta de propiedad, licencia C2 al día, botiquín, conos y extintor cargado y revisado.',
+    evidencias: 'SOAT vigente y lista de revisión del kit de carretera',
     responsable: 'Conductor / Coordinador SST',
     fechaVerificacion: '2026-02-10',
   },
@@ -420,11 +421,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-03',
     cargo: 'conductor',
     numero: 3,
-    necesidad: 'Disponer de horarios organizados y tiempos adecuados para las entregas.',
+    necesidad: 'Tener horarios organizados y tiempos reales para entregar sin afán ni exceso de velocidad.',
     estado: 'En proceso',
     observaciones:
-      'Se definieron 2 zonas de reparto (Norte y Sur); se requiere ajustar ventanas de entrega en horas pico de Bogotá.',
-    evidencias: 'Plan de Rutas Logísticas Frikaz 2026 y hoja de tiempos de despacho',
+      'Se dividieron 2 zonas (Norte y Sur); falta ajustar horarios en horas de mayor trancón en Bogotá.',
+    evidencias: 'Plan de Rutas Frikaz 2026 y tabla de tiempos de entrega',
     responsable: 'Coordinador Logístico / Gerencia',
     fechaVerificacion: '2026-02-24',
   },
@@ -432,11 +433,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-04',
     cargo: 'conductor',
     numero: 4,
-    necesidad: 'Recibir capacitación en seguridad vial y prevención de accidentes.',
+    necesidad: 'Recibir capacitación sobre cómo manejar con precaución y evitar choques.',
     estado: 'Cumplido',
     observaciones:
-      'Curso de manejo defensivo y seguridad vial completado en alianza con la ARL.',
-    evidencias: 'Certificado de capacitación en Manejo Defensivo y Seguridad Vial ARL',
+      'Curso práctico de manejo preventivo y seguridad vial terminado con la ARL.',
+    evidencias: 'Certificado del curso de Manejo Preventivo ARL',
     responsable: 'Asesor ARL / Coordinador SST',
     fechaVerificacion: '2026-01-28',
   },
@@ -444,11 +445,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-05',
     cargo: 'conductor',
     numero: 5,
-    necesidad: 'Contar con elementos de protección para realizar las entregas.',
+    necesidad: 'Contar con chaleco reflectivo, guantes de agarre y botas seguras para entregar pedidos.',
     estado: 'Cumplido',
     observaciones:
-      'Dotación de chaleco reflectivo reglamentario, guantes de nitrilo antideslizante y calzado de seguridad con puntera.',
-    evidencias: 'Registro firmado de entrega de EPP para personal de transporte',
+      'Entrega completa de chaleco reflectivo, guantes antideslizantes y calzado con puntera de seguridad.',
+    evidencias: 'Planilla firmada de entrega de EPP de transporte',
     responsable: 'Coordinador SST',
     fechaVerificacion: '2026-02-08',
   },
@@ -456,11 +457,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-06',
     cargo: 'conductor',
     numero: 6,
-    necesidad: 'Recibir orientación sobre manipulación manual de cargas.',
+    necesidad: 'Aprender a levantar y mover canastillas sin lastimarse la espalda.',
     estado: 'Cumplido',
     observaciones:
-      'Técnicas ergonómicas para levantar y trasladar canastillas de snacks (límite máx. 25 kg para hombres).',
-    evidencias: 'Acta de inducción en Higiene Postural y Manejo Manual de Cargas',
+      'Práctica de cómo agacharse doblando las rodillas y respetar el peso máximo (25 kg hombres / 12,5 kg mujeres).',
+    evidencias: 'Acta de charla sobre cuidado de espalda y carga segura',
     responsable: 'Fisioterapeuta ARL / Vigía de SST',
     fechaVerificacion: '2026-02-19',
   },
@@ -468,11 +469,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-07',
     cargo: 'conductor',
     numero: 7,
-    necesidad: 'Realizar inspecciones periódicas al vehículo.',
+    necesidad: 'Revisar frenos, luces, llantas y niveles del vehículo todos los días antes de salir.',
     estado: 'Cumplido',
     observaciones:
-      'Diligenciamiento diario de la lista de chequeo preoperacional vehicular antes de salir de la sede Bosa.',
-    evidencias: 'Taletario físico y consolidado digital de listas preoperacionales vehiculares',
+      'Lista diaria del vehículo diligenciada antes de arrancar desde la planta en Bosa.',
+    evidencias: 'Talonario y registro digital de revisiones diarias del carro',
     responsable: 'Conductor / Coordinador SST',
     fechaVerificacion: '2026-03-04',
   },
@@ -480,11 +481,11 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     id: 'chk-con-08',
     cargo: 'conductor',
     numero: 8,
-    necesidad: 'Contar con condiciones adecuadas para los tiempos de conducción y descanso.',
+    necesidad: 'Tener pausas de descanso para no manejar con sueño ni cansancio extremo.',
     estado: 'En proceso',
     observaciones:
-      'Se estipuló pausa de 20 minutos cada 2.5 horas de conducción; pendiente monitoreo a través del reporte de GPS.',
-    evidencias: 'Política interna de prevención de fatiga y microsueños Frikaz S.A.S.',
+      'Se definió parar 20 minutos cada 2 horas y media de manejo; falta revisar el cumplimiento con el reporte GPS.',
+    evidencias: 'Regla interna de descanso y prevención de fatiga al volante',
     responsable: 'Gerente / Coordinador Logístico',
     fechaVerificacion: '2026-02-26',
   },
@@ -505,7 +506,7 @@ export const HISTORIAL_INICIAL_CHECKLIST: RegistroHistorialChecklist[] = [
     enProceso: 2,
     pendientes: 1,
     observacionesGenerales:
-      'Buena adherencia al uso de guantes térmicos y POE de freído. Se dio orden de compra urgente para la reposición de la señalética faltante en el área de lavado y pailas.',
+      'El equipo está usando bien los guantes contra el calor y siguiendo los pasos para freír. Ya se aprobó la compra urgente de los avisos que faltan en lavado y freidoras.',
   },
   {
     id: 'rev-02',
@@ -517,7 +518,7 @@ export const HISTORIAL_INICIAL_CHECKLIST: RegistroHistorialChecklist[] = [
     enProceso: 2,
     pendientes: 0,
     observacionesGenerales:
-      'Inspección preoperacional al 100% de cumplimiento. Se coordina con logística la optimización de las ventanas de entrega para evitar sobretiempos en tráfico.',
+      'Revisión diaria del vehículo al 100 %. Se están ajustando los horarios de ruta para evitar demoras en horas pico y cuidar el descanso del conductor.',
   },
   {
     id: 'rev-03',
@@ -529,15 +530,74 @@ export const HISTORIAL_INICIAL_CHECKLIST: RegistroHistorialChecklist[] = [
     enProceso: 3,
     pendientes: 0,
     observacionesGenerales:
-      'Presupuesto y recursos garantizados. En proceso la preparación del informe de revisión semestral gerencial y plan de bienestar.',
+      'Presupuesto y recursos asegurados. Se avanza en la preparación de la revisión semestral y las jornadas de salud.',
   },
 ];
 
 // ----------------------------------------------------------------------------
-// PERSISTENCIA EN LOCALSTORAGE
+// PERSISTENCIA EN LOCALSTORAGE + MIGRACIÓN SEGURA A LENGUAJE CLARO
 // ----------------------------------------------------------------------------
 
+function ensurePlainLangMigration(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY_PLAIN_LANG) === '1') return;
+
+    const rawPartes = localStorage.getItem(STORAGE_KEY_PARTES);
+    if (rawPartes) {
+      const parsed: ParteInteresada[] = JSON.parse(rawPartes);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const seedById = new Map(PARTES_INTERESADAS_INICIALES.map((p) => [p.id, p]));
+        const migratedPartes = parsed.map((p) => {
+          const seed = seedById.get(p.id);
+          return seed ? { ...seed } : p;
+        });
+        localStorage.setItem(STORAGE_KEY_PARTES, JSON.stringify(migratedPartes));
+      }
+    }
+
+    const rawChecklist = localStorage.getItem(STORAGE_KEY_CHECKLIST);
+    if (rawChecklist) {
+      const parsed: ItemChecklistNecesidad[] = JSON.parse(rawChecklist);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const seedById = new Map(CHECKLIST_INICIAL_CARGOS.map((c) => [c.id, c]));
+        const migratedChecklist = parsed.map((item) => {
+          const seed = seedById.get(item.id);
+          if (!seed) return item;
+          return {
+            ...item,
+            necesidad: seed.necesidad,
+            responsable: seed.responsable,
+            observaciones:
+              item.fechaVerificacion === seed.fechaVerificacion ? seed.observaciones : item.observaciones,
+            evidencias:
+              item.fechaVerificacion === seed.fechaVerificacion ? seed.evidencias : item.evidencias,
+          };
+        });
+        localStorage.setItem(STORAGE_KEY_CHECKLIST, JSON.stringify(migratedChecklist));
+      }
+    }
+
+    const rawHist = localStorage.getItem(STORAGE_KEY_HISTORIAL);
+    if (rawHist) {
+      const parsed: RegistroHistorialChecklist[] = JSON.parse(rawHist);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const seedById = new Map(HISTORIAL_INICIAL_CHECKLIST.map((h) => [h.id, h]));
+        const migratedHist = parsed.map((h) => {
+          const seed = seedById.get(h.id);
+          return seed ? { ...h, observacionesGenerales: seed.observacionesGenerales } : h;
+        });
+        localStorage.setItem(STORAGE_KEY_HISTORIAL, JSON.stringify(migratedHist));
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEY_PLAIN_LANG, '1');
+  } catch (error) {
+    console.error('Error migrando partes interesadas a lenguaje claro:', error);
+  }
+}
+
 export function getStoredPartesInteresadas(): ParteInteresada[] {
+  ensurePlainLangMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PARTES);
     if (!raw) {
@@ -565,6 +625,7 @@ export function saveStoredPartesInteresadas(partes: ParteInteresada[]): void {
 }
 
 export function getStoredChecklistItems(): ItemChecklistNecesidad[] {
+  ensurePlainLangMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CHECKLIST);
     if (!raw) {
@@ -592,6 +653,7 @@ export function saveStoredChecklistItems(items: ItemChecklistNecesidad[]): void 
 }
 
 export function getStoredHistorialChecklist(): RegistroHistorialChecklist[] {
+  ensurePlainLangMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_HISTORIAL);
     if (!raw) {
@@ -628,9 +690,9 @@ export function calcularIndicadoresPartesInteresadas(
   const cargos: CargoChecklistInterno[] = ['gerente', 'operarios', 'conductor'];
 
   const nombresCargos: Record<CargoChecklistInterno, string> = {
-    gerente: 'Gerente (Alta Dirección)',
+    gerente: 'Gerente (Dirección)',
     operarios: 'Operarios (Producción y Planta)',
-    conductor: 'Conductor (Logística y Distribución)',
+    conductor: 'Conductor (Entregas y Reparto)',
   };
 
   const porCargo = {} as Record<CargoChecklistInterno, ResumenIndicadoresCargo>;
@@ -686,19 +748,19 @@ export async function exportarChecklistExcel(
   items: ItemChecklistNecesidad[]
 ): Promise<void> {
   const nombresCargo: Record<CargoChecklistInterno, string> = {
-    gerente: 'GERENTE (ALTA DIRECCIÓN)',
+    gerente: 'GERENTE (DIRECCIÓN)',
     operarios: 'OPERARIOS (PRODUCCIÓN Y PLANTA)',
-    conductor: 'CONDUCTOR (LOGÍSTICA Y DISTRIBUCIÓN)',
+    conductor: 'CONDUCTOR (ENTREGAS Y REPARTO)',
   };
 
   const itemsCargo = items.filter((it) => it.cargo === cargo);
   const nombreCargoOficial = nombresCargo[cargo];
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Frikaz S.A.S. - Sistema de Gestión SST';
+  workbook.creator = 'Frikaz S.A.S. - Seguridad y Salud en el Trabajo';
   workbook.created = new Date();
 
-  const worksheet = workbook.addWorksheet(`Checklist_${cargo.toUpperCase()}`, {
+  const worksheet = workbook.addWorksheet(`Lista_${cargo.toUpperCase()}`, {
     views: [{ showGridLines: true }],
   });
 
@@ -708,7 +770,7 @@ export async function exportarChecklistExcel(
   worksheet.mergeCells('A3:G3');
 
   const titleCell = worksheet.getCell('A1');
-  titleCell.value = 'FRIKAZ S.A.S. — SISTEMA DE GESTIÓN DE SEGURIDAD Y SALUD EN EL TRABAJO';
+  titleCell.value = 'FRIKAZ S.A.S. — SEGURIDAD Y SALUD EN EL TRABAJO (SG-SST)';
   titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
   titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
   titleCell.fill = {
@@ -718,7 +780,7 @@ export async function exportarChecklistExcel(
   };
 
   const subtitleCell = worksheet.getCell('A2');
-  subtitleCell.value = `CHECKLIST DE EVALUACIÓN DE NECESIDADES EN SST — ${nombreCargoOficial}`;
+  subtitleCell.value = `LISTA DE CHEQUEO DE NECESIDADES EN SEGURIDAD — ${nombreCargoOficial}`;
   subtitleCell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFEA580C' } };
   subtitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
   subtitleCell.fill = {
@@ -728,7 +790,7 @@ export async function exportarChecklistExcel(
   };
 
   const metaCell = worksheet.getCell('A3');
-  metaCell.value = `Sede: Bosa, Bogotá D.C. | NIT: 901.458.723-1 | Fecha de Emisión: ${new Date().toLocaleDateString('es-CO')} | Documento Oficial SG-SST`;
+  metaCell.value = `Sede: Bosa, Bogotá D.C. | NIT: 901.458.723-1 | Fecha: ${new Date().toLocaleDateString('es-CO')} | Documento SG-SST`;
   metaCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF64748B' } };
   metaCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -736,13 +798,13 @@ export async function exportarChecklistExcel(
 
   // CABECERA DE TABLA
   const headerRow = worksheet.addRow([
-    'ÍTEM',
-    'NECESIDAD EN SEGURIDAD Y SALUD EN EL TRABAJO',
+    'N.°',
+    'LO QUE NECESITA ESTE CARGO PARA TRABAJAR SEGURO',
     'ESTADO',
-    'OBSERVACIONES Y DIAGNÓSTICO',
-    'EVIDENCIAS / SOPORTE DOCUMENTAL',
-    'RESPONSABLE ASIGNADO',
-    'FECHA VERIFICACIÓN',
+    'NOTAS Y CÓMO ESTÁ HOY',
+    'PRUEBAS O DOCUMENTOS',
+    'QUIÉN SE ENCARGA',
+    'FECHA DE REVISIÓN',
   ]);
 
   headerRow.height = 28;
@@ -885,7 +947,7 @@ export async function exportarMatrizExcel(partes: ParteInteresada[]): Promise<vo
   worksheet.mergeCells('A2:H2');
 
   const titleCell = worksheet.getCell('A1');
-  titleCell.value = 'FRIKAZ S.A.S. — MATRIZ DE IDENTIFICACIÓN Y GESTIÓN DE PARTES INTERESADAS';
+  titleCell.value = 'FRIKAZ S.A.S. — PERSONAS Y ENTIDADES INTERESADAS EN LA SEGURIDAD';
   titleCell.font = { name: 'Calibri', size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
   titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
   titleCell.fill = {
@@ -895,21 +957,21 @@ export async function exportarMatrizExcel(partes: ParteInteresada[]): Promise<vo
   };
 
   const subCell = worksheet.getCell('A2');
-  subCell.value = `SG-SST Decreto 1072 de 2015 / ISO 45001 | Total Partes: ${partes.length} | Fecha: ${new Date().toLocaleDateString('es-CO')}`;
+  subCell.value = `SG-SST Decreto 1072 de 2015 / ISO 45001 | Total registradas: ${partes.length} | Fecha: ${new Date().toLocaleDateString('es-CO')}`;
   subCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF64748B' } };
   subCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
   worksheet.addRow([]);
 
   const headerRow = worksheet.addRow([
-    'PARTE INTERESADA',
-    'CLASIFICACIÓN',
-    'DESCRIPCIÓN Y ROL',
-    'NECESIDADES Y EXPECTATIVAS',
+    'PERSONA O ENTIDAD',
+    'TIPO',
+    'QUIÉN ES Y QUÉ HACE',
+    'QUÉ NECESITA O ESPERA',
     'PELIGROS O SITUACIONES QUE LA AFECTAN',
-    'POSIBLES AFECTACIONES',
-    'MEDIDAS DE PREVENCIÓN Y CONTROL',
-    'MECANISMO DE SEGUIMIENTO',
+    'QUÉ PUEDE PASAR SI NO SE CUIDA',
+    'CÓMO LO PREVENIMOS Y CONTROLAMOS',
+    'CÓMO LE HACEMOS SEGUIMIENTO',
   ]);
 
   headerRow.height = 30;

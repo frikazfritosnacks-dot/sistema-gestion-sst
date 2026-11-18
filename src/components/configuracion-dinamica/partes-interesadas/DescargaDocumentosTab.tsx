@@ -49,22 +49,22 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
   }[] = [
     {
       id: 'gerente',
-      nombre: 'Checklist de Necesidades — Gerente',
-      subtitulo: '7 Necesidades de Alta Dirección, asignación de recursos y seguimiento normativo',
+      nombre: 'Lista de Necesidades — Gerente',
+      subtitulo: '7 puntos sobre dinero para seguridad, cumplimiento de leyes y apoyo al equipo',
       icon: <Crown className="h-5 w-5 text-purple-600" />,
       color: 'border-purple-200 bg-purple-50/20',
     },
     {
       id: 'operarios',
-      nombre: 'Checklist de Necesidades — Operarios',
-      subtitulo: '9 Necesidades de planta, maquinaria, EPP térmicos, BPM y prevención de quemaduras',
+      nombre: 'Lista de Necesidades — Operarios',
+      subtitulo: '9 puntos sobre máquinas seguras, guantes contra el calor, limpieza (BPM) y evitar quemaduras',
       icon: <Users className="h-5 w-5 text-indigo-600" />,
       color: 'border-indigo-200 bg-indigo-50/20',
     },
     {
       id: 'conductor',
-      nombre: 'Checklist de Necesidades — Conductor',
-      subtitulo: '8 Necesidades de vehículo, seguridad vial, carga ergonómica y tiempos de ruta',
+      nombre: 'Lista de Necesidades — Conductor',
+      subtitulo: '8 puntos sobre el carro, manejo seguro, levantamiento de cajas sin dolor y descansos',
       icon: <Truck className="h-5 w-5 text-sky-600" />,
       color: 'border-sky-200 bg-sky-50/20',
     },
@@ -95,13 +95,13 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <span className="text-orange-200 font-extrabold text-xs uppercase tracking-wider block">
-              Centro de Documentación Oficial SG-SST
+              Archivos Listos para Imprimir o Guardar
             </span>
             <h2 className="text-2xl font-black text-white">
-              Descarga de Checklists y Matriz Institucional
+              Descarga de Listas y Tabla General
             </h2>
             <p className="text-xs text-orange-100 max-w-2xl leading-relaxed">
-              Generación de documentos individuales e institucionales en formatos oficiales editables (Excel .xlsx con estilos de cabecera y estado) y listos para firma (PDF / Impresión formal con membrete de Frikaz S.A.S.).
+              Baja cada lista por separado en Excel (si necesitas editarla) o en PDF listo para imprimir y firmar con el nombre de Frikaz S.A.S.
             </p>
           </div>
 
@@ -114,12 +114,12 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
 
       {/* Grid de Descarga Individual de Checklists por Cargo */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <h3 className="font-black text-sm text-slate-900 uppercase tracking-wide">
-            1. Descarga Individual por Cargo (Checklists Internos)
+            1. Descargar la Lista de Cada Cargo
           </h3>
           <span className="text-xs text-slate-500">
-            Cada archivo se descarga individualmente con sus métricas y firmas correspondientes
+            Cada archivo incluye su resumen de avance y espacio para firmas
           </span>
         </div>
 
@@ -145,7 +145,7 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
                           {cargo.nombre}
                         </h4>
                         <span className="text-[11px] font-mono text-slate-500 block">
-                          {itemsCargo.length} Necesidades · {pct}% Cumplido
+                          {itemsCargo.length} puntos · {pct}% cumplido
                         </span>
                       </div>
                     </div>
@@ -157,7 +157,7 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
 
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-mono text-slate-600 space-y-1">
                     <div className="flex justify-between">
-                      <span>Cumplidas:</span>
+                      <span>Cumplidos:</span>
                       <strong className="text-emerald-700">{cumplidas}</strong>
                     </div>
                     <div className="flex justify-between">
@@ -184,7 +184,7 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
                   >
                     <FileSpreadsheet className="h-4 w-4" />
                     <span>
-                      {exportandoExcel === cargo.id ? 'Generando Excel...' : 'Descargar en Excel (.xlsx)'}
+                      {exportandoExcel === cargo.id ? 'Preparando Excel...' : 'Descargar en Excel (.xlsx)'}
                     </span>
                   </button>
 
@@ -194,7 +194,7 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
                     className="w-full py-2.5 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Printer className="h-4 w-4" />
-                    <span>Descargar en PDF / Imprimir</span>
+                    <span>Ver PDF o Imprimir</span>
                   </button>
                 </div>
               </div>
@@ -212,10 +212,10 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-sm text-slate-900">
-                2. Matriz General de Identificación y Gestión de Partes Interesadas
+                2. Tabla General de Personas y Entidades Interesadas
               </h3>
               <p className="text-xs text-slate-500">
-                Documento integral con las 9 partes interesadas (3 internas y 6 externas), peligros, afectaciones y controles.
+                Archivo completo con los 9 grupos (3 del equipo y 6 de afuera), sus riesgos y cómo nos cuidamos.
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
           >
             <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
             <span>
-              {exportandoExcel === 'matriz' ? 'Generando Matriz...' : 'Descargar Matriz en Excel'}
+              {exportandoExcel === 'matriz' ? 'Preparando archivo...' : 'Descargar Tabla en Excel'}
             </span>
           </button>
         </div>

@@ -99,9 +99,9 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
   // Formulario de prueba de correo directo
   const [testTo, setTestTo] = useState('');
-  const [testSubject, setTestSubject] = useState('Prueba de entrega SG-SST – Frikaz S.A.S.');
+  const [testSubject, setTestSubject] = useState('Prueba de correo SG-SST – Frikaz S.A.S.');
   const [testMessage, setTestMessage] = useState(
-    'Este es un mensaje de prueba emitido desde la plataforma SG-SST de Frikaz S.A.S. para verificar la recepción real en el servidor destinatario.'
+    'Hola, este es un mensaje de prueba desde la herramienta de seguridad de Frikaz S.A.S. para confirmar que los correos llegan bien.'
   );
   const [enviandoPrueba, setEnviandoPrueba] = useState(false);
   const [resultadoPrueba, setResultadoPrueba] = useState<any>(null);
@@ -122,7 +122,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
       setEmailStatus(status);
       setEmailHistoryList(history);
     } catch (err) {
-      console.error('Error cargando diagnóstico/historial:', err);
+      console.error('Error cargando estado del correo:', err);
     } finally {
       setCargandoHistorial(false);
     }
@@ -143,7 +143,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
     } catch (err: any) {
       setSmtpVerifyResult({
         success: false,
-        message: `Fallo inesperado: ${err.message || err}`,
+        message: `No se pudo revisar la conexión: ${err.message || err}`,
       });
     } finally {
       setVerificandoSmtp(false);
@@ -155,7 +155,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
   const handleEnviarPrueba = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!testTo.trim() || !testTo.includes('@')) {
-      triggerToast('Ingrese un correo de destino válido para la prueba.');
+      triggerToast('Escribe un correo válido para hacer la prueba.');
       return;
     }
 
@@ -166,7 +166,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
       if (testProvider === 'gmail') {
         const token = await getAccessToken();
         if (!token) {
-          throw new Error('Debe conectar su cuenta de Google Workspace primero (botón superior "Conectar Gmail").');
+          throw new Error('Primero conecta la cuenta de Gmail arriba (botón "Conectar Gmail").');
         }
         const resGmail = await sendEmailViaGmailApi({
           to: testTo.trim(),
@@ -177,35 +177,35 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
         if (resGmail.success) {
           setResultadoPrueba({
             success: true,
-            status: 'Entregado vía Gmail API',
+            status: 'Entregado por Gmail',
             messageId: resGmail.messageId,
             trackingCode: `GMAIL-${resGmail.messageId?.substring(0, 8) || 'OK'}`,
-            response: `Despacho exitoso procesado por los servidores de Google Workspace Gmail API. Thread: ${resGmail.threadId}`,
+            response: `Correo enviado sin problemas desde Gmail.`,
           });
-          triggerToast(`¡Prueba enviada con éxito hacia ${testTo} mediante Gmail API!`);
+          triggerToast(`¡Prueba enviada con éxito a ${testTo} por Gmail!`);
         } else {
           setResultadoPrueba({
             success: false,
-            status: 'Error en Gmail API',
+            status: 'No se pudo enviar por Gmail',
             error: resGmail.error || resGmail.details,
           });
-          triggerToast(`Fallo en el envío: ${resGmail.error}`);
+          triggerToast(`No se pudo enviar: ${resGmail.error}`);
         }
       } else {
         const res = await sendEmailReal({
           to: testTo.trim(),
           subject: testSubject.trim(),
           text: testMessage,
-          tipoNotificacion: 'Prueba de Conectividad SMTP',
-          workerName: 'Verificador Técnico Frikaz',
-          cargo: 'Auditoría SG-SST',
+          tipoNotificacion: 'Prueba de Correo',
+          workerName: 'Prueba de equipo Frikaz',
+          cargo: 'Revisión de correo',
         });
         setResultadoPrueba(res);
         await cargarDiagnosticoYHistorial();
         if (res.success) {
-          triggerToast(`¡Prueba enviada con éxito hacia ${testTo}!`);
+          triggerToast(`¡Correo de prueba enviado a ${testTo}!`);
         } else {
-          triggerToast(`Fallo en el envío: ${res.error || res.status}`);
+          triggerToast(`No se pudo enviar: ${res.error || res.status}`);
         }
       }
     } catch (err: any) {
@@ -220,13 +220,13 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
   };
 
   const handleReintentarCorreo = async (id: string) => {
-    triggerToast('Reintentando envío de correo en el servidor...');
+    triggerToast('Intentando enviar de nuevo...');
     const res = await retryEmailSend(id);
     await cargarDiagnosticoYHistorial();
     if (res.success) {
-      triggerToast('¡Reintento completado y entregado al proveedor!');
+      triggerToast('¡Listo! El correo salió bien.');
     } else {
-      triggerToast(`Reintento fallido: ${res.error || res.details || res.status}`);
+      triggerToast(`No se pudo enviar de nuevo: ${res.error || res.details || res.status}`);
     }
   };
 
@@ -259,18 +259,18 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
       if (agregadosGmail > 0) {
         triggerToast(
-          `¡Sincronización Gmail exitosa! Se incorporaron ${agregadosGmail} nuevos documentos firmados devueltos por trabajadores.`
+          `¡Bandeja actualizada! Llegaron ${agregadosGmail} documentos nuevos firmados por trabajadores.`
         );
       } else {
         triggerToast(
-          `Bandeja sincronizada con ${CUENTA_INSTITUCIONAL}. Se verificaron ${rec.length} documentos recibidos.`
+          `Bandeja revisada (${CUENTA_INSTITUCIONAL}). Hay ${rec.length} documentos recibidos al día.`
         );
       }
     } catch (err) {
       console.error('Error sincronizando con Gmail:', err);
       const rec = getStoredDocumentosFirmados();
       setDocumentos([...rec]);
-      triggerToast(`Bandeja actualizada con ${rec.length} documentos recibidos.`);
+      triggerToast(`Lista actualizada con ${rec.length} documentos recibidos.`);
     } finally {
       setIsSyncing(false);
     }
@@ -285,7 +285,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
     setEnviosPendientes(actualizadosEnv);
     setVistaActiva('recibidos');
     triggerToast(
-      `¡Correo entrante recibido! ${envio.nombreTrabajador} devolvió ${nuevoRecibido.nombreArchivoRecibido}.`
+      `¡Llegó un correo! ${envio.nombreTrabajador} devolvió ${nuevoRecibido.nombreArchivoRecibido}.`
     );
   };
 
@@ -394,12 +394,12 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
   const formatearTipoDocumento = (tipo: TipoDocumentoFirmado) => {
     switch (tipo) {
       case 'responsabilidades':
-        return 'Responsabilidades del cargo';
+        return 'Cuidados y roles del cargo';
       case 'politicas':
-        return 'Políticas institucionales';
+        return 'Compromiso de seguridad (Política)';
       case 'otros':
       default:
-        return 'Otros documentos recibidos';
+        return 'Otros documentos';
     }
   };
 
@@ -422,7 +422,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-md bg-sky-500/20 px-3 py-1 text-xs font-black tracking-wider uppercase text-sky-300 border border-sky-500/30">
                 <Inbox className="h-3.5 w-3.5 text-sky-400" />
-                Bandeja de Recepción Documental
+                Bandeja de Documentos Firmados
               </span>
               <span className="rounded-md bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                 <Mail className="h-3 w-3 text-emerald-400" />
@@ -430,17 +430,17 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               </span>
               <span className="rounded-md bg-purple-500/20 px-2.5 py-1 text-[11px] font-bold text-purple-300 border border-purple-500/30 flex items-center gap-1">
                 <Server className="h-3 w-3 text-purple-400" />
-                <span>Servidor SMTP / Backend Activo</span>
+                <span>Envío de Correos Listo</span>
               </span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-              <span>Documentos devueltos por correo y gestión de envíos</span>
+              <span>Documentos Firmados y Envíos por Correo</span>
               <span className="text-sky-400 font-mono text-base">[Frikaz S.A.S.]</span>
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Consulte, organice y audite todos los documentos que los trabajadores responden y devuelven firmados a través del correo electrónico institucional. Vincula automáticamente las responsabilidades de los cargos y las políticas del SG-SST enviadas con envíos reales verificados.
+              Revisa y organiza los documentos que los trabajadores ya leyeron, firmaron y devolvieron al correo de la empresa. Aquí puedes abrir cada firma, aprobarla o pedir una foto más clara si salió borrosa.
             </p>
           </div>
 
@@ -452,19 +452,19 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               onClick={handleSincronizarGmail}
               disabled={isSyncing}
               className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer flex items-center gap-2 shadow-sm"
-              title="Verificar y sincronizar nuevos correos entrantes"
+              title="Buscar nuevos documentos firmados que hayan llegado al correo"
             >
               <RefreshCw className={`h-4 w-4 text-sky-400 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar Bandeja'}</span>
+              <span>{isSyncing ? 'Buscando correos...' : 'Revisar Bandeja'}</span>
             </button>
 
             <button
               onClick={() => setIsModalEnvioOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white text-xs font-black transition-all shadow-lg shadow-orange-500/30 flex items-center gap-2 cursor-pointer"
-              title="Emitir nuevo envío real de documento a un trabajador"
+              title="Enviar un documento por correo a un trabajador para que lo firme"
             >
               <Send className="h-4 w-4" />
-              <span>Nuevo envío por correo real</span>
+              <span>Enviar Documento por Correo</span>
             </button>
           </div>
         </div>
@@ -473,16 +473,16 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
         <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-slate-300 flex-wrap">
             <div className={`h-2 w-2 rounded-full ${emailStatus?.configured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className="font-semibold">Servicio de Envío:</span>
-            <span className="font-mono text-emerald-300">{emailStatus?.provider || 'SMTP'}</span>
-            <span className="text-slate-400">· Remitente:</span>
+            <span className="font-semibold">Servicio de Correo:</span>
+            <span className="font-mono text-emerald-300">{emailStatus?.provider || 'Gmail / SMTP'}</span>
+            <span className="text-slate-400">· Correo de la empresa:</span>
             <span className="font-mono text-white">{CUENTA_INSTITUCIONAL}</span>
           </div>
 
           <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono">
-            <span>Envíos por responder: <strong className="text-orange-400">{enviosPendientes.length}</strong></span>
-            <span>Total Recibidos: <strong className="text-sky-400">{documentos.length}</strong></span>
-            <span>Historial real servidor: <strong className="text-emerald-400">{emailHistoryList.length}</strong></span>
+            <span>Esperando firma: <strong className="text-orange-400">{enviosPendientes.length}</strong></span>
+            <span>Firmados recibidos: <strong className="text-sky-400">{documentos.length}</strong></span>
+            <span>Historial de envíos: <strong className="text-emerald-400">{emailHistoryList.length}</strong></span>
           </div>
         </div>
       </div>
@@ -497,25 +497,25 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             <span className="text-xl font-black text-white font-mono">{metricas.totalRecibidos}</span>
             <Inbox className="h-4 w-4 text-sky-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Documentos en buzón</span>
+          <span className="text-[10px] text-slate-400 block">Archivos en bandeja</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-sky-400 block">Recibidos</span>
+          <span className="text-[10px] uppercase font-bold text-sky-400 block">Recién Llegados</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-sky-300 font-mono">{metricas.recibidos}</span>
             <Mail className="h-4 w-4 text-sky-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Por clasificar</span>
+          <span className="text-[10px] text-slate-400 block">Sin revisar aún</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-amber-400 block">Pendientes Revisión</span>
+          <span className="text-[10px] uppercase font-bold text-amber-400 block">Por Revisar</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-amber-300 font-mono">{metricas.pendientesRevision}</span>
             <Clock className="h-4 w-4 text-amber-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">En cola de auditoría</span>
+          <span className="text-[10px] text-slate-400 block">Falta aprobar firma</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
@@ -524,25 +524,25 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             <span className="text-xl font-black text-emerald-300 font-mono">{metricas.aprobados}</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Conformes y firmados</span>
+          <span className="text-[10px] text-slate-400 block">Firmados y archivados</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-rose-400 block">Requieren Corrección</span>
+          <span className="text-[10px] uppercase font-bold text-rose-400 block">Por Corregir</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-rose-300 font-mono">{metricas.requierenCorreccion}</span>
             <AlertTriangle className="h-4 w-4 text-rose-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Firma borrosa o faltante</span>
+          <span className="text-[10px] text-slate-400 block">Firma borrosa o incompleta</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-purple-400 block">% Aprobación</span>
+          <span className="text-[10px] uppercase font-bold text-purple-400 block">% Aprobados</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-purple-300 font-mono">{metricas.porcentajeAprobados}%</span>
             <FileCheck2 className="h-4 w-4 text-purple-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Cumplimiento formal</span>
+          <span className="text-[10px] text-slate-400 block">Documentos al día</span>
         </div>
       </div>
 
@@ -560,7 +560,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             }`}
           >
             <Inbox className="h-4 w-4" />
-            <span>1. Bandeja de Documentos Recibidos ({documentos.length})</span>
+            <span>1. Documentos Recibidos ({documentos.length})</span>
           </button>
 
           <button
@@ -572,7 +572,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             }`}
           >
             <Clock className="h-4 w-4" />
-            <span>2. Envíos en espera de respuesta ({enviosPendientes.length})</span>
+            <span>2. Esperando Firma ({enviosPendientes.length})</span>
           </button>
 
           <button
@@ -587,12 +587,12 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             }`}
           >
             <Server className="h-4 w-4 text-purple-400" />
-            <span>3. Historial Real de Envíos y Diagnóstico SMTP ({emailHistoryList.length})</span>
+            <span>3. Estado del Correo e Historial ({emailHistoryList.length})</span>
           </button>
         </div>
 
         <span className="text-[11px] text-slate-400 hidden sm:inline">
-          Cuenta: <strong className="text-white font-mono">{CUENTA_INSTITUCIONAL}</strong>
+          Correo: <strong className="text-white font-mono">{CUENTA_INSTITUCIONAL}</strong>
         </span>
       </div>
 
@@ -624,8 +624,8 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                   className="bg-transparent text-white focus:outline-none cursor-pointer"
                 >
                   <option value="todos" className="bg-slate-900 text-white">Todos los tipos</option>
-                  <option value="responsabilidades" className="bg-slate-900 text-white">Responsabilidades del cargo</option>
-                  <option value="politicas" className="bg-slate-900 text-white">Políticas institucionales</option>
+                  <option value="responsabilidades" className="bg-slate-900 text-white">Cuidados del cargo</option>
+                  <option value="politicas" className="bg-slate-900 text-white">Compromiso de seguridad</option>
                   <option value="otros" className="bg-slate-900 text-white">Otros documentos</option>
                 </select>
               </div>
@@ -667,15 +667,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-950/80 text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-800">
-                    <th className="py-3 px-3.5">1. Nombre del trabajador</th>
-                    <th className="py-3 px-3.5">2. Correo electrónico</th>
+                    <th className="py-3 px-3.5">1. Trabajador</th>
+                    <th className="py-3 px-3.5">2. Correo</th>
                     <th className="py-3 px-3.5">3. Cargo</th>
-                    <th className="py-3 px-3.5">4. Tipo de documento</th>
-                    <th className="py-3 px-3.5">5. Nombre del documento recibido</th>
+                    <th className="py-3 px-3.5">4. Tipo</th>
+                    <th className="py-3 px-3.5">5. Archivo recibido</th>
                     <th className="py-3 px-3.5">6. Asunto del correo</th>
-                    <th className="py-3 px-3.5">7. Fecha de recepción</th>
+                    <th className="py-3 px-3.5">7. Fecha de llegada</th>
                     <th className="py-3 px-3.5">8. Estado</th>
-                    <th className="py-3 px-3.5 text-center">9. Acción</th>
+                    <th className="py-3 px-3.5 text-center">9. Ver</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200 font-sans">
@@ -683,9 +683,9 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                     <tr>
                       <td colSpan={9} className="py-12 text-center text-slate-400">
                         <Inbox className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-                        <span className="block font-bold">No se encontraron documentos firmados</span>
+                        <span className="block font-bold">No encontramos documentos firmados con ese filtro</span>
                         <span className="text-[11px] text-slate-500">
-                          Ajuste los términos de búsqueda o verifique la pestaña de envíos pendientes.
+                          Prueba otra búsqueda o revisa la pestaña &quot;Esperando Firma&quot;.
                         </span>
                       </td>
                     </tr>
@@ -813,10 +813,10 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
           <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div>
               <h3 className="font-extrabold text-sm text-white">
-                Despachos Realizados a la Espera de Devolución Firmada
+                Documentos Enviados que Faltan por Firmar
               </h3>
               <p className="text-slate-400 text-[11px] mt-0.5">
-                Estos documentos fueron emitidos desde el Organigrama o Políticas. Puede simular la devolución firmada por el trabajador para probar el flujo de recepción instantánea.
+                Estos documentos se enviaron desde el Organigrama o el Compromiso de Seguridad. Si quieres probar cómo llega una respuesta firmada, usa el botón verde.
               </p>
             </div>
 
@@ -825,7 +825,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               className="px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Plus className="h-4 w-4" />
-              <span>Nuevo envío manual</span>
+              <span>Enviar Otro Documento</span>
             </button>
           </div>
 
@@ -833,9 +833,9 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             {enviosPendientes.length === 0 ? (
               <div className="col-span-2 p-8 text-center bg-slate-900 rounded-2xl border border-slate-800 text-slate-400">
                 <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-                <span className="block font-bold">No hay envíos pendientes de respuesta</span>
+                <span className="block font-bold">No hay envíos esperando firma</span>
                 <span className="text-[11px] text-slate-500">
-                  Todos los despachos han recibido sus correspondientes documentos firmados.
+                  Todos los trabajadores a los que se envió documento ya lo devolvieron firmado.
                 </span>
               </div>
             ) : (
@@ -863,17 +863,17 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
                   <div className="p-3 rounded-xl bg-slate-950 text-xs space-y-1.5 font-mono text-[11px]">
                     <div className="text-slate-400 flex items-center justify-between">
-                      <span>Destino:</span>
+                      <span>Enviado a:</span>
                       <span className="text-slate-200">{env.correoTrabajador}</span>
                     </div>
                     <div className="text-slate-400 flex items-center justify-between">
-                      <span>Documento enviado:</span>
+                      <span>Archivo enviado:</span>
                       <span className="text-orange-300 truncate max-w-[200px]" title={env.nombreDocumentoEnviado}>
                         {env.nombreDocumentoEnviado}
                       </span>
                     </div>
                     <div className="text-slate-400 flex items-center justify-between">
-                      <span>Fecha emisión:</span>
+                      <span>Fecha de envío:</span>
                       <span className="text-slate-300">{env.fechaEnvio}</span>
                     </div>
                   </div>
@@ -881,15 +881,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                   {/* Botón de Simulación de Respuesta */}
                   <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
                     <span className="text-[10px] text-slate-400">
-                      Prueba en vivo de devolución:
+                      Prueba rápida en pantalla:
                     </span>
                     <button
                       onClick={() => handleSimularDevolucion(env)}
                       className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-950/40 flex items-center gap-1.5 cursor-pointer"
-                      title="Simular que el trabajador respondió al correo con el archivo PDF firmado"
+                      title="Probar cómo se ve cuando el trabajador responde con su archivo firmado"
                     >
                       <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                      <span>Simular respuesta con PDF firmado</span>
+                      <span>Probar llegada de PDF firmado</span>
                     </button>
                   </div>
                 </div>
@@ -910,18 +910,18 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                    Google Workspace API (1P)
+                    Conexión con Google (Gmail)
                   </span>
                   <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                    <span>Conexión Google Workspace Activa</span>
+                    <span>Lista para Enviar y Leer Correos</span>
                   </span>
                 </div>
                 <h3 className="text-lg font-black text-white">
-                  Integración Oficial de Gmail (OAuth 2.0 y REST API v1)
+                  Conexión con el Correo de Gmail
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Permite el despacho y la recepción directa de documentos firmados en el buzón institucional sin intermediarios SMTP.
+                  Permite mandar los documentos y recibir las respuestas firmadas directo en el correo de Frikaz S.A.S.
                 </p>
               </div>
 
@@ -932,25 +932,25 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Canal Oficial</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Medio de Envío</span>
                 <span className="font-bold text-white text-sm font-mono mt-0.5 block">
-                  Gmail REST API v1
+                  Gmail Directo
                 </span>
-                <span className="text-[10px] text-slate-400">gmail.googleapis.com</span>
+                <span className="text-[10px] text-slate-400">Cuenta Google autorizada</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Cuenta Destinada</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Correo de la Empresa</span>
                 <span className="font-bold text-emerald-400 text-sm font-mono mt-0.5 block truncate">
                   {CUENTA_INSTITUCIONAL}
                 </span>
-                <span className="text-[10px] text-slate-400">Frikaz S.A.S. Oficial</span>
+                <span className="text-[10px] text-slate-400">Frikaz S.A.S.</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Capacidad Activa</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Qué puede hacer</span>
                 <span className="font-bold text-sky-400 text-sm font-mono mt-0.5 block">
-                  Envío + Lectura + Búsqueda
+                  Enviar, Leer y Buscar
                 </span>
-                <span className="text-[10px] text-slate-400">Tracking FRK-ENV en tiempo real</span>
+                <span className="text-[10px] text-slate-400">Seguimiento por código FRK-ENV</span>
               </div>
             </div>
           </div>
@@ -961,7 +961,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    Arquitectura de Envíos Reales
+                    Servidor de Correo (SMTP)
                   </span>
                   <span
                     className={`text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 border ${
@@ -975,14 +975,14 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                         emailStatus?.configured ? 'bg-emerald-400' : 'bg-amber-400 animate-ping'
                       }`}
                     />
-                    <span>{emailStatus?.configured ? 'Servicio Configurado' : 'Pendiente de Credenciales'}</span>
+                    <span>{emailStatus?.configured ? 'Listo para Usar' : 'Falta Configurar Clave'}</span>
                   </span>
                 </div>
                 <h3 className="text-lg font-black text-white">
-                  Diagnóstico y Verificación del Servidor de Correo
+                  Estado y Prueba del Servidor de Correo
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Valida la conexión SMTP en vivo hacia los servidores de correo y la persistencia de mensajes despachados.
+                  Revisa si el envío automático de correos está conectado y funcionando bien.
                 </p>
               </div>
 
@@ -1002,7 +1002,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                   className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Activity className={`h-4 w-4 ${verificandoSmtp ? 'animate-spin' : ''}`} />
-                  <span>{verificandoSmtp ? 'Verificando con SMTP...' : 'Probar conexión SMTP'}</span>
+                  <span>{verificandoSmtp ? 'Revisando...' : 'Probar conexión'}</span>
                 </button>
               </div>
             </div>
@@ -1024,8 +1024,8 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                 <div>
                   <h4 className="font-bold text-sm">
                     {smtpVerifyResult.success
-                      ? 'Conexión SMTP exitosa'
-                      : 'Fallo al verificar conexión con el servidor'}
+                      ? 'Conexión funcionando bien'
+                      : 'No se pudo conectar con el servidor'}
                   </h4>
                   <p className="mt-0.5 leading-relaxed">{smtpVerifyResult.message}</p>
                 </div>
@@ -1035,15 +1035,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             {/* Cuadrícula de Parámetros Activos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Proveedor</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Servicio</span>
                 <span className="font-bold text-white text-sm font-mono mt-0.5 block">
-                  {emailStatus?.provider || 'SMTP (Nodemailer)'}
+                  {emailStatus?.provider || 'Correo SMTP'}
                 </span>
-                <span className="text-[10px] text-slate-400">Transporte activo</span>
+                <span className="text-[10px] text-slate-400">Medio de respaldo</span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Host SMTP</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Servidor</span>
                 <span className="font-bold text-white text-sm font-mono mt-0.5 block truncate">
                   {emailStatus?.smtpHost || 'smtp.gmail.com'}
                 </span>
@@ -1051,19 +1051,19 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Usuario SMTP</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Correo que envía</span>
                 <span className="font-bold text-white text-sm font-mono mt-0.5 block truncate">
                   {emailStatus?.smtpUser || 'frikaz.fritosnacks@gmail.com'}
                 </span>
-                <span className="text-[10px] text-slate-400">Cuenta de despacho</span>
+                <span className="text-[10px] text-slate-400">Cuenta remitente</span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-mono block">Envíos Registrados</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono block">Correos Guardados</span>
                 <span className="font-bold text-sky-400 text-sm font-mono mt-0.5 block">
-                  {emailStatus?.totalSentInHistory ?? emailHistoryList.length} correos
+                  {emailStatus?.totalSentInHistory ?? emailHistoryList.length} envíos
                 </span>
-                <span className="text-[10px] text-slate-400">En disco .email_history.json</span>
+                <span className="text-[10px] text-slate-400">Registro histórico</span>
               </div>
             </div>
 
@@ -1072,15 +1072,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs space-y-2">
                 <div className="flex items-center gap-2 font-bold text-amber-100">
                   <HelpCircle className="h-4 w-4 text-amber-400" />
-                  <span>Configuración para envíos reales hacia destinatarios externos:</span>
+                  <span>Cómo activar el envío automático si no usas el botón de Gmail:</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-amber-200/90">
                   {emailStatus?.instructions ||
-                    'Para conectar un servidor SMTP real, defina en las variables de entorno de AI Studio o en .env: SMTP_HOST (ej. smtp.gmail.com), SMTP_PORT (587), SMTP_USER (frikaz.fritosnacks@gmail.com) y SMTP_PASS (contraseña de aplicación de 16 caracteres de Google).'}
+                    'Si prefieres usar el servidor interno en vez de conectar Gmail arriba, el encargado técnico debe ingresar los datos de acceso del correo (SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASS).'}
                 </p>
                 {emailStatus?.missingVars && emailStatus.missingVars.length > 0 && (
                   <div className="text-[11px] font-mono bg-slate-950 p-2.5 rounded-lg border border-amber-600/30 text-amber-300">
-                    Variables requeridas faltantes: {emailStatus.missingVars.join(' · ')}
+                    Datos que faltan: {emailStatus.missingVars.join(' · ')}
                   </div>
                 )}
               </div>
@@ -1095,17 +1095,17 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-black text-white">
-                  Herramienta de Prueba de Envío en Vivo
+                  Enviar un Correo de Prueba
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Envíe un correo de prueba inmediato a cualquier dirección para validar la entrega en buzón de entrada.
+                  Manda un mensaje de prueba a cualquier correo para comprobar que llega bien.
                 </p>
               </div>
             </div>
 
             {/* Selector de canal de prueba */}
             <div className="flex items-center gap-2 pt-1">
-              <span className="text-xs text-slate-400 font-bold">Canal de prueba:</span>
+              <span className="text-xs text-slate-400 font-bold">Enviar usando:</span>
               <button
                 type="button"
                 onClick={() => setTestProvider('gmail')}
@@ -1115,7 +1115,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                     : 'bg-slate-950 text-slate-400 border-slate-800'
                 }`}
               >
-                Gmail API (Google Workspace)
+                Cuenta Gmail
               </button>
               <button
                 type="button"
@@ -1126,21 +1126,21 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                     : 'bg-slate-950 text-slate-400 border-slate-800'
                 }`}
               >
-                SMTP Backend
+                Servidor Interno
               </button>
             </div>
 
             <form onSubmit={handleEnviarPrueba} className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Correo destinatario de prueba: <span className="text-sky-400">*</span>
+                  Correo de destino: <span className="text-sky-400">*</span>
                 </label>
                 <input
                   type="email"
                   required
                   value={testTo}
                   onChange={(e) => setTestTo(e.target.value)}
-                  placeholder="su.correo@ejemplo.com"
+                  placeholder="nombre@gmail.com"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
                 />
               </div>
@@ -1166,12 +1166,12 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                   {enviandoPrueba ? (
                     <>
                       <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Despachando prueba...</span>
+                      <span>Enviando prueba...</span>
                     </>
                   ) : (
                     <>
                       <Send className="h-3.5 w-3.5" />
-                      <span>Enviar prueba real</span>
+                      <span>Enviar Correo de Prueba</span>
                     </>
                   )}
                 </button>
@@ -1179,7 +1179,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
               <div className="col-span-1 md:col-span-3">
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Cuerpo del mensaje de prueba:
+                  Texto del mensaje de prueba:
                 </label>
                 <textarea
                   rows={2}
@@ -1206,15 +1206,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                 <div>
                   <span className="font-bold">
                     {resultadoPrueba.success
-                      ? 'Mensaje entregado exitosamente al servidor de correo'
-                      : 'Error en la entrega del correo:'}
+                      ? '¡Correo enviado correctamente!'
+                      : 'No se pudo enviar el correo:'}
                   </span>
                   <p className="mt-0.5">
                     {resultadoPrueba.error || resultadoPrueba.details || resultadoPrueba.response}
                   </p>
                   {resultadoPrueba.trackingCode && (
                     <span className="text-[10px] font-mono text-emerald-300 block mt-1">
-                      Tracking Code: {resultadoPrueba.trackingCode}
+                      Código: {resultadoPrueba.trackingCode}
                     </span>
                   )}
                 </div>
@@ -1227,10 +1227,10 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             <div className="p-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
               <div>
                 <h4 className="font-extrabold text-sm text-white">
-                  Registro Persistente de Despachos Reales
+                  Historial de Correos Enviados
                 </h4>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Bitácora de auditoría inmutable respaldada en el servidor backend.
+                  Lista guardada de todos los correos que han salido desde la herramienta.
                 </p>
               </div>
               <span className="text-xs text-slate-400 font-mono">
@@ -1242,14 +1242,14 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-950 text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-800">
-                    <th className="py-3 px-3.5">Código Tracking</th>
-                    <th className="py-3 px-3.5">Destinatario / Trabajador</th>
-                    <th className="py-3 px-3.5">Tipo Notificación</th>
+                    <th className="py-3 px-3.5">Código</th>
+                    <th className="py-3 px-3.5">Para quién</th>
+                    <th className="py-3 px-3.5">Tipo de aviso</th>
                     <th className="py-3 px-3.5">Asunto</th>
-                    <th className="py-3 px-3.5">Fecha y Hora</th>
-                    <th className="py-3 px-3.5">Estado Operacional</th>
-                    <th className="py-3 px-3.5">Detalles / Error</th>
-                    <th className="py-3 px-3.5 text-center">Acción</th>
+                    <th className="py-3 px-3.5">Fecha y hora</th>
+                    <th className="py-3 px-3.5">Estado</th>
+                    <th className="py-3 px-3.5">Notas</th>
+                    <th className="py-3 px-3.5 text-center">Opción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-200">
@@ -1257,9 +1257,9 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                     <tr>
                       <td colSpan={8} className="py-10 text-center text-slate-500">
                         <Mail className="h-7 w-7 text-slate-600 mx-auto mb-2" />
-                        <span className="block font-bold">No hay registros de envío en el historial aún</span>
+                        <span className="block font-bold">Todavía no hay correos guardados aquí</span>
                         <span className="text-[11px] text-slate-500">
-                          Utilice el botón "Nuevo envío por correo real" o la herramienta de prueba superior.
+                          Usa el botón &quot;Enviar Documento por Correo&quot; o la prueba de arriba.
                         </span>
                       </td>
                     </tr>
@@ -1312,7 +1312,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                               ID: {item.messageId}
                             </span>
                           ) : (
-                            <span className="text-slate-500">Sin observaciones</span>
+                            <span className="text-slate-500">Sin notas</span>
                           )}
                         </td>
 
@@ -1321,12 +1321,12 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                             <button
                               onClick={() => handleReintentarCorreo(item.id)}
                               className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 text-[11px] font-bold transition-colors cursor-pointer"
-                              title="Reintentar despacho inmediatamente"
+                              title="Intentar enviar de nuevo"
                             >
                               Reintentar
                             </button>
                           ) : (
-                            <span className="text-emerald-400 text-xs font-bold">✓ Despachado</span>
+                            <span className="text-emerald-400 text-xs font-bold">✓ Enviado</span>
                           )}
                         </td>
                       </tr>
@@ -1362,12 +1362,12 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             cargarDiagnosticoYHistorial();
           }}
           tipoDocumento="responsabilidades"
-          tituloEntidad="Operario de Producción y Freído"
-          nombreDocumentoAdjunto="Responsabilidades_SST_Operario_Freido_Frikaz.docx"
+          tituloEntidad="Operario de Frito"
+          nombreDocumentoAdjunto="Responsabilidades_SST_Operario_Frito_Frikaz.docx"
           onEnvioExitoso={(envioId, dest) => {
             setEnviosPendientes(getStoredEnviosPendientes());
             cargarDiagnosticoYHistorial();
-            triggerToast(`Documento enviado exitosamente a ${dest} con código ${envioId}`);
+            triggerToast(`Documento enviado a ${dest} (código ${envioId})`);
             setVistaActiva('historial_real');
           }}
         />

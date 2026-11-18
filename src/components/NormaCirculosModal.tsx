@@ -13,7 +13,10 @@ import {
   RotateCcw,
   Trash2,
   Check,
+  CalendarCheck,
 } from 'lucide-react';
+import { getCaracterizacionActual } from '../services/dynamicRulesEngine';
+import { identificarRequisitosObligatorios } from '../services/planAnualService';
 
 interface NormaCirculosModalProps {
   item: NormaPhvaItem | null;
@@ -37,12 +40,14 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<NormaPhvaItem | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (item) {
       setFormData({ ...item });
       setIsEditing(Boolean(initialEditMode));
       setSaveSuccess(false);
+      setConfirmDelete(false);
     }
   }, [item, isOpen, initialEditMode]);
 
@@ -70,16 +75,14 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
   };
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        `¿Está seguro de eliminar la norma "${formData.tituloSituacion}" de la matriz?`
-      )
-    ) {
-      if (onDeleteNorma) {
-        onDeleteNorma(formData.id);
-      }
-      onClose();
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
     }
+    if (onDeleteNorma) {
+      onDeleteNorma(formData.id);
+    }
+    onClose();
   };
 
   return (
@@ -166,18 +169,18 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
             <div className="rounded-xl bg-emerald-50 border-2 border-emerald-500 p-3.5 flex items-center justify-between text-emerald-900 animate-fade-in shadow-xs">
               <div className="flex items-center gap-2 font-bold text-xs">
                 <Check className="h-4 w-4 text-emerald-600" />
-                <span>¡Cambios guardados con éxito en la base de datos de Frikaz S.A.S.!</span>
+                <span>¡Listo! Guardamos los cambios en la guía de Frikaz S.A.S.</span>
               </div>
             </div>
           )}
 
-          {/* Subtitle from the Teacher's Presentation (Slide 5) */}
+          {/* Encabezado claro de los 6 puntos */}
           <div className="text-center pb-2 border-b border-slate-200">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#991b1b]">
-              SISTEMA DE GESTIÓN — EVALUACIÓN NORMATIVA AUTOMATIZADA
+              GUÍA CLARA DE LA NORMA — 6 PUNTOS IMPORTANTES
             </span>
             <h4 className="text-sm font-semibold text-slate-600 mt-0.5">
-              Identificar la Normativa para cada Fase (Requisitos Oficiales de la Presentación)
+              Qué pide la ley, por qué nos cuida y qué hacemos cada día en Frikaz S.A.S.
             </h4>
           </div>
 
@@ -190,10 +193,10 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
               <div className="rounded-xl border border-amber-300 bg-amber-50/70 p-4 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-amber-950 uppercase">
-                    Datos Generales de la Disposición Legal:
+                    Datos Principales de la Norma:
                   </span>
                   <span className="text-[11px] text-amber-800">
-                    Edite cualquier campo y haga clic en <strong>Guardar Cambios</strong>
+                    Cambia lo que necesites y presiona <strong>Guardar Cambios</strong>
                   </span>
                 </div>
 
@@ -315,14 +318,14 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                 </div>
               </div>
 
-              {/* EDICIÓN DE LOS 6 CÍRCULOS OBLIGATORIOS */}
+              {/* EDICIÓN DE LOS 6 PUNTOS CLAVE */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                   <h4 className="font-extrabold text-sm text-[#0f172a] uppercase tracking-wide">
-                    Edición de los 6 Círculos Obligatorios de la Presentación:
+                    Los 6 Puntos Explicativos de la Norma:
                   </h4>
                   <span className="text-xs text-[#991b1b] font-bold">
-                    Requisitos solicitados por la profesora
+                    Escríbelos en palabras sencillas para todo el equipo
                   </span>
                 </div>
 
@@ -334,7 +337,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         1
                       </div>
                       <label className="font-bold text-xs uppercase tracking-wider text-[#0f172a]">
-                        Descripción (¿Qué regula la disposición?)
+                        ¿Qué dice o pide la norma?
                       </label>
                     </div>
                     <textarea
@@ -342,7 +345,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       value={formData.descripcion}
                       onChange={(e) => handleChange('descripcion', e.target.value)}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                      placeholder="Explique qué regula la norma..."
+                      placeholder="Explica con palabras sencillas qué pide esta norma..."
                       required
                     />
                   </div>
@@ -354,7 +357,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         2
                       </div>
                       <label className="font-bold text-xs uppercase tracking-wider text-orange-950">
-                        Importancia (¿Por qué es crucial para Frikaz S.A.S.?)
+                        ¿Por qué nos cuida en Frikaz S.A.S.?
                       </label>
                     </div>
                     <textarea
@@ -362,7 +365,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       value={formData.importancia}
                       onChange={(e) => handleChange('importancia', e.target.value)}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                      placeholder="Importancia para la planta de fritos y sus 10 trabajadores..."
+                      placeholder="Cómo protege la salud y seguridad de los 10 trabajadores..."
                       required
                     />
                   </div>
@@ -374,7 +377,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         3
                       </div>
                       <label className="font-bold text-xs uppercase tracking-wider text-[#1e3a8a]">
-                        Aplicabilidad (¿Qué debe hacer concretamente la empresa?)
+                        ¿Qué debemos hacer en la planta?
                       </label>
                     </div>
                     <textarea
@@ -382,7 +385,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       value={formData.aplicabilidad}
                       onChange={(e) => handleChange('aplicabilidad', e.target.value)}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                      placeholder="Medidas concretas a implementar..."
+                      placeholder="Pasos concretos en freidoras, empaque, bodega o entregas..."
                       required
                     />
                   </div>
@@ -394,7 +397,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         4
                       </div>
                       <label className="font-bold text-xs uppercase tracking-wider text-[#991b1b]">
-                        Vigencia Oficial (Confirmación en SUIN / MinTrabajo / SDA)
+                        ¿Sigue vigente hoy?
                       </label>
                     </div>
                     <textarea
@@ -402,7 +405,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       value={formData.textoVigencia}
                       onChange={(e) => handleChange('textoVigencia', e.target.value)}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                      placeholder="Estado de vigencia oficial..."
+                      placeholder="Confirmación de que la norma está vigente..."
                       required
                     />
                   </div>
@@ -414,7 +417,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         5
                       </div>
                       <label className="font-bold text-xs uppercase tracking-wider text-[#0f172a]">
-                        Jurisdicción y Alcance (Nacional / Distrital Bogotá)
+                        ¿Dónde y a quiénes aplica?
                       </label>
                     </div>
                     <textarea
@@ -422,7 +425,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       value={formData.jurisdiccionAlcance}
                       onChange={(e) => handleChange('jurisdiccionAlcance', e.target.value)}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                      placeholder="Cobertura y alcance territorial..."
+                      placeholder="Si aplica en todo el país, Bogotá o áreas específicas..."
                       required
                     />
                   </div>
@@ -434,7 +437,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         6
                       </div>
                       <label className="font-bold text-xs uppercase tracking-wider text-emerald-950">
-                        Evidencia para Cumplimiento (Documento auditable)
+                        ¿Con qué documento o soporte se demuestra?
                       </label>
                     </div>
                     <textarea
@@ -442,7 +445,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       value={formData.evidenciaCumplimiento}
                       onChange={(e) => handleChange('evidenciaCumplimiento', e.target.value)}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                      placeholder="Soporte documental exigido por la autoridad..."
+                      placeholder="Planillas, certificados, actas, fotos o registros..."
                       required
                     />
                   </div>
@@ -491,15 +494,30 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
               </div>
 
               {/* BOTONES DE ACCIÓN DEL FORMULARIO */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-[#991b1b] border border-red-300 text-xs font-bold hover:bg-red-100 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>Eliminar Esta Norma</span>
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-slate-200">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition-colors ${
+                      confirmDelete
+                        ? 'bg-[#991b1b] text-white border-[#991b1b]'
+                        : 'bg-red-50 text-[#991b1b] border-red-300 hover:bg-red-100'
+                    }`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>{confirmDelete ? 'Confirmar: Eliminar Norma' : 'Eliminar Esta Norma'}</span>
+                  </button>
+                  {confirmDelete && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="px-2.5 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200"
+                    >
+                      No eliminar
+                    </button>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-2">
                   <button
@@ -507,6 +525,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     onClick={() => {
                       setFormData({ ...item });
                       setIsEditing(false);
+                      setConfirmDelete(false);
                     }}
                     className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-300 transition-colors"
                   >
@@ -528,14 +547,14 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
             /* MODO LECTURA Y SEGUIMIENTO AUTOMATIZADO                                   */
             /* ========================================================================= */
             <>
-              {/* Interactive Status Bar (Automation) */}
+              {/* Interactive Status Bar */}
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-bold uppercase text-slate-600 block">
-                    Estado Automatizado de Cumplimiento:
+                    ¿Cómo vamos con esta norma?
                   </span>
                   <p className="text-xs text-slate-500">
-                    Al seleccionar un estado, los indicadores del panel se recalculan al instante.
+                    Al elegir un estado aquí, los porcentajes del panel se actualizan solos de inmediato.
                   </p>
                 </div>
 
@@ -605,7 +624,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                 </div>
               </div>
 
-              {/* LOS 6 CÍRCULOS DEL SLIDE 5 REPRESENTADOS CLARAMENTE */}
+              {/* LOS 6 PUNTOS EXPLICADOS EN LENGUAJE SENCILLO */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* CÍRCULO 1: DESCRIPCIÓN */}
                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs relative flex flex-col justify-between hover:border-slate-400 transition-all">
@@ -623,7 +642,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     </p>
                   </div>
                   <span className="mt-3 text-[10px] text-slate-400 font-medium">
-                    ¿Qué regula la norma?
+                    ¿Qué dice o pide esta norma?
                   </span>
                 </div>
 
@@ -643,7 +662,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     </p>
                   </div>
                   <span className="mt-3 text-[10px] text-orange-700 font-semibold">
-                    Para Frikaz S.A.S. (10 trab., snacks fritos)
+                    ¿Por qué nos cuida en Frikaz S.A.S. (10 trabajadores)?
                   </span>
                 </div>
 
@@ -655,7 +674,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         3
                       </div>
                       <h5 className="font-bold text-xs uppercase tracking-wider text-[#1e3a8a]">
-                        Aplicabilidad
+                        Cómo se Aplica
                       </h5>
                     </div>
                     <p className="text-xs text-slate-800 leading-relaxed font-normal">
@@ -663,11 +682,11 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     </p>
                   </div>
                   <span className="mt-3 text-[10px] text-blue-700 font-semibold">
-                    ¿Qué debe hacer la pyme concretamente?
+                    ¿Qué debemos hacer cada día en la planta?
                   </span>
                 </div>
 
-                {/* CÍRCULO 4: VIGENTE (DESTACADO EN ROJO OSCURO COMO EN LA DIAPOSITIVA) */}
+                {/* CÍRCULO 4: VIGENTE */}
                 <div className="rounded-xl border-2 border-[#991b1b] bg-red-50/60 p-4 shadow-xs relative flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -675,19 +694,19 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         4
                       </div>
                       <h5 className="font-bold text-xs uppercase tracking-wider text-[#991b1b]">
-                        Vigente (Oficial)
+                        ¿Está Vigente?
                       </h5>
                     </div>
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#991b1b] text-white text-xs font-bold mb-2">
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      <span>VIGENTE EN COLOMBIA</span>
+                      <span>VIGENTE HOY EN COLOMBIA</span>
                     </div>
                     <p className="text-xs text-red-950 leading-relaxed">
                       {formData.textoVigencia}
                     </p>
                   </div>
                   <span className="mt-3 text-[10px] text-red-800 font-bold">
-                    Verificado en SUIN-Juriscol / MinTrabajo / SDA
+                    Confirmado en fuentes oficiales del país
                   </span>
                 </div>
 
@@ -699,7 +718,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         5
                       </div>
                       <h5 className="font-bold text-xs uppercase tracking-wider text-[#0f172a]">
-                        Jurisdicción y Alcance
+                        Dónde y a Quiénes Aplica
                       </h5>
                     </div>
                     <p className="text-xs text-slate-700 leading-relaxed">
@@ -707,7 +726,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     </p>
                   </div>
                   <span className="mt-3 text-[10px] text-slate-500 font-medium">
-                    Ámbito territorial y cobertura laboral
+                    Lugares y personas cubiertas por la norma
                   </span>
                 </div>
 
@@ -719,7 +738,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                         6
                       </div>
                       <h5 className="font-bold text-xs uppercase tracking-wider text-emerald-950">
-                        Evidencia de Cumplimiento
+                        Soporte que lo Demuestra
                       </h5>
                     </div>
                     <p className="text-xs text-emerald-950 font-medium leading-relaxed">
@@ -727,20 +746,90 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     </p>
                   </div>
                   <span className="mt-3 text-[10px] text-emerald-800 font-bold">
-                    Documento o soporte auditable por la autoridad
+                    Documentos, planillas o registros para tener al día
                   </span>
                 </div>
               </div>
+
+              {/* Trazabilidad normativa para el Plan Anual */}
+              {(() => {
+                const configActual = getCaracterizacionActual();
+                const reqs = identificarRequisitosObligatorios(configActual, [formData]);
+                const reqMatch = reqs.find(
+                  (r) =>
+                    r.normaId === formData.id ||
+                    formData.normaOficial
+                      .toLowerCase()
+                      .includes(r.normaOficial.split('/')[0].trim().toLowerCase())
+                );
+                return (
+                  <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-2.5 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-black text-indigo-950 uppercase text-[11px] flex items-center gap-1.5">
+                        <CalendarCheck className="h-4 w-4 text-[#f97316]" />
+                        ¿Cómo entra esta norma al Plan Anual (PLANEAR)?
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-white border border-indigo-200 text-indigo-900 font-bold text-[10px]">
+                        {reqMatch
+                          ? `Cada cuánto se hace: ${reqMatch.frecuenciaRespaldada}`
+                          : 'Se revisa según avance en la lista'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-[11px]">
+                      <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                          Requisito a Cumplir
+                        </span>
+                        <span className="font-semibold text-slate-800">
+                          {reqMatch ? reqMatch.requisitoObligatorio : formData.tituloSituacion}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                          Norma y Actividad Práctica
+                        </span>
+                        <span className="font-semibold text-slate-800 block">
+                          {formData.normaOficial} ({formData.articulos})
+                        </span>
+                        <span className="text-slate-600">
+                          {reqMatch ? reqMatch.actividadPropuesta : formData.aplicabilidad.slice(0, 120)}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                          Frecuencia, Responsable y Soporte
+                        </span>
+                        <span className="text-slate-800 block">
+                          <strong>Cada cuánto:</strong>{' '}
+                          {reqMatch
+                            ? `${reqMatch.frecuenciaRespaldada} (${reqMatch.sustentoFrecuencia})`
+                            : 'Según seguimiento del plan'}
+                        </span>
+                        <span className="text-slate-600 block">
+                          <strong>Encargado:</strong>{' '}
+                          {reqMatch ? reqMatch.responsableSugerido : formData.responsable} ·{' '}
+                          <strong>Fecha:</strong>{' '}
+                          {reqMatch ? reqMatch.periodoCumplimiento : `Año ${new Date().getFullYear()}`}
+                        </span>
+                        <span className="text-emerald-800 block mt-0.5">
+                          <strong>Soporte:</strong>{' '}
+                          {reqMatch ? reqMatch.evidenciaNecesaria : formData.evidenciaCumplimiento.slice(0, 110)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Traceability Footnote */}
               <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500">
                 <div>
                   <span>
-                    <strong>Responsable Asignado:</strong> {formData.responsable}
+                    <strong>Encargado:</strong> {formData.responsable}
                   </span>
                   <span className="mx-2">·</span>
                   <span>
-                    <strong>Última Verificación:</strong> {formData.fechaVerificacion}
+                    <strong>Última Revisión:</strong> {formData.fechaVerificacion}
                   </span>
                 </div>
                 {formData.observaciones && (
@@ -759,11 +848,11 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
               onClick={() => setIsEditing(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#f97316] text-white text-xs font-bold hover:bg-[#ea580c] transition-colors shadow-xs"
             >
-              <span>Editar los 6 Círculos de esta Norma</span>
+              <span>Editar los 6 Puntos de esta Norma</span>
             </button>
           ) : (
             <span className="text-xs text-slate-500 font-medium">
-              Todos los cambios se guardan localmente para su sustentación.
+              Todos los cambios se guardan automáticamente en este equipo.
             </span>
           )}
 

@@ -80,6 +80,7 @@ export function MatrizRiesgosView() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [deletingRisk, setDeletingRisk] = useState<RiesgoGTC45Item | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState<boolean>(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
   const [saveNotification, setSaveNotification] = useState<string | null>(null);
 
@@ -180,17 +181,16 @@ export function MatrizRiesgosView() {
 
   // Reset to initial canonical base dataset
   const handleResetToCanonical = () => {
-    if (
-      window.confirm(
-        '¿Desea restablecer la matriz de riesgos GTC 45 a los datos originales de referencia de Frikaz S.A.S.?'
-      )
-    ) {
-      const base = resetToInitialRisks();
-      setDataset(base);
-      handleLimpiarFiltros();
-      setSelectedRiskId(base[0]?.id || '');
-      triggerNotification('Matriz restablecida a los valores originales de la GTC 45');
-    }
+    setIsResetModalOpen(true);
+  };
+
+  const handleConfirmResetToCanonical = () => {
+    const base = resetToInitialRisks();
+    setDataset(base);
+    handleLimpiarFiltros();
+    setSelectedRiskId(base[0]?.id || '');
+    setIsResetModalOpen(false);
+    triggerNotification('Lista de riesgos restaurada con los ejemplos iniciales de Frikaz S.A.S.');
   };
 
   // CRUD: Save (Create or Update)
@@ -255,7 +255,7 @@ export function MatrizRiesgosView() {
       triggerNotification('Archivo Excel (.xlsx) generado y descargado correctamente');
     } catch (err) {
       console.error('Error exportando Excel:', err);
-      alert('Ocurrió un error al generar el archivo Excel.');
+      triggerNotification('No pudimos crear el archivo Excel en este momento. Intenta de nuevo.');
     } finally {
       setIsExportingExcel(false);
     }
@@ -459,8 +459,8 @@ export function MatrizRiesgosView() {
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Identificación de peligros y evaluación de riesgos organizada en 6 secciones sencillas.
-              Consulte los riesgos agrupados por <strong className="text-white">Puesto de trabajo (Cargo)</strong> o por lugar, revise las fichas técnicas interactivas y planifique las medidas de prevención para proteger a los trabajadores.
+              Lista de peligros en la planta y qué tan graves son, explicada en 6 pasos sencillos.
+              Consulta los riesgos por <strong className="text-white">Puesto de trabajo (Cargo)</strong> o por área, mira cómo cuidarte y revisa las acciones de prevención de Frikaz S.A.S.
             </p>
           </div>
 
@@ -478,7 +478,7 @@ export function MatrizRiesgosView() {
                 </span>
               </div>
               <div className="text-center px-3">
-                <span className="block text-[10px] uppercase font-bold text-rose-400">Urgentes / Críticos (I)</span>
+                <span className="block text-[10px] uppercase font-bold text-rose-400">Urgentes (Nivel I)</span>
                 <span className="text-xl font-black text-rose-400 font-mono">
                   {estadisticas.nivelI}
                 </span>
@@ -498,10 +498,10 @@ export function MatrizRiesgosView() {
               <button
                 onClick={() => setIsAssistantOpen(true)}
                 className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
-                title="Abrir Asistente Consultor de la Matriz de Riesgos"
+                title="Abrir guía de consulta rápida sobre peligros y cuidados"
               >
                 <Bot className="h-4 w-4 text-emerald-400" />
-                <span>Asistente Consultor</span>
+                <span>Guía de Consulta</span>
               </button>
             </div>
           </div>
@@ -510,7 +510,7 @@ export function MatrizRiesgosView() {
         {/* Action Bar (View Modes, Export, Print, Reset) */}
         <div className="relative z-10 mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 font-medium mr-1">Vistas de la matriz:</span>
+            <span className="text-slate-400 font-medium mr-1">¿Cómo quieres verla?:</span>
             <button
               onClick={() => setViewMode('ficha')}
               className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -520,7 +520,7 @@ export function MatrizRiesgosView() {
               }`}
             >
               <Eye className="h-3.5 w-3.5" />
-              <span>1. Ficha Técnica (6 Secciones)</span>
+              <span>1. Ficha Sencilla (6 Pasos)</span>
             </button>
             <button
               onClick={() => setViewMode('por_cargos')}
@@ -531,7 +531,7 @@ export function MatrizRiesgosView() {
               }`}
             >
               <Briefcase className="h-3.5 w-3.5" />
-              <span>2. Agrupación por Cargos ({cargosDisponibles.length})</span>
+              <span>2. Por Puesto de Trabajo ({cargosDisponibles.length})</span>
             </button>
             <button
               onClick={() => setViewMode('tabla')}
@@ -542,7 +542,7 @@ export function MatrizRiesgosView() {
               }`}
             >
               <TableIcon className="h-3.5 w-3.5" />
-              <span>3. Tabla Matriz Completa</span>
+              <span>3. Tabla Completa</span>
             </button>
             <button
               onClick={() => setViewMode('indicadores')}
@@ -553,7 +553,7 @@ export function MatrizRiesgosView() {
               }`}
             >
               <BarChart2 className="h-3.5 w-3.5" />
-              <span>4. Indicadores y Estadísticas GTC 45</span>
+              <span>4. Resumen y Gráficas</span>
             </button>
           </div>
 
@@ -1334,7 +1334,7 @@ export function MatrizRiesgosView() {
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-emerald-400" />
                   <h4 className="text-sm font-bold text-white uppercase tracking-wide">
-                    Panel Explicativo Técnico del Nivel de Consecuencia (NC = {selectedRisk.nivelConsecuencia})
+                    ¿Qué significa la gravedad del daño (NC = {selectedRisk.nivelConsecuencia})?
                   </h4>
                 </div>
                 <button
@@ -1343,8 +1343,8 @@ export function MatrizRiesgosView() {
                 >
                   <span>
                     {showFullNcTable
-                      ? 'Ocultar comparativa completa'
-                      : 'Ver tabla técnica comparativa completa'}
+                      ? 'Ocultar tabla de comparación'
+                      : 'Ver tabla completa de gravedad'}
                   </span>
                   <ChevronRight
                     className={`h-3.5 w-3.5 transition-transform ${
@@ -1372,18 +1372,18 @@ export function MatrizRiesgosView() {
                         {TABLA_TECNICA_NC[selectedRisk.nivelConsecuencia].clasificacion.toUpperCase()}
                       </span>
                       <span className="text-xs font-bold text-white uppercase tracking-wide">
-                        ← Criterio técnico asignado a este peligro
+                        ← Nivel asignado a este peligro
                       </span>
                     </div>
                     <span className="text-xs font-mono text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-md border border-slate-700">
-                      GTC 45: Tabla 3 (Determinación del NC)
+                      Guía GTC 45 · Tabla de Gravedad (NC)
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-1">
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                        Definición Técnica Oficial
+                        Explicación Sencilla
                       </span>
                       <p className="text-slate-200 leading-relaxed">
                         {TABLA_TECNICA_NC[selectedRisk.nivelConsecuencia].definicionTecnica}
@@ -1392,7 +1392,7 @@ export function MatrizRiesgosView() {
 
                     <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-1">
                       <span className="text-[10px] uppercase font-bold text-amber-400 block">
-                        Criterio de Incapacidad Médica
+                        Incapacidad Médica Estimada
                       </span>
                       <p className="text-slate-200 font-medium leading-relaxed">
                         {TABLA_TECNICA_NC[selectedRisk.nivelConsecuencia].criterioIncapacidad}
@@ -1401,7 +1401,7 @@ export function MatrizRiesgosView() {
 
                     <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-1">
                       <span className="text-[10px] uppercase font-bold text-cyan-400 block">
-                        Ejemplos Operativos Típicos
+                        Ejemplos en Planta
                       </span>
                       <p className="text-slate-200 leading-relaxed">
                         {TABLA_TECNICA_NC[selectedRisk.nivelConsecuencia].ejemplosOperativos}
@@ -1418,10 +1418,10 @@ export function MatrizRiesgosView() {
                     <thead>
                       <tr className="bg-slate-900/90 text-slate-300 font-bold uppercase text-[10px] border-b border-slate-800">
                         <th className="p-3 w-16 text-center">NC</th>
-                        <th className="p-3 w-28">Clasificación</th>
-                        <th className="p-3">Definición Técnica Oficial</th>
-                        <th className="p-3 w-48">Criterio de Incapacidad</th>
-                        <th className="p-3">Ejemplos Operativos</th>
+                        <th className="p-3 w-28">Nivel de Daño</th>
+                        <th className="p-3">Qué Significa</th>
+                        <th className="p-3 w-48">Días de Incapacidad</th>
+                        <th className="p-3">Ejemplos en la Vida Real</th>
                         <th className="p-3 w-20 text-center">Estado</th>
                       </tr>
                     </thead>
@@ -1923,10 +1923,10 @@ export function MatrizRiesgosView() {
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <BarChart2 className="h-5 w-5 text-emerald-400" />
-              <span>Indicadores y Estadísticas Reales de la Matriz GTC 45</span>
+              <span>Resumen de Peligros y Medidas en Frikaz S.A.S.</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Métricas consolidadas a partir de los datos registrados, con desglose por cargo, nivel de criticidad, área y jerarquía de intervención.
+              Vista rápida de cuántos peligros hay por puesto de trabajo, por zona de la planta y qué tan urgentes son.
             </p>
           </div>
 
@@ -2174,6 +2174,36 @@ export function MatrizRiesgosView() {
           setViewMode('ficha');
         }}
       />
+
+      {/* MODAL: CONFIRMAR RESTABLECER MATRIZ */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-white">
+              ¿Volver a la lista inicial de riesgos?
+            </h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Si aceptas, se volverán a cargar los riesgos iniciales de ejemplo de Frikaz S.A.S. y se borrarán los cambios que hayas agregado a mano en esta lista.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsResetModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmResetToCanonical}
+                className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold"
+              >
+                Sí, volver a la lista inicial
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

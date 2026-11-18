@@ -6,10 +6,12 @@ import {
 import { RIESGOS_GTC45_DATASET } from '../data/gtc45RiskMatrixData';
 
 const STORAGE_KEY = 'frikaz_gtc45_matrix_v2';
+const PLAIN_LANG_FLAG = 'frikaz_gtc45_plain_lang_v1';
 
 /**
  * Loads risks from localStorage or falls back to the canonical GTC 45 dataset.
- * Automatically backfills cargo / cargosExpuestos if older items were stored without them.
+ * Automatically backfills cargo / cargosExpuestos and refreshes canonical plain-Spanish copy once
+ * while preserving user-added risks and customized numerical evaluations.
  */
 export function loadStoredRisks(): RiesgoGTC45Item[] {
   try {
@@ -18,8 +20,32 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const canonicalMap = new Map(RIESGOS_GTC45_DATASET.map((r) => [r.id, r]));
+        const needsPlainRefresh = !localStorage.getItem(PLAIN_LANG_FLAG);
         const merged = parsed.map((item: RiesgoGTC45Item) => {
           const canon = canonicalMap.get(item.id);
+          if (canon && needsPlainRefresh) {
+            return {
+              ...canon,
+              ...item,
+              actividades: canon.actividades,
+              tareas: canon.tareas,
+              peligroDescripcion: canon.peligroDescripcion,
+              efectosPosibles: canon.efectosPosibles,
+              controlesFuente: canon.controlesFuente,
+              controlesMedio: canon.controlesMedio,
+              controlesIndividuo: canon.controlesIndividuo,
+              peorConsecuencia: canon.peorConsecuencia,
+              requisitoLegalEspecifico: canon.requisitoLegalEspecifico,
+              medidaEliminacion: canon.medidaEliminacion,
+              medidaSustitucion: canon.medidaSustitucion,
+              medidaControlesIngenieria: canon.medidaControlesIngenieria,
+              medidaControlesAdministrativos: canon.medidaControlesAdministrativos,
+              medidaEquiposEPP: canon.medidaEquiposEPP,
+              observaciones: canon.observaciones,
+              cargo: item.cargo || canon.cargo || 'Operario',
+              cargosExpuestos: item.cargosExpuestos || canon.cargosExpuestos || canon.cargo || 'Operario',
+            };
+          }
           if (canon && (!item.cargo || !item.cargosExpuestos)) {
             return {
               ...item,
@@ -29,6 +55,14 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
           }
           return item;
         });
+        if (needsPlainRefresh) {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            localStorage.setItem(PLAIN_LANG_FLAG, '1');
+          } catch {
+            // ignore quota errors
+          }
+        }
         return merged;
       }
     }
@@ -44,6 +78,9 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
 export function saveStoredRisks(risks: RiesgoGTC45Item[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(risks));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('frikaz:risks-updated'));
+    }
   } catch (err) {
     console.error('Error saving risks to localStorage:', err);
   }
@@ -55,6 +92,9 @@ export function saveStoredRisks(risks: RiesgoGTC45Item[]): void {
 export function resetToInitialRisks(): RiesgoGTC45Item[] {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('frikaz:risks-updated'));
+    }
   } catch (err) {
     console.error('Error resetting risks:', err);
   }

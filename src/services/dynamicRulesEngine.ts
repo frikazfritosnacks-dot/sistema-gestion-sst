@@ -110,6 +110,9 @@ export function getCaracterizacionActual(): CaracterizacionEmpresaDinamica {
 export function saveCaracterizacion(config: CaracterizacionEmpresaDinamica): void {
   try {
     localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('frikaz:config-updated'));
+    }
   } catch (err) {
     console.error('Error al guardar caracterización dinámica', err);
   }
@@ -148,13 +151,13 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Capítulos I, II y III (Artículos 3, 9 y 16)',
     area: 'SST',
     fasePhva: 'PLANEAR',
-    condicionAplicacion: 'Tamaño de empresa y clase de riesgo laboral ARL',
+    condicionAplicacion: 'Cantidad de trabajadores y nivel de riesgo del trabajo',
     datosRequeridos: ['numeroTrabajadores', 'claseRiesgoSST'],
     umbralLegalTexto:
-      '<=10 trab. Riesgo I, II, III: 7 Estándares | 11 a 50 trab. Riesgo I, II, III: 21 Estándares | >50 trab. O Riesgo IV/V: 60 Estándares',
+      'Hasta 10 trabajadores (Riesgo I, II o III): 7 reglas básicas | De 11 a 50 trabajadores (Riesgo I, II o III): 21 reglas | Más de 50 trabajadores o Riesgo IV y V: 60 reglas completas',
     explicacionSencilla:
-      'Determina la cantidad de estándares obligatorios que el Ministerio del Trabajo exige implementar y auditar anualmente.',
-    fuenteOficial: 'Ministerio del Trabajo / SUIN-Juriscol',
+      'Define cuántas reglas de seguridad y salud nos pide el Ministerio del Trabajo según cuántas personas trabajan en la planta y qué tan riesgoso es el trabajo.',
+    fuenteOficial: 'Ministerio del Trabajo',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const n = cfg.numeroTrabajadores;
@@ -164,13 +167,13 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (esRiesgoAlto || n > 50) {
         return {
           resultado: 'MODIFICADA_ALCANCE',
-          explicacion: `Con ${n} trabajadores o Clase de Riesgo IV/V, aplican los 60 Estándares Mínimos completos de la Resolución 0312/2019 (Capítulo III). Se requiere plan anual ampliado, auditoría externa y profesional con posgrado en SST.`,
+          explicacion: `Con ${n} trabajadores o con riesgo alto (Clase IV o V), la ley nos pide cumplir los 60 puntos completos de la Resolución 0312 de 2019. Esto significa un plan anual más completo, revisiones médicas detalladas y una revisión externa al año.`,
           requiereRevisionHumana: true,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 0312 de 2019 - Capítulo III: Exigibilidad de los 60 Estándares Mínimos del SG-SST para empresas de más de 50 trabajadores o en clases de riesgo IV y V.`,
-            nuevaImportancia: `Para Frikaz S.A.S. con ${n} trabajadores y ${cfg.claseRiesgoSST}, es mandatorio implementar los 60 estándares, requiriendo mediciones higiénicas, profesiogramas detallados y auditoría formal anual.`,
-            nuevaAplicabilidad: `Contratar profesional en SST con licencia y curso 50h, realizar autoevaluación en plataforma MinTrabajo y registrar plan de mejoramiento.`,
-            nuevaEvidencia: `Tabla de autoevaluación de los 60 Estándares firmada con radicado ante ARL y Ministerio del Trabajo.`,
+            nuevaDescripcion: `Resolución 0312 de 2019 (Capítulo III): Cumplir los 60 puntos de seguridad y salud para empresas con más de 50 trabajadores o riesgo alto (IV y V).`,
+            nuevaImportancia: `En Frikaz S.A.S. con ${n} personas y ${cfg.claseRiesgoSST}, debemos tener controles muy completos en freidoras, mediciones de ruido/calor y exámenes médicos para proteger a todos.`,
+            nuevaAplicabilidad: `Contar con un profesional con licencia en SST y curso de 50 horas, revisar los 60 puntos cada año y guardar el plan de mejoras.`,
+            nuevaEvidencia: `Lista de los 60 puntos revisada, firmada y enviada a la ARL y al Ministerio del Trabajo.`,
           },
         };
       }
@@ -178,26 +181,26 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (n >= 11 && n <= 50) {
         return {
           resultado: 'MODIFICADA_ALCANCE',
-          explicacion: `Al tener ${n} trabajadores en ${cfg.claseRiesgoSST}, Frikaz S.A.S. escala de 7 a 21 Estándares Mínimos (Capítulo II de la Res. 0312/2019).`,
+          explicacion: `Al pasar a ${n} trabajadores en ${cfg.claseRiesgoSST}, Frikaz S.A.S. sube de 7 a 21 reglas obligatorias de seguridad y salud (Resolución 0312 de 2019, Capítulo II).`,
           requiereRevisionHumana: true,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 0312 de 2019 - Capítulo II: 21 Estándares Mínimos para empresas de 11 a 50 trabajadores clasificadas en riesgo I, II o III.`,
-            nuevaImportancia: `Con ${n} trabajadores, Frikaz S.A.S. pasa automáticamente de 7 a 21 estándares exigibles. Se incorporan obligaciones de evaluaciones médicas periódicas obligatorias, investigación de incidentes con COPASST y plan de capacitación formal.`,
-            nuevaAplicabilidad: `Actualizar la matriz de estándares mínimos a 21 ítems, validar perfil del responsable del SG-SST (mínimo tecnólogo con licencia y curso 50h) y radicar informe anual en diciembre.`,
-            nuevaEvidencia: `Evaluación de los 21 estándares mínimos en formato oficial del MinTrabajo con soportes y plan de trabajo anual.`,
+            nuevaDescripcion: `Resolución 0312 de 2019 (Capítulo II): 21 puntos de seguridad y salud para empresas de 11 a 50 trabajadores en riesgo bajo o medio (I, II o III).`,
+            nuevaImportancia: `Con ${n} trabajadores ya no basta con lo mínimo: debemos hacer exámenes médicos periódicos, investigar incidentes con ayuda del COPASST y dar charlas programadas todo el año.`,
+            nuevaAplicabilidad: `Revisar los 21 puntos, asegurarnos de que quien dirige el SST tenga licencia y curso de 50 horas, y guardar el reporte de fin de año en diciembre.`,
+            nuevaEvidencia: `Evaluación firmada de los 21 puntos y plan de trabajo anual con sus soportes.`,
           },
         };
       }
 
       return {
         resultado: 'APLICABLE',
-        explicacion: `Con ${n} trabajadores en ${cfg.claseRiesgoSST}, aplican los 7 Estándares Mínimos del Capítulo I de la Res. 0312/2019 para microempresas.`,
+        explicacion: `Con ${n} trabajadores en ${cfg.claseRiesgoSST}, nos corresponden los 7 puntos básicos de la Resolución 0312 de 2019 (Capítulo I) pensados para empresas pequeñas.`,
         requiereRevisionHumana: false,
         cambiosPropuestos: {
-          nuevaDescripcion: `Resolución 0312 de 2019 - Capítulo I: 7 Estándares Mínimos para unidades de 10 o menos trabajadores en clases de riesgo I, II o III.`,
-          nuevaImportancia: `Para los ${n} colaboradores de Frikaz S.A.S., se garantiza el cumplimiento normativo esencial optimizando recursos administrativos sin descuidar la protección física.`,
-          nuevaAplicabilidad: `Mantener actualizados los 7 estándares: asignación responsable, afiliación a seguridad social, plan de trabajo anual, capacitaciones, evaluaciones médicas, identificación de peligros y medidas preventivas.`,
-          nuevaEvidencia: `Acta de autoevaluación anual de 7 estándares con soportes documentales y reporte a la ARL.`,
+          nuevaDescripcion: `Resolución 0312 de 2019 (Capítulo I): 7 reglas básicas de seguridad y salud para empresas de hasta 10 trabajadores (riesgo I, II o III).`,
+          nuevaImportancia: `Para los ${n} compañeros de Frikaz S.A.S., nos permite cuidar la salud y evitar accidentes sin llenarnos de papeleo innecesario.`,
+          nuevaAplicabilidad: `Tener al día los 7 puntos: persona encargada, pagos de salud y ARL, plan de trabajo anual, charlas de seguridad, exámenes médicos, revisión de peligros y medidas para prevenir accidentes.`,
+          nuevaEvidencia: `Acta de revisión anual de los 7 puntos con sus comprobantes y envío a la ARL.`,
         },
       };
     },
@@ -210,38 +213,38 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Resolución 2013/1986 Art. 1 y 2 | Dec 1072/2015 Art. 2.2.4.6.2 y 2.2.4.6.8',
     area: 'SST',
     fasePhva: 'HACER',
-    condicionAplicacion: 'Número total de trabajadores vinculados',
+    condicionAplicacion: 'Cuántos trabajadores hay en la planta',
     datosRequeridos: ['numeroTrabajadores'],
     umbralLegalTexto:
-      '<=9 trabajadores: Vigía de SST | >=10 trabajadores: Comité Paritario de SST (COPASST con 1 representante por parte de 10 a 49 trab.)',
+      'Menos de 10 trabajadores: 1 Vigía de SST | 10 o más trabajadores: COPASST (grupo de representantes elegidos por los trabajadores y por la empresa)',
     explicacionSencilla:
-      'Define si la empresa debe elegir un Vigía de SST o conformar un Comité Paritario (COPASST) con representantes electos por votación.',
-    fuenteOficial: 'Ministerio del Trabajo / Presidencia de la República',
+      'Define si la empresa nombra a una sola persona encargada de vigilar la seguridad (Vigía) o si entre todos elegimos un equipo llamado COPASST.',
+    fuenteOficial: 'Ministerio del Trabajo',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const n = cfg.numeroTrabajadores;
       if (n >= 10) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Al tener ${n} trabajadores (umbral legal >= 10), la ley exige conformación obligatoria del COPASST (Comité Paritario de Seguridad y Salud en el Trabajo) con mínimo 1 representante principal y 1 suplente por el empleador, y 1 principal y 1 suplente electo democráticamente por los trabajadores (total 4 integrantes).`,
+          explicacion: `Como hay ${n} trabajadores (10 o más), la ley pide conformar el COPASST (Comité donde empresa y trabajadores participan por igual). Se elige 1 representante principal y 1 suplente por los trabajadores mediante votación, y 1 principal y 1 suplente por la gerencia (4 personas en total).`,
           requiereRevisionHumana: true,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 2013 de 1986 y Decreto 1072 de 2015: Conformación, funcionamiento y actas mensuales del Comité Paritario de Seguridad y Salud en el Trabajo (COPASST).`,
-            nuevaImportancia: `Para Frikaz S.A.S. con ${n} trabajadores, es obligatorio tener COPASST activo. Canaliza la participación laboral en inspecciones locativas a freidoras, investigación de incidentes y propuesta de mejoras.`,
-            nuevaAplicabilidad: `Convocar elecciones democráticas de trabajadores, emitir acta de designación del empleador, realizar posesión por 2 años y sostener reuniones mensuales obligatorias (mínimo 4 horas semanales de dedicación).`,
-            nuevaEvidencia: `Acta de conformación y escrutinio del COPASST, resolución de designación patronal y carpetas con 12 actas mensuales de reunión firmadas.`,
+            nuevaDescripcion: `Resolución 2013 de 1986 y Decreto 1072 de 2015: Elección y reuniones mensuales del equipo de seguridad COPASST.`,
+            nuevaImportancia: `Con ${n} trabajadores en Frikaz S.A.S., el COPASST ayuda a revisar las freidoras, escuchar ideas de los compañeros e investigar cualquier susto o accidente.`,
+            nuevaAplicabilidad: `Hacer votación entre los compañeros, nombrar los representantes de la empresa (por 2 años) y reunirse cada mes (con tiempo dentro de la jornada laboral para revisar la planta).`,
+            nuevaEvidencia: `Acta de votación y conformación del COPASST y actas firmadas de las reuniones de cada mes.`,
           },
         };
       } else {
         return {
           resultado: 'MODIFICADA_ALCANCE',
-          explicacion: `Al tener ${n} trabajadores (< 10 trabajadores), la ley colombiana exonera de constituir COPASST y exige en su lugar la designación de un Vigía de Seguridad y Salud en el Trabajo nombrado por la gerencia.`,
+          explicacion: `Al tener ${n} trabajadores (menos de 10), no es obligatorio hacer votaciones para COPASST; basta con que la gerencia nombre un Vigía de SST (un compañero capacitado que ayuda a vigilar la seguridad en la planta).`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Decreto 1072 de 2015 (Art. 2.2.4.6.2): Designación, funciones y registro de gestión del Vigía de Seguridad y Salud en el Trabajo para empresas de menos de 10 trabajadores.`,
-            nuevaImportancia: `Para los ${n} trabajadores de Frikaz S.A.S., el Vigía sustituye legalmente al COPASST, realizando inspecciones a freidoras y maquinaria sin la carga de votaciones paritarias.`,
-            nuevaAplicabilidad: `Designar formalmente al Vigía mediante comunicación escrita, brindarle capacitación de 50 horas y registrar sus recorridos mensuales de inspección.`,
-            nuevaEvidencia: `Carta formal de designación del Vigía de SST, constancia de capacitación y actas de inspección trimestrales/mensuales.`,
+            nuevaDescripcion: `Decreto 1072 de 2015 (Art. 2.2.4.6.2): Nombramiento y tareas del Vigía de SST para empresas con menos de 10 trabajadores.`,
+            nuevaImportancia: `Para los ${n} compañeros de Frikaz S.A.S., el Vigía hace recorridos por la zona de freidoras y empaque para detectar peligros antes de que ocurra un accidente.`,
+            nuevaAplicabilidad: `Entregar carta de nombramiento al Vigía, darle su curso de 50 horas y anotar sus recorridos de revisión cada mes.`,
+            nuevaEvidencia: `Carta de nombramiento del Vigía de SST, certificado del curso y planillas de revisión.`,
           },
         };
       }
@@ -258,9 +261,9 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     condicionAplicacion: 'Número de trabajadores',
     datosRequeridos: ['numeroTrabajadores'],
     umbralLegalTexto:
-      '<=10 trabajadores: 2 miembros (1 empleador, 1 trabajadores) | 11 a 50 trabajadores: 4 miembros (2 empleador, 2 trabajadores)',
+      'Hasta 10 trabajadores: 2 personas (1 por la empresa y 1 por los trabajadores) | De 11 a 50 trabajadores: 4 personas (2 por la empresa y 2 por los trabajadores)',
     explicacionSencilla:
-      'Regula el tamaño y composición del Comité de Convivencia Laboral para prevención del acoso laboral.',
+      'Define cuántas personas integran el Comité de Convivencia, que sirve para cuidar el buen trato, escuchar problemas de convivencia y evitar el maltrato o acoso laboral.',
     fuenteOficial: 'Ministerio del Trabajo',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
@@ -268,25 +271,25 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (n > 10) {
         return {
           resultado: 'MODIFICADA_ALCANCE',
-          explicacion: `Con ${n} trabajadores, el Comité de Convivencia Laboral debe conformarse por 4 miembros (2 representantes del empleador con sus suplentes, y 2 de los trabajadores con sus suplentes). Ya no basta con 2 miembros.`,
+          explicacion: `Con ${n} trabajadores, el Comité de Convivencia Laboral debe tener 4 integrantes principales (2 por los trabajadores con sus suplentes y 2 por la empresa con sus suplentes). Ya no alcanza con 2.`,
           requiereRevisionHumana: true,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 652 de 2012 y 1356 de 2012: Conformación ampliada a 4 miembros del Comité de Convivencia Laboral (empresas de 11 a 50 trabajadores).`,
-            nuevaImportancia: `Para Frikaz S.A.S. con ${n} colaboradores, el comité debe ampliar sus integrantes para prevenir quejas de acoso laboral e intervenir el riesgo psicosocial de turnos de fritura.`,
-            nuevaAplicabilidad: `Abrir proceso de elección para 2 representantes principales de trabajadores y designar 2 representantes de la gerencia, sesionando mínimo cada trimestre.`,
-            nuevaEvidencia: `Acta de votación de 4 miembros del Comité de Convivencia y actas de sesión trimestral ordinaria.`,
+            nuevaDescripcion: `Resolución 652 de 2012 y 1356 de 2012: Comité de Convivencia ampliado a 4 integrantes (empresas de 11 a 50 trabajadores).`,
+            nuevaImportancia: `En Frikaz S.A.S. con ${n} personas, este equipo ayuda a mantener el respeto en los turnos y atender cualquier inconformidad a tiempo y de forma privada.`,
+            nuevaAplicabilidad: `Hacer votación para elegir 2 compañeros representantes, nombrar 2 representantes de la empresa y reunirse al menos cada 3 meses.`,
+            nuevaEvidencia: `Acta de votación de los 4 integrantes y actas confidenciales de reunión cada 3 meses.`,
           },
         };
       } else {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Con ${n} trabajadores (<=10), el Comité de Convivencia Laboral se compone por 2 miembros (1 representante del empleador y 1 de los trabajadores con sus respectivos suplentes).`,
+          explicacion: `Con ${n} trabajadores (hasta 10), el Comité de Convivencia Laboral se forma con 2 personas (1 por la empresa y 1 elegido por los trabajadores, con sus suplentes).`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 652 de 2012 y 1356 de 2012: Comité de Convivencia Laboral simplificado (2 miembros) para empresas de hasta 10 trabajadores.`,
-            nuevaImportancia: `Garantiza en Frikaz S.A.S. el procedimiento confidencial ante quejas de acoso laboral cumpliendo el estándar legal proporcionado al tamaño de la planta.`,
-            nuevaAplicabilidad: `Mantener vigente el periodo de 2 años de los 2 miembros elegidos y archivar actas trimestrales con reserva legal.`,
-            nuevaEvidencia: `Acta de conformación de 2 miembros y actas trimestrales de no existencia de quejas o trámite confidencial.`,
+            nuevaDescripcion: `Resolución 652 de 2012 y 1356 de 2012: Comité de Convivencia sencillo (2 integrantes) para empresas de hasta 10 trabajadores.`,
+            nuevaImportancia: `Asegura un canal respetuoso y privado para resolver desacuerdos o prevenir malos tratos dentro de la planta.`,
+            nuevaAplicabilidad: `Mantener activos por 2 años a los 2 integrantes elegidos y hacer reuniones cada 3 meses guardando siempre la reserva de lo conversado.`,
+            nuevaEvidencia: `Acta de elección de 2 integrantes y actas de seguimiento cada 3 meses.`,
           },
         };
       }
@@ -300,12 +303,12 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Ley 789/2002 Art. 30 y Decreto 1072/2015',
     area: 'SST',
     fasePhva: 'HACER',
-    condicionAplicacion: 'Presencia de aprendices SENA o pasantes técnicos',
+    condicionAplicacion: 'Presencia de aprendices SENA o practicantes',
     datosRequeridos: ['modalidadesContrato'],
     umbralLegalTexto:
-      'Aplica si la empresa vincula estudiantes en etapa lectiva o práctica mediante contrato de aprendizaje',
+      'Aplica cuando la empresa recibe estudiantes en práctica o aprendizaje',
     explicacionSencilla:
-      'Exige afiliación a ARL en etapa práctica, prohíbe exponer a aprendices menores a labores peligrosas y exige dotación/inducción.',
+      'Pide afiliar al aprendiz a la ARL (seguro de riesgos laborales) desde el primer día de práctica, darle la misma ropa de protección (EPP) y prohibir que menores de edad trabajen en freidoras o cuchillas.',
     fuenteOficial: 'Ministerio del Trabajo / SENA',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
@@ -313,22 +316,22 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (tieneAprendices) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Se registró modalidad de Contrato de Aprendizaje. La empresa patrocinadora Frikaz S.A.S. tiene la obligación legal de afiliar al aprendiz a ARL (tarifa riesgo de la empresa) en etapa práctica, expedir EPP idéntico a los trabajadores y prohibir estrictamente que aprendices menores de edad operen freidoras a >160°C o rebanadoras de corte mecánico.`,
+          explicacion: `Tienes activo el contrato de aprendizaje. Frikaz S.A.S. debe afiliar al aprendiz a la ARL desde que empieza su práctica, entregarle sus elementos de protección y no permitir nunca que un menor de edad opere freidoras a más de 160°C ni rebanadoras.`,
           requiereRevisionHumana: true,
           cambiosPropuestos: {
-            nuevaDescripcion: `Ley 789 de 2002 y Decreto 1072 de 2015: Protección en SST y afiliación a ARL para aprendices SENA en etapa práctica.`,
-            nuevaImportancia: `Crucial para Frikaz S.A.S.: evita sanciones graves del MinTrabajo por riesgos laborales en aprendices en áreas calientes o con maquinaria rotativa.`,
-            nuevaAplicabilidad: `Registrar en planilla PILA aportes a ARL del aprendiz, realizar inducción completa de seguridad de 2 días y certificar entrega de dotación sanitaria y EPP térmico.`,
-            nuevaEvidencia: `Contrato de aprendizaje firmado, certificación de afiliación activa a ARL y formato de inducción en SST firmada por el aprendiz.`,
+            nuevaDescripcion: `Ley 789 de 2002 y Decreto 1072 de 2015: Cuidado en seguridad, inducción y afiliación a ARL para aprendices SENA en práctica.`,
+            nuevaImportancia: `Protege a los aprendices que están aprendiendo el oficio y evita accidentes graves o multas por ponerlos en máquinas calientes o de corte sin permiso.`,
+            nuevaAplicabilidad: `Afiliar al aprendiz a la ARL en la planilla PILA, hacerle charla completa de inducción y entregarle uniforme blanco y protección contra el calor.`,
+            nuevaEvidencia: `Contrato de aprendizaje firmado, certificado activo de ARL y firma de asistencia a la inducción.`,
           },
         };
       } else {
         return {
           resultado: 'NO_APLICABLE',
-          explicacion: `Actualmente la empresa no tiene vinculados aprendices bajo contrato de aprendizaje. La obligación permanece en seguimiento normativo.`,
+          explicacion: `En este momento no hay aprendices vinculados. Si llega alguno más adelante, esta regla se activará automáticamente.`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Disposición de aprendices en reserva: Frikaz S.A.S. no cuenta con aprendices vinculados en el periodo actual.`,
+            nuevaDescripcion: `Regla en espera: hoy Frikaz S.A.S. no tiene aprendices en práctica.`,
           },
         };
       }
@@ -342,31 +345,31 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Decreto 723 de 2013 Art. 2, 4 y 6',
     area: 'SST',
     fasePhva: 'HACER',
-    condicionAplicacion: 'Presencia de contratistas independientes o por prestación de servicios',
+    condicionAplicacion: 'Personas contratadas por prestación de servicios (técnicos, arreglos, etc.)',
     datosRequeridos: ['modalidadesContrato'],
-    umbralLegalTexto: 'Aplica a contratos de prestación de servicios civiles o comerciales',
+    umbralLegalTexto: 'Aplica cuando entran personas externas o independientes por contrato de servicios',
     explicacionSencilla:
-      'Verificación previa de afiliación y pago de aportes a ARL, EPS y Pensión como requisito para autorizar ingreso a planta y pagos.',
-    fuenteOficial: 'Ministerio del Trabajo / Presidencia',
+      'Antes de dejar entrar a alguien que trabaja por servicios (como un técnico de gas o mantenimiento), debemos revisar que tenga al día sus pagos de salud, pensión y ARL (planilla PILA) y explicarle los riesgos de la planta.',
+    fuenteOficial: 'Ministerio del Trabajo',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const tieneServicios = cfg.modalidadesContrato.includes('servicios');
       if (tieneServicios) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Al vincular contratistas por prestación de servicios, Frikaz S.A.S. debe verificar mensualmente el pago de seguridad social (PILA), realizar inducción de peligros en planta de fritura y coordinar la cobertura de ARL según la clase de riesgo de la labor (riesgo I a V).`,
+          explicacion: `Al contratar personas por prestación de servicios, debemos pedir cada mes su planilla PILA paga (salud, pensión y ARL), darles una charla rápida sobre los peligros de las freidoras y pedirles permiso de trabajo si van a arreglar equipos calientes.`,
           requiereRevisionHumana: true,
           cambiosPropuestos: {
-            nuevaDescripcion: `Decreto 723 de 2013 y Dec. 1072/2015: Gestión de contratistas independientes, verificación de afiliación al Sistema de Riesgos Laborales e inducción en planta.`,
-            nuevaImportancia: `Para Frikaz S.A.S., evita responsabilidad solidaria ante accidentes de contratistas de mantenimiento de freidoras o distribuidores independientes.`,
-            nuevaAplicabilidad: `Exigir planilla PILA con aportes a ARL/Salud antes del ingreso a la fábrica y antes de aprobar cuentas de cobro, así como inducción locativa y permiso para trabajos calientes.`,
-            nuevaEvidencia: `Carpetas de contratistas con soportes mensuales de pago PILA a ARL, planilla de inducción y permisos de trabajo en freidoras.`,
+            nuevaDescripcion: `Decreto 723 de 2013 y Dec. 1072/2015: Revisión de seguridad social (PILA) y charla de peligros para contratistas independientes.`,
+            nuevaImportancia: `Cuida a quienes vienen a hacer arreglos o trabajos puntuales y evita que la empresa responda sola si les ocurre un accidente adentro.`,
+            nuevaAplicabilidad: `Pedir el comprobante PILA antes de entrar a la planta y antes de pagar facturas, explicar riesgos de la zona y exigir permiso para trabajos con calor o electricidad.`,
+            nuevaEvidencia: `Copia de planillas PILA pagas al día, registro de charla de ingreso y permisos de trabajo firmados.`,
           },
         };
       } else {
         return {
           resultado: 'NO_APLICABLE',
-          explicacion: `No se registran contratistas independientes de prestación de servicios en la operación habitual.`,
+          explicacion: `Actualmente no tienes personas fijas contratadas por prestación de servicios.`,
           requiereRevisionHumana: false,
         };
       }
@@ -380,13 +383,13 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Capítulos II, III y VIII (Manipulación, edificación y salud del personal)',
     area: 'INTEGRAL',
     fasePhva: 'HACER',
-    condicionAplicacion: 'Sector secundario agroindustrial / elaboración de alimentos para consumo humano',
+    condicionAplicacion: 'Fábrica o planta que prepara alimentos para el público',
     datosRequeridos: ['sectorEconomico', 'ciiuPrincipal'],
     umbralLegalTexto:
-      'Obligatorio para toda planta de fabricación, procesamiento, envase y almacenamiento de alimentos en Colombia',
+      'Obligatorio para toda planta que prepare, empaque y guarde alimentos en Colombia',
     explicacionSencilla:
-      'Exige certificación médica para manipular alimentos (frotis de garganta, coprológico, KOH), indumentaria sanitaria blanca, cofia y capacitación continua en inocuidad alimentaria.',
-    fuenteOficial: 'Ministerio de Salud y Protección Social / INVIMA',
+      'Son las reglas de higiene (BPM o Buenas Prácticas de Manufactura): exámenes médicos anuales para manipular alimentos, uniforme blanco limpio sin bolsillos arriba, gorro/cofia, tapabocas y curso de higiene alimentaria.',
+    fuenteOficial: 'Ministerio de Salud / INVIMA',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const esAlimentos =
@@ -398,22 +401,22 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (esAlimentos) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Por operar en el Sector Secundario de manufactura de snacks fritos alimenticios (CIIU 1089), aplica plenamente la Resolución 2674/2013. Todo el personal manipulador debe contar con certificado médico de aptitud sanitaria anual y carné de manipulación con mínimo 10 horas de capacitación.`,
+          explicacion: `Como Frikaz S.A.S. fabrica snacks fritos para comer (código CIIU 1089), aplica toda la Resolución 2674 de 2013. Todos los que tocan o empacan alimentos deben tener su certificado médico anual de manipulación y mínimo 10 horas de capacitación en higiene.`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 2674 de 2013: Requisitos sanitarios, Buenas Prácticas de Manufactura (BPM) e higiene del personal para fabricación de snacks fritos.`,
-            nuevaImportancia: `Es la licencia operativa fundamental de Frikaz S.A.S. ante el INVIMA y la Secretaría de Salud de Bosa. Su incumplimiento genera clausura inmediata de la planta.`,
-            nuevaAplicabilidad: `Realizar exámenes clínicos paraclínicos a los ${cfg.numeroTrabajadores} operarios, suministrar dotación blanca sin botones ni bolsillos superiores, cofia y tapabocas, y llevar registros de limpieza y desinfección diarios.`,
-            nuevaEvidencia: `Certificados de aptitud médica para manipulación de alimentos de los trabajadores, plan de capacitación en inocuidad y planilla de inspección sanitaria de planta.`,
+            nuevaDescripcion: `Resolución 2674 de 2013: Reglas de limpieza, higiene y Buenas Prácticas de Manufactura (BPM) al preparar snacks fritos.`,
+            nuevaImportancia: `Sin este permiso del INVIMA y la Secretaría de Salud de Bosa la planta no puede abrir. Además asegura alimentos sanos para las familias que los compran.`,
+            nuevaAplicabilidad: `Hacer exámenes médicos de alimentos a los ${cfg.numeroTrabajadores} trabajadores, usar ropa blanca limpia sin botones ni bolsillos en el pecho, cofia y tapabocas, y anotar la limpieza diaria.`,
+            nuevaEvidencia: `Certificados médicos de aptitud para manipular alimentos, certificados del curso de higiene y planillas diarias de aseo.`,
           },
         };
       } else {
         return {
           resultado: 'REQUIERE_REVISION',
-          explicacion: `El sector económico o CIIU actual no corresponde típicamente a manufactura de alimentos. Se requiere validar si la planta continúa procesando comestibles.`,
+          explicacion: `La actividad económica elegida ya no parece de fabricación de alimentos. Por favor confirma si la empresa sigue preparando productos comestibles.`,
           requiereRevisionHumana: true,
           informacionPendiente:
-            'Verificar si se elaboran alimentos para consumo humano bajo el nuevo sector seleccionado.',
+            'Confirmar si se siguen preparando alimentos en la planta bajo la nueva actividad.',
         };
       }
     },
@@ -426,13 +429,13 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Artículos 6, 7 y 8 (Obligaciones de los generadores industriales y comerciales)',
     area: 'AMBIENTAL',
     fasePhva: 'VERIFICAR',
-    condicionAplicacion: 'Generación de Aceite de Cocina Usado en procesos de fritura',
+    condicionAplicacion: 'Uso y descarte de aceite de cocina en las freidoras',
     datosRequeridos: ['maquinariaEquipos', 'aspectosAmbientales'],
     umbralLegalTexto:
-      'Generadores industriales/comerciales que utilicen aceites vegetales para freír alimentos',
+      'Empresas que fríen alimentos con aceites vegetales',
     explicacionSencilla:
-      'Inscripción ante la Secretaría Distrital de Ambiente (SDA), prohibición de vertimiento al alcantarillado o basura, almacenamiento en canecas rotuladas y entrega exclusiva a gestor autorizado con certificado.',
-    fuenteOficial: 'Ministerio de Ambiente y Desarrollo Sostenible / SDA Bogotá',
+      'Prohíbe botar el aceite usado por el sifón o a la basura común. Debe guardarse frío (por debajo de 40 °C) en canecas azules tapadas y entregarse solo a una empresa autorizada que entregue certificado.',
+    fuenteOficial: 'Ministerio de Ambiente / Secretaría de Ambiente de Bogotá',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const tieneFreidoras = cfg.maquinariaEquipos.some((m) =>
@@ -445,22 +448,22 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (tieneFreidoras || generaACU) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Al operar freidoras industriales continuas y generar entre 180 y 250 L/mes de ACU, Frikaz S.A.S. está catalogada como Generador Comercial/Industrial ante la SDA Bogotá bajo Resolución 316/2018.`,
+          explicacion: `Al usar freidoras y sacar entre 180 y 250 litros al mes de Aceite de Cocina Usado (ACU), Frikaz S.A.S. debe registrarse ante la Secretaría de Ambiente de Bogotá bajo la Resolución 316 de 2018.`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 316 de 2018: Gestión ambientalmente adecuada de Aceites de Cocina Usados (ACU) en establecimientos de fritura industrial.`,
-            nuevaImportancia: `Evita contaminación de cuerpos hídricos de la cuenca Tunjuelo/Bogotá y sanciones ambientales de la SDA de hasta 5.000 SMLMV por vertimiento ilegal.`,
-            nuevaAplicabilidad: `Mantener registro vigente ante la SDA, almacenar en canecas azules rotuladas sobre estibas con contención, llevar planilla de balance de masa y entregar únicamente a gestor con licencia ambiental.`,
-            nuevaEvidencia: `Certificados de recolección de ACU expedidos por gestor autorizado por la SDA con volúmenes en kilogramos/litros y constancia de reporte anual ante el aplicativo web de la autoridad.`,
+            nuevaDescripcion: `Resolución 316 de 2018: Manejo seguro y entrega autorizada del Aceite de Cocina Usado (ACU).`,
+            nuevaImportancia: `Un litro de aceite en el sifón contamina miles de litros de agua del río Bogotá y puede traer multas muy altas. Guardarlo bien también evita resbalones en la planta.`,
+            nuevaAplicabilidad: `Esperar a que el aceite enfríe (< 40 °C), pasarlo con cuidado a canecas azules marcadas sobre estiba, anotar los litros y entregarlo solo al gestor con permiso ambiental.`,
+            nuevaEvidencia: `Recibos o certificados de entrega de ACU firmados por el gestor autorizado y registro anual en la página de la Secretaría de Ambiente.`,
           },
         };
       } else {
         return {
           resultado: 'REQUIERE_REVISION',
-          explicacion: `No se identificaron freidoras ni generación de ACU en los parámetros actuales. Confirmar si la planta no utiliza aceites vegetales de fritura.`,
+          explicacion: `No marcaste freidoras ni aceite usado en los equipos actuales. Confirma si en la planta ya no se fríen alimentos con aceite.`,
           requiereRevisionHumana: true,
           informacionPendiente:
-            'Indicar si se eliminaron los procesos térmicos de fritura con aceite vegetal.',
+            'Confirmar si se dejaron de usar freidoras con aceite vegetal.',
         };
       }
     },
@@ -473,35 +476,35 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Capítulo VI (Parámetros para actividades de elaboración de alimentos)',
     area: 'AMBIENTAL',
     fasePhva: 'HACER',
-    condicionAplicacion: 'Descarga de aguas residuales no domésticas a la red de alcantarillado',
+    condicionAplicacion: 'Salida de aguas de lavado de planta hacia el alcantarillado',
     datosRequeridos: ['sedesInstalaciones', 'aspectosAmbientales'],
     umbralLegalTexto:
-      'Límites máximos permisibles de Grasas y Aceites (GyA), DBO, DQO y sólidos suspendidos en vertimientos de alimentos',
+      'Límites máximos de grasa, restos de comida y jabones que pueden ir al agua del alcantarillado',
     explicacionSencilla:
-      'Exige trampa física de grasas en funcionamiento, plan de mantenimiento periódico y caracterización de aguas si la autoridad ambiental lo requiere.',
-    fuenteOficial: 'Ministerio de Ambiente y Desarrollo Sostenible',
+      'Pide tener una trampa de grasas limpia y funcionando para atrapar la grasa y cáscaras antes de que el agua del lavado salga a la calle.',
+    fuenteOficial: 'Ministerio de Ambiente',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const tieneTrampa = cfg.sedesInstalaciones.trampaGrasasOperativa;
       if (tieneTrampa) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Frikaz S.A.S. cuenta con trampa física de grasas instalada. La Resolución 0631/2015 le exige asegurar que el vertimiento a la red de alcantarillado de la EAAB no supere los límites permisibles de grasas y aceites (GyA) mediante bitácora de desengrase y retiro quincenal de natas.`,
+          explicacion: `Frikaz S.A.S. cuenta con trampa de grasas. La Resolución 0631 de 2015 nos pide limpiarla cada 15 días para que no salga grasa por las tuberías del alcantarillado de Bosa.`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 0631 de 2015: Parámetros y valores límites máximos permisibles en vertimientos puntuales a cuerpos de aguas superficiales y alcantarillado público.`,
-            nuevaImportancia: `Protege las redes hidrosanitarias de Bosa contra taponamientos por grasas solidificadas y cumple los requerimientos de la EAAB y la SDA.`,
-            nuevaAplicabilidad: `Ejecutar limpieza quincenal de la trampa de grasas, disponer los lodos grasosos con gestor autorizado (no al inodoro/lavaplatos) y registrar fechas en la bitácora ambiental.`,
-            nuevaEvidencia: `Bitácora de limpieza de trampa de grasas con firmas del operario y certificados de disposición final de natas grasas.`,
+            nuevaDescripcion: `Resolución 0631 de 2015: Control del agua de lavado y limpieza de la trampa de grasas antes de salir al alcantarillado.`,
+            nuevaImportancia: `Evita que se tapen los desagües de la planta o de la cuadra y evita sanciones del Acueducto o la Secretaría de Ambiente.`,
+            nuevaAplicabilidad: `Sacar las natas de grasa cada 15 días usando guantes largos, echarlas en recipiente cerrado para el gestor autorizado (nunca al inodoro) y anotar la limpieza en la planilla.`,
+            nuevaEvidencia: `Planilla firmada de limpieza quincenal de la trampa de grasas y comprobantes de entrega de esos residuos.`,
           },
         };
       } else {
         return {
           resultado: 'PENDIENTE_INFORMACION',
-          explicacion: `ALERTA: Se indicó que la trampa de grasas NO está operativa o no está registrada. Se generará incumplimiento inmediato de la Res. 0631/2015 al verter aguas de lavado de tubérculos y freidoras al alcantarillado.`,
+          explicacion: `ATENCIÓN: Indicaste que la trampa de grasas NO está funcionando. Sin ella, la grasa del lavado va directo al alcantarillado e incumple la Resolución 0631 de 2015.`,
           requiereRevisionHumana: true,
           informacionPendiente:
-            'Instalar o poner en marcha de manera urgente la trampa de grasas en la línea de efluentes de producción.',
+            'Arreglar o instalar la trampa de grasas en los desagües de la zona de lavado y fritura.',
         };
       }
     },
@@ -514,35 +517,35 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'Capítulo IV y V (Estándares para fuentes fijas de combustión y cocción)',
     area: 'AMBIENTAL',
     fasePhva: 'VERIFICAR',
-    condicionAplicacion: 'Operación de ductos de extracción de humos y quemadores a gas',
+    condicionAplicacion: 'Uso de campana extractora, chimenea y quemadores a gas',
     datosRequeridos: ['sedesInstalaciones', 'consumoAguaEnergia'],
     umbralLegalTexto:
-      'Ductos de extracción vertical por encima de caballete de cubierta con filtros de retención de grasa',
+      'Ducto vertical por encima del techo y filtros limpios para retener grasa y humo',
     explicacionSencilla:
-      'Regula la dispersión de olores ofensivos, vahos grasos y gases de combustión de los quemadores para no afectar a la comunidad residencial colindante de Bosa Piamonte.',
-    fuenteOficial: 'Ministerio de Ambiente y Desarrollo Sostenible / SDA',
+      'Exige mantener la campana extractora con sus filtros limpios y el tubo de salida por encima del techo para que el humo y el olor a frito no molesten a los vecinos de Bosa Piamonte ni acumulen grasa inflamable.',
+    fuenteOficial: 'Ministerio de Ambiente / Secretaría de Ambiente',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const tieneCampana = cfg.sedesInstalaciones.campanaExtractoraFiltros;
       if (tieneCampana) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `La campana extractora y ducto vertical sobre cubierta mitigan las emisiones de olores y vahos hacia las viviendas vecinas de Bosa Piamonte. Se requiere mantenimiento y desengrase mensual de filtros metálicos.`,
+          explicacion: `La campana extractora con ducto alto ayuda a sacar el calor y reduce los olores hacia las casas vecinas de Bosa Piamonte. Hay que desengrasar los filtros cada 15 días.`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `Resolución 909 de 2008: Control de emisiones atmosféricas y ductos de dispersión en fuentes fijas de cocción y combustión de gas.`,
-            nuevaImportancia: `Evita querellas ciudadanas ante la Alcaldía Local de Bosa por olores molestos de fritura de chicharrón y garantiza tiro adecuado de los gases quemados.`,
-            nuevaAplicabilidad: `Limpiar los filtros metálicos de la campana cada 15 días e inspeccionar el ducto vertical y extractor centrífugo semestralmente.`,
-            nuevaEvidencia: `Registro de mantenimiento preventivo del sistema de extracción de vapores y certificado de lavado de ductos.`,
+            nuevaDescripcion: `Resolución 909 de 2008: Limpieza de filtros de la campana y cuidado del ducto de salida de humos y olores.`,
+            nuevaImportancia: `Cuida el aire dentro de la cocina para que los compañeros respiren mejor, evita incendios por grasa acumulada en el tubo y mantiene buena relación con los vecinos.`,
+            nuevaAplicabilidad: `Desmontar y lavar los filtros metálicos cada 15 días y revisar el motor extractor y ducto cada 6 meses.`,
+            nuevaEvidencia: `Planilla de lavado quincenal de filtros y factura o certificado de limpieza profunda del ducto cada 6 meses.`,
           },
         };
       } else {
         return {
           resultado: 'REQUIERE_REVISION',
-          explicacion: `Campana de extracción sin filtros o inoperativa. Riesgo severo de acumulación de grasa inflamable en ductos y quejas vecinales por olores.`,
+          explicacion: `ATENCIÓN: La campana extractora aparece sin filtros o apagada. Sin filtros se acumula grasa peligrosa en el ducto y el humo queda dentro de la planta.`,
           requiereRevisionHumana: true,
           informacionPendiente:
-            'Confirmar estado de filtros y altura técnica del ducto vertical sobre la cubierta.',
+            'Revisar que los filtros estén puestos y que el tubo salga por encima del techo.',
         };
       }
     },
@@ -555,13 +558,13 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
     disposicionArticulo: 'NTC 2885 Numeral 5.5 (Fuegos en artefactos de cocina con aceites vegetales)',
     area: 'SST',
     fasePhva: 'HACER',
-    condicionAplicacion: 'Presencia de freidoras industriales con aceite caliente >160°C',
+    condicionAplicacion: 'Freidoras industriales con aceite muy caliente (>160°C)',
     datosRequeridos: ['maquinariaEquipos'],
     umbralLegalTexto:
-      'Obligatoriedad de extintores de acetato de potasio (Clase K) ubicados a menos de 9 metros de artefactos de fritura',
+      'Obligatorio tener extintor especial Clase K (acetato de potasio) a menos de 9 metros de las freidoras',
     explicacionSencilla:
-      'Prohíbe usar agua o extintores comunes de polvo ABC sobre freidoras calientes (causan explosión por evaporación súbita de agua). Exige extintor Clase K específico.',
-    fuenteOficial: 'Cuerpo Oficial de Bomberos de Bogotá / ICONTEC',
+      'Si alguna vez se prende fuego en una freidora con aceite, NUNCA eches agua ni uses un extintor común porque el aceite salta en forma de bola de fuego. Para eso existe el extintor plateado Clase K.',
+    fuenteOficial: 'Bomberos de Bogotá / ICONTEC',
     fechaVerificacion: '2026-03-15',
     evaluar: (cfg) => {
       const tieneFreidoras = cfg.maquinariaEquipos.some((m) =>
@@ -570,19 +573,19 @@ export const REGLAS_NORMATIVAS_COLOMBIA: ReglaNormativa[] = [
       if (tieneFreidoras) {
         return {
           resultado: 'APLICABLE',
-          explicacion: `Al operar freidoras con aceite vegetal a más de 160°C, Frikaz S.A.S. está obligada a contar con extintor Clase K cargado con acetato de potasio a menos de 9 metros, termostato de corte y brigada capacitada en no arrojar agua a la tina.`,
+          explicacion: `Como trabajamos con freidoras a más de 160°C, es obligatorio tener un extintor Clase K a menos de 9 metros, revisar el termostato de corte y capacitar a todo el equipo para jamás arrojar agua al aceite caliente.`,
           requiereRevisionHumana: false,
           cambiosPropuestos: {
-            nuevaDescripcion: `NTC 2885 y Resolución 2400 de 1979: Protección contra incendios en cocinas industriales y extintores portátiles Clase K.`,
-            nuevaImportancia: `Vital para salvaguardar la vida de los operarios de planta: el aceite vegetal caliente arde a más de 300°C y el uso indebido de agua generaría una bola de fuego explosiva.`,
-            nuevaAplicabilidad: `Mantener el extintor Clase K de 6 litros señalizado, con inspección mensual de manómetro y recarga anual certificada por empresa acreditada por Bomberos.`,
-            nuevaEvidencia: `Ficha técnica del extintor Clase K, hoja de vida del equipo con inspecciones mensuales y certificado de recarga vigente con anillo de verificación.`,
+            nuevaDescripcion: `NTC 2885 y Resolución 2400 de 1979: Extintor Clase K y reglas para apagar incendios en freidoras con aceite.`,
+            nuevaImportancia: `Salva vidas en la planta: el aceite vegetal arde a más de 300 °C y echarle agua provoca una explosión de fuego.`,
+            nuevaAplicabilidad: `Tener el extintor Clase K de 6 litros siempre visible y despejado cerca de las freidoras, revisar su aguja cada mes y recargarlo cada año con empresa autorizada.`,
+            nuevaEvidencia: `Hoja de vida del extintor Clase K, planilla mensual de revisión de aguja y etiqueta de recarga vigente.`,
           },
         };
       } else {
         return {
           resultado: 'MODIFICADA_ALCANCE',
-          explicacion: `Sin freidoras industriales, se requeriría únicamente extintor convencional Solkaflam / Polvo Químico Seco ABC para oficinas y embalaje.`,
+          explicacion: `Si no hay freidoras con aceite caliente, bastaría con extintores normales ABC o Solkaflam para oficinas y bodega.`,
           requiereRevisionHumana: true,
         };
       }
@@ -679,27 +682,27 @@ export function evaluarImpactoCambio(
 
     if (evaluacionNueva.resultado === 'PENDIENTE_INFORMACION') {
       categoriaAlerta = 'INFORMACION_PENDIENTE';
-      motivo = `Falta información técnica: ${evaluacionNueva.informacionPendiente || 'Revisar datos requeridos'}`;
+      motivo = `Falta un dato para confirmar: ${evaluacionNueva.informacionPendiente || 'Revisar datos de la planta'}`;
     } else if (evaluacionAnterior.resultado !== evaluacionNueva.resultado) {
       if (
         evaluacionAnterior.resultado === 'NO_APLICABLE' &&
         evaluacionNueva.resultado === 'APLICABLE'
       ) {
         categoriaAlerta = 'NORMA_NUEVA_APLICABLE';
-        motivo = `Nueva disposición legal aplicable activada por los cambios empresariales`;
+        motivo = `Se activó una nueva regla que ahora nos aplica por los cambios hechos`;
       } else if (evaluacionNueva.resultado === 'MODIFICADA_ALCANCE') {
         categoriaAlerta = 'OBLIGACION_MODIFICADA';
-        motivo = `El alcance de la obligación cambió por umbral o nueva condición legal`;
+        motivo = `Cambió lo que debemos hacer porque cambió el tamaño o las condiciones de la planta`;
       } else if (evaluacionNueva.requiereRevisionHumana) {
         categoriaAlerta = 'REVISION_APLICABILIDAD';
-        motivo = `Requiere criterio del auditor SG-SST para validar evidencia específica`;
+        motivo = `El encargado de SST debe revisar y confirmar este punto`;
       }
     } else if (evaluacionNueva.requiereRevisionHumana) {
       categoriaAlerta = 'REVISION_APLICABILIDAD';
-      motivo = `Condición legal sensible que amerita confirmación de cumplimiento`;
+      motivo = `Regla importante que conviene confirmar para asegurarnos de cumplirla`;
     } else {
       categoriaAlerta = 'SIN_CAMBIOS';
-      motivo = `La norma conserva su aplicabilidad verificada sin alteraciones`;
+      motivo = `Esta regla sigue igual, sin cambios por ahora`;
     }
 
     const propuesta: PropuestaCambioNorma = {
@@ -742,11 +745,11 @@ export function evaluarImpactoCambio(
   // 3. Generar Resumen Ejecutivo dinámico exigido por la especificación
   let resumenEjecutivo = '';
   if (configAnterior.numeroTrabajadores !== configNueva.numeroTrabajadores) {
-    resumenEjecutivo = `Se actualizó la cantidad de trabajadores de ${configAnterior.numeroTrabajadores} a ${configNueva.numeroTrabajadores}. Se identificaron ${totalAfectadas} obligaciones que requieren revisión. ${normasSinCambios.length} conservan su evaluación actual y ${datosPendientes.length + normasParaRevisar.length} necesitan validar los nuevos datos antes de determinar su aplicabilidad.`;
+    resumenEjecutivo = `Cambió el número de trabajadores de ${configAnterior.numeroTrabajadores} a ${configNueva.numeroTrabajadores}. Hay ${totalAfectadas} reglas para revisar, ${normasSinCambios.length} siguen igual y ${datosPendientes.length + normasParaRevisar.length} necesitan revisar datos antes de aplicar cambios.`;
   } else if (diferencias.length > 0) {
-    resumenEjecutivo = `Se actualizaron las condiciones empresariales (${diferencias[0]}). Se detectaron ${totalAfectadas} normas con impacto regulatorio potencial, ${normasSinCambios.length} normas estables sin afectación directa y ${propuestasGeneradas.length} verificaciones del motor completadas.`;
+    resumenEjecutivo = `Se actualizaron los datos de la planta (${diferencias[0]}). Detectamos ${totalAfectadas} reglas que pueden cambiar y ${normasSinCambios.length} reglas que siguen sin novedad.`;
   } else {
-    resumenEjecutivo = `Se realizó una validación preventiva de las características empresariales. Las ${normasSinCambios.length} normas vigentes mantienen consistencia con el perfil operativo de Frikaz S.A.S.`;
+    resumenEjecutivo = `Revisión lista: todas las ${normasSinCambios.length} reglas coinciden con la forma como trabaja hoy Frikaz S.A.S.`;
   }
 
   const resumen: ResumenEvaluacionImpacto = {

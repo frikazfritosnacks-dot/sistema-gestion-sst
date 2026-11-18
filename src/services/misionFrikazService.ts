@@ -101,132 +101,132 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
   {
     id: 'FRK-SST-POL-01',
     codigoCalidad: 'FRK-SST-POL-01',
-    titulo: 'POLÍTICA INTEGRAL DE SEGURIDAD Y SALUD EN EL TRABAJO',
-    subtitulo: 'Compromiso rector con la vida, prevención de quemaduras y mejora continua',
+    titulo: 'CUIDAMOS TU VIDA Y TU SALUD EN EL TRABAJO (POLÍTICA DE SST)',
+    subtitulo: 'Nuestro compromiso para prevenir quemaduras, caídas y accidentes todos los días',
     version: '02',
     fechaEmision: '2026-01-15',
     esObligatoria: true,
     icono: 'ShieldCheck',
     colorAcento: '#F59E0B',
-    insigniaNombre: 'Guardián de la Vida Frikaz',
-    insigniaDescripcion: 'Dominio absoluto de la Política Integral de SST y los 4 compromisos legales de Frikaz S.A.S.',
+    insigniaNombre: 'Protector de la Vida en Frikaz',
+    insigniaDescripcion: 'Conoces cómo cuidarte en planta y los 4 compromisos de seguridad de Frikaz S.A.S.',
     insigniaIcono: 'Award',
     resumenEjecutivo:
-      'En Frikaz S.A.S., empresa dedicada a la fabricación artesanal de snacks (papas, plátanos y chicharrones), nuestro capital más valioso es el equipo humano. La empresa asume el compromiso legal y moral de proteger la integridad física de todos los colaboradores mediante la identificación de peligros en freidoras a 180°C, ergonomía, suministro de EPP térmico de alta temperatura y mejora continua.',
+      'En Frikaz S.A.S., donde hacemos papas, plátanos y chicharrones, lo más importante eres tú y cada compañero de trabajo. La empresa se compromete a cuidar tu salud y evitar accidentes: revisando peligros como el aceite a 180°C, cuidando tu espalda al cargar, entregándote tus elementos de protección (EPP: guantes térmicos, careta, delantal y botas antideslizantes) y escuchando tus sugerencias para mejorar cada día.',
 
-    // Atributos de Videojuego
+    // Atributos del recorrido práctico
     imagenZona: '/assets/images/zone_frying_line.webp',
-    sectorPlantaNombre: 'Sector Alfa: Línea Central de Freído y Control Térmico',
-    dificultad: 'Nivel 1: Recluta',
+    sectorPlantaNombre: 'Zona 1: Área de Freído y Cuidado con el Calor',
+    dificultad: 'Paso 1: Inicio',
     puntosXp: 350,
     dialogoGuiaBienvenida:
-      '¡Bienvenido a la línea de freído! El aceite alcanza 180°C. Cada segundo de atención protege tu vida y la de tus compañeros. ¡Explora el sector e identifica cualquier anomalía!',
+      '¡Hola! Bienvenido a la zona de freidoras. Aquí el aceite llega a 180°C (muy caliente). Prestar atención a cada detalle cuida tu vida y la de tus compañeros. ¡Mira la escena y busca qué está fallando!',
     hotspots: [
       {
         id: 'hs-temp',
         x: 42,
         y: 38,
-        titulo: 'Termostato a 195°C',
-        descripcion: '¡Peligro térmico! La temperatura supera en 15°C el límite operativo seguro de 180°C.',
+        titulo: 'Medidor de calor a 195°C',
+        descripcion: '¡Ojo! El aceite está 15°C más caliente de lo normal (el máximo seguro es 180°C).',
         esPeligro: true,
-        consejoGuia: 'Cerrar inmediatamente la válvula de gas para cortar la fuente de calor.',
+        consejoGuia: 'Cierra de una vez la llave del gas para bajar el calor y avisa al encargado.',
       },
       {
         id: 'hs-water',
         x: 28,
         y: 68,
-        titulo: 'Papa húmeda goteando',
-        descripcion: 'Riesgo crítico de vaporización explosiva por agua en contacto con aceite caliente.',
+        titulo: 'Papa mojada goteando agua',
+        descripcion: 'Si el agua toca el aceite muy caliente, el vapor salta con fuerza y puede salpicar y quemar.',
         esPeligro: true,
-        consejoGuia: 'Todo tubérculo debe ser centrifugado y secado antes de sumergirse.',
+        consejoGuia: 'Escurre y seca bien la papa antes de meterla a la freidora.',
       },
       {
         id: 'hs-extintor',
         x: 82,
         y: 55,
-        titulo: 'Extintor Clase K',
-        descripcion: 'Agente sofocante de acetato de potasio especial para aceites vegetales comestibles.',
+        titulo: 'Extintor Clase K (para aceite de cocina)',
+        descripcion: 'Es el extintor especial que apaga fuego en aceites y grasas sin hacer que salten.',
         esPeligro: false,
-        consejoGuia: '¡Equipo correcto! Genera una espuma jabonosa que enfría y corta el oxígeno sin salpicar.',
+        consejoGuia: '¡Muy bien! Este extintor saca una espuma especial que enfría el aceite y corta el fuego sin salpicar.',
       },
     ],
     desafioTerminal: {
       codigoProtocolo: 'FRK-SAFE-180',
-      instruccion: 'Ingresa el protocolo de corte de emergencia ante sobrecalentamiento crítico de la freidora:',
-      pregunta: '¿Cuál es la primera acción ante el switch maestro?',
+      instruccion: '¿Qué haces primero si ves que la freidora se calentó demasiado (pasó de 180°C)?',
+      pregunta: 'Elige el primer paso seguro:',
       opciones: [
-        { id: 't-1', etiqueta: 'Accionar Válvula Solenoide de Corte General de Gas y detener cargue', esCorrecta: true },
-        { id: 't-2', etiqueta: 'Arrojar un cubo de hielo a la tina de fritura para enfriar', esCorrecta: false },
-        { id: 't-3', etiqueta: 'Acelerar el empaque para vaciar la máquina más rápido', esCorrecta: false },
+        { id: 't-1', etiqueta: 'Cerrar la llave principal de gas y detener el ingreso de papa', esCorrecta: true },
+        { id: 't-2', etiqueta: 'Echar hielo dentro del aceite para enfriarlo rápido', esCorrecta: false },
+        { id: 't-3', etiqueta: 'Seguir fritando más rápido para terminar el turno pronto', esCorrecta: false },
       ],
     },
     compromisosClave: [
       {
         numero: 1,
-        titulo: 'Proteger la seguridad y salud de todos los colaboradores',
+        titulo: 'Cuidar la salud y evitar accidentes de todos',
         descripcion:
-          'Prevenir lesiones, accidentes de trabajo y enfermedades laborales priorizando los peligros de temperaturas extremas (180°C), riesgo biomecánico y locativo.',
+          'Prevenir quemaduras por calor extremo (180°C), dolores por malas posturas y resbalones en el piso.',
         aplicacionEnPlanta:
-          'Uso innegociable de careta facial, delantal térmico y guantes de 200°C en la zona de cocción.',
+          'Usa siempre tu careta para la cara, delantal grueso, guantes para el calor (hasta 200°C) y botas que no resbalen.',
       },
       {
         numero: 2,
-        titulo: 'Cumplir la normatividad nacional vigente',
+        titulo: 'Cumplir las leyes de seguridad y cuidado ambiental',
         descripcion:
-          'Acatar estrictamente el Decreto 1072 de 2015, la Resolución 0312 de 2019 y las disposiciones ambientales de la Secretaría Distrital de Ambiente (SDA).',
+          'Cumplir las normas de seguridad en el trabajo (Decreto 1072 de 2015 y Resolución 0312 de 2019) y cuidar el ambiente (reglas de la Secretaría de Ambiente).',
         aplicacionEnPlanta:
-          'Reporte y registro formal de todo incidente antes de 24 horas y entrega de ACU a gestores autorizados.',
+          'Si pasa un golpe, caída o casi accidente, avisa antes de 24 horas y entrega el aceite usado solo a la empresa autorizada.',
       },
       {
         numero: 3,
-        titulo: 'Garantizar la consulta y participación activa',
+        titulo: 'Escuchar tu voz y parar si hay peligro',
         descripcion:
-          'Promover la elección del Vigía de SST, la comunicación de condiciones inseguras y el derecho inalienable a suspender labores ante riesgo inminente.',
+          'Contar con el Vigía de SST (un compañero elegido para apoyar la seguridad), reportar daños sin miedo y parar el trabajo si hay un peligro grave.',
         aplicacionEnPlanta:
-          'Cualquier operario puede detener la freidora si detecta fuga de gas o sobrecalentamiento sin represalias.',
+          'Si hueles gas o ves que la máquina se pasa de calor, puedes apagarla y avisar de inmediato sin ningún problema.',
       },
       {
         numero: 4,
-        titulo: 'Mejorar continuamente el SG-SST',
+        titulo: 'Mejorar cada año nuestras condiciones de trabajo',
         descripcion:
-          'Evaluar anualmente los indicadores de accidentabilidad, auditar los puestos y destinar recursos técnicos y financieros para modernizar la planta.',
+          'Revisar cómo nos fue en seguridad durante el año, revisar cada puesto y arreglar o cambiar lo que haga falta.',
         aplicacionEnPlanta:
-          'Inspecciones preoperacionales diarias a quemadores y reposición periódica de calzado con ranurado profundo.',
+          'Revisar los quemadores antes de encender y cambiar a tiempo las botas cuando la suela ya esté lisa.',
       },
     ],
     responsabilidadesPorNivel: [
       {
-        nivel: 'Alta Dirección (Gerencia)',
-        responsabilidad: 'Asignar presupuesto, presidir rendición de cuentas y firmar la política anualmente.',
+        nivel: 'Gerencia (Dirección)',
+        responsabilidad: 'Dar el dinero y los materiales necesarios para trabajar seguros, revisar los resultados y firmar este compromiso cada año.',
       },
       {
-        nivel: 'Vigía / Coordinador SST',
-        responsabilidad: 'Auditar la matriz GTC 45, investigar accidentes en 15 días e inspeccionar EPP.',
+        nivel: 'Vigía / Encargado de Seguridad (SST)',
+        responsabilidad: 'Revisar los riesgos del trabajo, analizar si ocurre un accidente (en máximo 15 días) y verificar que todos tengan sus elementos de protección.',
       },
       {
-        nivel: 'Nivel Operativo (Trabajadores)',
-        responsabilidad: 'Suministrar información clara sobre su salud, portar EPP y cumplir protocolos seguros.',
+        nivel: 'Operarios y Conductores (Todos)',
+        responsabilidad: 'Contar cómo te sientes de salud, usar siempre tus guantes, careta y botas, y avisar si ves algo peligroso.',
       },
     ],
     escenario: {
-      titulo: 'Incidente Crítico en la Línea de Freído a Gas (180°C)',
-      ubicacionPlanta: 'Planta Bosa – Módulo Central de Freidoras Industriales a Gas',
-      peligroAsociado: 'Físico (Calor extremo por contacto con aceite vegetal a 180°C) y Locativo (Superficies encharcadas con grasa)',
+      titulo: 'Alerta de calor en la freidora a gas (180°C)',
+      ubicacionPlanta: 'Planta Bosa – Zona de Freidoras a Gas',
+      peligroAsociado: 'Calor muy alto (aceite a 180°C) y piso resbaloso por grasa',
       descripcionCaso:
-        'Es viernes a las 11:30 AM en plena producción de papas onduladas. El termómetro análogo de la freidora #1 marca 195°C (15°C por encima del límite seguro de 180°C). El operario de turno nota que la campana extractora hace un zumbido irregular y pequeñas gotas de condensación fría del ducto están cayendo cerca de la tina caliente. Además, hay una película resbaladiza de aceite en el suelo y una canastilla con 25 kg de papa recién lavada aún con exceso de agua goteando. El supervisor de turno apura la producción porque el camión de distribución sale en 40 minutos.',
+        'Es viernes a las 11:30 de la mañana y hay bastante pedido de papas. El reloj de temperatura de la freidora #1 marca 195°C (15 grados por encima del límite seguro que es 180°C). El operario escucha un ruido raro en la campana del humo y ve caer unas gotitas de agua fría cerca de la paila caliente. Además, el piso tiene un poco de grasa regada y hay una canastilla con 25 kilos de papa recién lavada que todavía está goteando agua. Hay afán porque el camión sale en 40 minutos.',
       elementosInvolucrados: [
-        'Freidora a gas sobrecalentada a 195°C',
-        'Canastilla con papa húmeda escurriendo agua sobre el aceite',
-        'Piso con película de grasa resbalosa frente a la freidora',
+        'Freidora muy caliente a 195°C (el máximo seguro es 180°C)',
+        'Canastilla con papa mojada goteando agua cerca del aceite',
+        'Piso resbaloso con grasa frente a la máquina',
         'Extintor Clase K ubicado a 4 metros',
-        'Presión de tiempo para entrega de lote de producto',
+        'Afán por despachar el pedido a tiempo',
       ],
       desafioObservacion:
-        'Analiza las condiciones de la escena. Según la Política de SST y el protocolo de Frikaz S.A.S., ¿cuál es la secuencia correcta de decisiones para neutralizar la amenaza y proteger la vida de todos en planta?',
+        'Mira bien lo que está pasando. ¿Qué es lo primero y más seguro que debes hacer para cuidar tu vida y la de tus compañeros?',
       pistas: [
-        'Pista 1: El agua jamás debe entrar en contacto con aceite a 180°C porque genera vaporización explosiva instantánea (salpicaduras graves).',
-        'Pista 2: La Política de Frikaz S.A.S. otorga a todo trabajador el derecho explícito de suspender labores ante riesgo inminente.',
-        'Pista 3: La temperatura máxima de operación en Frikaz es 180°C.',
+        'Consejo 1: Nunca dejes caer agua en aceite a 180°C; el vapor sale disparado y puede causar quemaduras graves.',
+        'Consejo 2: En Frikaz S.A.S., tienes todo el derecho de parar una máquina si ves un peligro cercano.',
+        'Consejo 3: La temperatura máxima segura para freír en Frikaz es 180°C.',
       ],
     },
     preguntas: [
@@ -234,34 +234,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p1-1',
         numero: 1,
         enunciado:
-          'Ante el sobrecalentamiento de la freidora a 195°C y la presencia de papa con exceso de agua cerca de la tina caliente, ¿cuál es la primera acción OBLIGATORIA según la Política de SST de Frikaz S.A.S.?',
-        contextoCaso: 'La freidora supera en 15°C el límite operativo y hay riesgo de vaporización explosiva.',
+          'Si la freidora marca 195°C (más de lo permitido) y la papa está goteando agua cerca del aceite, ¿qué debes hacer primero?',
+        contextoCaso: 'El aceite está demasiado caliente y hay riesgo de salpicaduras fuertes si cae agua.',
         pesoPuntos: 20,
-        fundamentoNormativo: 'Decreto 1072 de 2015, Art. 2.2.4.6.8 y Compromiso 1 y 3 de la Política de Frikaz.',
+        fundamentoNormativo: 'Decreto 1072 de 2015 (Art. 2.2.4.6.8) y compromisos de seguridad de Frikaz.',
         opciones: [
           {
             id: 'opt-1-1',
-            texto: 'Verter inmediatamente la papa húmeda para bajar la temperatura del aceite por choque térmico.',
+            texto: 'Echar de una vez la papa mojada para que el agua enfríe el aceite rápido.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO Y PELIGROSO: Verter agua o productos muy húmedos en aceite hirviendo provoca una expansión explosiva de vapor que causa salpicaduras masivas y quemaduras de 3er grado.',
+            retroalimentacion: 'Cuidado, esa opción es peligrosa: si echas agua o papa muy mojada en aceite hirviendo, el agua se vuelve vapor de golpe y hace que el aceite salte por todas partes, causando quemaduras graves.',
           },
           {
             id: 'opt-1-2',
-            texto: 'Cerrar la válvula de paso de gas, apagar el quemador, suspender el cargue de papa húmeda y notificar de inmediato al Vigía de SST.',
+            texto: 'Cerrar la llave del gas, apagar el quemador, no meter la papa mojada y avisar de una vez al Vigía de SST o encargado.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! En Frikaz S.A.S. prima la vida sobre la velocidad de entrega. Cortar el suministro calórico y suspender la actividad ante riesgo inminente es la directriz rectora de la Política de SST.',
+            retroalimentacion: '¡Muy bien! En Frikaz tu vida vale más que cualquier afán de entrega. Cortar el gas y detener la tarea cuando hay peligro es la decisión correcta.',
           },
           {
             id: 'opt-1-3',
-            texto: 'Acelerar el empaque y no reportar nada para evitar retrasar la salida del camión repartidor.',
+            texto: 'Seguir trabajando rápido y no decir nada para que el camión no se retrase.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La presión comercial jamás justifica omitir un protocolo de seguridad que pone en peligro a los 10 colaboradores de la empresa.',
+            retroalimentacion: 'Recuerda: ningún pedido urgente vale más que tu salud. Guardar silencio ante un peligro nos pone en riesgo a todos en la planta.',
           },
           {
             id: 'opt-1-4',
-            texto: 'Echar agua fría con balde al exterior de la tina de fritura para enfriar el metal rápidamente.',
+            texto: 'Tirar un baldado de agua fría por fuera de la paila para enfriar el metal.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El agua cerca de la zona caliente puede filtrarse a la cuba o generar choque térmico con fractura del metal y derrame incontrolado.',
+            retroalimentacion: 'Ten precaución: el agua puede entrar a la cuba de aceite o dañar el metal caliente por el cambio brusco de temperatura, provocando un derrame.',
           },
         ],
       },
@@ -269,34 +269,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p1-2',
         numero: 2,
         enunciado:
-          '¿Cuál es la dotación de Elementos de Protección Personal (EPP) innegociable que debe portar el Operario de Frito según la matriz de requisitos de Frikaz S.A.S.?',
-        contextoCaso: 'Operación a pie de cuba con aceite vegetal a 180°C.',
+          '¿Qué elementos de protección (EPP) debes usar siempre cuando trabajas frente a la freidora a 180°C?',
+        contextoCaso: 'Trabajo directo junto al aceite vegetal muy caliente.',
         pesoPuntos: 20,
         fundamentoNormativo: 'Resolución 2400 de 1979 y Decreto 1072 de 2015.',
         opciones: [
           {
             id: 'opt-2-1',
-            texto: 'Careta de policarbonato con mentonera, guantes de nitrilo/carnaza térmica resistentes a 200°C, delantal térmico impermeable y calzado de seguridad con suela antideslizante profunda.',
+            texto: 'Careta que cubra toda la cara, guantes gruesos para calor (200°C), delantal térmico impermeable y botas con suela que no resbale.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! Esta configuración protege contra las salpicaduras de 180°C en rostro, tórax y manos, mientras que el calzado evita caídas en pisos con películas de grasa.',
+            retroalimentacion: '¡Exacto! Este equipo cuida tu cara, pecho y manos de salpicaduras a 180°C, y las botas evitan caídas si el piso tiene algo de grasa.',
           },
           {
             id: 'opt-2-2',
-            texto: 'Solo tapabocas quirúrgico, guantes desechables de látex y tenis deportivos cómodos.',
+            texto: 'Solo tapabocas normal, guantes delgados de látex y tenis cómodos.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El látex se derrite instantáneamente en contacto con aceite caliente provocando lesiones cutáneas graves y los tenis no previenen resbalones.',
+            retroalimentacion: 'Ojo: el guante delgado de látex se derrite si le cae aceite caliente y los tenis no agarran bien en pisos con grasa.',
           },
           {
             id: 'opt-2-3',
-            texto: 'Gafas de sol oscuras y botas pantaneras de caucho común.',
+            texto: 'Gafas oscuras y botas plásticas normales de lluvia.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: No brindan cobertura facial completa contra salpicaduras ni resistencia térmica adecuada.',
+            retroalimentacion: 'Esos elementos no protegen toda tu cara contra salpicaduras ni resisten el calor de la freidora.',
           },
           {
             id: 'opt-2-4',
-            texto: 'Únicamente guantes de tela de algodón para evitar mancharse las manos de grasa.',
+            texto: 'Solo guantes de tela de algodón para no ensuciarse las manos.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La tela absorbe el aceite hirviendo actuando como mecha contra la piel.',
+            retroalimentacion: 'Ten cuidado: la tela absorbe el aceite caliente y deja la quemadura pegada a la piel.',
           },
         ],
       },
@@ -304,34 +304,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p1-3',
         numero: 3,
         enunciado:
-          'Si ocurriera un conato de fuego en la superficie del aceite caliente de la freidora, ¿cuál es el único tipo de extintor que debe ser utilizado según el estándar técnico de Frikaz?',
-        contextoCaso: 'Combustión de aceite vegetal comestible a altas temperaturas.',
+          'Si llega a prenderse fuego en el aceite caliente de la freidora, ¿con qué extintor debes apagarlo?',
+        contextoCaso: 'Fuego sobre aceite de cocina caliente.',
         pesoPuntos: 20,
-        fundamentoNormativo: 'Norma NFPA 10 y Resolución 2400 de 1979.',
+        fundamentoNormativo: 'Norma de extintores NFPA 10 y Resolución 2400 de 1979.',
         opciones: [
           {
             id: 'opt-3-1',
-            texto: 'Manguera de agua a presión del grifo de lavado de materias primas.',
+            texto: 'Con la manguera de agua del lavapapas a toda presión.',
             esCorrecta: false,
-            retroalimentacion: '¡FATAL! El agua en aceite ardiendo produce una bola de fuego gigantesca por ebullición violenta (boilover). Nunca use agua en fuegos de cocina.',
+            retroalimentacion: 'Mucho cuidado: nunca uses agua en aceite encendido. El agua se hunde, hierve al instante y levanta una bola grande de fuego.',
           },
           {
             id: 'opt-3-2',
-            texto: 'Extintor Clase K (a base de acetato de potasio líquido que saponifica el aceite formando una capa sofocante y enfriadora).',
+            texto: 'Con el Extintor Clase K (especial para cocina; saca una espuma que enfría el aceite y tapa el fuego).',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! Los extintores Clase K están especialmente diseñados para grasas y aceites de cocina; generan una espuma jabonosa que enfría y corta el oxígeno sin salpicar.',
+            retroalimentacion: '¡Correcto! El extintor Clase K (plateado, especial para cocinas) crea una capa de espuma que ahoga el fuego y enfría el aceite sin hacerlo saltar.',
           },
           {
             id: 'opt-3-3',
-            texto: 'Soplar fuertemente la llama con una bandeja metálica de empaque.',
+            texto: 'Abanicando o soplando la llama con una bandeja de aluminio.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Aviva la llama proporcionando más oxígeno y arriesga la integridad del colaborador.',
+            retroalimentacion: 'Al echarle aire solo haces que la llama crezca más rápido y puedes quemarte.',
           },
           {
             id: 'opt-3-4',
-            texto: 'Extintor de agua presurizada corriente.',
+            texto: 'Con un extintor común de agua a presión.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Dispersa el aceite encendido en todas las direcciones del recinto.',
+            retroalimentacion: 'No sirve para aceites calientes: el agua esparce el aceite prendido por toda la cocina.',
           },
         ],
       },
@@ -339,34 +339,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p1-4',
         numero: 4,
         enunciado:
-          'Respecto a la participación y reporte en el SG-SST de Frikaz S.A.S., ¿qué derecho y deber tienen TODOS los trabajadores frente a una condición insegura detectada?',
-        contextoCaso: 'Un piso resbaloso no señalizado o un quemador con olor a gas.',
+          'Si ves un piso resbaloso sin aviso o sientes olor a gas en la planta, ¿qué puedes y debes hacer?',
+        contextoCaso: 'Cualquier riesgo que veas en tu turno o al pasar por otra área.',
         pesoPuntos: 20,
-        fundamentoNormativo: 'Decreto 1072 de 2015, Art. 2.2.4.6.10 y Política de SST Frikaz.',
+        fundamentoNormativo: 'Decreto 1072 de 2015 (Art. 2.2.4.6.10) y Política de Seguridad de Frikaz.',
         opciones: [
           {
             id: 'opt-4-1',
-            texto: 'Ignorarlo si no pertenece a su turno de trabajo asignado.',
+            texto: 'Pasar de largo si esa no es mi máquina ni mi turno.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La seguridad es una responsabilidad compartida de los 10 colaboradores de Frikaz S.A.S.',
+            retroalimentacion: 'Cuidarnos es tarea de todos. Un accidente le puede pasar a cualquier compañero que pase por ahí.',
           },
           {
             id: 'opt-4-2',
-            texto: 'Reportarlo de inmediato al Vigía de SST o Gerente, suspender la labor si hay peligro inminente y documentarlo sin temor a sanciones.',
+            texto: 'Avisar de inmediato al Vigía de SST o al Gerente, y parar la tarea si el peligro es grave, sabiendo que nadie te regañará por cuidar la vida.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! La Política de Frikaz garantiza el canal abierto de participación y ampara el derecho a no laborar bajo condiciones de peligro no controlado.',
+            retroalimentacion: '¡Así es! En Frikaz siempre puedes reportar peligros y detener un trabajo riesgoso para evitar que alguien salga herido.',
           },
           {
             id: 'opt-4-3',
-            texto: 'Esperar a la reunión anual de gerencia para mencionarlo como sugerencia.',
+            texto: 'Esperar hasta fin de año para contarlo en la reunión general.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Las condiciones críticas deben atenderse en tiempo real antes de que se conviertan en un accidente de trabajo.',
+            retroalimentacion: 'Si esperamos meses, alguien puede caerse o quemarse hoy mismo. Los peligros se avisan en el momento.',
           },
           {
             id: 'opt-4-4',
-            texto: 'Publicar una queja en redes sociales antes de comentarlo internamente.',
+            texto: 'Subir un video a redes sociales antes de avisarle al encargado.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El conducto regular es el reporte técnico interno a través del Vigía y el canal de SST.',
+            retroalimentacion: 'Lo más rápido para proteger a tus compañeros es avisarle primero al Vigía de SST o al jefe directo para arreglarlo ya.',
           },
         ],
       },
@@ -374,34 +374,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p1-5',
         numero: 5,
         enunciado:
-          '¿Cuál es la frecuencia mínima obligatoria con la que la Alta Dirección y el Vigía de SST deben revisar y actualizar la Política de Seguridad y Salud en el Trabajo de Frikaz S.A.S.?',
-        contextoCaso: 'Mantenimiento del ciclo PHVA y mejora continua.',
+          '¿Cada cuánto tiempo debe revisar y firmar la Gerencia este compromiso de seguridad (Política de SST)?',
+        contextoCaso: 'Mantener las reglas de seguridad al día según los cambios de la planta.',
         pesoPuntos: 20,
         fundamentoNormativo: 'Decreto 1072 de 2015, Art. 2.2.4.6.7.',
         opciones: [
           {
             id: 'opt-5-1',
-            texto: 'Cada 10 años únicamente cuando cambie el representante legal de la empresa.',
+            texto: 'Cada 10 años, solo cuando cambie el dueño de la empresa.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La norma colombiana exige revisiones periódicas mucho más dinámicas.',
+            retroalimentacion: 'Es mucho tiempo; las máquinas, procesos y leyes cambian antes, por eso la ley pide revisarla con más frecuencia.',
           },
           {
             id: 'opt-5-2',
-            texto: 'Como mínimo una vez al año (anualmente), firmada y fechada por la Alta Dirección.',
+            texto: 'Por lo menos una vez al año, firmada y con la fecha actualizada por la Gerencia.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! El Decreto 1072/2015 estipula que la política debe ser revisada mínimo una vez al año para asegurar que siga siendo pertinente a los peligros de la pyme.',
+            retroalimentacion: '¡Muy bien! La ley pide revisar la política mínimo una vez al año para confirmar que sigue protegiendo bien a todos en la empresa.',
           },
           {
             id: 'opt-5-3',
-            texto: 'Solo si ocurre un accidente mortal en la fábrica de snacks.',
+            texto: 'Únicamente si llega a pasar un accidente grave en la fábrica.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El SG-SST es eminentemente preventivo, no reactivo.',
+            retroalimentacion: 'La idea del SG-SST es prevenir antes de que pase un accidente, no esperar a que ocurra algo malo.',
           },
           {
             id: 'opt-5-4',
-            texto: 'No requiere revisión una vez redactada por primera vez.',
+            texto: 'Nunca más; con escribirla una sola vez ya queda para siempre.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La falta de revisión anual constituye un hallazgo de no conformidad en los estándares mínimos de la Resolución 0312/2019.',
+            retroalimentacion: 'No revisarla cada año es una falta ante la ley (Resolución 0312 de 2019) y hace que las reglas queden desactualizadas.',
           },
         ],
       },
@@ -410,119 +410,119 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
   {
     id: 'FRK-SST-POL-02',
     codigoCalidad: 'FRK-SST-POL-02',
-    titulo: 'POLÍTICA DE PREVENCIÓN DE CONSUMO DE TABACO, ALCOHOL Y SUSTANCIAS PSICOACTIVAS',
-    subtitulo: 'Tolerancia cero con el alcohol y drogas en plantas de fritura y rutas de distribución',
+    titulo: 'CERO ALCOHOL, DROGAS Y CIGARRILLO EN EL TRABAJO',
+    subtitulo: 'Cuidamos nuestra mente y reflejos al 100% en las freidoras y en la vía',
     version: '01',
     fechaEmision: '2026-01-20',
     esObligatoria: true,
     icono: 'ShieldAlert',
     colorAcento: '#EF4444',
-    insigniaNombre: 'Defensor de la Vida y Sobriedad',
-    insigniaDescripcion: 'Compromiso riguroso con la cero tolerancia a sustancias psicoactivas en planta y conducción.',
+    insigniaNombre: 'Ejemplo de Cuidado y Lucidez',
+    insigniaDescripcion: 'Sabes por qué trabajamos 100% sobrios y libres de humo en planta y en el furgón.',
     insigniaIcono: 'CheckCircle2',
     resumenEjecutivo:
-      'Frikaz S.A.S. mantiene una política de TOLERANCIA CERO ante la posesión, consumo, distribución o presencia laboral bajo efectos de bebidas alcohólicas, drogas ilícitas, sustancias psicoactivas o tabaco dentro de las instalaciones de la planta de producción (Bosa) y en los vehículos de reparto. La manipulación de freidoras a 180°C y la conducción de vehículos de carga pesada exigen un estado psicofísico y de reflejos al 100%.',
+      'En Frikaz S.A.S. no se permite entrar, tener ni trabajar bajo los efectos del alcohol, drogas o sustancias que alteren los sentidos, ni fumar dentro de la planta de Bosa o en los camiones de reparto. Trabajar junto a aceite a 180°C, cuchillas o manejando un furgón en la calle exige estar descansado, despejado y con todos los reflejos al 100%.',
 
-    // Atributos de Videojuego
+    // Atributos del recorrido práctico
     imagenZona: '/assets/images/zone_logistics_patio.webp',
-    sectorPlantaNombre: 'Sector Beta: Muelle de Despacho, Furgones y Cero Adicciones',
-    dificultad: 'Nivel 2: Operativo',
+    sectorPlantaNombre: 'Zona 2: Patio de Cargue, Furgones y Cero Adicciones',
+    dificultad: 'Paso 2: En Planta y Ruta',
     puntosXp: 400,
     dialogoGuiaBienvenida:
-      '¡Atención al muelle de despacho! Conducir o manipular furgones exige 100% de reflejos. La política es de Tolerancia Cero absoluta. ¡Revisa el perímetro e inspecciona los vehículos!',
+      '¡Bienvenido al patio de entregas! Manejar el furgón o trabajar en la planta requiere tener la cabeza despejada y reflejos al 100%. Aquí cumplimos cero alcohol, cero drogas y cero humo. ¡Revisa bien el lugar!',
     hotspots: [
       {
         id: 'hs-conductor',
         x: 18,
         y: 75,
-        titulo: 'Conductor con aliento alcohólico',
-        descripcion: 'Sospecha de consumo de licor previa a la salida de ruta con 400 kg de snacks.',
+        titulo: 'Conductor con olor a alcohol',
+        descripcion: 'Parece que tomó licor antes de salir a manejar el furgón con 400 kg de producto.',
         esPeligro: true,
-        consejoGuia: 'Separar inmediatamente del furgón y aplicar prueba preventiva con alcohosensor.',
+        consejoGuia: 'No debe subir al vehículo. Hay que apartarlo de las zonas de riesgo y hacer la prueba preventiva con alcoholímetro.',
       },
       {
         id: 'hs-cigarrillo',
         x: 62,
         y: 62,
-        titulo: 'Colilla en zona de corrugados',
-        descripcion: 'Peligro inminente de conato de incendio en zona de cartón y empaque.',
+        titulo: 'Colilla de cigarrillo cerca de las cajas de cartón',
+        descripcion: 'Riesgo muy alto de incendio junto a las cajas y bolsas de empaque.',
         esPeligro: true,
-        consejoGuia: 'Frikaz S.A.S. es 100% libre de humo. Está prohibido fumar en toda la sede.',
+        consejoGuia: 'Frikaz S.A.S. es un lugar 100% libre de humo. Está prohibido fumar o usar vapeadores en toda la empresa.',
       },
       {
         id: 'hs-sendero',
         x: 52,
         y: 86,
-        titulo: 'Paso Peatonal Demarcado',
-        descripcion: 'Línea de vida pintada en amarillo para circulación segura de personal.',
+        titulo: 'Sendero peatonal pintado en amarillo',
+        descripcion: 'Camino seguro marcado en el piso para que las personas caminen sin cruzarse con los carros.',
         esPeligro: false,
-        consejoGuia: '¡Correcto! Utilizar siempre las franjas peatonales delimitadas.',
+        consejoGuia: '¡Muy bien! Camina siempre por las líneas amarillas para evitar accidentes con el furgón.',
       },
     ],
     desafioTerminal: {
       codigoProtocolo: 'FRK-ZERO-TOL',
-      instruccion: 'Desbloquea la salida del furgón confirmando la condición psicofísica requerida:',
-      pregunta: '¿Qué nivel de alcoholemia es admisible para iniciar labores en Frikaz S.A.S.?',
+      instruccion: 'Antes de encender el furgón o las máquinas, confirma la regla de Frikaz:',
+      pregunta: '¿Cuánto alcohol está permitido en el cuerpo para empezar a trabajar?',
       opciones: [
-        { id: 't2-1', etiqueta: '0.00 mg/L (Tolerancia Cero Estricta y Absoluta)', esCorrecta: true },
-        { id: 't2-2', etiqueta: 'Hasta 0.39 mg/L si durmió más de 4 horas', esCorrecta: false },
-        { id: 't2-3', etiqueta: 'Cualquier nivel si se toman dos tazas de café caliente', esCorrecta: false },
+        { id: 't2-1', etiqueta: '0.00 mg/L (Cero alcohol, tolerancia cero total)', esCorrecta: true },
+        { id: 't2-2', etiqueta: 'Un poco, si la persona durmió más de 4 horas', esCorrecta: false },
+        { id: 't2-3', etiqueta: 'Cualquier cantidad si toma dos tazas de café negro', esCorrecta: false },
       ],
     },
     compromisosClave: [
       {
         numero: 1,
-        titulo: 'Tolerancia cero al consumo y porte de sustancias',
+        titulo: 'Cero alcohol y drogas en la jornada',
         descripcion:
-          'Prohibición tajante de ingresar o laborar bajo el influjo de alcohol o estupefacientes en planta, oficinas y vehículos.',
+          'No se puede llegar al trabajo ni trabajar habiendo tomado alcohol o consumido sustancias que alteren los sentidos.',
         aplicacionEnPlanta:
-          'Pruebas aleatorias de alcoholemia antes del encendido de freidoras y salida de furgones.',
+          'Pruebas de alcoholímetro de forma preventiva antes de prender freidoras o salir a ruta.',
       },
       {
         numero: 2,
-        titulo: 'Prohibición estricta de fumar en toda la sede',
+        titulo: 'Prohibido fumar o usar vapeadores en toda la sede',
         descripcion:
-          'Espacio 100% libre de humo de tabaco o cigarrillos electrónicos (vapeadores), por bioseguridad alimentaria e inflamabilidad.',
+          'Toda la fábrica, baños, vestieres y patios son libres de humo, para cuidar los alimentos y evitar incendios.',
         aplicacionEnPlanta:
-          'Cero fuentes de ignición en áreas con gas natural, grasas y material corrugado de empaque.',
+          'Cero fósforos, encendedores o chispas cerca de la tubería de gas, aceites y cajas de cartón.',
       },
       {
         numero: 3,
-        titulo: 'Prevención integral y apoyo al bienestar',
+        titulo: 'Apoyo a la salud y hábitos sanos',
         descripcion:
-          'Promoción de estilos de vida saludables, capacitaciones periódicas con la ARL y orientación confidencial.',
+          'Charlas y acompañamiento con la aseguradora de riesgos (ARL) para cuidar el bienestar físico y mental, con respeto y reserva.',
         aplicacionEnPlanta:
-          'Campañas mensuales sobre manejo del estrés y consecuencias del consumo en la salud osteomuscular y refleja.',
+          'Actividades cada mes sobre cómo manejar el estrés, dormir bien y cuidar la salud.',
       },
     ],
     responsabilidadesPorNivel: [
       {
         nivel: 'Gerencia y Vigía SST',
-        responsabilidad: 'Gestionar las pruebas de tamizaje con la ARL y garantizar ambientes seguros.',
+        responsabilidad: 'Organizar los controles preventivos con la ARL y mantener espacios seguros para todos.',
       },
       {
         nivel: 'Operarios y Conductores',
-        responsabilidad: 'Presentarse en óptimas condiciones de sobriedad, reportar medicamentos que generen somnolencia y rechazar el consumo.',
+        responsabilidad: 'Llegar despejado al turno, avisar si tomas una medicina que dé sueño y decir no al consumo en el trabajo.',
       },
     ],
     escenario: {
-      titulo: 'Sospecha en Turno Matutino: Conducción y Cocina Industrial',
-      ubicacionPlanta: 'Planta Bosa – Zona de Cargue y Despacho de Snacks',
-      peligroAsociado: 'Peligro Psicosocial y Condiciones de Seguridad (Tránsito vehicular y quemaduras por disminución de reflejos)',
+      titulo: 'Inicio de turno: cuidado en la vía y en la planta',
+      ubicacionPlanta: 'Planta Bosa – Patio de Cargue y Despacho',
+      peligroAsociado: 'Riesgo de accidente de tránsito o quemadura por reflejos lentos y riesgo de incendio',
       descripcionCaso:
-        'Lunes 6:00 AM. Al iniciar la jornada, durante el saludo de seguridad, se percibe un aliento con olor a licor y dificultad leve de articulación en uno de los colaboradores asignado al furgón de reparto de Soacha. El trabajador asegura que durmió 5 horas y que solo bebió un par de cervezas la noche anterior, alegando que "se siente perfecto" para manejar porque conoce la ruta de memoria. Al mismo tiempo, en el vestier se encuentra una colilla de cigarrillo apagada en un rincón cerca a las cajas de cartón de empaque.',
+        'Lunes 6:00 AM. Al comenzar el día, se nota olor a licor y habla un poco enredada en un compañero que va a manejar el furgón hacia Soacha. Él dice que durmió 5 horas, que solo se tomó dos cervezas anoche y que se siente bien para manejar porque se sabe el camino de memoria. Al mismo tiempo, alguien dejó una colilla de cigarrillo apagada en un rincón del vestier, cerca de las cajas de cartón de empaque.',
       elementosInvolucrados: [
-        'Conductor con sospecha de alcoholemia positiva',
-        'Furgón de reparto con 400 kg de producto terminado listo para salir a vía pública',
-        'Colilla de cigarrillo en área contigua a material altamente inflamable',
-        'Alcohosensor preventivo calibrado en enfermería/SST',
+        'Compañero con posible alcoholemia antes de manejar',
+        'Furgón con 400 kilos de producto listo para salir a la calle',
+        'Colilla de cigarrillo junto a cajas de cartón inflamables',
+        'Alcoholímetro listo para revisar de forma preventiva',
       ],
       desafioObservacion:
-        '¿Cómo debe actuar la empresa y los compañeros de trabajo según la Política de Alcohol y Drogas y el Código Sustantivo del Trabajo de Colombia?',
+        'Según las reglas de Frikaz S.A.S. y la ley en Colombia, ¿cómo se debe actuar en esta situación con respeto y seguridad?',
       pistas: [
-        'Pista 1: El Código Sustantivo del Trabajo (Art. 60) prohíbe presentarse al trabajo en estado de embriaguez o bajo la influencia de narcóticos.',
-        'Pista 2: La ley vial colombiana (Ley 1696) establece sanción desde Grado 0 de alcoholemia.',
-        'Pista 3: En Frikaz el humo de tabaco está prohibido en el 100% de las instalaciones por riesgo de incendio y contaminación de alimentos.',
+        'Consejo 1: La ley laboral (Código Sustantivo del Trabajo, Art. 60) prohíbe ir a trabajar en estado de embriaguez o bajo drogas.',
+        'Consejo 2: En Colombia, la ley de tránsito (Ley 1696) multa desde el primer grado de alcohol (tolerancia cero).',
+        'Consejo 3: En Frikaz está prohibido fumar en toda la empresa para evitar incendios y no contaminar los alimentos.',
       ],
     },
     preguntas: [
@@ -530,34 +530,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p2-1',
         numero: 1,
         enunciado:
-          '¿Cuál es la postura oficial y legal de Frikaz S.A.S. respecto al consumo de alcohol previo a la jornada de trabajo o durante ella?',
-        contextoCaso: 'Un operario o conductor afirma haber bebido "poco" la noche anterior.',
+          '¿Qué dice la regla de Frikaz S.A.S. si alguien llega con algo de alcohol de la noche anterior?',
+        contextoCaso: 'Un compañero dice que tomó poco anoche y que se siente capaz de manejar o freír.',
         pesoPuntos: 25,
         fundamentoNormativo: 'Código Sustantivo del Trabajo Art. 60 y Ley 1566 de 2012.',
         opciones: [
           {
             id: 'opt-2-1-1',
-            texto: 'Se permite trabajar siempre que el colaborador beba dos tazas de café bien cargado.',
+            texto: 'Puede trabajar si se toma dos tazas de café bien cargado.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El café no metaboliza el alcohol en sangre ni restablece la velocidad de reflejos ante una maniobra de emergencia.',
+            retroalimentacion: 'Recuerda: el café quita un poco la sensación de cansancio, pero no saca el alcohol de la sangre ni devuelve los reflejos rápidos.',
           },
           {
             id: 'opt-2-1-2',
-            texto: 'Tolerancia Cero: Queda estrictamente prohibido laborar con cualquier grado de alcoholemia o influjo de sustancias psicoactivas.',
+            texto: 'Tolerancia cero: no se puede trabajar en planta ni conducir con ningún grado de alcohol o drogas.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! En Frikaz S.A.S. la política es de tolerancia cero estricta para garantizar la vida del propio colaborador, sus compañeros y la comunidad.',
+            retroalimentacion: '¡Correcto! Cero alcohol protege la vida del trabajador, la de sus compañeros y la de las personas en la calle.',
           },
           {
             id: 'opt-2-1-3',
-            texto: 'Solo se prohíbe para el Gerente, pero los operarios pueden trabajar si usan guantes.',
+            texto: 'Solo aplica al Gerente; los demás sí pueden trabajar si usan guantes.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La política aplica universalmente a todos los niveles de la organización sin distinción jerárquica.',
+            retroalimentacion: 'Esta regla nos cuida a todos por igual en la empresa, sin importar el cargo.',
           },
           {
             id: 'opt-2-1-4',
-            texto: 'Se permite si el trabajador promete conducir más despacio por la derecha.',
+            texto: 'Se permite manejar si promete ir despacio por el carril derecho.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La Ley 1696 de 2013 y el SG-SST prohíben categóricamente la conducción bajo cualquier vestigio de alcohol.',
+            retroalimentacion: 'La ley colombiana (Ley 1696 de 2013) y nuestras normas internas prohíben totalmente conducir con cualquier rastro de alcohol.',
           },
         ],
       },
@@ -565,34 +565,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p2-2',
         numero: 2,
         enunciado:
-          'Si un trabajador consume medicamentos recetados por su médico tratante que causan somnolencia o alteran la concentración, ¿qué debe hacer conforme a la política?',
-        contextoCaso: 'Medicamentos antihistamínicos o ansiolíticos prescritos por la EPS.',
+          'Si el médico de tu EPS te formuló una medicina que da sueño o quita concentración (por ejemplo para la alergia o el dolor), ¿qué debes hacer?',
+        contextoCaso: 'Tomar medicamentos formulados que producen sueño durante el turno.',
         pesoPuntos: 25,
         fundamentoNormativo: 'Decreto 1072 de 2015 Art. 2.2.4.6.10.',
         opciones: [
           {
             id: 'opt-2-2-1',
-            texto: 'Ocultarlo para no generar sospechas entre los compañeros de planta.',
+            texto: 'No decirle a nadie para que no piensen mal en el trabajo.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Ocultar un fármaco con efecto sedante al operar freidoras o furgones es un acto inseguro de altísima gravedad.',
+            retroalimentacion: 'Ocultar que una pasta te da sueño mientras manejas carro o aceite caliente te pone en un peligro muy grande.',
           },
           {
             id: 'opt-2-2-2',
-            texto: 'Informar previamente al Responsable del SG-SST y presentar la fórmula médica para reasignar temporalmente sus funciones a labores de bajo riesgo.',
+            texto: 'Avisar antes al encargado de SST y mostrar la fórmula médica para que te den otra tarea más segura mientras pasa el tratamiento.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! El deber legal del trabajador es informar sobre su estado de salud. La empresa reubicará temporalmente sus tareas para evitar accidentes.',
+            retroalimentacion: '¡Muy bien! Contar sobre tu salud permite que la empresa te ubique en una tarea sin riesgo de accidente mientras te recuperas.',
           },
           {
             id: 'opt-2-2-3',
-            texto: 'Tomar doble dosis para contrarrestar la somnolencia con energía.',
+            texto: 'Tomar doble pastilla para que se pase el efecto más rápido.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Aumentar la dosis empeora los efectos adversos y arriesga la salud del colaborador.',
+            retroalimentacion: 'Nunca tomes más medicina de la que mandó el médico; eso aumenta el sueño y daña tu salud.',
           },
           {
             id: 'opt-2-2-4',
-            texto: 'No tomar el medicamento y trabajar enfermo sin consultar al médico.',
+            texto: 'Dejar de tomar el remedio y trabajar enfermo sin avisar.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La salud es prioritaria; la empresa coordina la labor sin suspender el tratamiento médico prescrito.',
+            retroalimentacion: 'Tu salud es primero: no suspendas tu tratamiento, solo avisa para apoyarte con una labor segura.',
           },
         ],
       },
@@ -600,34 +600,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p2-3',
         numero: 3,
         enunciado:
-          '¿Por qué está totalmente prohibido fumar o vapear dentro de las instalaciones de Frikaz S.A.S. (incluidos vestieres, baños y patios)?',
-        contextoCaso: 'Sede con presencia de gas combustible, aceites comestibles y empaque corrugado.',
+          '¿Por qué no se puede fumar ni usar cigarrillo electrónico en ninguna parte de Frikaz (ni en baños, vestieres o patios)?',
+        contextoCaso: 'Planta con gas natural, aceites y cajas de cartón.',
         pesoPuntos: 25,
         fundamentoNormativo: 'Ley 1335 de 2009 (Espacios libres de humo) y Res. 2400 de 1979.',
         opciones: [
           {
             id: 'opt-2-3-1',
-            texto: 'Porque el humo puede contaminar la inocuidad de los alimentos fritos y las cenizas/chispas constituyen un potencial foco de incendio en áreas con gas y cartón.',
+            texto: 'Porque el humo ensucia los alimentos que fabricamos y una chispa o colilla puede iniciar un incendio cerca del gas y el cartón.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! Combina dos pilares: la protección de la salud respiratoria y prevención de incendios Clase B/K, además del cumplimiento sanitario de BPM en snacks.',
+            retroalimentacion: '¡Exacto! Así protegemos la comida que comen las familias, cuidamos nuestros pulmones y evitamos incendios en planta.',
           },
           {
             id: 'opt-2-3-2',
             texto: 'Solo está prohibido si el cigarrillo no tiene filtro.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La prohibición es absoluta para tabaco, cigarrillos con o sin filtro y vaporizadores.',
+            retroalimentacion: 'Está prohibido todo tipo de cigarrillo, tabaco o vapeador dentro de la empresa.',
           },
           {
             id: 'opt-2-3-3',
-            texto: 'Porque a la gerencia no le agrada el olor a menta.',
+            texto: 'Porque a los jefes no les gusta el olor del humo.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Es una disposición fundamentada en normas de seguridad industrial y salud pública nacional.',
+            retroalimentacion: 'No es un gusto personal: es una ley nacional de salud pública y una medida vital para evitar incendios.',
           },
           {
             id: 'opt-2-3-4',
-            texto: 'Está permitido si se fuma debajo de la campana extractora con el motor encendido.',
+            texto: 'Sí se puede fumar si uno se hace debajo de la campana extractora prendida.',
             esCorrecta: false,
-            retroalimentacion: '¡PELIGROSO! La campana contiene vapores de grasa acumulada; una chispa encendería un fuego incontrolable en el ducto de extracción.',
+            retroalimentacion: 'Mucho ojo: la campana acumula grasa y vapores; una sola chispa puede prender fuego dentro de todo el tubo extractor.',
           },
         ],
       },
@@ -635,34 +635,34 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p2-4',
         numero: 4,
         enunciado:
-          '¿Cuál es el procedimiento que Frikaz S.A.S. implementa cuando se sospecha que un colaborador se presenta bajo el efecto del alcohol en planta?',
-        contextoCaso: 'Detección en el filtro de ingreso matutino.',
+          'Si parece que un compañero llegó bajo efectos del alcohol, ¿cómo debe actuar la empresa?',
+        contextoCaso: 'Al entrar al turno en la mañana.',
         pesoPuntos: 25,
         fundamentoNormativo: 'Sentencia C-636 de 2016 y Código Sustantivo del Trabajo.',
         opciones: [
           {
             id: 'opt-2-4-1',
-            texto: 'Expulsarlo a empujones a la calle sin dejar registro formal.',
+            texto: 'Sacarlo a empujones a la calle sin hablar ni anotar nada.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: La empresa debe garantizar el debido proceso, la dignidad humana y la seguridad del colaborador.',
+            retroalimentacion: 'Todo trabajador merece respeto y un proceso claro y justo para cuidarlo.',
           },
           {
             id: 'opt-2-4-2',
-            texto: 'Separarlo inmediatamente de zonas de riesgo, aplicar prueba técnica de tamizaje (alcohosensor) con un testigo del Vigía/compañero y levantar acta de custodia.',
+            texto: 'Alejarlo de una vez de máquinas y vehículos, hacer la prueba con alcoholímetro frente a un testigo (Vigía o compañero) y dejar un acta clara.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! Se resguarda la integridad del trabajador impidiendo su acceso a maquinaria peligrosa, asegurando transparencia con testigos y registro documental legal.',
+            retroalimentacion: '¡Correcto! Primero se evita cualquier accidente en las máquinas o en la vía, se trata con respeto al compañero y se deja constancia transparente.',
           },
           {
             id: 'opt-2-4-3',
-            texto: 'Hacerlo correr 5 vueltas alrededor de la bodega para que sude el alcohol.',
+            texto: 'Ponerlo a trotar 5 vueltas por la bodega para que se le pase.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Carece de sentido técnico y atenta contra la salud física del colaborador.',
+            retroalimentacion: 'Eso no quita el alcohol de la sangre y puede hacer que se caiga o se lesione.',
           },
           {
             id: 'opt-2-4-4',
-            texto: 'Ignorarlo hasta que cometa una equivocación en la freidora.',
+            texto: 'Dejarlo empezar a freír y esperar a ver si comete un error.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Eso generaría una omisión negligente y un accidente laboral previsible.',
+            retroalimentacion: 'Nunca debemos esperar a que ocurra una quemadura o un choque cuando podemos evitarlo a tiempo.',
           },
         ],
       },
@@ -671,118 +671,118 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
   {
     id: 'FRK-SST-PR-01',
     codigoCalidad: 'FRK-SST-PR-01',
-    titulo: 'PROCEDIMIENTO OPERATIVO SEGURO EN FREIDORAS INDUSTRIALES Y ACEITE CALIENTE',
-    subtitulo: 'Reglas de oro para control térmico a 180°C y prevención de choques de vapor',
+    titulo: 'CÓMO USAR Y VACIAR CON SEGURIDAD LAS FREIDORAS Y EL ACEITE',
+    subtitulo: 'Pasos sencillos para freír a 180°C y sacar el aceite usado sin quemarnos',
     version: '01',
     fechaEmision: '2026-02-01',
     esObligatoria: true,
     icono: 'Flame',
     colorAcento: '#EA580C',
-    insigniaNombre: 'Maestro del Control Térmico Frikaz',
-    insigniaDescripcion: 'Experto en la operación segura de freidoras continuas, control de termostatos y disposición de ACU.',
+    insigniaNombre: 'Experto en Manejo Seguro de Freidoras',
+    insigniaDescripcion: 'Dominas el control del calor, el escurrido de la papa y el vaciado seguro del aceite usado.',
     insigniaIcono: 'Award',
     resumenEjecutivo:
-      'El proceso de freído industrial de papa y plátano en Frikaz S.A.S. opera con aceite vegetal a temperaturas de hasta 180°C sobre quemadores de gas natural de alta potencia. Este instructivo establece los estándares innegociables de inspección preoperacional, presecado de materia prima, purga segura, respuesta ante conatos con acetato de potasio y drenaje ambiental de ACU.',
+      'En Frikaz S.A.S. freímos papa y plátano en aceite vegetal hasta a 180°C con quemadores de gas. Aquí aprendes los pasos claros de todos los días: revisar la máquina antes de prenderla, escurrir bien la papa para que no tenga agua, apagar el fuego de forma segura si hay emergencia y esperar a que el aceite usado (ACU) se enfríe para sacarlo y entregarlo al gestor ambiental.',
 
-    // Atributos de Videojuego
+    // Atributos del recorrido práctico
     imagenZona: '/assets/images/zone_eco_waste.webp',
-    sectorPlantaNombre: 'Sector Gamma: Batería de Freidoras y Gestión Ambiental de ACU',
-    dificultad: 'Nivel 3: Experto',
+    sectorPlantaNombre: 'Zona 3: Freidoras y Entrega Segura de Aceite Usado (ACU)',
+    dificultad: 'Paso 3: Operación Segura',
     puntosXp: 450,
     dialogoGuiaBienvenida:
-      '¡Llegaste a la zona de drenaje y disposición ecológica! El aceite usado caliente puede causar quemaduras de tercer grado. ¡Comprueba las condiciones antes de abrir las válvulas!',
+      '¡Llegaste a la zona de vaciado y cuidado ambiental! Sacar el aceite cuando aún está caliente es una de las causas más graves de quemaduras. ¡Revisa los recipientes y la temperatura antes de abrir cualquier llave!',
     hotspots: [
       {
         id: 'hs-balde',
         x: 45,
         y: 65,
-        titulo: 'Balde plástico doméstico',
-        descripcion: 'Material no industrial que se deforma y desintegra a más de 80°C derramando aceite.',
+        titulo: 'Balde plástico normal de casa',
+        descripcion: 'Este plástico se ablanda y se rompe si le cae líquido a más de 80°C, regando todo.',
         esPeligro: true,
-        consejoGuia: 'Nunca trasvasar líquidos calientes en plástico no certificado térmicamente.',
+        consejoGuia: 'Nunca eches aceite ni líquidos calientes en baldes plásticos comunes.',
       },
       {
         id: 'hs-tambores',
         x: 18,
         y: 72,
-        titulo: 'Tambores Herméticos SDA',
-        descripcion: 'Canecas metálicas rotuladas con sellos de trazabilidad para gestor autorizado.',
+        titulo: 'Canecas metálicas cerradas y marcadas (SDA)',
+        descripcion: 'Recipientes seguros y tapados para guardar el aceite usado y entregarlo a la empresa ambiental autorizada.',
         esPeligro: false,
-        consejoGuia: 'Disposición oficial de Aceite de Cocina Usado conforme a la Secretaría Distrital de Ambiente.',
+        consejoGuia: '¡Bien! Así cumplimos con la Secretaría de Ambiente (SDA) y cuidamos el agua de Bogotá.',
       },
       {
         id: 'hs-temp-drenaje',
         x: 75,
         y: 75,
-        titulo: 'Temperatura de aceite a 140°C',
-        descripcion: 'Aceite aún a alta temperatura. Peligro crítico de quemaduras de 3er grado.',
+        titulo: 'Aceite todavía a 140°C',
+        descripcion: 'Sigue demasiado caliente. Si cae en la piel produce quemaduras muy profundas.',
         esPeligro: true,
-        consejoGuia: 'El protocolo exige esperar el enfriamiento completo por debajo de 40°C antes de drenar.',
+        consejoGuia: 'Espera siempre a que el aceite baje a menos de 40°C (que ya esté tibio o frío) antes de abrir la llave.',
       },
     ],
     desafioTerminal: {
       codigoProtocolo: 'FRK-ACU-DISP',
-      instruccion: 'Autoriza la apertura de la compuerta de residuos especiales:',
-      pregunta: '¿Cuál es la temperatura máxima para iniciar el drenaje de aceite de freidoras?',
+      instruccion: 'Confirma el momento seguro para vaciar el aceite de la freidora:',
+      pregunta: '¿A qué temperatura máxima debe estar el aceite para empezar a sacarlo?',
       opciones: [
-        { id: 't3-1', etiqueta: 'Menos de 40°C (Frío al tacto con guante)', esCorrecta: true },
-        { id: 't3-2', etiqueta: '120°C para agilizar el flujo de salida', esCorrecta: false },
-        { id: 't3-3', etiqueta: 'Apenas se apaga el quemador de gas', esCorrecta: false },
+        { id: 't3-1', etiqueta: 'Menos de 40°C (ya frío o tibio al tocar por fuera con guante)', esCorrecta: true },
+        { id: 't3-2', etiqueta: 'A 120°C para que salga más rápido por la llave', esCorrecta: false },
+        { id: 't3-3', etiqueta: 'Apenas se apague el quemador de gas', esCorrecta: false },
       ],
     },
     compromisosClave: [
       {
         numero: 1,
-        titulo: 'Verificación preoperacional obligatoria',
+        titulo: 'Revisar la freidora antes de prenderla',
         descripcion:
-          'Inspeccionar termostatos análogos y digitales, perillas de gas, válvulas de corte y campanas antes de encender pilotos.',
+          'Chequear los relojes de temperatura, perillas de gas, llaves de cierre y la campana antes de encender la llama.',
         aplicacionEnPlanta:
-          'Diligenciamiento diario de la lista de chequeo de freidoras FRK-SST-FOR-01.',
+          'Llenar todos los días la hoja de revisión rápida de freidoras (FRK-SST-FOR-01).',
       },
       {
         numero: 2,
-        titulo: 'Presecado y escurrido de tubérculos',
+        titulo: 'Secar y escurrir bien la papa antes de freír',
         descripcion:
-          'Garantizar que las rodajas de papa no posean películas de agua libre al sumergirlas en la cuba de cocción.',
+          'Asegurar que las rodajas de papa y plátano no lleven gotas de agua al caer al aceite caliente.',
         aplicacionEnPlanta:
-          'Uso del centrifugador o canastillas de escurrido mínimo 7 minutos antes del fritado.',
+          'Pasar por la centrifugadora o dejar escurrir en canastilla mínimo 7 minutos antes de freír.',
       },
       {
         numero: 3,
-        titulo: 'Drenaje de aceite solo por debajo de 40°C',
+        titulo: 'Vaciar el aceite solo cuando esté frío (menos de 40°C)',
         descripcion:
-          'Nunca evacuar aceite de cocina caliente; esperar el enfriamiento completo en turno posterior.',
+          'Nunca sacar el aceite caliente al terminar el turno; dejarlo enfriar hasta el siguiente turno o descanso programado.',
         aplicacionEnPlanta:
-          'Traslado hermético en canecas rotuladas para gestores autorizados por la SDA.',
+          'Pasarlo con calma a las canecas metálicas marcadas para entregarlo al gestor autorizado por la Secretaría de Ambiente.',
       },
     ],
     responsabilidadesPorNivel: [
       {
         nivel: 'Operario de Frito',
-        responsabilidad: 'Portar kit térmico (200°C), controlar termostato a 180°C y jamás desatender la freidora encendida.',
+        responsabilidad: 'Usar siempre tu kit térmico (para 200°C), vigilar que no pase de 180°C y nunca dejar la freidora encendida sola.',
       },
       {
         nivel: 'Mantenimiento y SST',
-        responsabilidad: 'Calibración trimestral de termostatos y mantenimiento preventivo de quemadores y chimeneas.',
+        responsabilidad: 'Revisar y calibrar los relojes de temperatura cada 3 meses y hacer mantenimiento a quemadores y chimeneas.',
       },
     ],
     escenario: {
-      titulo: 'Drenaje de Aceite Usado al Cierre de Turno',
-      ubicacionPlanta: 'Planta Bosa – Batería de Freidoras #2 y Zona de Residuos',
-      peligroAsociado: 'Físico (Quemadura térmica de tercer grado por contacto con líquidos a alta temperatura)',
+      titulo: 'Vaciado del aceite usado al terminar el turno',
+      ubicacionPlanta: 'Planta Bosa – Freidora #2 y Zona de Recolección',
+      peligroAsociado: 'Quemadura grave por tocar o salpicarse con aceite muy caliente',
       descripcionCaso:
-        'Es viernes a las 4:45 PM y la jornada termina a las 5:00 PM. El aceite vegetal de la freidora #2 ya cumplió sus ciclos de calidad (muestra coloración oscura y exceso de polímeros). El operario quiere "dejar todo listo" para salir a su hora y pretende abrir la válvula de desagüe inferior directamente sobre un balde plástico común, con el aceite recién apagado que aún se encuentra a 140°C.',
+        'Son las 4:45 PM del viernes y la salida es a las 5:00 PM. El aceite de la freidora #2 ya está oscuro y hay que cambiarlo. Para irse rápido a casa, un operario piensa abrir la llave de abajo para sacar el aceite directamente en un balde plástico normal de la casa, aunque apagó la máquina hace apenas un momento y el aceite sigue a 140°C.',
       elementosInvolucrados: [
-        'Aceite vegetal usado a 140°C dentro de la freidora',
-        'Válvula manual de drenaje inferior',
-        'Balde plástico doméstico no apto para altas temperaturas',
-        'Prisa por finalizar la jornada laboral a tiempo',
+        'Aceite usado dentro de la freidora todavía a 140°C',
+        'Llave de vaciado de la parte inferior',
+        'Balde plástico normal que no resiste calor alto',
+        'Afán por terminar rápido e irse a casa',
       ],
       desafioObservacion:
-        '¿Cuál es el peligro crítico de esta acción y qué manda el procedimiento oficial de Frikaz S.A.S.?',
+        '¿Por qué es tan riesgoso hacer esto y qué nos indica el paso a paso seguro de Frikaz S.A.S.?',
       pistas: [
-        'Pista 1: Los baldes plásticos estándar se derriten a temperaturas mayores de 80°C, provocando derrames violentos en las piernas y pies del operario.',
-        'Pista 2: La regla de oro en Frikaz es drenar únicamente cuando el aceite esté por debajo de 40°C (frío al tacto en la pared exterior).',
+        'Consejo 1: Los baldes de plástico común se derriten desde los 80°C y se rompen, regando todo el aceite caliente en piernas y pies.',
+        'Consejo 2: La regla segura en Frikaz es vaciar el aceite únicamente cuando esté por debajo de 40°C (ya frío).',
       ],
     },
     preguntas: [
@@ -790,28 +790,28 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p3-1',
         numero: 1,
         enunciado:
-          '¿Cuál es la temperatura máxima permitida para realizar el drenaje y filtrado de Aceite de Cocina Usado (ACU) en las freidoras de Frikaz S.A.S.?',
-        contextoCaso: 'Evacuación de aceite degradado hacia los tambores de almacenamiento SDA.',
+          '¿A qué temperatura máxima debe estar el aceite usado (ACU) para poder sacarlo de la freidora?',
+        contextoCaso: 'Pasar el aceite viejo de la freidora a las canecas de almacenamiento.',
         pesoPuntos: 34,
-        fundamentoNormativo: 'Procedimiento FRK-SST-PR-01 y Estándar de Seguridad Industrial.',
+        fundamentoNormativo: 'Procedimiento seguro de freído FRK-SST-PR-01.',
         opciones: [
           {
             id: 'opt-3-1-1',
-            texto: 'A 180°C apenas se apagan los quemadores para que fluya más rápido por las tuberías.',
+            texto: 'A 180°C apenas se apaga el fuego para que salga ligerito.',
             esCorrecta: false,
-            retroalimentacion: '¡GRAVÍSIMO! Manipular aceite a 180°C fuera de la cuba genera vapores asfixiantes y si se derrama destruye ropa y causa quemaduras de tercer grado que requieren injerto.',
+            retroalimentacion: 'Mucho cuidado: sacar aceite a 180°C suelta vapores fuertes y, si se riega, traspasa la ropa y causa quemaduras muy graves.',
           },
           {
             id: 'opt-3-1-2',
-            texto: 'Por debajo de 40°C, habiendo dejado enfriar la freidora apagada durante el reposo programado.',
+            texto: 'Por debajo de 40°C, después de dejar la freidora apagada y en reposo hasta que se enfríe.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! El protocolo de Frikaz exige esperar a que el aceite descienda por debajo de 40°C para eliminar completamente el riesgo de quemadura y derretimiento de recipientes.',
+            retroalimentacion: '¡Muy bien! Esperar a que baje de 40°C quita por completo el riesgo de quemaduras y evita que los envases se dañen.',
           },
           {
             id: 'opt-3-1-3',
-            texto: 'A 100°C siempre y cuando se use tapabocas de tela.',
+            texto: 'A 100°C siempre y cuando uno tenga puesto el tapabocas.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: A 100°C el aceite aún tiene capacidad calórica extrema para causar daños irreparables.',
+            retroalimentacion: 'A 100°C el agua hierve y el aceite quema igual de fuerte; hay que esperar a que baje de 40°C.',
           },
         ],
       },
@@ -819,28 +819,28 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p3-2',
         numero: 2,
         enunciado:
-          '¿Por qué nunca se debe utilizar un balde de plástico común para trasvasar líquidos calientes en la planta?',
-        contextoCaso: 'Uso inadecuado de herramientas no industriales.',
+          '¿Por qué nunca debes usar un balde plástico común de casa para recibir líquidos calientes en la planta?',
+        contextoCaso: 'Uso de recipientes que no son resistentes al calor.',
         pesoPuntos: 33,
-        fundamentoNormativo: 'Resolución 2400 de 1979 y Ficha Técnica de Materiales.',
+        fundamentoNormativo: 'Resolución 2400 de 1979 y ficha de seguridad de envases.',
         opciones: [
           {
             id: 'opt-3-2-1',
-            texto: 'Porque el polipropileno o polietileno estándar colapsa y se desintegra con calor superior a 80°C, derramando el líquido sobre el cuerpo del trabajador.',
+            texto: 'Porque ese plástico se derrite y se rompe si pasa de 80°C, derramando el líquido caliente sobre tus piernas y pies.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! Los recipientes plásticos sufren deformación súbita perdiendo su base estructural, vertiendo el líquido hirviendo sobre los pies y miembros inferiores.',
+            retroalimentacion: '¡Exacto! El plástico normal se ablanda de golpe con el calor, se le cae el fondo y riega todo encima de quien lo sostiene.',
           },
           {
             id: 'opt-3-2-2',
-            texto: 'Únicamente porque el color del balde no combina con el uniforme de la empresa.',
+            texto: 'Solo porque el color del balde no combina con el uniforme.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: Es una cuestión de resistencia mecánica y seguridad física vital.',
+            retroalimentacion: 'No es por estética: es porque el calor derrite ese material y puede causarte un accidente serio.',
           },
           {
             id: 'opt-3-2-3',
-            texto: 'Porque hace mucho ruido al rozar con el piso de baldosín.',
+            texto: 'Porque suena muy duro al arrastrarlo por la baldosa.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El riesgo reside en la deformación térmica inminente del plástico.',
+            retroalimentacion: 'El peligro real es que el balde se derrite y suelta el aceite encima de tus pies.',
           },
         ],
       },
@@ -848,28 +848,28 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
         id: 'p3-3',
         numero: 3,
         enunciado:
-          '¿Qué se debe hacer con el Aceite de Cocina Usado (ACU) retirado de las freidoras de Frikaz S.A.S. según la norma ambiental y el SG-SST?',
-        contextoCaso: 'Cumplimiento con la Secretaría Distrital de Ambiente (SDA) de Bogotá.',
+          '¿Qué debemos hacer con el Aceite de Cocina Usado (ACU) que ya se sacó de las freidoras de Frikaz S.A.S.?',
+        contextoCaso: 'Cuidado del agua y cumplimiento con la Secretaría de Ambiente (SDA).',
         pesoPuntos: 33,
-        fundamentoNormativo: 'Resolución 316 de 2018 y Procedimiento FRK-SST-PR-02.',
+        fundamentoNormativo: 'Resolución 316 de 2018 y Procedimiento ambiental FRK-SST-PR-02.',
         opciones: [
           {
             id: 'opt-3-3-1',
-            texto: 'Verterlo por el sifón del piso del área de lavado aplicando agua caliente para que no se tranque la cañería.',
+            texto: 'Botarlo por la rejilla del piso echándole agua caliente para que no tape el tubo.',
             esCorrecta: false,
-            retroalimentacion: '¡PROHIBIDO POR LA LEY! Verter aceite al alcantarillado contamina miles de litros de agua, tapona redes y acarrea multas millonarias de la SDA.',
+            retroalimentacion: '¡Nunca hagas eso! Está prohibido por ley: un solo litro de aceite contamina miles de litros de agua, tapa las tuberías y genera multas muy altas para la empresa.',
           },
           {
             id: 'opt-3-3-2',
-            texto: 'Almacenarlo en tambores herméticos debidamente rotulados y entregarlo exclusivamente a un gestor ambiental autorizado por la SDA con su manifiesto de trazabilidad.',
+            texto: 'Guardarlo en las canecas cerradas y marcadas, y entregarlo solo a la empresa ambiental autorizada con su recibo de entrega.',
             esCorrecta: true,
-            retroalimentacion: '¡CORRECTO! Frikaz S.A.S. cuenta con protocolo de economía circular y custodia de manifiestos oficiales de disposición final ante la autoridad distrital.',
+            retroalimentacion: '¡Excelente! En Frikaz reciclamos el aceite usado de forma responsable y guardamos cada comprobante de entrega.',
           },
           {
             id: 'opt-3-3-3',
-            texto: 'Regalarlo en botellas plásticas a los vecinos del barrio para que rieguen plantas.',
+            texto: 'Regalarlo en botellas a los vecinos para echarle a las matas.',
             esCorrecta: false,
-            retroalimentacion: 'INCORRECTO: El ACU no es fertilizante y su disposición informal está penada.',
+            retroalimentacion: 'El aceite quemado daña la tierra y las plantas, y la ley prohíbe entregarlo sin autorización.',
           },
         ],
       },
@@ -877,36 +877,38 @@ export const POLITICAS_MISION_BASE: PoliticaMisionFrikaz[] = [
   },
 ];
 
-// ----------------------------------------------------------------------------
-// GESTIÓN DE CONFIGURACIÓN Y PERSISTENCIA
-// ----------------------------------------------------------------------------
+const MIGRATION_KEY_POLITICAS_PLAIN = 'frikaz_mision_politicas_plain_lang_v1';
 
 export function getStoredPoliticasMision(): PoliticaMisionFrikaz[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_POLITICAS_CONFIG);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY_POLITICAS_CONFIG, JSON.stringify(POLITICAS_MISION_BASE));
-      return POLITICAS_MISION_BASE;
+    const migrated = localStorage.getItem(MIGRATION_KEY_POLITICAS_PLAIN);
+    if (!raw || !migrated) {
+      let base = POLITICAS_MISION_BASE;
+      if (raw) {
+        try {
+          const prev = JSON.parse(raw);
+          if (Array.isArray(prev)) {
+            const obligatoriaMap = new Map(
+              prev.map((p: Partial<PoliticaMisionFrikaz>) => [p.id, p.esObligatoria])
+            );
+            base = POLITICAS_MISION_BASE.map((p) =>
+              typeof obligatoriaMap.get(p.id) === 'boolean'
+                ? { ...p, esObligatoria: obligatoriaMap.get(p.id)! }
+                : p
+            );
+          }
+        } catch {
+          // ignore malformed previous config
+        }
+      }
+      localStorage.setItem(STORAGE_KEY_POLITICAS_CONFIG, JSON.stringify(base));
+      localStorage.setItem(MIGRATION_KEY_POLITICAS_PLAIN, '1');
+      return base;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Rehidratar con propiedades de videojuego si faltaban en storage previo
-      return parsed.map((stored: PoliticaMisionFrikaz) => {
-        const base = POLITICAS_MISION_BASE.find((b) => b.id === stored.id);
-        if (!base) return stored;
-        return {
-          ...base,
-          ...stored,
-          imagenZona: base.imagenZona,
-          sectorPlantaNombre: base.sectorPlantaNombre,
-          dificultad: base.dificultad,
-          puntosXp: base.puntosXp,
-          dialogoGuiaBienvenida: base.dialogoGuiaBienvenida,
-          hotspots: base.hotspots,
-          desafioTerminal: base.desafioTerminal,
-          esObligatoria: typeof stored.esObligatoria === 'boolean' ? stored.esObligatoria : base.esObligatoria,
-        };
-      });
+    if (Array.isArray(parsed) && parsed.length === POLITICAS_MISION_BASE.length) {
+      return parsed;
     }
     return POLITICAS_MISION_BASE;
   } catch (err) {
@@ -1020,8 +1022,8 @@ export async function validarAccesoBackend(
     totalSuperadas: pasaporte.totalSuperadas,
     misionesPendientes: pasaporte.esEmbajadorFrikaz ? [] : ['FRK-SST-POL-01'],
     mensaje: pasaporte.esEmbajadorFrikaz
-      ? 'Acceso autorizado.'
-      : 'Acceso restringido: Misiones obligatorias pendientes.',
+      ? 'Ya completaste tus recorridos de seguridad. Puedes entrar a toda la herramienta.'
+      : 'Antes de entrar, completa los recorridos cortos de seguridad que te faltan.',
   };
 }
 
@@ -1192,7 +1194,7 @@ export async function procesarEvaluacionMision(
       esCorrecta,
       textoRetroalimentacion:
         opcionSeleccionada?.retroalimentacion ||
-        'No se seleccionó una respuesta válida para esta pregunta.',
+        'Por favor elige una de las opciones de esta pregunta.',
     });
   }
 

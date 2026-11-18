@@ -6,6 +6,7 @@ import {
   logoutGoogle,
   getCurrentGoogleUser,
   getAccessToken,
+  subscribeTokenChange,
   CUENTA_OBJETIVO_GMAIL,
 } from '../services/gmailAuthService';
 import { getGmailProfile, GmailProfile } from '../services/gmailApiService';
@@ -42,6 +43,19 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
       }
     );
 
+    const unsubToken = subscribeTokenChange(async (authUser, token) => {
+      if (authUser && token) {
+        setUser(authUser);
+        if (onParentAuthStateChanged) onParentAuthStateChanged(authUser, token);
+        const profile = await getGmailProfile();
+        setGmailProfile(profile);
+      } else {
+        setUser(null);
+        setGmailProfile(null);
+        if (onParentAuthStateChanged) onParentAuthStateChanged(null, null);
+      }
+    });
+
     getAccessToken().then(async (tok) => {
       if (tok) {
         const profile = await getGmailProfile();
@@ -49,7 +63,10 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubToken();
+    };
   }, [onParentAuthStateChanged]);
 
   const handleSignIn = async () => {
@@ -67,10 +84,10 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
       console.error('Error al iniciar sesión con Gmail:', err);
       if (err.message && (err.message.includes('access_denied') || err.message.includes('blocked'))) {
         setError(
-          'Acceso bloqueado por Google: la cuenta debe estar agregada como "Usuario de prueba" en Google Cloud Console para este proyecto.'
+          'Google no dejó entrar esta cuenta porque aún falta darle permiso como "Usuario de prueba" en la configuración de Google.'
         );
       } else {
-        setError(err.message || 'Error al conectar con Gmail.');
+        setError(err.message || 'No pudimos conectar con Gmail. Inténtalo de nuevo.');
       }
     } finally {
       setLoading(false);
@@ -119,11 +136,11 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
                 {displayEmail}
               </span>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Gmail Activo
+                Correo Conectado
               </span>
             </div>
             {!compact && (
-              <span className="text-[10px] text-slate-400 font-mono">Google Workspace</span>
+              <span className="text-[10px] text-slate-400 font-mono">Correo Gmail · Carpeta Drive · Hojas</span>
             )}
           </div>
         </div>
@@ -132,7 +149,7 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
           onClick={handleSignOut}
           disabled={loading}
           className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer ml-1"
-          title="Cerrar sesión de Gmail"
+          title="Desconectar cuenta de Google"
         >
           <LogOut className="h-3.5 w-3.5" />
         </button>
@@ -140,7 +157,7 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
     );
   }
 
-  // Si no está autenticado, renderizar botón de Google estándar
+  // Si no está autenticado, renderizar botón oficial Sign in with Google
   return (
     <div className={`flex flex-col items-start gap-1 ${className}`}>
       {error && (
@@ -152,8 +169,8 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
       <button
         onClick={handleSignIn}
         disabled={loading}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold border border-slate-300 shadow-sm transition-all cursor-pointer disabled:opacity-50"
-        title="Conectar con Gmail"
+        className="gsi-material-button inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-[#1f1f1f] text-xs font-semibold border border-[#747775]/40 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+        title="Entrar con Google para enviar correos y guardar documentos"
       >
         {loading ? (
           <RefreshCw className="h-4 w-4 animate-spin text-slate-500" />
@@ -177,7 +194,7 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
             />
           </svg>
         )}
-        <span>{compact ? 'Gmail' : 'Conectar Gmail'}</span>
+        <span>{compact ? 'Conectar Google' : 'Entrar con Google'}</span>
       </button>
     </div>
   );

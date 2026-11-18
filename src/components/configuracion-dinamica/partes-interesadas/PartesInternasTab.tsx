@@ -64,21 +64,21 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <span className="text-purple-300 font-bold text-xs uppercase tracking-wider block">
-              Sección A · Estructura Organizacional Frikaz S.A.S.
+              Grupo A · Nuestro Equipo en Frikaz S.A.S.
             </span>
             <h2 className="text-xl font-black text-white">
-              Partes Interesadas Internas del SG-SST
+              Personas de la Empresa (Equipo Interno)
             </h2>
             <p className="text-xs text-purple-200/80 max-w-2xl leading-relaxed">
-              Identificación y caracterización de las necesidades, expectativas y riesgos laborales prioritarios para los roles clave de la empresa: Alta Dirección, Operarios de Planta de Fritura y Conductor de Distribución.
+              Conoce qué necesita cada persona del equipo para cuidar su salud y trabajar sin accidentes: Dirección (Gerente), Operarios de planta y Conductor de entregas.
             </p>
           </div>
 
           <div className="flex items-center gap-2 bg-white/10 px-4 py-3 rounded-xl border border-white/10 shrink-0">
             <ClipboardList className="h-5 w-5 text-purple-300" />
             <div className="text-left text-xs">
-              <span className="block font-bold text-white">3 Roles Internos</span>
-              <span className="text-[10px] text-purple-200">Con Checklists de SST Vinculados</span>
+              <span className="block font-bold text-white">3 Roles del Equipo</span>
+              <span className="text-[10px] text-purple-200">Con listas de revisión conectadas</span>
             </div>
           </div>
         </div>
@@ -105,7 +105,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
                         {parte.nombre}
                       </h3>
                       <span className={`inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${getBadgeColor(cargoKey)}`}>
-                        Parte Interesada Interna
+                        Equipo de la Empresa
                       </span>
                     </div>
                   </div>
@@ -119,7 +119,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
                 {/* Necesidades y expectativas */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                   <span className="font-bold text-[11px] text-slate-900 block">
-                    Necesidades y Expectativas en SST:
+                    Qué necesita para trabajar seguro:
                   </span>
                   <p className="text-xs text-slate-700 leading-relaxed">
                     {parte.necesidadesExpectativas}
@@ -131,7 +131,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
                   <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1">
                     <div className="flex items-center gap-1.5 text-amber-900 font-bold text-[11px]">
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                      <span>Peligros y Situaciones Críticas:</span>
+                      <span>Peligros principales en su labor:</span>
                     </div>
                     <p className="text-[11px] text-amber-950 leading-relaxed">
                       {parte.peligrosSituaciones}
@@ -140,7 +140,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
 
                   <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/70 space-y-1">
                     <span className="font-bold text-[11px] text-rose-900 block">
-                      Posibles Afectaciones:
+                      Qué puede pasar si no se cuida:
                     </span>
                     <p className="text-[11px] text-rose-950 leading-relaxed">
                       {parte.posiblesAfectaciones}
@@ -152,7 +152,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
                 <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/70 space-y-1">
                   <div className="flex items-center gap-1.5 text-emerald-950 font-bold text-[11px]">
                     <Shield className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                    <span>Medidas de Prevención y Control:</span>
+                    <span>Cómo nos cuidamos y prevenimos:</span>
                   </div>
                   <p className="text-[11px] text-emerald-900 leading-relaxed">
                     {parte.medidasPrevencionControl}
@@ -161,7 +161,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
 
                 <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-1">
                   <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span><strong>Seguimiento:</strong> {parte.seguimiento}</span>
+                  <span><strong>Cómo lo revisamos:</strong> {parte.seguimiento}</span>
                 </div>
               </div>
 
@@ -173,7 +173,7 @@ export const PartesInternasTab: React.FC<PartesInternasTabProps> = ({
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <ClipboardList className="h-4 w-4" />
-                  <span>Evaluar Checklist de este Cargo</span>
+                  <span>Revisar Lista de este Cargo</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>

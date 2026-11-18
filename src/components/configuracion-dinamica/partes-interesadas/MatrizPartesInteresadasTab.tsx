@@ -43,6 +43,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
   const [filtroClasificacion, setFiltroClasificacion] = useState<'todas' | ClasificacionParteInteresada>('todas');
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
   const [parteEnEdicion, setParteEnEdicion] = useState<ParteInteresada | null>(null);
+  const [parteAEliminar, setParteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   // Formulario temporal
@@ -143,12 +144,16 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
     setModalEditarOpen(false);
   };
 
-  const eliminarParte = (id: string, nombre: string) => {
-    if (confirm(`¿Está seguro de eliminar la parte interesada "${nombre}"?`)) {
-      const actualizadas = partes.filter((p) => p.id !== id);
-      onActualizarPartes(actualizadas);
-      saveStoredPartesInteresadas(actualizadas);
-    }
+  const solicitarEliminarParte = (id: string, nombre: string) => {
+    setParteAEliminar({ id, nombre });
+  };
+
+  const confirmarEliminarParte = () => {
+    if (!parteAEliminar) return;
+    const actualizadas = partes.filter((p) => p.id !== parteAEliminar.id);
+    onActualizarPartes(actualizadas);
+    saveStoredPartesInteresadas(actualizadas);
+    setParteAEliminar(null);
   };
 
   const handleExportarExcel = async () => {
@@ -195,7 +200,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
                   : 'text-slate-600 hover:text-purple-700'
               }`}
             >
-              Internas ({partes.filter((p) => p.clasificacion === 'interna').length})
+              Del equipo ({partes.filter((p) => p.clasificacion === 'interna').length})
             </button>
             <button
               onClick={() => setFiltroClasificacion('externa')}
@@ -205,7 +210,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
                   : 'text-slate-600 hover:text-sky-700'
               }`}
             >
-              Externas ({partes.filter((p) => p.clasificacion === 'externa').length})
+              De afuera ({partes.filter((p) => p.clasificacion === 'externa').length})
             </button>
           </div>
         </div>
@@ -215,10 +220,10 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
             onClick={handleExportarExcel}
             disabled={isExporting}
             className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Descargar matriz en formato Excel"
+            title="Descargar esta tabla en Excel"
           >
             <FileSpreadsheet className="h-4 w-4" />
-            <span>{isExporting ? 'Generando...' : 'Descargar Excel'}</span>
+            <span>{isExporting ? 'Preparando...' : 'Descargar Excel'}</span>
           </button>
 
           <button
@@ -226,33 +231,33 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
             className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span>Nueva Parte Interesada</span>
+            <span>Agregar Persona o Entidad</span>
           </button>
         </div>
       </div>
 
-      {/* Tabla interactiva con las 8 columnas oficiales */}
+      {/* Tabla interactiva con las 8 columnas */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-900 text-white text-[11px] uppercase tracking-wider font-bold divide-x divide-slate-800">
-                <th className="py-3.5 px-4 w-44">Parte Interesada</th>
-                <th className="py-3.5 px-3 w-28 text-center">Clasificación</th>
-                <th className="py-3.5 px-4 w-52">Descripción</th>
-                <th className="py-3.5 px-4 w-56">Necesidades y Expectativas</th>
-                <th className="py-3.5 px-4 w-56">Peligros / Situaciones</th>
-                <th className="py-3.5 px-4 w-52">Posibles Afectaciones</th>
-                <th className="py-3.5 px-4 w-60">Medidas de Prevención y Control</th>
-                <th className="py-3.5 px-4 w-44">Seguimiento</th>
-                <th className="py-3.5 px-3 w-20 text-center">Acciones</th>
+                <th className="py-3.5 px-4 w-44">Persona o Entidad</th>
+                <th className="py-3.5 px-3 w-28 text-center">Grupo</th>
+                <th className="py-3.5 px-4 w-52">Quién es y qué hace</th>
+                <th className="py-3.5 px-4 w-56">Qué necesita y espera</th>
+                <th className="py-3.5 px-4 w-56">Peligros o situaciones</th>
+                <th className="py-3.5 px-4 w-52">Qué puede pasar</th>
+                <th className="py-3.5 px-4 w-60">Cómo lo prevenimos</th>
+                <th className="py-3.5 px-4 w-44">Cómo lo revisamos</th>
+                <th className="py-3.5 px-3 w-20 text-center">Opciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-slate-800">
               {partesFiltradas.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-slate-500 text-xs">
-                    No se encontraron partes interesadas con el criterio de búsqueda seleccionado.
+                    No encontramos resultados con esa búsqueda. Prueba otra palabra.
                   </td>
                 </tr>
               ) : (
@@ -319,7 +324,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => eliminarParte(parte.id, parte.nombre)}
+                          onClick={() => solicitarEliminarParte(parte.id, parte.nombre)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                           title="Eliminar"
                         >
@@ -339,11 +344,11 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
           <div className="flex items-center gap-4">
             <span>
               Mostrando <strong className="text-slate-800">{partesFiltradas.length}</strong> de{' '}
-              <strong className="text-slate-800">{partes.length}</strong> partes interesadas registradas
+              <strong className="text-slate-800">{partes.length}</strong> registradas
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="text-[11px] text-slate-400">
-              Metodología alineada con Decreto 1072/2015 &amp; ISO 45001:2018
+              Guía alineada con Decreto 1072/2015 e ISO 45001:2018
             </span>
           </div>
 
@@ -352,7 +357,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
               onClick={onIrAChecklist}
               className="text-orange-600 hover:text-orange-700 font-bold flex items-center gap-1 text-xs cursor-pointer"
             >
-              <span>Ir al Checklist de Necesidades Internas</span>
+              <span>Ir a la Lista de Necesidades del Equipo</span>
               <span>→</span>
             </button>
           )}
@@ -367,7 +372,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-orange-400" />
                 <h3 className="font-bold text-sm">
-                  {parteEnEdicion ? 'Actualizar Parte Interesada' : 'Registrar Nueva Parte Interesada'}
+                  {parteEnEdicion ? 'Actualizar Datos' : 'Agregar Persona o Entidad'}
                 </h3>
               </div>
               <button
@@ -382,49 +387,49 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
                   <label className="font-bold text-slate-700 block">
-                    Nombre de la Parte Interesada: *
+                    Nombre de la persona, grupo o entidad: *
                   </label>
                   <input
                     type="text"
                     required
                     value={formNombre}
                     onChange={(e) => setFormNombre(e.target.value)}
-                    placeholder="Ej. Operarios, Proveedores, etc."
+                    placeholder="Ej. Operarios, Proveedores, Clientes..."
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Clasificación: *</label>
+                  <label className="font-bold text-slate-700 block">Grupo: *</label>
                   <select
                     value={formClasificacion}
                     onChange={(e) => setFormClasificacion(e.target.value as ClasificacionParteInteresada)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                   >
-                    <option value="interna">Interna</option>
-                    <option value="externa">Externa</option>
+                    <option value="interna">Del equipo (Interna)</option>
+                    <option value="externa">De afuera (Externa)</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Descripción y Rol:</label>
+                <label className="font-bold text-slate-700 block">Quién es y qué hace:</label>
                 <textarea
                   rows={2}
                   value={formDescripcion}
                   onChange={(e) => setFormDescripcion(e.target.value)}
-                  placeholder="Descripción de la parte interesada y su relación con Frikaz S.A.S."
+                  placeholder="Explica de forma sencilla su relación con Frikaz S.A.S."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Necesidades y Expectativas:</label>
+                <label className="font-bold text-slate-700 block">Qué necesita y espera de nuestra seguridad:</label>
                 <textarea
                   rows={2}
                   value={formNecesidades}
                   onChange={(e) => setFormNecesidades(e.target.value)}
-                  placeholder="¿Qué espera o necesita esta parte interesada del SG-SST?"
+                  placeholder="¿Qué espera o necesita para trabajar o relacionarse sin riesgos?"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
@@ -432,24 +437,24 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-amber-900 block">
-                    Peligros o Situaciones que pueden afectarla:
+                    Peligros o situaciones que la afectan:
                   </label>
                   <textarea
                     rows={2}
                     value={formPeligros}
                     onChange={(e) => setFormPeligros(e.target.value)}
-                    placeholder="Riesgos específicos (aceite caliente, tránsito, etc.)"
+                    placeholder="Ej. aceite caliente, tráfico en entregas, pisos resbalosos..."
                     className="w-full px-3 py-2 rounded-xl border border-amber-300 bg-amber-50/20 text-xs focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-rose-900 block">Posibles Afectaciones:</label>
+                  <label className="font-bold text-rose-900 block">Qué puede pasar si no se cuida:</label>
                   <textarea
                     rows={2}
                     value={formAfectaciones}
                     onChange={(e) => setFormAfectaciones(e.target.value)}
-                    placeholder="Impacto legal, médico o patrimonial"
+                    placeholder="Ej. quemaduras, multas, golpes o retrasos"
                     className="w-full px-3 py-2 rounded-xl border border-rose-300 bg-rose-50/20 text-xs focus:ring-1 focus:ring-rose-500 focus:border-rose-500"
                   />
                 </div>
@@ -457,24 +462,24 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
 
               <div className="space-y-1">
                 <label className="font-bold text-emerald-900 block">
-                  Medidas de Prevención y Control:
+                  Cómo lo prevenimos y controlamos:
                 </label>
                 <textarea
                   rows={2}
                   value={formMedidas}
                   onChange={(e) => setFormMedidas(e.target.value)}
-                  placeholder="Controles operacionales, EPP, inspecciones y mantenimientos"
+                  placeholder="EPP (guantes, botas), mantenimientos, capacitaciones y avisos"
                   className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50/20 text-xs focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Mecanismo de Seguimiento:</label>
+                <label className="font-bold text-slate-700 block">Cómo le hacemos seguimiento:</label>
                 <input
                   type="text"
                   value={formSeguimiento}
                   onChange={(e) => setFormSeguimiento(e.target.value)}
-                  placeholder="Frecuencia y mecanismo de evaluación (ej. auditorías, comités)"
+                  placeholder="Ej. revisiones cada semana, reuniones mensuales"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
@@ -491,10 +496,47 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition-all shadow-xs cursor-pointer"
                 >
-                  Guardar Información
+                  Guardar Datos
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INLINE DE CONFIRMACIÓN PARA ELIMINAR */}
+      {parteAEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-100 text-rose-600 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-black text-slate-900">
+                  ¿Seguro que quieres quitar este registro?
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Vas a borrar a <strong>{parteAEliminar.nombre}</strong> de la tabla. Si la quitas por error, tendrás que agregarla de nuevo.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setParteAEliminar(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+              >
+                No, dejarla
+              </button>
+              <button
+                type="button"
+                onClick={confirmarEliminarParte}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
+              >
+                Sí, quitar
+              </button>
+            </div>
           </div>
         </div>
       )}

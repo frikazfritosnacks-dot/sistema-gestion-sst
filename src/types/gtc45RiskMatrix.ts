@@ -39,10 +39,10 @@ export const TABLA_TECNICA_NC: Record<number, CriterioTecnicoNC> = {
     bgLight: 'bg-emerald-950/40 border-emerald-500/30 text-emerald-200',
     borderColor: 'border-emerald-500',
     definicionTecnica:
-      'Lesiones superficiales o molestias pasajeras que requieren únicamente primeros auxilios, sin generar secuelas permanentes ni afectación funcional relevante.',
-    criterioIncapacidad: 'Sin incapacidad o incapacidad temporal corta de 1 a 3 días.',
+      'Golpes suaves, rasguños o molestias pasajeras que se atienden con primeros auxilios y no dejan secuelas ni daños permanentes.',
+    criterioIncapacidad: 'Sin incapacidad o descanso médico corto de 1 a 3 días.',
     ejemplosOperativos:
-      'Rasguños, cortaduras menores, pequeñas contusiones, fatiga visual, cefalea leve o irritación ocular/cutánea temporal por vapores o polvo.',
+      'Raspones, cortaduras pequeñas, morados leves, cansancio visual, dolor de cabeza suave o ardor pasajero en ojos o piel por vapor o polvo.',
   },
   25: {
     nc: 25,
@@ -51,10 +51,10 @@ export const TABLA_TECNICA_NC: Record<number, CriterioTecnicoNC> = {
     bgLight: 'bg-amber-950/40 border-amber-500/30 text-amber-200',
     borderColor: 'border-amber-500',
     definicionTecnica:
-      'Lesiones que requieren tratamiento médico especializado, incapacidad temporal de mediana duración, pero con recuperación total sin secuelas permanentes ni invalidez.',
-    criterioIncapacidad: 'Incapacidad temporal de 4 a 30 días.',
+      'Lesiones que necesitan atención médica e incapacidad de varios días, pero la persona se recupera por completo sin quedar con secuelas permanentes.',
+    criterioIncapacidad: 'Incapacidad médica temporal de 4 a 30 días.',
     ejemplosOperativos:
-      'Esguinces o luxaciones, quemaduras de 1.° o 2.° grado limitadas (contacto con aceite o vapor), fisuras óseas, fracturas simples de falanges o extremidades menores, heridas profundas con necesidad de sutura.',
+      'Torceduras o esguinces, quemaduras de 1.° o 2.° grado en una zona pequeña por aceite o vapor caliente, fisuras o fracturas simples de un dedo, o heridas que requieren puntos.',
   },
   60: {
     nc: 60,
@@ -63,10 +63,11 @@ export const TABLA_TECNICA_NC: Record<number, CriterioTecnicoNC> = {
     bgLight: 'bg-orange-950/40 border-orange-500/30 text-orange-200',
     borderColor: 'border-orange-500',
     definicionTecnica:
-      'Lesiones graves con alto compromiso de salud del trabajador, hospitalización prolongada, invalidez parcial permanente o secuelas permanentes funcionales o anatómicas.',
-    criterioIncapacidad: 'Incapacidad prolongada (> 30 días) o declaración de invalidez parcial permanente (pérdida de capacidad laboral < 50%).',
+      'Lesiones serias que requieren hospitalización larga o dejan una secuela permanente que afecta parte de la salud o el movimiento del trabajador.',
+    criterioIncapacidad:
+      'Incapacidad larga (más de 30 días) o pérdida parcial permanente de la capacidad para trabajar (menor al 50%).',
     ejemplosOperativos:
-      'Fracturas de huesos largos (fémur, húmero, columna vertebral), amputación traumática de dedos, pérdida parcial de audición (hipoacusia neurosensorial inducida por ruido), pérdida de visión en un ojo, quemaduras de 3.° grado extensas.',
+      'Fracturas de brazos, piernas o columna, pérdida (amputación) de dedos, pérdida parcial de audición por ruido fuerte (hipoacusia), pérdida de visión en un ojo o quemaduras extensas de 3.° grado.',
   },
   100: {
     nc: 100,
@@ -75,10 +76,11 @@ export const TABLA_TECNICA_NC: Record<number, CriterioTecnicoNC> = {
     bgLight: 'bg-rose-950/40 border-rose-500/30 text-rose-200',
     borderColor: 'border-rose-500',
     definicionTecnica:
-      'Eventos fatales o lesiones de extrema gravedad e irreversibles con potencial de cobrar vidas humanas, amputaciones mayores múltiples o causar invalidez permanente total en uno o varios trabajadores simultáneamente.',
-    criterioIncapacidad: 'Incapacidad permanente total (PCL >= 50%), gran invalidez o fallecimiento.',
+      'Accidentes muy graves que pueden causar la muerte o lesiones irreversibles que impiden volver a trabajar, afectando a una o varias personas al mismo tiempo.',
+    criterioIncapacidad:
+      'Incapacidad permanente total (pérdida de capacidad laboral igual o mayor al 50%) o fallecimiento.',
     ejemplosOperativos:
-      'Muerte o politraumatismo por caída de altura sin protección, electrocución fatal con alta tensión, atrapamiento de cuerpo entero en tornillo sinfín o mezcladora, explosión de caldera / fuga masiva de gas con deflagración, colapso estructural por sismo mayor.',
+      'Muerte o golpes múltiples graves por caída de altura, descarga eléctrica fatal, atrapamiento del cuerpo en una máquina sin guarda, explosión por fuga de gas o derrumbe por sismo fuerte.',
   },
 };
 
