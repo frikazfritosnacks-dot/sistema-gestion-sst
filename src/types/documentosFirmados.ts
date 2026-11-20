@@ -9,9 +9,13 @@ export type TipoDocumentoFirmado =
   | 'otros';
 
 export type EstadoDocumentoFirmado =
-  | 'Recibido'
+  | 'Por hacer'
+  | 'En proceso'
   | 'Pendiente de revisión'
+  | 'Devuelto para ajustes'
+  | 'Cumplido'
   | 'Aprobado'
+  | 'Recibido'
   | 'Requiere corrección';
 
 export interface HistorialTrazabilidadItem {
@@ -42,6 +46,7 @@ export interface DocumentoFirmadoRecibido {
   observacionesRevision: string;
   revisadoPor: string | null;
   fechaRevision: string | null;
+  resultadoRevision?: 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes' | null;
   detallesFirma: {
     numeroDocumento?: string;
     empresa: string;

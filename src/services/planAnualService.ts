@@ -22,9 +22,11 @@ import { getStoredTrabajadores } from './misionFrikazService';
 import { loadStoredRisks } from './riskMatrixStorage';
 import { getCaracterizacionActual } from './dynamicRulesEngine';
 import { getPhvaNorms } from './phvaService';
+import { NOMBRE_GERENTE_OFICIAL, normalizarEstadoEstandar } from './gerenteControlService';
 
 const STORAGE_KEY_PLANES = 'frikaz_plan_anual_vigencias_v1';
 const PLAIN_LANG_FLAG_PLAN = 'frikaz_plan_anual_plain_lang_v1';
+const GERENTE_GATE_FLAG_PLAN = 'frikaz_plan_gerente_gate_v1';
 
 // ============================================================================
 // UTILIDADES DE RESPONSABLES Y EMPRESA
@@ -206,7 +208,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Resolución 0312 de 2019 Art. 27 y 28 (se hace una vez al año, en diciembre).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: `Lista de los ${cantidadEstandares} puntos calificada y firmada, más el comprobante de envío a la ARL.`,
       periodoCumplimiento: `Diciembre ${vigencia}`,
       mesesSugeridos: [12],
@@ -234,7 +236,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.15 Parágrafo 1 (mínimo 1 vez al año).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Matriz de peligros actualizada, lista de asistencia de trabajadores que participaron y acta de entrega.',
       periodoCumplimiento: `Febrero ${vigencia}`,
       mesesSugeridos: [2],
@@ -260,7 +262,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Revisar cada año con Gerencia la Política de Seguridad y Ambiente, firmarla y compartirla en palabras claras con todo el equipo.',
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.7 (se revisa mínimo 1 vez al año).',
-      responsableSugerido: 'Gerente General (Representante Legal)',
+      responsableSugerido: NOMBRE_GERENTE_OFICIAL,
       aprobadorSugerido: 'Coordinador / Vigía de SST',
       evidenciaNecesaria: 'Documento de la Política firmado y fechado, más firmas o registro de que todos los trabajadores la leyeron.',
       periodoCumplimiento: `Enero ${vigencia}`,
@@ -293,7 +295,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Resolución 2013 de 1986 Art. 7 (debe reunirse o hacer seguimiento mínimo una vez al mes).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: esCopasst
         ? 'Acta de reunión mensual del COPASST firmada y lista de revisión de la planta.'
         : 'Informe mensual firmado por el Vigía de SST con lo revisado en la planta.',
@@ -322,7 +324,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'TRIMESTRAL',
       sustentoFrecuencia: 'Resolución 1356 de 2012 Art. 3 (reunión obligatoria cada 3 meses).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Acta privada de la reunión cada 3 meses firmada por los integrantes del Comité.',
       periodoCumplimiento: `Cada 3 meses (Q1-Q4 ${vigencia})`,
       mesesSugeridos: [3, 6, 9, 12],
@@ -354,7 +356,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Jornada anual de exámenes médicos periódicos, pruebas de laboratorio (frotis/KOH) y renovación del carné de manipulación de alimentos (BPM) de 10 horas.',
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Resolución 2674 de 2013 Art. 11 (chequeo médico mínimo 1 vez al año) y Res. 1843/2025.',
-      responsableSugerido: 'Gerente General (Representante Legal)',
+      responsableSugerido: NOMBRE_GERENTE_OFICIAL,
       aprobadorSugerido: 'Coordinador / Vigía de SST',
       evidenciaNecesaria: 'Certificados médicos de aptitud para el trabajo y carnés al día de manipulación de alimentos.',
       periodoCumplimiento: `Marzo ${vigencia}`,
@@ -389,7 +391,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Resolución 316 de 2018 Art. 6 y registro SDA Bogotá (almacenamiento seguro y entrega periódica).',
       responsableSugerido: 'Líder de Gestión Ambiental',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Recibos o certificados mensuales entregados por el recolector autorizado con los litros o kilos entregados.',
       periodoCumplimiento: `Cada mes (Ene-Dic ${vigencia})`,
       mesesSugeridos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -451,7 +453,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.25 Num. 10 (mínimo 1 simulacro al año) y NTC 2885 (revisión y recarga anual).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Etiqueta y certificado de recarga del extintor Clase K al día, guion, fotos y lista de asistencia del simulacro.',
       periodoCumplimiento: `Octubre ${vigencia}`,
       mesesSugeridos: [10],
@@ -480,7 +482,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.29 y 2.2.4.6.31 (obligatorio mínimo 1 vez al año).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Informe de la revisión anual (auditoría) y acta firmada por la Gerencia con los compromisos de mejora.',
       periodoCumplimiento: `Noviembre ${vigencia}`,
       mesesSugeridos: [11],
@@ -508,7 +510,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'SEMESTRAL',
       sustentoFrecuencia: 'Control preventivo cada 6 meses para evitar incendios en ductos y cuidar a los vecinos de Bosa.',
       responsableSugerido: 'Líder de Gestión Ambiental',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Certificado o comprobante de lavado de ductos y filtros, más registro del mantenimiento de extractores.',
       periodoCumplimiento: `Mayo y Noviembre ${vigencia}`,
       mesesSugeridos: [5, 11],
@@ -535,7 +537,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Decreto 723 de 2013 (revisión cada mes antes de pagar o dejar ingresar a planta).',
       responsableSugerido: 'Coordinador / Vigía de SST',
-      aprobadorSugerido: 'Gerente General (Representante Legal)',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Copias mensuales de planilla PILA paga y registro firmado de la charla de inducción en seguridad.',
       periodoCumplimiento: `Cada mes ${vigencia}`,
       mesesSugeridos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -559,7 +561,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Confirmar afiliación a ARL del aprendiz, entregarle su EPP completo y prohibirle operar freidoras o cortadoras si es menor de edad.',
       frecuenciaRespaldada: 'SEMESTRAL',
       sustentoFrecuencia: 'Ley 789 de 2002 (cada vez que ingresa un nuevo grupo o cada 6 meses).',
-      responsableSugerido: 'Gerente General (Representante Legal)',
+      responsableSugerido: NOMBRE_GERENTE_OFICIAL,
       aprobadorSugerido: 'Coordinador / Vigía de SST',
       evidenciaNecesaria: 'Contrato de aprendizaje, certificado de afiliación a la ARL y planilla firmada de entrega de EPP e inducción.',
       periodoCumplimiento: `Cada 6 meses ${vigencia}`,
@@ -592,7 +594,7 @@ export function identificarRequisitosObligatorios(
           frecuenciaRespaldada: 'UNICA',
           sustentoFrecuencia: 'Pendiente encontrado en la lista de normas — requiere ponerse al día este año.',
           responsableSugerido: n.responsable || 'Coordinador / Vigía de SST',
-          aprobadorSugerido: 'Gerente General (Representante Legal)',
+          aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
           evidenciaNecesaria: n.evidenciaCumplimiento.slice(0, 180),
           periodoCumplimiento: `Año ${vigencia}`,
           mesesSugeridos: [new Date().getMonth() + 1],
@@ -629,18 +631,22 @@ export function calcularIndicadoresPlan(
 
     if (ind.tipoCalculo === 'AUTOMATICO_ACTIVIDADES') {
       totalBase = actividadesFiltradas.length;
-      totalLogrado = actividadesFiltradas.filter((a) => a.estado === 'CUMPLIDA').length;
+      totalLogrado = actividadesFiltradas.filter(
+        (a) => a.estado === 'CUMPLIDA' || a.estado === 'APROBADA'
+      ).length;
       resultadoActual = totalBase > 0 ? Math.round((totalLogrado / totalBase) * 1000) / 10 : 0;
-      detalleCalculo = `${totalLogrado} de ${totalBase} tareas terminadas y aprobadas con su soporte.`;
+      detalleCalculo = `${totalLogrado} de ${totalBase} tareas en estado Cumplido o Aprobado por Gerencia.`;
     } else if (ind.tipoCalculo === 'AUTOMATICO_EVIDENCIAS') {
       totalBase = actividadesFiltradas.length;
       totalLogrado = actividadesFiltradas.filter(
         (a) =>
           a.evidencias.length > 0 &&
-          a.evidencias.some((e) => e.estadoRevision === 'APROBADA')
+          a.evidencias.some(
+            (e) => e.estadoRevision === 'APROBADA' || e.estadoRevision === 'CUMPLIDA'
+          )
       ).length;
       resultadoActual = totalBase > 0 ? Math.round((totalLogrado / totalBase) * 1000) / 10 : 0;
-      detalleCalculo = `${totalLogrado} de ${totalBase} tareas ya tienen su foto, acta o certificado aprobado.`;
+      detalleCalculo = `${totalLogrado} de ${totalBase} tareas ya tienen su foto, acta o certificado aprobado por Gerencia.`;
     } else if (ind.tipoCalculo === 'AUTOMATICO_PRESUPUESTO') {
       const presAsignado = actividadesFiltradas.reduce(
         (acc, a) => acc + (a.presupuestoEstimado || 0),
@@ -658,7 +664,10 @@ export function calcularIndicadoresPlan(
       );
       totalBase = riesgosCriticos.length;
       const riesgosConActividadCumplida = riesgosCriticos.filter((r) =>
-        plan.actividades.some((a) => a.riesgoId === r.id && a.estado === 'CUMPLIDA')
+        plan.actividades.some(
+          (a) =>
+            a.riesgoId === r.id && (a.estado === 'CUMPLIDA' || a.estado === 'APROBADA')
+        )
       ).length;
       const riesgosProgramados = riesgosCriticos.filter((r) =>
         plan.actividades.some((a) => a.riesgoId === r.id)
@@ -666,7 +675,7 @@ export function calcularIndicadoresPlan(
       totalLogrado = riesgosConActividadCumplida;
       resultadoActual =
         totalBase > 0 ? Math.round((riesgosProgramados / totalBase) * 1000) / 10 : 100;
-      detalleCalculo = `${riesgosProgramados} de ${totalBase} riesgos altos (Nivel I y II) ya tienen tarea asignada (${riesgosConActividadCumplida} terminadas).`;
+      detalleCalculo = `${riesgosProgramados} de ${totalBase} riesgos altos (Nivel I y II) ya tienen tarea asignada (${riesgosConActividadCumplida} con cumplimiento aprobado por Gerencia).`;
     }
 
     let cumple = false;
@@ -1109,7 +1118,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       titulo: 'Cumplir a tiempo con las tareas del Plan Anual y los Estándares Mínimos (Res. 0312/2019)',
       descripcion:
         'Hacer las actividades de seguridad y ambiente en las fechas acordadas y guardar siempre su prueba (foto, acta o certificado aprobado).',
-      responsable: 'Gerente General (Representante Legal)',
+      responsable: NOMBRE_GERENTE_OFICIAL,
       metas: [
         {
           id: `meta-${anio}-02a`,
@@ -1170,19 +1179,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       tipoCalculo: 'AUTOMATICO_ACTIVIDADES',
       filtroArea: 'TODAS',
       filtroOrigen: 'TODOS',
-      historicoMediciones:
-        anio === 2025
-          ? [
-              { id: 'm25-1', periodo: '2025-Q1', fecha: '2025-03-31', valor: 88 },
-              { id: 'm25-2', periodo: '2025-Q2', fecha: '2025-06-30', valor: 92 },
-              { id: 'm25-3', periodo: '2025-Q3', fecha: '2025-09-30', valor: 94 },
-              { id: 'm25-4', periodo: '2025-Q4', fecha: '2025-12-20', valor: 100 },
-            ]
-          : [
-              { id: 'm26-1', periodo: '2026-Q1', fecha: '2026-03-31', valor: 80 },
-              { id: 'm26-2', periodo: '2026-Q2', fecha: '2026-06-30', valor: 83.3 },
-              { id: 'm26-3', periodo: '2026-Q3', fecha: '2026-09-30', valor: 85.7 },
-            ],
+      historicoMediciones: [],
     },
     {
       id: `ind-${anio}-02`,
@@ -1202,10 +1199,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       responsable: 'Coordinador / Vigía de SST',
       periodicidad: 'TRIMESTRAL',
       tipoCalculo: 'AUTOMATICO_RIESGOS_CRITICOS',
-      historicoMediciones:
-        anio === 2025
-          ? [{ id: 'm25r-1', periodo: '2025-Anual', fecha: '2025-12-15', valor: 100 }]
-          : [{ id: 'm26r-1', periodo: '2026-Q3', fecha: '2026-09-30', valor: 75 }],
+      historicoMediciones: [],
     },
     {
       id: `ind-${anio}-03`,
@@ -1221,14 +1215,11 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
         'Suma todo lo que se ha gastado en las tareas y lo compara con el dinero total aprobado para el año.',
       unidadMedida: '%',
       fuenteInformacion: 'Cuentas del Plan Anual',
-      responsable: 'Gerente General (Representante Legal)',
+      responsable: NOMBRE_GERENTE_OFICIAL,
       periodicidad: 'TRIMESTRAL',
       tipoCalculo: 'AUTOMATICO_PRESUPUESTO',
       filtroArea: 'TODAS',
-      historicoMediciones:
-        anio === 2025
-          ? [{ id: 'm25p-1', periodo: '2025-Anual', fecha: '2025-12-20', valor: 96.4 }]
-          : [{ id: 'm26p-1', periodo: '2026-Q3', fecha: '2026-09-30', valor: 64.2 }],
+      historicoMediciones: [],
     },
     {
       id: `ind-${anio}-04`,
@@ -1249,10 +1240,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       periodicidad: 'MENSUAL',
       tipoCalculo: 'AUTOMATICO_EVIDENCIAS',
       filtroArea: 'TODAS',
-      historicoMediciones:
-        anio === 2025
-          ? [{ id: 'm25e-1', periodo: '2025-Anual', fecha: '2025-12-20', valor: 100 }]
-          : [{ id: 'm26e-1', periodo: '2026-Q3', fecha: '2026-09-30', valor: 60 }],
+      historicoMediciones: [],
     },
     {
       id: `ind-${anio}-05`,
@@ -1273,10 +1261,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       periodicidad: 'MENSUAL',
       tipoCalculo: 'AUTOMATICO_ACTIVIDADES',
       filtroArea: 'AMBIENTAL',
-      historicoMediciones:
-        anio === 2025
-          ? [{ id: 'm25a-1', periodo: '2025-Anual', fecha: '2025-12-20', valor: 100 }]
-          : [{ id: 'm26a-1', periodo: '2026-Q3', fecha: '2026-09-30', valor: 66.7 }],
+      historicoMediciones: [],
     },
   ];
 
@@ -1291,14 +1276,14 @@ function buildPlan2025Seed(
   const r01 = riesgos.find((r) => r.id === 'RSK-PROD-01') || riesgos[0];
   const r03 = riesgos.find((r) => r.id === 'RSK-PROD-03') || riesgos[2] || riesgos[0];
 
-  const makeClosedActivity = (
+  const makeSeedActivity2025 = (
     idx: number,
     partial: Partial<ActividadPlanAnual> & { nombre: string; fechaInicio: string; fechaLimite: string }
   ): ActividadPlanAnual => ({
     id: `act-2025-${idx}`,
     codigo: `PA-2025-0${idx}`,
     descripcion: partial.descripcion || partial.nombre,
-    criterioAceptacion: partial.criterioAceptacion || 'Soporte firmado y aprobado por Gerencia.',
+    criterioAceptacion: partial.criterioAceptacion || 'Soporte firmado y revisado por Gerencia.',
     area: partial.area || 'SST',
     origen: partial.origen || 'NORMA_OBLIGATORIA',
     esRecurrente: partial.esRecurrente ?? false,
@@ -1309,45 +1294,52 @@ function buildPlan2025Seed(
     responsableCargo: partial.responsableCargo || 'Coordinador / Vigía de SST',
     responsableCorreo: 'frikaz.fritosnacks@gmail.com',
     aprobadorId: 'cargo-gerente-general',
-    aprobadorNombre: 'Gerente General (Representante Legal)',
-    aprobadorCargo: 'Gerente General',
+    aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+    aprobadorCargo: 'Gerente',
     presupuestoEstimado: partial.presupuestoEstimado ?? 600000,
-    gastoEjecutado: partial.gastoEjecutado ?? 580000,
-    estado: 'CUMPLIDA',
+    gastoEjecutado: partial.gastoEjecutado ?? 0,
+    estado: idx <= 2 ? 'REQUIERE_REVISION' : 'PENDIENTE',
     evidenciaRequerida: partial.evidenciaRequerida || 'Acta y soporte fotográfico',
-    evidencias: [
-      {
-        id: `ev-2025-${idx}`,
-        nombreArchivo: `Soporte_PA_2025_0${idx}.pdf`,
-        tipoSoporte: 'PDF',
-        descripcionSoporte: `Evidencia verificada de ejecución en vigencia 2025 (${partial.nombre}).`,
-        fechaCarga: partial.fechaLimite,
-        cargadoPor: partial.responsableNombre || 'Coordinador / Vigía de SST',
-        estadoRevision: 'APROBADA',
-        revisadoPor: 'Gerente General (Representante Legal)',
-        fechaRevision: partial.fechaLimite,
-        comentarioRevisor: 'Aprobado conforme al cierre de vigencia 2025.',
-      },
-    ],
-    resultadoActividad: 'Actividad ejecutada al 100% dentro de la vigencia 2025.',
-    fechaCierre: partial.fechaLimite,
-    cerradoPor: 'Gerente General (Representante Legal)',
-    observaciones: 'Cerrada y guardada en el historial de 2025.',
+    evidencias:
+      idx <= 2
+        ? [
+            {
+              id: `ev-2025-${idx}`,
+              nombreArchivo: `Soporte_PA_2025_0${idx}.pdf`,
+              tipoSoporte: 'PDF',
+              descripcionSoporte: `Documento cargado para revisión de Gerencia (${partial.nombre}).`,
+              fechaCarga: partial.fechaLimite,
+              cargadoPor: partial.responsableNombre || 'Coordinador / Vigía de SST',
+              estadoRevision: 'PENDIENTE_REVISION',
+            },
+          ]
+        : [],
+    resultadoActividad:
+      idx <= 2
+        ? 'Soporte cargado; pendiente revisión y aprobación por el Gerente General.'
+        : undefined,
+    observaciones:
+      idx <= 2
+        ? 'Pendiente de revisión y aprobación por el Gerente.'
+        : 'Por hacer o completar evidencias de vigencia 2025.',
     historialRevisiones: [
       {
         id: `hr-2025-${idx}`,
-        fecha: partial.fechaLimite,
-        usuario: 'Gerente General (Representante Legal)',
-        rol: 'Aprobador',
-        accion: 'APROBADA_CERRADA',
-        detalle: 'Cierre definitivo de actividad de la vigencia 2025.',
+        fecha: partial.fechaInicio,
+        usuario: partial.responsableNombre || 'Coordinador / Vigía de SST',
+        rol: 'Responsable',
+        accion: idx <= 2 ? 'EVIDENCIA_ADJUNTADA' : 'CREADA',
+        detalle:
+          idx <= 2
+            ? 'Soporte subido y enviado a revisión de Gerencia.'
+            : 'Actividad base registrada en estado Por hacer.',
       },
     ],
     ...partial,
   });
 
   const actividades: ActividadPlanAnual[] = [
-    makeClosedActivity(1, {
+    makeSeedActivity2025(1, {
       nombre: 'Política de Seguridad y Ambiente y revisión de peligros GTC 45 (2025)',
       fechaInicio: '2025-01-15',
       fechaLimite: '2025-02-20',
@@ -1356,9 +1348,9 @@ function buildPlan2025Seed(
       normaOficial: 'Decreto 1072 de 2015',
       objetivoEspecificoId: 'obj-2025-02',
       presupuestoEstimado: 450000,
-      gastoEjecutado: 420000,
+      gastoEjecutado: 0,
     }),
-    makeClosedActivity(2, {
+    makeSeedActivity2025(2, {
       nombre: 'Entrega de guantes/caretas térmicas 200°C y pantallas protectoras en freidoras (2025)',
       fechaInicio: '2025-03-01',
       fechaLimite: '2025-04-15',
@@ -1374,9 +1366,9 @@ function buildPlan2025Seed(
       programacionMensual: [3, 4],
       objetivoEspecificoId: 'obj-2025-01',
       presupuestoEstimado: 1850000,
-      gastoEjecutado: 1790000,
+      gastoEjecutado: 0,
     }),
-    makeClosedActivity(3, {
+    makeSeedActivity2025(3, {
       nombre: 'Medición de ruido (sonometría) y entrega de tapa oídos (2025)',
       fechaInicio: '2025-05-05',
       fechaLimite: '2025-06-20',
@@ -1392,9 +1384,9 @@ function buildPlan2025Seed(
       programacionMensual: [5, 6],
       objetivoEspecificoId: 'obj-2025-01',
       presupuestoEstimado: 1200000,
-      gastoEjecutado: 1150000,
+      gastoEjecutado: 0,
     }),
-    makeClosedActivity(4, {
+    makeSeedActivity2025(4, {
       nombre: 'Entrega de aceite usado (ACU) y limpieza de trampa de grasas (Resumen 2025)',
       fechaInicio: '2025-01-10',
       fechaLimite: '2025-12-10',
@@ -1403,9 +1395,9 @@ function buildPlan2025Seed(
       normaOficial: 'Resolución 316 de 2018 / Resolución 0631 de 2015',
       objetivoEspecificoId: 'obj-2025-03',
       presupuestoEstimado: 1600000,
-      gastoEjecutado: 1540000,
+      gastoEjecutado: 0,
     }),
-    makeClosedActivity(5, {
+    makeSeedActivity2025(5, {
       nombre: 'Revisión anual de los 7 Estándares Mínimos (Res. 0312/2019) y auditoría (2025)',
       fechaInicio: '2025-11-10',
       fechaLimite: '2025-12-18',
@@ -1414,7 +1406,7 @@ function buildPlan2025Seed(
       normaOficial: 'Resolución 0312 de 2019',
       objetivoEspecificoId: 'obj-2025-02',
       presupuestoEstimado: 750000,
-      gastoEjecutado: 740000,
+      gastoEjecutado: 0,
     }),
   ];
 
@@ -1427,9 +1419,8 @@ function buildPlan2025Seed(
     fechaElaboracion: '2025-01-10',
     responsableId: 'cargo-coordinador-vigia-sst',
     responsableNombre: 'Coordinador / Vigía de SST',
-    aprobadorNombre: 'Gerente General (Representante Legal)',
-    estadoAprobacion: 'CERRADO',
-    fechaAprobacion: '2025-01-15',
+    aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+    estadoAprobacion: 'EN_REVISION',
     empresaSnapshot: construirEmpresaSnapshot(config),
     objetivosEspecificos: objetivos,
     indicadores,
@@ -1440,16 +1431,9 @@ function buildPlan2025Seed(
       {
         id: 'h-2025-01',
         fechaHora: '2025-01-15T09:00:00',
-        usuario: 'Gerente General (Representante Legal)',
-        accion: 'Plan Aprobado',
-        detalle: 'Aprobación oficial del Plan Anual 2025.',
-      },
-      {
-        id: 'h-2025-02',
-        fechaHora: '2025-12-22T17:00:00',
-        usuario: 'Gerente General (Representante Legal)',
-        accion: 'Cierre de Vigencia',
-        detalle: 'Año 2025 cerrado al 100% con todas sus pruebas guardadas.',
+        usuario: 'Coordinador / Vigía de SST',
+        accion: 'Borrador listo para Gerencia',
+        detalle: 'Registro base 2025 preparado; pendiente de revisión y aprobación por el Gerente.',
       },
     ],
   };
@@ -1478,7 +1462,7 @@ function buildPlan2026Seed(
   const mesHoy = hoy.getMonth() + 1;
 
   const actividades: ActividadPlanAnual[] = [
-    // 1. Cumplida: Política y Matriz GTC 45
+    // 1. Pendiente de revisión: Política y Matriz GTC 45
     {
       id: 'act-2026-01',
       codigo: 'PA-2026-01',
@@ -1504,43 +1488,38 @@ function buildPlan2026Seed(
       responsableCargo: 'Coordinador / Vigía de SST',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
-      aprobadorNombre: 'Gerente General (Representante Legal)',
-      aprobadorCargo: 'Gerente General',
+      aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: 'Gerente',
       presupuestoEstimado: 500000,
-      gastoEjecutado: 480000,
-      estado: 'CUMPLIDA',
+      gastoEjecutado: 0,
+      estado: 'REQUIERE_REVISION',
       evidenciaRequerida: 'Política SST firmada, planillas de charla al personal y Matriz GTC 45 actualizada.',
       evidencias: [
         {
           id: 'ev-2026-01',
-          nombreArchivo: 'Politica_SST_Firmada_y_Matriz_GTC45_2026.pdf',
+          nombreArchivo: 'Politica_SST_Borrrador_y_Matriz_GTC45_2026.pdf',
           tipoSoporte: 'PDF',
-          descripcionSoporte: 'Documento firmado por Gerencia y firmas de socialización con el equipo de Bosa.',
+          descripcionSoporte: 'Documento preparado por el encargado SST para revisión y firma del Gerente.',
           fechaCarga: '2026-02-10',
           cargadoPor: 'Coordinador / Vigía de SST',
-          estadoRevision: 'APROBADA',
-          revisadoPor: 'Gerente General (Representante Legal)',
-          fechaRevision: '2026-02-12',
-          comentarioRevisor: 'Aprobado conforme al Decreto 1072 de 2015.',
+          estadoRevision: 'PENDIENTE_REVISION',
         },
       ],
-      resultadoActividad: 'Política explicada a los 10 trabajadores y lista de peligros actualizada.',
-      fechaCierre: '2026-02-12',
-      cerradoPor: 'Gerente General (Representante Legal)',
-      observaciones: 'Completada dentro del plazo acordado.',
+      resultadoActividad: 'Borrador cargado; pendiente de revisión y aprobación por parte del Gerente.',
+      observaciones: 'Esperando validación oficial del Gerente General.',
       historialRevisiones: [
         {
           id: 'hr-2026-01',
-          fecha: '2026-02-12T10:30:00',
-          usuario: 'Gerente General (Representante Legal)',
-          rol: 'Aprobador',
-          accion: 'APROBADA_CERRADA',
-          detalle: 'Evidencia revisada y cierre aprobado.',
+          fecha: '2026-02-10T10:30:00',
+          usuario: 'Coordinador / Vigía de SST',
+          rol: 'Responsable',
+          accion: 'EVIDENCIA_ADJUNTADA',
+          detalle: 'Borrador subido; pendiente revisión de Gerencia.',
         },
       ],
     },
 
-    // 2. Cumplida: Riesgo Nivel I Calor Freidoras
+    // 2. En proceso: Riesgo Nivel I Calor Freidoras
     ...(rCalor
       ? [
           {
@@ -1563,18 +1542,18 @@ function buildPlan2026Seed(
             esRecurrente: false,
             periodicidad: 'ANUAL' as const,
             fechaInicio: '2026-03-01',
-            fechaLimite: '2026-04-30',
+            fechaLimite: addDaysIso(14),
             programacionMensual: [3, 4],
             responsableId: 'cargo-operario-frito',
             responsableNombre: 'Operario de Frito',
             responsableCargo: 'Operario de Frito',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
-            aprobadorId: 'cargo-coordinador-vigia-sst',
-            aprobadorNombre: 'Coordinador / Vigía de SST',
-            aprobadorCargo: 'Coordinador / Vigía de SST',
+            aprobadorId: 'cargo-gerente-general',
+            aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+            aprobadorCargo: 'Gerente',
             presupuestoEstimado: 2100000,
-            gastoEjecutado: 1980000,
-            estado: 'CUMPLIDA' as const,
+            gastoEjecutado: 0,
+            estado: 'EN_PROCESO' as const,
             evidenciaRequerida:
               'Fotos de las pantallas protectoras y planilla firmada de entrega de guantes 250°C y careta ANSI Z87.1.',
             evidencias: [
@@ -1582,34 +1561,29 @@ function buildPlan2026Seed(
                 id: 'ev-2026-02',
                 nombreArchivo: 'Entrega_EPP_Termico_y_Barreras_Freidoras.pdf',
                 tipoSoporte: 'CERTIFICADO' as const,
-                descripcionSoporte: 'Facturas, fichas de los guantes térmicos y fotos de las pantallas instaladas.',
+                descripcionSoporte: 'Soporte inicial cargado; pendiente revisión y visto bueno del Gerente.',
                 fechaCarga: '2026-04-24',
                 cargadoPor: 'Operario de Frito',
-                estadoRevision: 'APROBADA' as const,
-                revisadoPor: 'Coordinador / Vigía de SST',
-                fechaRevision: '2026-04-26',
-                comentarioRevisor: 'Controles verificados en recorrido de planta.',
+                estadoRevision: 'PENDIENTE_REVISION' as const,
               },
             ],
-            resultadoActividad: 'Pantallas instaladas y todo el personal de fritura recibió su protección térmica.',
-            fechaCierre: '2026-04-26',
-            cerradoPor: 'Coordinador / Vigía de SST',
-            observaciones: 'Protección aplicada sobre riesgo alto de freído.',
+            resultadoActividad: 'Soportes cargados por el área; esperando revisión de Gerencia.',
+            observaciones: 'En revisión para confirmar cumplimiento en freidoras.',
             historialRevisiones: [
               {
                 id: 'hr-2026-02',
-                fecha: '2026-04-26T14:00:00',
-                usuario: 'Coordinador / Vigía de SST',
-                rol: 'Aprobador',
-                accion: 'APROBADA_CERRADA' as const,
-                detalle: 'Soporte validado en planta.',
+                fecha: '2026-04-24T14:00:00',
+                usuario: 'Operario de Frito',
+                rol: 'Responsable',
+                accion: 'EVIDENCIA_ADJUNTADA' as const,
+                detalle: 'Soportes subidos para revisión de Gerencia.',
               },
             ],
           },
         ]
       : []),
 
-    // 3. Requiere Revisión (Evidencia cargada pendiente de aprobación): Riesgo Nivel II Químico SGA
+    // 3. Pendiente de revisión: Riesgo Nivel II Químico SGA
     ...(rQuimico
       ? [
           {
@@ -1638,11 +1612,11 @@ function buildPlan2026Seed(
             responsableNombre: 'Operario de Selección',
             responsableCargo: 'Operario de Selección',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
-            aprobadorId: 'cargo-coordinador-vigia-sst',
-            aprobadorNombre: 'Coordinador / Vigía de SST',
-            aprobadorCargo: 'Coordinador / Vigía de SST',
+            aprobadorId: 'cargo-gerente-general',
+            aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+            aprobadorCargo: 'Gerente',
             presupuestoEstimado: 950000,
-            gastoEjecutado: 890000,
+            gastoEjecutado: 0,
             estado: 'REQUIERE_REVISION' as const,
             evidenciaRequerida:
               'Fotos de los envases etiquetados, carpeta de hojas de seguridad y planilla de charla.',
@@ -1659,8 +1633,8 @@ function buildPlan2026Seed(
               },
             ],
             resultadoActividad:
-              'Se etiquetaron todos los envases de limpieza y se instaló el punto lavaojos.',
-            observaciones: 'Falta que el Coordinador / Vigía SST revise las fotos y apruebe el cierre.',
+              'Se etiquetaron los envases de limpieza y se instaló el punto lavaojos.',
+            observaciones: 'Falta que la Gerencia revise las fotos y apruebe el cumplimiento.',
             historialRevisiones: [
               {
                 id: 'hr-2026-03',
@@ -1675,7 +1649,7 @@ function buildPlan2026Seed(
         ]
       : []),
 
-    // 4. Próxima a vencer (sin evidencia aún): Riesgo Nivel I Ruido
+    // 4. En proceso: Riesgo Nivel I Ruido
     ...(rRuido
       ? [
           {
@@ -1704,16 +1678,16 @@ function buildPlan2026Seed(
             responsableNombre: 'Operario de Pelado',
             responsableCargo: 'Operario de Pelado',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
-            aprobadorId: 'cargo-coordinador-vigia-sst',
-            aprobadorNombre: 'Coordinador / Vigía de SST',
-            aprobadorCargo: 'Coordinador / Vigía de SST',
+            aprobadorId: 'cargo-gerente-general',
+            aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+            aprobadorCargo: 'Gerente',
             presupuestoEstimado: 1400000,
-            gastoEjecutado: 600000,
+            gastoEjecutado: 0,
             estado: 'EN_PROCESO' as const,
             evidenciaRequerida:
               'Informe de medición de ruido y planilla firmada de entrega de tapa oídos.',
             evidencias: [],
-            observaciones: 'Visita coordinada con la ARL; falta subir el informe final.',
+            observaciones: 'Visita en coordinación con la ARL; falta subir el informe final.',
             historialRevisiones: [
               {
                 id: 'hr-2026-04',
@@ -1728,7 +1702,7 @@ function buildPlan2026Seed(
         ]
       : []),
 
-    // 5. Vencida: Riesgo Nivel II Biomecánico / Pausas activas y tapetes antifatiga
+    // 5. Por hacer: Riesgo Nivel II Biomecánico / Pausas activas y tapetes antifatiga
     ...(rBiomec
       ? [
           {
@@ -1751,21 +1725,21 @@ function buildPlan2026Seed(
             esRecurrente: false,
             periodicidad: 'ANUAL' as const,
             fechaInicio: '2026-08-01',
-            fechaLimite: addDaysIso(-9),
-            programacionMensual: [8, 9],
+            fechaLimite: addDaysIso(15),
+            programacionMensual: [8, 9, mesHoy],
             responsableId: 'cargo-operario-empaque',
             responsableNombre: 'Operario de Empaque',
             responsableCargo: 'Operario de Empaque',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
-            aprobadorId: 'cargo-coordinador-vigia-sst',
-            aprobadorNombre: 'Coordinador / Vigía de SST',
-            aprobadorCargo: 'Coordinador / Vigía de SST',
+            aprobadorId: 'cargo-gerente-general',
+            aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+            aprobadorCargo: 'Gerente',
             presupuestoEstimado: 780000,
             gastoEjecutado: 0,
-            estado: 'VENCIDA' as const,
+            estado: 'PENDIENTE' as const,
             evidenciaRequerida: 'Factura o foto de los tapetes instalados y lista de pausas activas.',
             evidencias: [],
-            observaciones: 'Se pasó la fecha límite; dar prioridad para completarla y subir las fotos.',
+            observaciones: 'Actividad por hacer en mesa de selección y empaque.',
             historialRevisiones: [
               {
                 id: 'hr-2026-05',
@@ -1780,7 +1754,7 @@ function buildPlan2026Seed(
         ]
       : []),
 
-    // 6. Recurrente Trimestral: Comité de Convivencia Laboral (Q4 pendiente)
+    // 6. Por hacer: Comité de Convivencia Laboral (Q4)
     {
       id: 'act-2026-06',
       codigo: 'PA-2026-06',
@@ -1806,14 +1780,14 @@ function buildPlan2026Seed(
       responsableCargo: 'Coordinador / Vigía de SST',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
-      aprobadorNombre: 'Gerente General (Representante Legal)',
-      aprobadorCargo: 'Gerente General',
+      aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: 'Gerente',
       presupuestoEstimado: 200000,
-      gastoEjecutado: 150000,
+      gastoEjecutado: 0,
       estado: 'PENDIENTE',
       evidenciaRequerida: 'Acta firmada de la reunión del Comité de Convivencia.',
       evidencias: [],
-      observaciones: 'Reunión #4 del año (ya se hicieron las de marzo, junio y septiembre).',
+      observaciones: 'Pendiente convocar la reunión trimestral y subir el acta.',
       historialRevisiones: [
         {
           id: 'hr-2026-06',
@@ -1826,7 +1800,7 @@ function buildPlan2026Seed(
       ],
     },
 
-    // 7. Cumplida Ambiental: Entrega ACU Res. 316/2018 (Periodo anterior) + siguiente mes
+    // 7. En proceso Ambiental: Entrega ACU Res. 316/2018
     {
       id: 'act-2026-07',
       codigo: 'PA-2026-07',
@@ -1843,7 +1817,7 @@ function buildPlan2026Seed(
       esRecurrente: true,
       periodicidad: 'MENSUAL',
       fechaInicio: '2026-10-01',
-      fechaLimite: '2026-10-30',
+      fechaLimite: addDaysIso(18),
       programacionMensual: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       serieRecurrenteId: 'serie-acu-2026',
       numeroOcurrencia: 10,
@@ -1852,43 +1826,38 @@ function buildPlan2026Seed(
       responsableCargo: 'Encargado Ambiental / Jefe de Planta',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
-      aprobadorNombre: 'Gerente General (Representante Legal)',
-      aprobadorCargo: 'Gerente General',
+      aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: 'Gerente',
       presupuestoEstimado: 1200000,
-      gastoEjecutado: 1050000,
-      estado: 'CUMPLIDA',
+      gastoEjecutado: 0,
+      estado: 'REQUIERE_REVISION',
       evidenciaRequerida: 'Certificado mensual de recolección de aceite entregado por el gestor autorizado.',
       evidencias: [
         {
           id: 'ev-2026-07',
-          nombreArchivo: 'Manifiesto_ACU_Octubre_2026_SDA.pdf',
+          nombreArchivo: 'Manifiesto_ACU_Recoleccion_2026_SDA.pdf',
           tipoSoporte: 'CERTIFICADO',
-          descripcionSoporte: 'Recibo oficial por 220 litros de aceite usado entregados al gestor autorizado.',
+          descripcionSoporte: 'Recibo del gestor autorizado subido; pendiente revisión y aprobación por Gerencia.',
           fechaCarga: '2026-10-28',
           cargadoPor: 'Líder de Gestión Ambiental',
-          estadoRevision: 'APROBADA',
-          revisadoPor: 'Gerente General (Representante Legal)',
-          fechaRevision: '2026-10-29',
-          comentarioRevisor: 'Entrega de aceite verificada y al día.',
+          estadoRevision: 'PENDIENTE_REVISION',
         },
       ],
-      resultadoActividad: '220 litros de aceite entregados correctamente sin botar nada al desagüe.',
-      fechaCierre: '2026-10-29',
-      cerradoPor: 'Gerente General (Representante Legal)',
-      observaciones: 'Entregas cumplidas todos los meses entre enero y octubre.',
+      resultadoActividad: 'Recibo cargado en el sistema; falta revisión y aprobación del Gerente.',
+      observaciones: 'Pendiente revisión de Gerencia sobre los soportes ambientales.',
       historialRevisiones: [
         {
           id: 'hr-2026-07',
-          fecha: '2026-10-29T11:00:00',
-          usuario: 'Gerente General (Representante Legal)',
-          rol: 'Aprobador',
-          accion: 'APROBADA_CERRADA',
-          detalle: 'Recibo de aceite aprobado.',
+          fecha: '2026-10-28T11:00:00',
+          usuario: 'Líder de Gestión Ambiental',
+          rol: 'Responsable',
+          accion: 'EVIDENCIA_ADJUNTADA',
+          detalle: 'Recibo de aceite cargado para revisión de Gerencia.',
         },
       ],
     },
 
-    // 8. Pendiente Ambiental: Trampa de Grasas (Noviembre)
+    // 8. En proceso Ambiental: Trampa de Grasas
     {
       id: 'act-2026-08',
       codigo: 'PA-2026-08',
@@ -1913,19 +1882,19 @@ function buildPlan2026Seed(
       responsableNombre: 'Líder de Gestión Ambiental',
       responsableCargo: 'Encargado Ambiental / Jefe de Planta',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
-      aprobadorId: 'cargo-coordinador-vigia-sst',
-      aprobadorNombre: 'Coordinador / Vigía de SST',
-      aprobadorCargo: 'Coordinador / Vigía de SST',
+      aprobadorId: 'cargo-gerente-general',
+      aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: 'Gerente',
       presupuestoEstimado: 900000,
-      gastoEjecutado: 750000,
+      gastoEjecutado: 0,
       estado: 'EN_PROCESO',
       evidenciaRequerida: 'Planilla de limpieza de trampa de grasas firmada y foto.',
       evidencias: [],
-      observaciones: 'Limpieza de noviembre en marcha.',
+      observaciones: 'Limpieza en marcha.',
       historialRevisiones: [],
     },
 
-    // 9. Programada Diciembre: Autoevaluación Res. 0312 de 2019
+    // 9. Por hacer Diciembre: Autoevaluación Res. 0312 de 2019
     {
       id: 'act-2026-09',
       codigo: 'PA-2026-09',
@@ -1948,8 +1917,8 @@ function buildPlan2026Seed(
       responsableCargo: 'Coordinador / Vigía de SST',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
-      aprobadorNombre: 'Gerente General (Representante Legal)',
-      aprobadorCargo: 'Gerente General',
+      aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: 'Gerente',
       presupuestoEstimado: 650000,
       gastoEjecutado: 0,
       estado: 'PENDIENTE',
@@ -1969,9 +1938,8 @@ function buildPlan2026Seed(
     fechaElaboracion: '2026-01-12',
     responsableId: 'cargo-coordinador-vigia-sst',
     responsableNombre: 'Coordinador / Vigía de SST',
-    aprobadorNombre: 'Gerente General (Representante Legal)',
-    estadoAprobacion: 'APROBADO',
-    fechaAprobacion: '2026-01-16',
+    aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+    estadoAprobacion: 'EN_REVISION',
     empresaSnapshot: construirEmpresaSnapshot(config),
     objetivosEspecificos: objetivos,
     indicadores,
@@ -1982,9 +1950,9 @@ function buildPlan2026Seed(
       {
         id: 'h-2026-01',
         fechaHora: '2026-01-16T10:00:00',
-        usuario: 'Gerente General (Representante Legal)',
-        accion: 'Plan Aprobado',
-        detalle: `Plan Anual 2026 aprobado inicialmente (${config.numeroTrabajadores} trabajadores, ${grupo}).`,
+        usuario: 'Coordinador / Vigía de SST',
+        accion: 'Enviado a revisión de Gerencia',
+        detalle: `Plan Anual 2026 (${config.numeroTrabajadores} trabajadores, ${grupo}) listo para revisión y aprobación del Gerente General.`,
       },
     ],
   };
@@ -2004,10 +1972,12 @@ export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
     if (raw) {
       const parsed = JSON.parse(raw) as Record<number, PlanAnualVigencia>;
       if (parsed && Object.keys(parsed).length > 0) {
+        let updated: Record<number, PlanAnualVigencia> = { ...parsed };
+        let dirty = false;
+
         if (!localStorage.getItem(PLAIN_LANG_FLAG_PLAN)) {
           const freshSeed2025 = buildPlan2025Seed(config, riesgos);
           const freshSeed2026 = buildPlan2026Seed(config, riesgos);
-          const migrated: Record<number, PlanAnualVigencia> = { ...parsed };
 
           const mergeSeedPlan = (
             existing: PlanAnualVigencia | undefined,
@@ -2056,16 +2026,120 @@ export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
             };
           };
 
-          const m2025 = mergeSeedPlan(parsed[2025], freshSeed2025);
-          const m2026 = mergeSeedPlan(parsed[2026], freshSeed2026);
-          if (m2025) migrated[2025] = m2025;
-          if (m2026) migrated[2026] = m2026;
-
-          saveAllVigencias(migrated);
+          const m2025 = mergeSeedPlan(updated[2025], freshSeed2025);
+          const m2026 = mergeSeedPlan(updated[2026], freshSeed2026);
+          if (m2025) updated[2025] = m2025;
+          if (m2026) updated[2026] = m2026;
           localStorage.setItem(PLAIN_LANG_FLAG_PLAN, '1');
-          return migrated;
+          dirty = true;
         }
-        return parsed;
+
+        if (!localStorage.getItem(GERENTE_GATE_FLAG_PLAN)) {
+          const resetPlanWithoutGerente = (p: PlanAnualVigencia): PlanAnualVigencia => {
+            const planHasRealGerenteReview = Boolean(p.revisionGerente);
+            const normPlanEst = normalizarEstadoEstandar(p.estadoAprobacion);
+            const resetEstadoPlan =
+              !planHasRealGerenteReview &&
+              (normPlanEst === 'Aprobado' || normPlanEst === 'Cumplido')
+                ? 'EN_REVISION'
+                : p.estadoAprobacion;
+
+            return {
+              ...p,
+              estadoAprobacion: resetEstadoPlan,
+              fechaAprobacion: planHasRealGerenteReview ? p.fechaAprobacion : undefined,
+              indicadores: p.indicadores.map((ind) => ({
+                ...ind,
+                historicoMediciones:
+                  ind.id.startsWith('ind-2025-') || ind.id.startsWith('ind-2026-')
+                    ? []
+                    : ind.historicoMediciones,
+              })),
+              actividades: p.actividades.map((act) => {
+                const tieneRevGerente = Boolean(act.revisionGerente);
+                const evidenciasLimpias = act.evidencias.map((ev) => {
+                  const evRevGerente = Boolean(ev.revisionGerente);
+                  if (!evRevGerente && (ev.estadoRevision === 'APROBADA' || ev.estadoRevision === 'CUMPLIDA' || ev.estadoRevision === 'DEVUELTA')) {
+                    return {
+                      ...ev,
+                      estadoRevision: 'PENDIENTE_REVISION' as const,
+                      revisadoPor: undefined,
+                      fechaRevision: undefined,
+                      comentarioRevisor: 'Pendiente de revisión y aprobación por el Gerente General.',
+                    };
+                  }
+                  return ev;
+                });
+
+                const normActEst = normalizarEstadoEstandar(act.estado);
+                const esEstadoGerenteSinFirma =
+                  !tieneRevGerente &&
+                  (normActEst === 'Cumplido' ||
+                    normActEst === 'Aprobado' ||
+                    normActEst === 'Devuelto para ajustes');
+
+                const nuevoEstado = esEstadoGerenteSinFirma
+                  ? evidenciasLimpias.length > 0
+                    ? ('REQUIERE_REVISION' as const)
+                    : ('EN_PROCESO' as const)
+                  : act.estado === 'VENCIDA'
+                  ? ('PENDIENTE' as const)
+                  : act.estado;
+
+                return {
+                  ...act,
+                  estado: nuevoEstado,
+                  fechaCierre: tieneRevGerente ? act.fechaCierre : undefined,
+                  cerradoPor: tieneRevGerente ? act.cerradoPor : undefined,
+                  evidencias: evidenciasLimpias,
+                };
+              }),
+            };
+          };
+
+          const migratedPlanes: Record<number, PlanAnualVigencia> = {};
+          Object.entries(updated).forEach(([anioKey, planVal]) => {
+            migratedPlanes[Number(anioKey)] = resetPlanWithoutGerente(planVal);
+          });
+          updated = migratedPlanes;
+          localStorage.setItem(GERENTE_GATE_FLAG_PLAN, '1');
+          dirty = true;
+        }
+
+        Object.keys(updated).forEach((anioKey) => {
+          const plan = updated[Number(anioKey)];
+          if (!plan) return;
+          const needsPlanName =
+            plan.aprobadorNombre === 'Gerente General (Representante Legal)' ||
+            plan.aprobadorNombre === 'Gerente General';
+          const needsActName = plan.actividades.some(
+            (a) =>
+              a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
+              a.aprobadorNombre === 'Gerente General' ||
+              a.aprobadorCargo === 'Gerente General'
+          );
+          if (needsPlanName || needsActName) {
+            updated[Number(anioKey)] = {
+              ...plan,
+              aprobadorNombre: needsPlanName ? NOMBRE_GERENTE_OFICIAL : plan.aprobadorNombre,
+              actividades: plan.actividades.map((a) => ({
+                ...a,
+                aprobadorNombre:
+                  a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
+                  a.aprobadorNombre === 'Gerente General'
+                    ? NOMBRE_GERENTE_OFICIAL
+                    : a.aprobadorNombre,
+                aprobadorCargo: a.aprobadorCargo === 'Gerente General' ? 'Gerente' : a.aprobadorCargo,
+              })),
+            };
+            dirty = true;
+          }
+        });
+
+        if (dirty) {
+          saveAllVigencias(updated);
+        }
+        return updated;
       }
     }
   } catch (err) {
@@ -2082,6 +2156,7 @@ export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
 
   saveAllVigencias(seed);
   localStorage.setItem(PLAIN_LANG_FLAG_PLAN, '1');
+  localStorage.setItem(GERENTE_GATE_FLAG_PLAN, '1');
   return seed;
 }
 
@@ -2124,7 +2199,7 @@ export function crearNuevaVigencia(
     fechaElaboracion: new Date().toISOString().split('T')[0],
     responsableId: 'cargo-coordinador-vigia-sst',
     responsableNombre: 'Coordinador / Vigía de SST',
-    aprobadorNombre: 'Gerente General (Representante Legal)',
+    aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
     estadoAprobacion: 'BORRADOR',
     empresaSnapshot: construirEmpresaSnapshot(config),
     objetivosEspecificos: objetivos,
@@ -2233,8 +2308,8 @@ export async function exportarPlanAnualExcel(
       a.presupuestoEstimado,
       a.gastoEjecutado,
       disp,
-      a.estado,
-      a.evidencias.map((e) => `${e.nombreArchivo} (${e.estadoRevision})`).join(' | ') || 'Sin archivos',
+      normalizarEstadoEstandar(a.estado),
+      a.evidencias.map((e) => `${e.nombreArchivo} (${normalizarEstadoEstandar(e.estadoRevision)})`).join(' | ') || 'Sin archivos',
       a.fechaCierre || '-',
     ];
     [11, 12, 13].forEach((col) => {

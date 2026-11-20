@@ -9,6 +9,11 @@ import {
   subscribeTokenChange,
   CUENTA_OBJETIVO_GMAIL,
 } from '../services/gmailAuthService';
+import {
+  esUsuarioGerenteFirebase,
+  NOMBRE_GERENTE_OFICIAL,
+} from '../services/gerenteControlService';
+import { GAME_IMAGES } from '../services/gameAssets';
 import { getGmailProfile, GmailProfile } from '../services/gmailApiService';
 import { LogOut, RefreshCw, AlertCircle } from 'lucide-react';
 
@@ -37,9 +42,10 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
         setGmailProfile(profile);
       },
       () => {
-        setUser(null);
+        const current = getCurrentGoogleUser();
+        setUser(current);
         setGmailProfile(null);
-        if (onParentAuthStateChanged) onParentAuthStateChanged(null, null);
+        if (onParentAuthStateChanged) onParentAuthStateChanged(current, null);
       }
     );
 
@@ -49,6 +55,10 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
         if (onParentAuthStateChanged) onParentAuthStateChanged(authUser, token);
         const profile = await getGmailProfile();
         setGmailProfile(profile);
+      } else if (authUser) {
+        setUser(authUser);
+        setGmailProfile(null);
+        if (onParentAuthStateChanged) onParentAuthStateChanged(authUser, null);
       } else {
         setUser(null);
         setGmailProfile(null);
@@ -111,16 +121,19 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
   // Si está autenticado, mostrar badge y usuario
   if (user) {
     const displayEmail = gmailProfile?.emailAddress || user.email || 'Cuenta Gmail';
+    const esAndrea = esUsuarioGerenteFirebase(user);
+    const avatarSrc = esAndrea ? GAME_IMAGES.avatars.gerente.jpg : user.photoURL;
 
     return (
       <div className={`flex items-center gap-2.5 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 shadow-sm text-xs ${className}`}>
         <div className="flex items-center gap-2">
           <div className="relative">
-            {user.photoURL ? (
+            {avatarSrc ? (
               <img
-                src={user.photoURL}
-                alt="Avatar"
-                className="h-6 w-6 rounded-full border border-emerald-400"
+                src={avatarSrc}
+                alt={esAndrea ? NOMBRE_GERENTE_OFICIAL : 'Avatar'}
+                referrerPolicy="no-referrer"
+                className="h-6 w-6 rounded-full object-cover border border-emerald-400 bg-slate-800"
               />
             ) : (
               <div className="h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">
@@ -132,15 +145,17 @@ export const GoogleWorkspaceAuthButton: React.FC<GoogleWorkspaceAuthButtonProps>
 
           <div className="leading-tight">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-white max-w-[150px] truncate" title={displayEmail}>
-                {displayEmail}
+              <span className="font-semibold text-white max-w-[160px] truncate" title={displayEmail}>
+                {esAndrea ? NOMBRE_GERENTE_OFICIAL : displayEmail}
               </span>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 Correo Conectado
               </span>
             </div>
             {!compact && (
-              <span className="text-[10px] text-slate-400 font-mono">Correo Gmail · Carpeta Drive · Hojas</span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {esAndrea ? displayEmail : 'Correo Gmail · Carpeta Drive · Hojas'}
+              </span>
             )}
           </div>
         </div>

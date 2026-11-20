@@ -6,6 +6,10 @@
 import React from 'react';
 import { Printer, X, Download, ShieldCheck, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { ItemChecklistNecesidad, CargoChecklistInterno } from '../../../types/partesInteresadas';
+import {
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../../../services/gerenteControlService';
 
 interface ModalImpresionPdfChecklistProps {
   cargo: CargoChecklistInterno;
@@ -29,9 +33,18 @@ export const ModalImpresionPdfChecklist: React.FC<ModalImpresionPdfChecklistProp
   };
 
   const itemsCargo = items.filter((it) => it.cargo === cargo);
-  const cumplidas = itemsCargo.filter((it) => it.estado === 'Cumplido').length;
-  const enProceso = itemsCargo.filter((it) => it.estado === 'En proceso').length;
-  const pendientes = itemsCargo.filter((it) => it.estado === 'Pendiente').length;
+  const cumplidas = itemsCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Cumplido' || est === 'Aprobado';
+  }).length;
+  const enProceso = itemsCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'En proceso' || est === 'Pendiente de revisión';
+  }).length;
+  const pendientes = itemsCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Por hacer' || est === 'Devuelto para ajustes';
+  }).length;
   const porcentaje = itemsCargo.length > 0 ? Math.round((cumplidas / itemsCargo.length) * 100) : 0;
 
   const handlePrint = () => {
@@ -147,17 +160,16 @@ export const ModalImpresionPdfChecklist: React.FC<ModalImpresionPdfChecklistProp
                       {item.necesidad}
                     </td>
                     <td className="p-2 border border-slate-300 text-center">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold ${
-                          item.estado === 'Cumplido'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : item.estado === 'En proceso'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {item.estado.toUpperCase()}
-                      </span>
+                      {(() => {
+                        const badge = getBadgeClassesEstadoFrikaz(item.estado);
+                        return (
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded border text-[9px] font-bold ${badge.light}`}
+                          >
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="p-2 border border-slate-300 text-slate-600">
                       {item.observaciones || '—'}

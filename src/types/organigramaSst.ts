@@ -27,6 +27,16 @@ export interface CompromisoPolitica {
   descripcion: string;
 }
 
+export type EstadoPoliticaSST =
+  | 'Por hacer'
+  | 'En proceso'
+  | 'Pendiente de revisión'
+  | 'Devuelto para ajustes'
+  | 'Cumplido'
+  | 'Aprobado'
+  | 'Pendiente de aprobación'
+  | 'Vigente';
+
 export interface RegistroHistorialPolitica {
   id: string;
   fecha: string;
@@ -34,7 +44,7 @@ export interface RegistroHistorialPolitica {
   version: string;
   autor: string;
   motivoCambio: string;
-  estado: 'Pendiente de aprobación' | 'Vigente';
+  estado: EstadoPoliticaSST;
   detallesModificacion: string;
 }
 
@@ -50,9 +60,13 @@ export interface PoliticaSSTData {
   comunicacionRevision: string;
   nombreFirmante: string;
   cargoFirmante: string;
-  estado: 'Pendiente de aprobación' | 'Vigente';
+  estado: EstadoPoliticaSST;
   fechaUltimaActualizacion: string;
   fechaAprobacion?: string;
+  fechaRevision?: string;
+  revisadoPor?: string;
+  resultadoRevision?: 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes';
+  observacionesRevision?: string;
   versionActual: string;
   historialCambios: RegistroHistorialPolitica[];
 }

@@ -13,11 +13,13 @@ import {
   IndicadoresGlobalesPartesInteresadas,
   ResumenIndicadoresCargo,
 } from '../types/partesInteresadas';
+import { esEstadoExclusivoGerente, normalizarEstadoEstandar } from './gerenteControlService';
 
 const STORAGE_KEY_PARTES = 'frikaz_partes_interesadas_v1';
 const STORAGE_KEY_CHECKLIST = 'frikaz_checklist_partes_v1';
 const STORAGE_KEY_HISTORIAL = 'frikaz_historial_checklist_v1';
 const STORAGE_KEY_PLAIN_LANG = 'frikaz_partes_plain_lang_v1';
+const STORAGE_KEY_GERENTE_GATE = 'frikaz_partes_gerente_gate_v1';
 
 // ----------------------------------------------------------------------------
 // DATOS SEMILLA: PARTES INTERESADAS (INTERNAS Y EXTERNAS)
@@ -202,12 +204,12 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     cargo: 'gerente',
     numero: 1,
     necesidad: 'Estar informado sobre los peligros y riesgos actuales en la empresa.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Tabla de riesgos (Matriz GTC 45) al día en 2026 con las 6 áreas revisadas y su nivel de peligro.',
+      'Tabla de riesgos (Matriz GTC 45) preparada con las 6 áreas; pendiente revisión y visto bueno del Gerente.',
     evidencias: 'Matriz de Riesgos Frikaz S.A.S. versión digital 2026',
     responsable: 'Coordinador / Vigía de SST',
-    fechaVerificacion: '2026-02-15',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ger-02',
@@ -216,34 +218,34 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     necesidad: 'Asegurar que la empresa cumpla todas las leyes de seguridad en el trabajo.',
     estado: 'En proceso',
     observaciones:
-      '15 normas revisadas en la lista legal; falta ajustar el control sobre estrés y carga laboral.',
+      'Normas revisadas en la lista legal; en proceso de completar evidencias y ajustar controles.',
     evidencias: 'Lista de Normas Legales SST (Res. 0312/2019 y Dec. 1072/2015)',
     responsable: 'Gerente General / Asesor Externo',
-    fechaVerificacion: '2026-02-28',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ger-03',
     cargo: 'gerente',
     numero: 3,
     necesidad: 'Aprobar dinero, personal y herramientas para cuidar la seguridad.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Presupuesto 2026 aprobado para guantes térmicos, limpieza de campanas y asesoría en seguridad.',
-    evidencias: 'Acta firmada de aprobación del presupuesto SST 2026',
+      'Presupuesto 2026 propuesto para guantes térmicos, limpieza de campanas y asesoría en seguridad; pendiente aprobación del Gerente.',
+    evidencias: 'Propuesta de presupuesto SST 2026',
     responsable: 'Gerente General',
-    fechaVerificacion: '2026-01-20',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ger-04',
     cargo: 'gerente',
     numero: 4,
     necesidad: 'Impulsar un ambiente de trabajo seguro, limpio y respetuoso.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Compromiso de seguridad (Política SST) firmado, explicado al equipo y publicado en la cartelera.',
-    evidencias: 'Política SST Frikaz S.A.S. firmada y lista de asistencia a charla',
+      'Borrador de Política SST listo para firma y aprobación del Gerente.',
+    evidencias: 'Borrador Política SST Frikaz S.A.S.',
     responsable: 'Gerente General / Coordinador SST',
-    fechaVerificacion: '2026-02-10',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ger-05',
@@ -252,10 +254,10 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     necesidad: 'Revisar cada cierto tiempo cómo avanza el plan de seguridad.',
     estado: 'En proceso',
     observaciones:
-      'Revisión de gerencia programada para mitad de año con los resultados de cumplimiento.',
+      'Revisión de gerencia programada para revisar los resultados de cumplimiento.',
     evidencias: 'Calendario de reuniones de revisión 2026',
     responsable: 'Gerente General',
-    fechaVerificacion: '2026-03-01',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ger-06',
@@ -267,19 +269,19 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
       'Coordinando con Caja de Compensación y ARL jornadas de examen visual y pausas activas.',
     evidencias: 'Plan de Bienestar y Salud Frikaz 2026',
     responsable: 'Gestión Humana / Vigía de SST',
-    fechaVerificacion: '2026-02-22',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ger-07',
     cargo: 'gerente',
     numero: 7,
     necesidad: 'Participar en capacitaciones y reuniones de seguimiento de seguridad.',
-    estado: 'Cumplido',
+    estado: 'En proceso',
     observaciones:
-      'El gerente completó el curso de 50 horas del SG-SST y participó en la reunión de responsabilidades.',
-    evidencias: 'Certificado del curso de 50 horas SENA y acta de reunión',
+      'Programación de capacitaciones y reuniones de seguimiento en curso.',
+    evidencias: 'Registro de participación y reuniones',
     responsable: 'Gerente General',
-    fechaVerificacion: '2026-01-25',
+    fechaVerificacion: '',
   },
 
   // 2. OPERARIOS (9 NECESIDADES ESPECÍFICAS)
@@ -288,48 +290,48 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     cargo: 'operarios',
     numero: 1,
     necesidad: 'Tener máquinas y herramientas funcionando bien y con protectores.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Peladora y selladora revisadas con mantenimiento preventivo en febrero de 2026.',
+      'Revisión preventiva de peladora y selladora cargada; pendiente verificación del Gerente.',
     evidencias: 'Hoja de vida de máquinas y registro de mantenimiento',
     responsable: 'Técnico de Mantenimiento / Jefe de Planta',
-    fechaVerificacion: '2026-02-18',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-02',
     cargo: 'operarios',
     numero: 2,
     necesidad: 'Recibir elementos de protección personal (EPP) adecuados para cada tarea.',
-    estado: 'Cumplido',
+    estado: 'En proceso',
     observaciones:
-      'Entrega de guantes largos resistentes al calor para fritura, delantales impermeables y botas antideslizantes.',
-    evidencias: 'Planilla firmada de entrega de EPP a cada operario',
+      'Planillas de entrega de guantes largos resistentes al calor, delantales y botas en recolección.',
+    evidencias: 'Planilla de entrega de EPP a cada operario',
     responsable: 'Coordinador / Vigía de SST',
-    fechaVerificacion: '2026-02-05',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-03',
     cargo: 'operarios',
     numero: 3,
     necesidad: 'Trabajar en espacios limpios, ordenados y sin grasa en el piso.',
-    estado: 'Cumplido',
+    estado: 'En proceso',
     observaciones:
-      'Orden y aseo diario (técnica 5S) en tajado y empaque, con lavado desengrasante de pisos.',
+      'Orden y aseo diario en tajado y empaque con lavado desengrasante de pisos.',
     evidencias: 'Lista diaria de orden, aseo y desinfección de planta',
     responsable: 'Jefe de Planta / Operarios',
-    fechaVerificacion: '2026-03-02',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-04',
     cargo: 'operarios',
     numero: 4,
     necesidad: 'Recibir charlas y cursos prácticos sobre higiene en alimentos (BPM) y cómo evitar accidentes.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Curso de 10 horas en Manipulación Higiénica de Alimentos y Buenas Prácticas (BPM) completado.',
-    evidencias: 'Certificados vigentes de manipulación de alimentos',
+      'Certificados de curso de manipulación higiénica de alimentos listos para revisión de Gerencia.',
+    evidencias: 'Certificados de manipulación de alimentos',
     responsable: 'Ingeniero de Alimentos / Asesor Externo',
-    fechaVerificacion: '2026-01-30',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-05',
@@ -341,31 +343,31 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
       'Ya se hacen pausas activas en la mañana (10:00 a. m.); falta organizarlas igual en el turno de la tarde.',
     evidencias: 'Fotos y planilla de pausas activas de la mañana',
     responsable: 'Vigía de SST / Líder de Producción',
-    fechaVerificacion: '2026-02-25',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-06',
     cargo: 'operarios',
     numero: 6,
     necesidad: 'Conocer paso a paso cómo trabajar con aceite caliente (170–180 °C) sin quemarse.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Guía visual de pasos seguros para freír y filtrar aceite (solo cuando baje de 40 °C) pegada junto a las freidoras.',
+      'Guía visual de pasos seguros para freír y filtrar aceite pegada junto a las freidoras; pendiente verificación.',
     evidencias: 'Cartel de pasos seguros POE-FRI-02 en zona de freidoras',
     responsable: 'Coordinador SST / Maestro Fritador',
-    fechaVerificacion: '2026-02-12',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-07',
     cargo: 'operarios',
     numero: 7,
     necesidad: 'Saber cómo prevenir cortes, quemaduras, atrapamientos y caídas en su puesto.',
-    estado: 'Cumplido',
+    estado: 'En proceso',
     observaciones:
-      'Charla inicial de riesgos en cada máquina y entrega de guía sencilla de seguridad por cargo.',
+      'Charlas de riesgos en cada máquina y entrega de guía sencilla de seguridad por cargo.',
     evidencias: 'Registro de inducción al puesto y entrega de guía',
     responsable: 'Coordinador / Vigía de SST',
-    fechaVerificacion: '2026-02-14',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-08',
@@ -377,19 +379,19 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
       'Rebanadora y freidoras revisadas; falta hacer limpieza y revisión al extractor y la campana a fin de mes.',
     evidencias: 'Calendario de mantenimiento 2026 y órdenes de trabajo',
     responsable: 'Jefe de Planta / Mantenimiento',
-    fechaVerificacion: '2026-02-27',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-ope-09',
     cargo: 'operarios',
     numero: 9,
     necesidad: 'Tener avisos visibles de peligro y piso resbaloso en las zonas de trabajo.',
-    estado: 'Pendiente',
+    estado: 'Por hacer',
     observaciones:
       'Falta cambiar 3 avisos de peligro por calor (>160 °C) y pintar la señal de piso mojado en lavado.',
-    evidencias: 'Cotización aprobada para comprar nuevos avisos visibles',
+    evidencias: 'Cotización para comprar nuevos avisos visibles',
     responsable: 'Coordinador SST / Compras',
-    fechaVerificacion: '2026-03-03',
+    fechaVerificacion: '',
   },
 
   // 3. CONDUCTOR (8 NECESIDADES ESPECÍFICAS)
@@ -398,24 +400,24 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     cargo: 'conductor',
     numero: 1,
     necesidad: 'Contar con el vehículo de entregas en buen estado mecánico.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Furgón con revisión técnico-mecánica al día y cambio reciente de llantas.',
+      'Certificado técnico-mecánico y factura de taller cargados; pendiente visto bueno de Gerencia.',
     evidencias: 'Certificado técnico-mecánico RUNT y factura de taller',
     responsable: 'Conductor / Administrador de Flota',
-    fechaVerificacion: '2026-02-16',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-02',
     cargo: 'conductor',
     numero: 2,
     necesidad: 'Tener papeles al día y equipo completo de carretera y emergencias.',
-    estado: 'Cumplido',
+    estado: 'En proceso',
     observaciones:
-      'SOAT, tarjeta de propiedad, licencia C2 al día, botiquín, conos y extintor cargado y revisado.',
+      'Revisando vigencias de SOAT, licencia, botiquín y extintor del vehículo.',
     evidencias: 'SOAT vigente y lista de revisión del kit de carretera',
     responsable: 'Conductor / Coordinador SST',
-    fechaVerificacion: '2026-02-10',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-03',
@@ -427,55 +429,55 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
       'Se dividieron 2 zonas (Norte y Sur); falta ajustar horarios en horas de mayor trancón en Bogotá.',
     evidencias: 'Plan de Rutas Frikaz 2026 y tabla de tiempos de entrega',
     responsable: 'Coordinador Logístico / Gerencia',
-    fechaVerificacion: '2026-02-24',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-04',
     cargo: 'conductor',
     numero: 4,
     necesidad: 'Recibir capacitación sobre cómo manejar con precaución y evitar choques.',
-    estado: 'Cumplido',
+    estado: 'Por hacer',
     observaciones:
-      'Curso práctico de manejo preventivo y seguridad vial terminado con la ARL.',
-    evidencias: 'Certificado del curso de Manejo Preventivo ARL',
+      'Programar curso de manejo preventivo y seguridad vial con la ARL.',
+    evidencias: 'Programación de curso con ARL',
     responsable: 'Asesor ARL / Coordinador SST',
-    fechaVerificacion: '2026-01-28',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-05',
     cargo: 'conductor',
     numero: 5,
     necesidad: 'Contar con chaleco reflectivo, guantes de agarre y botas seguras para entregar pedidos.',
-    estado: 'Cumplido',
+    estado: 'Pendiente de revisión',
     observaciones:
-      'Entrega completa de chaleco reflectivo, guantes antideslizantes y calzado con puntera de seguridad.',
+      'Planilla de entrega de EPP de transporte subida para revisión de Gerencia.',
     evidencias: 'Planilla firmada de entrega de EPP de transporte',
     responsable: 'Coordinador SST',
-    fechaVerificacion: '2026-02-08',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-06',
     cargo: 'conductor',
     numero: 6,
     necesidad: 'Aprender a levantar y mover canastillas sin lastimarse la espalda.',
-    estado: 'Cumplido',
+    estado: 'Por hacer',
     observaciones:
-      'Práctica de cómo agacharse doblando las rodillas y respetar el peso máximo (25 kg hombres / 12,5 kg mujeres).',
-    evidencias: 'Acta de charla sobre cuidado de espalda y carga segura',
+      'Realizar práctica de levantamiento seguro (doblar rodillas y peso máximo) con la ARL.',
+    evidencias: 'Acta pendiente de charla sobre cuidado de espalda',
     responsable: 'Fisioterapeuta ARL / Vigía de SST',
-    fechaVerificacion: '2026-02-19',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-07',
     cargo: 'conductor',
     numero: 7,
     necesidad: 'Revisar frenos, luces, llantas y niveles del vehículo todos los días antes de salir.',
-    estado: 'Cumplido',
+    estado: 'En proceso',
     observaciones:
-      'Lista diaria del vehículo diligenciada antes de arrancar desde la planta en Bosa.',
+      'Diligenciando lista diaria preoperacional del vehículo antes de salir de Bosa.',
     evidencias: 'Talonario y registro digital de revisiones diarias del carro',
     responsable: 'Conductor / Coordinador SST',
-    fechaVerificacion: '2026-03-04',
+    fechaVerificacion: '',
   },
   {
     id: 'chk-con-08',
@@ -487,7 +489,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
       'Se definió parar 20 minutos cada 2 horas y media de manejo; falta revisar el cumplimiento con el reporte GPS.',
     evidencias: 'Regla interna de descanso y prevención de fatiga al volante',
     responsable: 'Gerente / Coordinador Logístico',
-    fechaVerificacion: '2026-02-26',
+    fechaVerificacion: '',
   },
 ];
 
@@ -500,37 +502,13 @@ export const HISTORIAL_INICIAL_CHECKLIST: RegistroHistorialChecklist[] = [
     id: 'rev-01',
     fecha: '2026-03-04',
     cargo: 'operarios',
-    responsableEvaluador: 'Ing. Carlos Mendoza (Coordinador SST)',
-    porcentajeCumplimiento: 67,
-    cumplidas: 6,
-    enProceso: 2,
+    responsableEvaluador: 'Coordinador / Vigía de SST',
+    porcentajeCumplimiento: 0,
+    cumplidas: 0,
+    enProceso: 8,
     pendientes: 1,
     observacionesGenerales:
-      'El equipo está usando bien los guantes contra el calor y siguiendo los pasos para freír. Ya se aprobó la compra urgente de los avisos que faltan en lavado y freidoras.',
-  },
-  {
-    id: 'rev-02',
-    fecha: '2026-02-26',
-    cargo: 'conductor',
-    responsableEvaluador: 'Ing. Carlos Mendoza (Coordinador SST)',
-    porcentajeCumplimiento: 75,
-    cumplidas: 6,
-    enProceso: 2,
-    pendientes: 0,
-    observacionesGenerales:
-      'Revisión diaria del vehículo al 100 %. Se están ajustando los horarios de ruta para evitar demoras en horas pico y cuidar el descanso del conductor.',
-  },
-  {
-    id: 'rev-03',
-    fecha: '2026-02-15',
-    cargo: 'gerente',
-    responsableEvaluador: 'Ing. Carlos Mendoza (Coordinador SST)',
-    porcentajeCumplimiento: 57,
-    cumplidas: 4,
-    enProceso: 3,
-    pendientes: 0,
-    observacionesGenerales:
-      'Presupuesto y recursos asegurados. Se avanza en la preparación de la revisión semestral y las jornadas de salud.',
+      'Levantamiento inicial completado. Varios puntos están en proceso o pendientes de revisión y aprobación por Gerencia.',
   },
 ];
 
@@ -596,8 +574,36 @@ function ensurePlainLangMigration(): void {
   }
 }
 
+function ensurePartesGerenteGateMigration(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY_GERENTE_GATE) === '1') return;
+    const rawChecklist = localStorage.getItem(STORAGE_KEY_CHECKLIST);
+    if (rawChecklist) {
+      const parsed: ItemChecklistNecesidad[] = JSON.parse(rawChecklist);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const cleaned = parsed.map((item) => {
+          const norm = normalizarEstadoEstandar(item.estado);
+          if (!item.resultadoRevision && esEstadoExclusivoGerente(norm)) {
+            return {
+              ...item,
+              estado: 'Pendiente de revisión' as const,
+              fechaVerificacion: '',
+            };
+          }
+          return { ...item, estado: norm };
+        });
+        localStorage.setItem(STORAGE_KEY_CHECKLIST, JSON.stringify(cleaned));
+      }
+    }
+    localStorage.setItem(STORAGE_KEY_GERENTE_GATE, '1');
+  } catch (error) {
+    console.error('Error aplicando compuerta de Gerente en partes interesadas:', error);
+  }
+}
+
 export function getStoredPartesInteresadas(): ParteInteresada[] {
   ensurePlainLangMigration();
+  ensurePartesGerenteGateMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PARTES);
     if (!raw) {
@@ -626,6 +632,7 @@ export function saveStoredPartesInteresadas(partes: ParteInteresada[]): void {
 
 export function getStoredChecklistItems(): ItemChecklistNecesidad[] {
   ensurePlainLangMigration();
+  ensurePartesGerenteGateMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CHECKLIST);
     if (!raw) {
@@ -705,9 +712,18 @@ export function calcularIndicadoresPartesInteresadas(
   for (const c of cargos) {
     const itemsCargo = items.filter((it) => it.cargo === c);
     const total = itemsCargo.length;
-    const cumplidas = itemsCargo.filter((it) => it.estado === 'Cumplido').length;
-    const enProceso = itemsCargo.filter((it) => it.estado === 'En proceso').length;
-    const pendientes = itemsCargo.filter((it) => it.estado === 'Pendiente').length;
+    const cumplidas = itemsCargo.filter((it) => {
+      const est = normalizarEstadoEstandar(it.estado);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
+    const enProceso = itemsCargo.filter((it) => {
+      const est = normalizarEstadoEstandar(it.estado);
+      return est === 'En proceso' || est === 'Pendiente de revisión';
+    }).length;
+    const pendientes = itemsCargo.filter((it) => {
+      const est = normalizarEstadoEstandar(it.estado);
+      return est === 'Por hacer' || est === 'Devuelto para ajustes';
+    }).length;
     const porcentaje = total > 0 ? Math.round((cumplidas / total) * 100) : 0;
 
     porCargo[c] = {
@@ -826,10 +842,11 @@ export async function exportarChecklistExcel(
 
   // FILAS DE DATOS
   itemsCargo.forEach((item) => {
+    const estadoNorm = normalizarEstadoEstandar(item.estado);
     const row = worksheet.addRow([
       item.numero,
       item.necesidad,
-      item.estado.toUpperCase(),
+      estadoNorm.toUpperCase(),
       item.observaciones || 'Sin observaciones registradas',
       item.evidencias || 'Sin evidencias adjuntas',
       item.responsable || 'Por asignar',
@@ -840,14 +857,14 @@ export async function exportarChecklistExcel(
 
     // Colores de estado
     const estadoCell = row.getCell(3);
-    if (item.estado === 'Cumplido') {
+    if (estadoNorm === 'Cumplido' || estadoNorm === 'Aprobado') {
       estadoCell.fill = {
         type: 'pattern',
         pattern: 'solid',
         fgColor: { argb: 'FFDCFCE7' }, // emerald 100
       };
       estadoCell.font = { bold: true, color: { argb: 'FF166534' } };
-    } else if (item.estado === 'En proceso') {
+    } else if (estadoNorm === 'En proceso' || estadoNorm === 'Pendiente de revisión') {
       estadoCell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -883,9 +900,18 @@ export async function exportarChecklistExcel(
 
   // FILA RESUMEN DE CUMPLIMIENTO
   worksheet.addRow([]);
-  const cumplidasCount = itemsCargo.filter((it) => it.estado === 'Cumplido').length;
-  const enProcesoCount = itemsCargo.filter((it) => it.estado === 'En proceso').length;
-  const pendientesCount = itemsCargo.filter((it) => it.estado === 'Pendiente').length;
+  const cumplidasCount = itemsCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Cumplido' || est === 'Aprobado';
+  }).length;
+  const enProcesoCount = itemsCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'En proceso' || est === 'Pendiente de revisión';
+  }).length;
+  const pendientesCount = itemsCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Por hacer' || est === 'Devuelto para ajustes';
+  }).length;
   const porcentaje = itemsCargo.length > 0 ? Math.round((cumplidasCount / itemsCargo.length) * 100) : 0;
 
   const totalRow = worksheet.addRow([

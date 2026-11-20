@@ -17,8 +17,10 @@ import { RiesgoGTC45Item } from '../types/gtc45RiskMatrix';
 import { CaracterizacionEmpresaDinamica } from '../types/dynamicConfig';
 import { getStoredCargosSST } from './organigramaService';
 import { determinarGrupoEstandares0312 } from './planAnualService';
+import { normalizarEstadoEstandar } from './gerenteControlService';
 
 const STORAGE_KEY_SGSST = 'frikaz_plan_anual_sgsst_v1';
+const GERENTE_GATE_FLAG_SGSST = 'frikaz_sgsst_gerente_gate_v1';
 
 export const MESES_NOMBRES = [
   'Enero',
@@ -118,7 +120,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Investigación oficial de accidentes de trabajo, reportes a la ARL y actas de cierre anual.',
     periodicidad: 'ANUAL',
-    responsable: 'Gerente General (Representante Legal) / Vigía SST',
+    responsable: 'Andrea Orjuela – Gerente / Vigía SST',
     interpretacionBase: 'En el año, el X % de accidentes de trabajo fueron mortales.',
   },
   {
@@ -214,18 +216,18 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
   {
     id: 'trab-01',
     estadoLaboral: 'ACTIVO',
-    nombreCompleto: 'Carlos Andrés Méndez Rojas',
+    nombreCompleto: 'Andrea Orjuela',
     tipoDocumento: 'CC',
     numeroDocumento: '1.014.223.889',
     fechaNacimiento: '1984-05-14',
-    sexo: 'Masculino',
+    sexo: 'Femenino',
     estadoCivil: 'Casado(a)',
     escolaridad: 'Profesional',
     localidadResidencia: 'Bosa Piamonte, Bogotá',
     telefono: '311 452 8890',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-gerente-general',
-    cargoNombre: 'Gerente General',
+    cargoNombre: 'Gerente',
     areaProceso: 'Dirección General y Toma de Decisiones',
     actividadPrincipal: 'Dirección de la empresa, compras, presupuesto y revisión del SG-SST',
     tipoContrato: 'Indefinido',
@@ -670,7 +672,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
 function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
   const registros: RegistroPeriodoIndicador[] = [];
 
-  // Año 2025 completo validado (histórico cerrado)
+  // Año 2025: datos base registrados, pendientes de validación por Gerencia
   for (let m = 1; m <= 12; m++) {
     registros.push({
       id: `per-2025-${String(m).padStart(2, '0')}`,
@@ -686,13 +688,12 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
       casosAntiguosEL: 0,
       diasAusenciaIncapacidadMedica: m === 4 ? 2 : m === 7 ? 4 : m === 10 ? 2 : 0,
       diasTrabajoProgramados: 240,
-      validado: true,
-      validadoPor: 'Coordinador / Vigía de SST',
+      validado: false,
       fechaActualizacion: `2025-${String(m).padStart(2, '0')}-28`,
       observaciones:
         m === 7
-          ? 'En julio 2025 se presentó 1 incidente/accidente leve en empaque con 3 días de incapacidad.'
-          : 'Mes sin accidentes de trabajo.',
+          ? 'En julio 2025 se anotó 1 caso en empaque con 3 días de incapacidad; pendiente de validación de Gerencia.'
+          : 'Datos del mes anotados; pendiente de validación de Gerencia.',
     });
   }
   registros.push({
@@ -709,13 +710,12 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
     casosAntiguosEL: 0,
     diasAusenciaIncapacidadMedica: 8,
     diasTrabajoProgramados: 2880,
-    validado: true,
-    validadoPor: 'Gerente General (Representante Legal)',
+    validado: false,
     fechaActualizacion: '2025-12-30',
-    observaciones: 'Cierre anual oficial 2025 validado.',
+    observaciones: 'Consolidado anual 2025 listo para revisión y validación de Gerencia.',
   });
 
-  // Año 2026: Enero a Octubre validados; Noviembre con datos pendientes de validar y Diciembre pendiente de registro
+  // Año 2026: meses con datos cargados para revisión de Gerencia y meses futuros sin cerrar
   for (let m = 1; m <= 12; m++) {
     if (m <= 10) {
       registros.push({
@@ -732,16 +732,14 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
         casosAntiguosEL: 0,
         diasAusenciaIncapacidadMedica: m === 2 ? 2 : m === 6 ? 3 : m === 9 ? 1 : 0,
         diasTrabajoProgramados: 240,
-        validado: true,
-        validadoPor: 'Coordinador / Vigía de SST',
+        validado: false,
         fechaActualizacion: `2026-${String(m).padStart(2, '0')}-28`,
         observaciones:
           m === 2 || m === 6 || m === 9
-            ? 'Incapacidad médica común registrada en nómina; 0 accidentes de trabajo.'
-            : 'Mes cerrado sin accidentes ni incapacidades.',
+            ? 'Incapacidad médica registrada; pendiente validación de Gerencia.'
+            : 'Datos del mes anotados; pendiente validación de Gerencia.',
       });
     } else if (m === 11) {
-      // Noviembre: faltan días de incapacidad por confirmar y validar
       registros.push({
         id: `per-2026-11`,
         anio: 2026,
@@ -758,10 +756,9 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
         diasTrabajoProgramados: 240,
         validado: false,
         fechaActualizacion: '2026-11-18',
-        observaciones: 'Pendiente cerrar novedades médicas de fin de mes antes de validar.',
+        observaciones: 'Faltan días de incapacidad por confirmar antes de enviar a Gerencia.',
       });
     } else {
-      // Diciembre: pendiente de registro
       registros.push({
         id: `per-2026-12`,
         anio: 2026,
@@ -778,7 +775,7 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
         diasTrabajoProgramados: null,
         validado: false,
         fechaActualizacion: '2026-11-18',
-        observaciones: 'Mes futuro aún sin datos registrados.',
+        observaciones: 'Mes aún sin datos registrados.',
       });
     }
   }
@@ -799,7 +796,7 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
     diasTrabajoProgramados: 2400,
     validado: false,
     fechaActualizacion: '2026-11-18',
-    observaciones: 'Se consolidará al validar Noviembre y Diciembre 2026.',
+    observaciones: 'Se consolidará cuando la Gerencia valide los meses del año.',
   });
 
   return registros;
@@ -810,7 +807,7 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
 // ============================================================================
 
 export function construirEstandaresBaseAnio(
-  anio: number,
+  _anio: number,
   config: CaracterizacionEmpresaDinamica
 ): EvaluacionEstandarMinimo[] {
   const { cantidadEstandares } = determinarGrupoEstandares0312(config);
@@ -818,8 +815,6 @@ export function construirEstandaresBaseAnio(
   const motivo = esGrupo7
     ? `Aplica directamente porque Frikaz S.A.S. tiene ${config.numeroTrabajadores} trabajadores en ${config.claseRiesgoSST} (Capítulo I: 7 Estándares).`
     : `Aplica como base obligatoria dentro de los ${cantidadEstandares} Estándares que corresponden ahora a Frikaz (${config.numeroTrabajadores} trabajadores, ${config.claseRiesgoSST}).`;
-
-  const cerrado2025 = anio === 2025;
 
   return [
     {
@@ -832,12 +827,8 @@ export function construirEstandaresBaseAnio(
         'Carta de asignación firmada por el Gerente General en el Organigrama.',
         'Certificado vigente del curso de 50 horas (o actualización de 20 horas) en SST.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'EN_REVISION',
-      revisadoPor: cerrado2025 ? 'Gerente General (Representante Legal)' : undefined,
-      fechaRevision: cerrado2025 ? '2025-12-18' : undefined,
-      observacionesRevision: cerrado2025
-        ? 'Asignación y certificado verificados al cierre 2025.'
-        : 'Confirmar certificado vigente del Vigía/Coordinador antes del cierre anual.',
+      estadoRevision: 'EN_REVISION',
+      observacionesRevision: 'Pendiente revisión de soportes y visto bueno del Gerente General.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -851,12 +842,8 @@ export function construirEstandaresBaseAnio(
         'Registro individual de cada trabajador con EPS, ARL y AFP diligenciados.',
         'Planillas de pago PILA del último mes sin retrasos.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'EN_REVISION',
-      revisadoPor: cerrado2025 ? 'Gerente General (Representante Legal)' : undefined,
-      fechaRevision: cerrado2025 ? '2025-12-18' : undefined,
-      observacionesRevision: cerrado2025
-        ? 'Afiliaciones completas verificadas.'
-        : 'Revisar planilla PILA mensual junto con las fichas individuales de trabajadores.',
+      estadoRevision: 'EN_REVISION',
+      observacionesRevision: 'En proceso de revisión de planillas PILA y afiliaciones.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -870,12 +857,8 @@ export function construirEstandaresBaseAnio(
         'Actividades de capacitación programadas en el Plan Anual.',
         'Listas de asistencia firmadas o sellos aprobados de Misión Frikaz.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'FALTA_SOPORTE',
-      revisadoPor: cerrado2025 ? 'Coordinador / Vigía de SST' : undefined,
-      fechaRevision: cerrado2025 ? '2025-12-18' : undefined,
-      observacionesRevision: cerrado2025
-        ? 'Capacitaciones ejecutadas y archivadas.'
-        : 'Falta aprobar algunas evidencias de charlas del segundo semestre.',
+      estadoRevision: 'PENDIENTE',
+      observacionesRevision: 'Por hacer o subir listas de asistencia para revisión de Gerencia.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -889,12 +872,8 @@ export function construirEstandaresBaseAnio(
         'Objetivos generales y específicos aprobados por Gerencia.',
         'Cronograma con fechas, responsables, presupuesto y evidencias aprobadas.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'EN_REVISION',
-      revisadoPor: cerrado2025 ? 'Gerente General (Representante Legal)' : undefined,
-      fechaRevision: cerrado2025 ? '2025-12-18' : undefined,
-      observacionesRevision: cerrado2025
-        ? 'Plan 2025 cerrado al 100%.'
-        : 'Plan 2026 aprobado y en seguimiento; faltan tareas por cerrar.',
+      estadoRevision: 'EN_REVISION',
+      observacionesRevision: 'Plan anual en revisión y ejecución; pendiente aprobación de Gerencia.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -908,12 +887,8 @@ export function construirEstandaresBaseAnio(
         'Certificados de aptitud laboral y exámenes (audiometría, visiometría, espirometría, laboratorio BPM) al día.',
         'Protección estricta de historias médicas individuales.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'REQUIERE_MEJORA',
-      revisadoPor: cerrado2025 ? 'Coordinador / Vigía de SST' : undefined,
-      fechaRevision: cerrado2025 ? '2025-12-18' : undefined,
-      observacionesRevision: cerrado2025
-        ? 'Exámenes médicos 2025 al día.'
-        : 'Hay trabajadores con espirometría, optometría o examen periódico 2026 pendiente.',
+      estadoRevision: 'PENDIENTE',
+      observacionesRevision: 'Faltan exámenes médicos o pruebas complementarias por completar y revisar.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -927,11 +902,8 @@ export function construirEstandaresBaseAnio(
         'Matriz GTC 45 actualizada para todos los cargos y procesos de la planta.',
         'Evidencia de revisión anual y vinculación de los riesgos Nivel I y II al Plan Anual.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'CUMPLE_VERIFICADO',
-      revisadoPor: 'Coordinador / Vigía de SST',
-      fechaRevision: cerrado2025 ? '2025-12-18' : '2026-02-15',
-      observacionesRevision:
-        'Matriz GTC 45 actualizada y conectada con los cargos y el Plan Anual.',
+      estadoRevision: 'EN_REVISION',
+      observacionesRevision: 'Matriz GTC 45 conectada con los cargos; pendiente revisión final del Gerente.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -945,12 +917,8 @@ export function construirEstandaresBaseAnio(
         'Actividades ejecutadas y fotos/actas aprobadas para cada riesgo prioritario.',
         'Acciones de mejora abiertas cuando una medida falle o esté atrasada.',
       ],
-      estadoRevision: cerrado2025 ? 'CUMPLE_VERIFICADO' : 'REQUIERE_MEJORA',
-      revisadoPor: cerrado2025 ? 'Gerente General (Representante Legal)' : undefined,
-      fechaRevision: cerrado2025 ? '2025-12-18' : undefined,
-      observacionesRevision: cerrado2025
-        ? 'Controles ejecutados y verificados en planta.'
-        : 'Falta cerrar entrega de tapetes antifatiga en empaque y medir ruido en peladora.',
+      estadoRevision: 'PENDIENTE',
+      observacionesRevision: 'Medidas de control en desarrollo; pendiente verificación y cierre de Gerencia.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -1075,17 +1043,14 @@ function crearSeedInicialSgsst(
           id: 'ev-acm-02',
           nombreArchivo: 'Chequeo_Termostatos_Freidoras_2026.pdf',
           tipoSoporte: 'ACTA',
-          descripcionSoporte: 'Revisión satisfactoria de corte térmico a 180 °C y guantes al día.',
+          descripcionSoporte: 'Revisión de corte térmico a 180 °C y guantes cargada para revisión.',
           fechaCarga: '2026-05-10',
           cargadoPor: 'Operario de Frito',
-          estadoRevision: 'APROBADA',
-          revisadoPor: 'Coordinador / Vigía de SST',
-          fechaRevision: '2026-05-12',
-          comentarioRevisor: 'Control efectivo en planta.',
+          estadoRevision: 'PENDIENTE_REVISION',
         },
       ],
-      estado: 'CUMPLIDA',
-      resultadoSeguimiento: 'Controles térmicos funcionando correctamente sin novedades.',
+      estado: 'PENDIENTE_REVISION',
+      resultadoSeguimiento: 'Soporte cargado; pendiente revisión y aprobación por el Gerente.',
       riesgoId: rCalor?.id,
       actividadPlanId: 'act-2026-02',
       estandarNumero: 7,
@@ -1099,10 +1064,10 @@ function crearSeedInicialSgsst(
         },
         {
           id: 'hm-04',
-          fecha: '2026-05-12',
-          usuario: 'Coordinador / Vigía de SST',
-          accion: 'CERRADA',
-          detalle: 'Verificado funcionamiento del corte automático a 180 °C.',
+          fecha: '2026-05-10',
+          usuario: 'Operario de Frito',
+          accion: 'EVIDENCIA_ADJUNTADA',
+          detalle: 'Lista de chequeo subida para revisión y aprobación del Gerente.',
         },
       ],
     },
@@ -1182,16 +1147,82 @@ export function loadSgsstData(
     if (raw) {
       const parsed = JSON.parse(raw) as PlanAnualSgsstData;
       if (parsed && Array.isArray(parsed.trabajadores) && Array.isArray(parsed.hojasVidaIndicadores)) {
-        // Garantizar que los 6 indicadores normativos de la Res. 0312 siempre estén presentes y con su fórmula oficial
-        const normativosById = new Map(INDICADORES_NORMATIVOS_0312.map((i) => [i.id, i]));
         const existentesCustom = parsed.hojasVidaIndicadores.filter((i) => !i.esNormativo0312);
         const hojasVida = [...INDICADORES_NORMATIVOS_0312, ...existentesCustom];
-        // Preservar meta/responsable editado si es custom o restaurar normativo
-        void normativosById;
-        return {
+        let needsSave = false;
+        const trabajadoresActualizados = parsed.trabajadores.map((t) => {
+          if (
+            t.id === 'trab-01' &&
+            (t.nombreCompleto === 'Carlos Andrés Méndez Rojas' || t.cargoNombre === 'Gerente General')
+          ) {
+            needsSave = true;
+            return {
+              ...t,
+              nombreCompleto: 'Andrea Orjuela',
+              sexo: 'Femenino' as const,
+              cargoNombre: 'Gerente',
+            };
+          }
+          return t;
+        });
+        let result: PlanAnualSgsstData = {
           ...parsed,
+          trabajadores: trabajadoresActualizados,
           hojasVidaIndicadores: hojasVida,
         };
+
+        if (!localStorage.getItem(GERENTE_GATE_FLAG_SGSST)) {
+          const cleanEstandares: Record<number, EvaluacionEstandarMinimo[]> = {};
+          Object.entries(result.estandaresMinimos || {}).forEach(([anioKey, lista]) => {
+            cleanEstandares[Number(anioKey)] = lista.map((est) => {
+              const estNorm = normalizarEstadoEstandar(est.estadoRevision);
+              if (!est.revisionGerente && (estNorm === 'Cumplido' || estNorm === 'Aprobado')) {
+                return {
+                  ...est,
+                  estadoRevision: 'EN_REVISION',
+                  revisadoPor: undefined,
+                  fechaRevision: undefined,
+                  observacionesRevision: 'Pendiente de revisión y aprobación por Andrea Orjuela – Gerente.',
+                };
+              }
+              return est;
+            });
+          });
+
+          result = {
+            ...result,
+            registrosPeriodosIndicadores: result.registrosPeriodosIndicadores.map((reg) =>
+              !reg.revisionGerente && reg.validado
+                ? { ...reg, validado: false, validadoPor: undefined }
+                : reg
+            ),
+            estandaresMinimos: cleanEstandares,
+            accionesMejora: result.accionesMejora.map((acm) => {
+              const evs = (acm.evidenciasAdjuntas || []).map((e) =>
+                !e.revisionGerente && (e.estadoRevision === 'APROBADA' || e.estadoRevision === 'CUMPLIDA')
+                  ? { ...e, estadoRevision: 'PENDIENTE_REVISION' as const, revisadoPor: undefined, fechaRevision: undefined }
+                  : e
+              );
+              const acmNorm = normalizarEstadoEstandar(acm.estado);
+              const resetEst =
+                !acm.revisionGerente &&
+                (acmNorm === 'Cumplido' || acmNorm === 'Aprobado' || acmNorm === 'Devuelto para ajustes')
+                  ? evs.length > 0
+                    ? ('PENDIENTE_REVISION' as const)
+                    : ('EN_PROCESO' as const)
+                  : acm.estado;
+              return { ...acm, estado: resetEst, evidenciasAdjuntas: evs };
+            }),
+          };
+          needsSave = true;
+          localStorage.setItem(GERENTE_GATE_FLAG_SGSST, '1');
+        }
+
+        if (needsSave) {
+          saveSgsstData(result);
+        }
+
+        return result;
       }
     }
   } catch (err) {
@@ -1199,6 +1230,7 @@ export function loadSgsstData(
   }
   const seed = crearSeedInicialSgsst(config, riesgos);
   saveSgsstData(seed);
+  localStorage.setItem(GERENTE_GATE_FLAG_SGSST, '1');
   return seed;
 }
 
@@ -1515,10 +1547,10 @@ export function calcularResultadoIndicadorPeriodo(
         estadoCalculo: 'PENDIENTE_VALIDACION',
         valor: null,
         interpretacionAutomatica:
-          'Los datos ya fueron ingresados, pero el periodo está pendiente de validación por el responsable SST.',
+          'Los datos ya fueron guardados, pero falta que la Gerencia los revise y apruebe para oficializar el resultado.',
         estadoSemaforo: 'AMARILLO',
-        textoSemaforo: 'Amarillo: Pendiente de validación para oficializar resultado.',
-        faltantes: ['Validación del periodo'],
+        textoSemaforo: 'Amarillo: Pendiente de revisión por Gerencia.',
+        faltantes: ['Revisión y aprobación del Gerente'],
         variablesUsadas: vars,
         fechaActualizacion: reg.fechaActualizacion,
       };
@@ -2067,16 +2099,20 @@ export function obtenerSoportesRealesEstandar(
         a.nombre.toLowerCase().includes('capacit') ||
         a.nombre.toLowerCase().includes('pausas')
     );
-    const conEvAprobada = actsCap.filter((a) => a.evidencias.some((e) => e.estadoRevision === 'APROBADA'));
-    disponibles.push(`${actsCap.length} actividad(es) de formación en el Plan Anual (${conEvAprobada.length} con soporte aprobado).`);
+    const conEvAprobada = actsCap.filter((a) =>
+      a.evidencias.some((e) => e.estadoRevision === 'APROBADA' || e.estadoRevision === 'CUMPLIDA')
+    );
+    disponibles.push(`${actsCap.length} actividad(es) de formación en el Plan Anual (${conEvAprobada.length} con soporte aprobado por Gerencia).`);
     if (actsCap.length === 0 || conEvAprobada.length < actsCap.length) {
-      faltantes.push('Faltan actas o listas de asistencia aprobadas en capacitaciones.');
+      faltantes.push('Faltan actas o listas de asistencia aprobadas por Gerencia en capacitaciones.');
     }
   } else if (numero === 4) {
-    const cumplidas = plan.actividades.filter((a) => a.estado === 'CUMPLIDA').length;
-    disponibles.push(`Plan ${plan.vigencia} (${plan.estadoAprobacion}): ${plan.actividades.length} actividades (${cumplidas} cumplidas).`);
+    const cumplidas = plan.actividades.filter(
+      (a) => a.estado === 'CUMPLIDA' || a.estado === 'APROBADA'
+    ).length;
+    disponibles.push(`Plan ${plan.vigencia} (${plan.estadoAprobacion}): ${plan.actividades.length} actividades (${cumplidas} cumplidas/aprobadas).`);
     if (cumplidas < plan.actividades.length) {
-      faltantes.push(`Quedan ${plan.actividades.length - cumplidas} actividades por ejecutar o aprobar.`);
+      faltantes.push(`Quedan ${plan.actividades.length - cumplidas} actividades por ejecutar o aprobar por Gerencia.`);
     }
   } else if (numero === 5) {
     const alDia = activos.filter(
@@ -2101,13 +2137,12 @@ export function obtenerSoportesRealesEstandar(
     }
   } else if (numero === 7) {
     const actsRiesgo = plan.actividades.filter((a) => a.origen === 'RIESGO_GTC45' || a.estandarMinimoNumero === 7);
-    const cumplidasRiesgo = actsRiesgo.filter((a) => a.estado === 'CUMPLIDA');
-    const vencidasRiesgo = actsRiesgo.filter((a) => a.estado === 'VENCIDA');
-    disponibles.push(`${cumplidasRiesgo.length} de ${actsRiesgo.length} medidas de prevención y control cumplidas con soporte.`);
-    if (vencidasRiesgo.length > 0) {
-      faltantes.push(`${vencidasRiesgo.length} medida(s) vencida(s) sin evidencia de cierre.`);
-    } else if (cumplidasRiesgo.length < actsRiesgo.length) {
-      faltantes.push(`Faltan ${actsRiesgo.length - cumplidasRiesgo.length} medida(s) por completar y aprobar.`);
+    const cumplidasRiesgo = actsRiesgo.filter(
+      (a) => a.estado === 'CUMPLIDA' || a.estado === 'APROBADA'
+    );
+    disponibles.push(`${cumplidasRiesgo.length} de ${actsRiesgo.length} medidas de prevención y control aprobadas por Gerencia.`);
+    if (cumplidasRiesgo.length < actsRiesgo.length) {
+      faltantes.push(`Faltan ${actsRiesgo.length - cumplidasRiesgo.length} medida(s) por completar o aprobar por Gerencia.`);
     }
   }
 

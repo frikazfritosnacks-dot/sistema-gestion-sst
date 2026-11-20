@@ -4,6 +4,7 @@ import {
   getStoredCargosSST,
   exportarResponsabilidadesWord,
 } from '../../services/organigramaService';
+import { useGerenteAutorizado } from '../../services/gerenteControlService';
 import {
   Crown,
   ShieldCheck,
@@ -40,6 +41,7 @@ interface OrganigramaInteractivoViewProps {
 export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProps> = ({
   onIrAPoliticas,
 }) => {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [cargos] = useState<CargoSST[]>(() => getStoredCargosSST());
   const [cargoSeleccionado, setCargoSeleccionado] = useState<CargoSST | null>(() => {
     const list = getStoredCargosSST();
@@ -61,6 +63,10 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
 
   const handleAbrirModalEnvio = (cargo: CargoSST, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setCargoParaEnviar(cargo);
     setIsModalEnviarOpen(true);
   };

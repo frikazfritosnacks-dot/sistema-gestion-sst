@@ -22,7 +22,15 @@ import {
   Wrench,
   Users,
   Scale,
+  Mail,
 } from 'lucide-react';
+import {
+  ESTADOS_ESTANDAR_FRIKAZ,
+  crearRegistroRevisionGerente,
+  esEstadoExclusivoGerente,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
 
 interface RiskFormModalProps {
   isOpen: boolean;
@@ -67,9 +75,11 @@ export function RiskFormModal({
     medidaControlesAdministrativos: '',
     medidaEquiposEPP: '',
     observaciones: '',
+    estadoControl: 'Por hacer',
   });
 
   const [activeTab, setActiveTab] = useState<number>(1);
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   // Sync when initialData changes - Loads all existing values for easy editing
   useEffect(() => {
@@ -109,6 +119,7 @@ export function RiskFormModal({
         medidaControlesAdministrativos: '',
         medidaEquiposEPP: '',
         observaciones: '',
+        estadoControl: 'Por hacer',
       });
     }
     setActiveTab(1);
@@ -153,6 +164,26 @@ export function RiskFormModal({
 
     const cargoLimpio = formData.cargo?.trim() || formData.cargosExpuestos?.trim() || 'Operario';
 
+    const estadoSolicitado = normalizarEstadoEstandar(formData.estadoControl || 'Por hacer');
+    const estadoPrevio = normalizarEstadoEstandar(initialData?.estadoControl || 'Por hacer');
+    const estadoFinal =
+      esEstadoExclusivoGerente(estadoSolicitado) &&
+      estadoSolicitado !== estadoPrevio &&
+      !esGerente
+        ? estadoPrevio
+        : estadoSolicitado;
+
+    const revisionGerente =
+      esEstadoExclusivoGerente(estadoFinal) &&
+      esGerente &&
+      (estadoFinal === 'Aprobado' ||
+        estadoFinal === 'Cumplido' ||
+        estadoFinal === 'Devuelto para ajustes')
+        ? initialData?.revisionGerente && estadoFinal === estadoPrevio
+          ? initialData.revisionGerente
+          : crearRegistroRevisionGerente(estadoFinal, formData.observaciones)
+        : initialData?.revisionGerente;
+
     const itemToSave: RiesgoGTC45Item = {
       id: formData.id || `RSK-${Date.now()}`,
       codigo: formData.codigo || `GTC45-${Math.floor(100 + Math.random() * 900)}`,
@@ -188,6 +219,8 @@ export function RiskFormModal({
       medidaEquiposEPP: normalizar(formData.medidaEquiposEPP),
       observaciones: formData.observaciones?.trim() || undefined,
       fechaEvaluacion: new Date().toISOString().split('T')[0],
+      estadoControl: estadoFinal,
+      revisionGerente,
     };
 
     onSave(itemToSave);
@@ -909,6 +942,49 @@ export function RiskFormModal({
                     placeholder="Ej. Careta facial con policarbonato ANSI Z87.1, guantes de nitrilo térmico de 45 cm, peto impermeable..."
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                   />
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-xs font-semibold text-slate-200">
+                      Estado de avance de estas medidas de control
+                    </label>
+                    {!esGerente && (
+                      <button
+                        type="button"
+                        onClick={solicitarAccesoGerente}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-600 text-amber-300 text-[11px] font-bold hover:bg-slate-700 cursor-pointer"
+                      >
+                        <Mail className="h-3 w-3" />
+                        <span>Ingresar como Gerente</span>
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    value={normalizarEstadoEstandar(formData.estadoControl || 'Por hacer')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (esEstadoExclusivoGerente(val) && !esGerente) {
+                        solicitarAccesoGerente();
+                        return;
+                      }
+                      setFormData({ ...formData, estadoControl: val as any });
+                    }}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500"
+                  >
+                    {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                      const locked = esEstadoExclusivoGerente(est) && !esGerente;
+                      return (
+                        <option key={est} value={est} disabled={locked}>
+                          {est}
+                          {locked ? ' (Solo Gerente)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="text-[11px] text-slate-400">
+                    Guardar este formulario nunca da por cumplidas las medidas automáticamente. Solo el Gerente aprueba o marca como Cumplido tras verificar en planta.
+                  </p>
                 </div>
               </div>
             </div>

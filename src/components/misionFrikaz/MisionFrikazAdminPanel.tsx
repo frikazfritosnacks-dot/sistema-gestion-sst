@@ -17,6 +17,7 @@ import {
   getMetricasAdminMision,
   getPasaporteDigital,
 } from '../../services/misionFrikazService';
+import { useGerenteAutorizado } from '../../services/gerenteControlService';
 import { GameAvatar } from './GameAvatar';
 import {
   ShieldCheck,
@@ -50,6 +51,7 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
   onClose,
   onVerPasaporteTrabajador,
 }) => {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [metricas, setMetricas] = useState<MetricasAdminMisionFrikaz>(() => getMetricasAdminMision());
   const [trabajadores, setTrabajadores] = useState<TrabajadorFrikaz[]>(() => getStoredTrabajadores());
   const [politicas, setPoliticas] = useState<PoliticaMisionFrikaz[]>(() => getStoredPoliticasMision());
@@ -86,6 +88,10 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
 
   // Toggle de obligatoriedad de política
   const handleToggleObligatoria = (polId: string) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const updated = politicas.map((p) => (p.id === polId ? { ...p, esObligatoria: !p.esObligatoria } : p));
     setPoliticas(updated);
     saveStoredPoliticasMision(updated);
@@ -94,6 +100,10 @@ export const MisionFrikazAdminPanel: React.FC<MisionFrikazAdminPanelProps> = ({
 
   // Sincronizar con Google Sheets
   const handleSincronizarSheets = async () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setSincronizando(true);
     setSyncStatusMsg(null);
     try {

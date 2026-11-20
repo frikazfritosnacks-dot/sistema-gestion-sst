@@ -9,6 +9,7 @@ import {
   CargoChecklistInterno,
 } from '../../../types/partesInteresadas';
 import { calcularIndicadoresPartesInteresadas } from '../../../services/partesInteresadasService';
+import { normalizarEstadoEstandar } from '../../../services/gerenteControlService';
 import {
   BarChart3,
   TrendingUp,
@@ -47,8 +48,14 @@ export const IndicadoresCumplimientoTab: React.FC<IndicadoresCumplimientoTabProp
     }
   };
 
-  const necesidadesPendientes = items.filter((it) => it.estado === 'Pendiente');
-  const necesidadesEnProceso = items.filter((it) => it.estado === 'En proceso');
+  const necesidadesPendientes = items.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Por hacer' || est === 'Devuelto para ajustes';
+  });
+  const necesidadesEnProceso = items.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'En proceso' || est === 'Pendiente de revisión';
+  });
 
   return (
     <div className="space-y-6">

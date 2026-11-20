@@ -24,7 +24,15 @@ import {
   ArrowRight,
   Save,
   AlertTriangle,
+  Mail,
 } from 'lucide-react';
+import {
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+  type EstadoEstandarFrikaz,
+} from '../../services/gerenteControlService';
 
 interface PlanAnualActuarTabProps {
   plan: PlanAnualVigencia;
@@ -52,14 +60,6 @@ interface PlanAnualActuarTabProps {
 
 type SubTabActuar = 'acciones' | 'recomendaciones';
 
-const ESTADOS_ACCION_LABEL: Record<AccionMejoraPlan['estado'], { label: string; style: string }> = {
-  PENDIENTE: { label: 'Pendiente', style: 'bg-slate-200 text-slate-800' },
-  EN_PROCESO: { label: 'En proceso', style: 'bg-amber-100 text-amber-900' },
-  CUMPLIDA: { label: 'Cumplida', style: 'bg-emerald-100 text-emerald-800' },
-  ATRASADA: { label: 'Atrasada', style: 'bg-rose-100 text-rose-800' },
-  DEVUELTA_CORRECCION: { label: 'Devuelta para corrección', style: 'bg-purple-100 text-purple-900' },
-};
-
 export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
   plan,
   riesgos,
@@ -74,9 +74,10 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
   onSaveAccion,
 }) => {
   const [subTab, setSubTab] = useState<SubTabActuar>('acciones');
-  const [filtroEstado, setFiltroEstado] = useState<'TODAS' | AccionMejoraPlan['estado']>('TODAS');
+  const [filtroEstado, setFiltroEstado] = useState<'TODAS' | EstadoEstandarFrikaz>('TODAS');
   const [filtroOrigenAccion, setFiltroOrigenAccion] = useState<'TODOS' | AccionMejoraPlan['origen']>('TODOS');
   const [filtroOrigenRec, setFiltroOrigenRec] = useState<'TODOS' | RecomendacionIntervencion['origen']>('TODOS');
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   // Formulario de nueva/edición acción de mejora
   const [showAccionForm, setShowAccionForm] = useState(false);
@@ -150,7 +151,8 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
 
   const accionesFiltradas = useMemo(() => {
     return accionesMejora.filter((a) => {
-      const mEstado = filtroEstado === 'TODAS' || a.estado === filtroEstado;
+      const mEstado =
+        filtroEstado === 'TODAS' || normalizarEstadoEstandar(a.estado) === filtroEstado;
       const mOrigen = filtroOrigenAccion === 'TODOS' || a.origen === filtroOrigenAccion;
       return mEstado && mOrigen;
     });
@@ -271,7 +273,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-              3. ACTUAR — Recomendaciones, Acciones de Mejora y Correcciones
+              4. ACTUAR — Recomendaciones, Acciones de Mejora y Correcciones
             </h3>
             <p className="text-[11px] text-slate-500">
               Convierta lo encontrado en evaluaciones médicas (respetando confidencialidad), riesgos, indicadores y estándares en acciones concretas con seguimiento hasta resolverlas.
@@ -810,17 +812,18 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
             </form>
           )}
 
-          {/* Filtros de estado y origen */}
+          {/* Filtros de estado (6 estados estándar) y origen */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-1.5">
               {(
                 [
                   { id: 'TODAS', label: `Todas (${accionesMejora.length})` },
-                  { id: 'PENDIENTE', label: 'Pendientes' },
-                  { id: 'EN_PROCESO', label: 'En proceso' },
-                  { id: 'CUMPLIDA', label: 'Cumplidas' },
-                  { id: 'ATRASADA', label: 'Atrasadas' },
-                  { id: 'DEVUELTA_CORRECCION', label: 'Devueltas para corrección' },
+                  { id: 'Por hacer', label: 'Por hacer' },
+                  { id: 'En proceso', label: 'En proceso' },
+                  { id: 'Pendiente de revisión', label: 'Pendiente de revisión' },
+                  { id: 'Devuelto para ajustes', label: 'Devuelto para ajustes' },
+                  { id: 'Cumplido', label: 'Cumplido' },
+                  { id: 'Aprobado', label: 'Aprobado' },
                 ] as const
               ).map((f) => (
                 <button
@@ -857,7 +860,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
               const riesgoVinculado = acc.riesgoId
                 ? riesgos.find((r) => r.id === acc.riesgoId)
                 : undefined;
-              const badgeEstado = ESTADOS_ACCION_LABEL[acc.estado];
+              const badgeEstado = getBadgeClassesEstadoFrikaz(acc.estado);
 
               return (
                 <div
@@ -873,7 +876,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                         <span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 font-bold text-[10px]">
                           {acc.tipo}
                         </span>
-                        <span className={`px-2 py-0.5 rounded font-black text-[10px] ${badgeEstado.style}`}>
+                        <span className={`px-2 py-0.5 rounded border font-black text-[10px] ${badgeEstado.light}`}>
                           {badgeEstado.label}
                         </span>
                         {acc.estandarNumero && (
@@ -916,13 +919,26 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                       <button
                         type="button"
                         onClick={() => {
+                          if (!esGerente) {
+                            solicitarAccesoGerente();
+                            return;
+                          }
                           setDevolverId(devolverId === acc.id ? null : acc.id);
                           setMotivoDevolucion('');
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-purple-100 text-purple-900 font-bold cursor-pointer inline-flex items-center gap-1"
+                        className={`px-3 py-1.5 rounded-lg font-bold cursor-pointer inline-flex items-center gap-1 ${
+                          esGerente
+                            ? 'bg-purple-100 text-purple-900'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                        title={
+                          esGerente
+                            ? 'Devolver para ajustes con observaciones'
+                            : 'Solo Andrea Orjuela – Gerente puede devolver para ajustes'
+                        }
                       >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        <span>Devolver</span>
+                        {esGerente ? <RotateCcw className="h-3.5 w-3.5" /> : <Mail className="h-3.5 w-3.5" />}
+                        <span>{esGerente ? 'Devolver' : 'Ingresar como Gerente'}</span>
                       </button>
                       <button
                         type="button"
@@ -997,10 +1013,18 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                             onChange={(e) => setSeguimientoEstado(e.target.value as any)}
                             className="w-full rounded-lg border border-slate-300 p-2 bg-white font-bold"
                           >
-                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="PENDIENTE">Por hacer</option>
                             <option value="EN_PROCESO">En proceso</option>
-                            <option value="CUMPLIDA">Cumplida y verificada</option>
-                            <option value="ATRASADA">Atrasada</option>
+                            <option value="PENDIENTE_REVISION">Pendiente de revisión</option>
+                            <option value="DEVUELTA_CORRECCION" disabled={!esGerente}>
+                              Devuelto para ajustes {!esGerente ? '(Solo Gerente)' : ''}
+                            </option>
+                            <option value="CUMPLIDA" disabled={!esGerente}>
+                              Cumplido {!esGerente ? '(Solo Gerente)' : ''}
+                            </option>
+                            <option value="APROBADA" disabled={!esGerente}>
+                              Aprobado {!esGerente ? '(Solo Gerente)' : ''}
+                            </option>
                           </select>
                         </div>
                         <div className="sm:col-span-2">
@@ -1018,6 +1042,10 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                       <button
                         type="button"
                         onClick={() => {
+                          if (esEstadoExclusivoGerente(seguimientoEstado) && !esGerente) {
+                            solicitarAccesoGerente();
+                            return;
+                          }
                           const hoy = new Date().toISOString().split('T')[0];
                           onSaveAccion({
                             ...acc,
@@ -1027,8 +1055,10 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                               {
                                 id: `hm-${Date.now()}`,
                                 fecha: hoy,
-                                usuario: acc.responsable,
-                                accion: `ESTADO: ${seguimientoEstado}`,
+                                usuario: esEstadoExclusivoGerente(seguimientoEstado)
+                                  ? nombreGerente
+                                  : acc.responsable,
+                                accion: `ESTADO: ${normalizarEstadoEstandar(seguimientoEstado)}`,
                                 detalle: seguimientoTexto,
                               },
                               ...acc.historial,
@@ -1107,12 +1137,12 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                             onSaveAccion({
                               ...acc,
                               estado: 'DEVUELTA_CORRECCION',
-                              resultadoSeguimiento: `Devuelta para corrección: ${motivoDevolucion.trim()}`,
+                              resultadoSeguimiento: `Devuelto para ajustes por ${nombreGerente}: ${motivoDevolucion.trim()}`,
                               historial: [
                                 {
                                   id: `hm-${Date.now()}`,
                                   fecha: hoy,
-                                  usuario: 'Revisor SG-SST',
+                                  usuario: nombreGerente,
                                   accion: 'DEVUELTA_CORRECCION',
                                   detalle: motivoDevolucion.trim(),
                                 },

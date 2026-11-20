@@ -13,6 +13,7 @@ import {
   exportarChecklistExcel,
   exportarMatrizExcel,
 } from '../../../services/partesInteresadasService';
+import { normalizarEstadoEstandar } from '../../../services/gerenteControlService';
 import { ModalImpresionPdfChecklist } from './ModalImpresionPdfChecklist';
 import {
   Download,
@@ -126,7 +127,18 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {cargos.map((cargo) => {
             const itemsCargo = items.filter((it) => it.cargo === cargo.id);
-            const cumplidas = itemsCargo.filter((it) => it.estado === 'Cumplido').length;
+            const cumplidas = itemsCargo.filter((it) => {
+              const est = normalizarEstadoEstandar(it.estado);
+              return est === 'Cumplido' || est === 'Aprobado';
+            }).length;
+            const enProcesoCount = itemsCargo.filter((it) => {
+              const est = normalizarEstadoEstandar(it.estado);
+              return est === 'En proceso' || est === 'Pendiente de revisión';
+            }).length;
+            const porHacerCount = itemsCargo.filter((it) => {
+              const est = normalizarEstadoEstandar(it.estado);
+              return est === 'Por hacer' || est === 'Devuelto para ajustes';
+            }).length;
             const pct = itemsCargo.length > 0 ? Math.round((cumplidas / itemsCargo.length) * 100) : 0;
 
             return (
@@ -157,20 +169,16 @@ export const DescargaDocumentosTab: React.FC<DescargaDocumentosTabProps> = ({
 
                   <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-mono text-slate-600 space-y-1">
                     <div className="flex justify-between">
-                      <span>Cumplidos:</span>
+                      <span>Cumplido / Aprobado:</span>
                       <strong className="text-emerald-700">{cumplidas}</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span>En proceso:</span>
-                      <strong className="text-amber-700">
-                        {itemsCargo.filter((it) => it.estado === 'En proceso').length}
-                      </strong>
+                      <span>En proceso / Por revisar:</span>
+                      <strong className="text-amber-700">{enProcesoCount}</strong>
                     </div>
                     <div className="flex justify-between">
-                      <span>Pendientes:</span>
-                      <strong className="text-rose-700">
-                        {itemsCargo.filter((it) => it.estado === 'Pendiente').length}
-                      </strong>
+                      <span>Por hacer / Ajustes:</span>
+                      <strong className="text-rose-700">{porHacerCount}</strong>
                     </div>
                   </div>
                 </div>

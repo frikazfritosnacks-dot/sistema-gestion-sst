@@ -15,6 +15,14 @@ import {
   saveStoredHistorialChecklist,
   exportarChecklistExcel,
 } from '../../../services/partesInteresadasService';
+import {
+  ESTADOS_ESTANDAR_FRIKAZ,
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  crearRegistroRevisionGerente,
+  useGerenteAutorizado,
+} from '../../../services/gerenteControlService';
 import { ModalImpresionPdfChecklist } from './ModalImpresionPdfChecklist';
 import {
   Crown,
@@ -35,6 +43,7 @@ import {
   ShieldCheck,
   Paperclip,
   Check,
+  Mail,
 } from 'lucide-react';
 
 interface ChecklistNecesidadesTabProps {
@@ -60,21 +69,32 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
   const [itemEnEdicion, setItemEnEdicion] = useState<ItemChecklistNecesidad | null>(null);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
 
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
   // Formulario de edición rápida de un ítem
-  const [editEstado, setEditEstado] = useState<EstadoCumplimientoChecklist>('Cumplido');
+  const [editEstado, setEditEstado] = useState<EstadoCumplimientoChecklist>('Por hacer');
   const [editObservaciones, setEditObservaciones] = useState('');
   const [editEvidencias, setEditEvidencias] = useState('');
   const [editResponsable, setEditResponsable] = useState('');
   const [editFecha, setEditFecha] = useState('');
 
   // Formulario para guardar nueva evaluación formal en historial
-  const [nuevoEvaluador, setNuevoEvaluador] = useState('Ing. Carlos Mendoza (Coordinador SST)');
+  const [nuevoEvaluador, setNuevoEvaluador] = useState(nombreGerente || 'Andrea Orjuela – Gerente');
   const [nuevasNotasGenerales, setNuevasNotasGenerales] = useState('');
 
   const itemsDelCargo = items.filter((it) => it.cargo === cargoActivo);
-  const cumplidas = itemsDelCargo.filter((it) => it.estado === 'Cumplido').length;
-  const enProceso = itemsDelCargo.filter((it) => it.estado === 'En proceso').length;
-  const pendientes = itemsDelCargo.filter((it) => it.estado === 'Pendiente').length;
+  const cumplidas = itemsDelCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Cumplido' || est === 'Aprobado';
+  }).length;
+  const enProceso = itemsDelCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'En proceso' || est === 'Pendiente de revisión';
+  }).length;
+  const pendientes = itemsDelCargo.filter((it) => {
+    const est = normalizarEstadoEstandar(it.estado);
+    return est === 'Por hacer' || est === 'Devuelto para ajustes';
+  }).length;
   const total = itemsDelCargo.length;
   const porcentaje = total > 0 ? Math.round((cumplidas / total) * 100) : 0;
 
@@ -98,12 +118,33 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
 
   // Cambio rápido de estado directamente desde la fila
   const handleCambiarEstadoRapido = (id: string, nuevoEstado: EstadoCumplimientoChecklist) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
+    const estadoNorm = normalizarEstadoEstandar(nuevoEstado);
+
+    const revisionGerente = esEstadoExclusivoGerente(estadoNorm)
+      ? crearRegistroRevisionGerente(
+          estadoNorm as 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes',
+          `Estado actualizado a "${estadoNorm}" desde la lista de chequeo.`
+        )
+      : null;
+
     const actualizados = items.map((it) =>
       it.id === id
         ? {
             ...it,
-            estado: nuevoEstado,
+            estado: estadoNorm,
             fechaVerificacion: new Date().toISOString().split('T')[0],
+            ...(revisionGerente
+              ? {
+                  fechaRevision: revisionGerente.fechaRevision,
+                  revisadoPor: revisionGerente.revisadoPor,
+                  resultadoRevision: revisionGerente.resultadoRevision,
+                  observacionesRevision: revisionGerente.observaciones,
+                }
+              : {}),
           }
         : it
     );
@@ -113,8 +154,12 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
 
   // Abrir modal de edición detallada de ítem
   const abrirEdicionItem = (item: ItemChecklistNecesidad) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setItemEnEdicion(item);
-    setEditEstado(item.estado);
+    setEditEstado(normalizarEstadoEstandar(item.estado));
     setEditObservaciones(item.observaciones);
     setEditEvidencias(item.evidencias);
     setEditResponsable(item.responsable);
@@ -125,16 +170,37 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
   const guardarEdicionItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemEnEdicion) return;
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
+
+    const estadoNorm = normalizarEstadoEstandar(editEstado);
+
+    const revisionGerente = esEstadoExclusivoGerente(estadoNorm)
+      ? crearRegistroRevisionGerente(
+          estadoNorm as 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes',
+          editObservaciones.trim() || `Validado como "${estadoNorm}".`
+        )
+      : null;
 
     const actualizados = items.map((it) =>
       it.id === itemEnEdicion.id
         ? {
             ...it,
-            estado: editEstado,
+            estado: estadoNorm,
             observaciones: editObservaciones.trim(),
             evidencias: editEvidencias.trim(),
             responsable: editResponsable.trim(),
             fechaVerificacion: editFecha,
+            ...(revisionGerente
+              ? {
+                  fechaRevision: revisionGerente.fechaRevision,
+                  revisadoPor: revisionGerente.revisadoPor,
+                  resultadoRevision: revisionGerente.resultadoRevision,
+                  observacionesRevision: revisionGerente.observaciones,
+                }
+              : {}),
           }
         : it
     );
@@ -147,11 +213,15 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
   // Guardar registro en historial de revisiones
   const handleGuardarRevisionHistorial = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const nuevoRegistro: RegistroHistorialChecklist = {
       id: `rev-${Date.now()}`,
       fecha: new Date().toISOString().split('T')[0],
       cargo: cargoActivo,
-      responsableEvaluador: nuevoEvaluador.trim() || 'Coordinador SST',
+      responsableEvaluador: nuevoEvaluador.trim() || nombreGerente,
       porcentajeCumplimiento: porcentaje,
       cumplidas,
       enProceso,
@@ -185,7 +255,10 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
           {(['gerente', 'operarios', 'conductor'] as CargoChecklistInterno[]).map((c) => {
             const activo = cargoActivo === c;
             const itemsC = items.filter((it) => it.cargo === c);
-            const cumpC = itemsC.filter((it) => it.estado === 'Cumplido').length;
+            const cumpC = itemsC.filter((it) => {
+              const est = normalizarEstadoEstandar(it.estado);
+              return est === 'Cumplido' || est === 'Aprobado';
+            }).length;
             const pctC = itemsC.length > 0 ? Math.round((cumpC / itemsC.length) * 100) : 0;
 
             return (
@@ -269,15 +342,15 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
             <div className="flex items-center gap-4 text-[11px] text-slate-500 mt-1.5">
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
-                <span>Cumplidas: <strong>{cumplidas}</strong></span>
+                <span>Cumplido / Aprobado: <strong>{cumplidas}</strong></span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-amber-400 inline-block" />
-                <span>En proceso: <strong>{enProceso}</strong></span>
+                <span>En proceso / Por revisar: <strong>{enProceso}</strong></span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-rose-400 inline-block" />
-                <span>Pendientes: <strong>{pendientes}</strong></span>
+                <span>Por hacer / Ajustes: <strong>{pendientes}</strong></span>
               </span>
             </div>
           </div>
@@ -287,7 +360,13 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => setModalNuevaRevisionOpen(true)}
+            onClick={() => {
+              if (!esGerente) {
+                solicitarAccesoGerente();
+                return;
+              }
+              setModalNuevaRevisionOpen(true);
+            }}
             className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
             title="Guardar cómo va esta revisión hoy en el historial"
           >
@@ -335,111 +414,126 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
             Puntos por revisar ({total} en total)
           </span>
           <span className="text-[11px] text-slate-500">
-            Toca el estado (Cumplido, En proceso o Pendiente) para cambiarlo, o el lápiz para editar notas y pruebas
+            El equipo marca avances (Por hacer, En proceso, Pendiente de revisión). Solo Gerencia valida Cumplido, Aprobado o Devuelto para ajustes.
           </span>
         </div>
 
         <div className="divide-y divide-slate-200">
-          {itemsDelCargo.map((item) => (
-            <div
-              key={item.id}
-              className={`p-4 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
-                item.estado === 'Cumplido'
-                  ? 'hover:bg-emerald-50/20'
-                  : item.estado === 'En proceso'
-                  ? 'bg-amber-50/20 hover:bg-amber-50/40'
-                  : 'bg-rose-50/20 hover:bg-rose-50/40'
-              }`}
-            >
-              <div className="flex items-start gap-3 flex-1">
-                <span className="h-7 w-7 rounded-xl bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0 border border-slate-200 mt-0.5">
-                  {item.numero}
-                </span>
+          {itemsDelCargo.map((item) => {
+            const badge = getBadgeClassesEstadoFrikaz(item.estado);
+            const esExito = badge.label === 'Cumplido' || badge.label === 'Aprobado';
+            const esRevision = badge.label === 'En proceso' || badge.label === 'Pendiente de revisión';
 
-                <div className="space-y-1.5 flex-1">
-                  <h4 className="text-xs font-bold text-slate-900 leading-snug">
-                    {item.necesidad}
-                  </h4>
+            return (
+              <div
+                key={item.id}
+                className={`p-4 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+                  esExito
+                    ? 'hover:bg-emerald-50/20'
+                    : esRevision
+                      ? 'bg-amber-50/20 hover:bg-amber-50/40'
+                      : 'bg-rose-50/20 hover:bg-rose-50/40'
+                }`}
+              >
+                <div className="flex items-start gap-3 flex-1">
+                  <span className="h-7 w-7 rounded-xl bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0 border border-slate-200 mt-0.5">
+                    {item.numero}
+                  </span>
 
-                  {/* Observaciones y evidencias */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-0.5">
-                    <div className="text-slate-600">
-                      <strong className="text-slate-700">Nota: </strong>
-                      <span>{item.observaciones || 'Sin notas todavía'}</span>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug">
+                        {item.necesidad}
+                      </h4>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${badge.light}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+                        <span>{badge.label}</span>
+                      </span>
                     </div>
-                    <div className="text-slate-600 flex items-center gap-1 truncate">
-                      <Paperclip className="h-3 w-3 text-slate-400 shrink-0" />
-                      <strong className="text-slate-700">Prueba / soporte: </strong>
-                      <span className="truncate italic">{item.evidencias || 'Sin documento'}</span>
+
+                    {/* Observaciones y evidencias */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-0.5">
+                      <div className="text-slate-600">
+                        <strong className="text-slate-700">Nota: </strong>
+                        <span>{item.observaciones || 'Sin notas todavía'}</span>
+                      </div>
+                      <div className="text-slate-600 flex items-center gap-1 truncate">
+                        <Paperclip className="h-3 w-3 text-slate-400 shrink-0" />
+                        <strong className="text-slate-700">Prueba / soporte: </strong>
+                        <span className="truncate italic">{item.evidencias || 'Sin documento'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] text-slate-500 pt-1 font-mono">
+                      <span>
+                        <strong>Encargado:</strong> {item.responsable || 'Por definir'}
+                      </span>
+                      <span>·</span>
+                      <span>
+                        <strong>Fecha:</strong> {item.fechaVerificacion || 'Pendiente'}
+                      </span>
+                      {item.revisadoPor && (
+                        <>
+                          <span>·</span>
+                          <span className="text-emerald-700 font-semibold">
+                            Revisado por Gerencia ({item.fechaRevision || item.fechaVerificacion})
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-[10px] text-slate-500 pt-1 font-mono">
-                    <span>
-                      <strong>Encargado:</strong> {item.responsable || 'Por definir'}
-                    </span>
-                    <span>·</span>
-                    <span>
-                      <strong>Revisado el:</strong> {item.fechaVerificacion || 'Pendiente'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Selector interactivo de estado (3 opciones) y botón de edición */}
-              <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => handleCambiarEstadoRapido(item.id, 'Cumplido')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                      item.estado === 'Cumplido'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-emerald-700'
-                    }`}
-                  >
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span>Cumplido</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleCambiarEstadoRapido(item.id, 'En proceso')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                      item.estado === 'En proceso'
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-amber-700'
-                    }`}
-                  >
-                    <Clock className="h-3 w-3" />
-                    <span>En proceso</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleCambiarEstadoRapido(item.id, 'Pendiente')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                      item.estado === 'Pendiente'
-                        ? 'bg-rose-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-rose-700'
-                    }`}
-                  >
-                    <AlertCircle className="h-3 w-3" />
-                    <span>Pendiente</span>
-                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => abrirEdicionItem(item)}
-                  className="p-2 rounded-xl bg-slate-100 hover:bg-orange-100 hover:text-orange-700 text-slate-600 transition-colors cursor-pointer"
-                  title="Editar observaciones, evidencias y responsable"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                </button>
+                {/* Selector estandarizado de estado (6 estados con control Gerente) y botón de edición */}
+                <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                  <select
+                    value={badge.label}
+                    onChange={(e) =>
+                      handleCambiarEstadoRapido(item.id, e.target.value as EstadoCumplimientoChecklist)
+                    }
+                    className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer focus:outline-none ${badge.light}`}
+                    title={
+                      esGerente
+                        ? 'Cambiar estado del punto'
+                        : 'Solo Gerencia puede marcar Devuelto para ajustes, Cumplido o Aprobado'
+                    }
+                  >
+                    {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                      const soloGerente = esEstadoExclusivoGerente(est);
+                      return (
+                        <option key={est} value={est}>
+                          {est}
+                          {soloGerente && !esGerente ? ' (Solo Gerente)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+
+                  {!esGerente && (
+                    <button
+                      type="button"
+                      onClick={() => solicitarAccesoGerente()}
+                      className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition-colors cursor-pointer"
+                      title="Ingresar con correo de Gerencia para editar o aprobar"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => abrirEdicionItem(item)}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-orange-100 hover:text-orange-700 text-slate-600 transition-colors cursor-pointer"
+                    title="Editar observaciones, evidencias y responsable"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -472,12 +566,25 @@ export const ChecklistNecesidadesTab: React.FC<ChecklistNecesidadesTabProps> = (
                 <label className="font-bold text-slate-700 block">¿Cómo va este punto?</label>
                 <select
                   value={editEstado}
-                  onChange={(e) => setEditEstado(e.target.value as EstadoCumplimientoChecklist)}
+                  onChange={(e) => {
+                    const nextVal = e.target.value as EstadoCumplimientoChecklist;
+                    if (esEstadoExclusivoGerente(nextVal) && !esGerente) {
+                      solicitarAccesoGerente();
+                      return;
+                    }
+                    setEditEstado(nextVal);
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white font-bold"
                 >
-                  <option value="Cumplido">Cumplido (Ya está listo)</option>
-                  <option value="En proceso">En proceso (Se está haciendo)</option>
-                  <option value="Pendiente">Pendiente (Falta hacerlo)</option>
+                  {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                    const soloGerente = esEstadoExclusivoGerente(est);
+                    return (
+                      <option key={est} value={est}>
+                        {est}
+                        {soloGerente && !esGerente ? ' (Solo Gerente)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { NormaPhvaItem } from '../types/phvaEvidence';
+import { normalizarEstadoEstandar } from './gerenteControlService';
 
 /**
  * Servicio para generar la Matriz Excel Automatizada de Frikaz S.A.S.
@@ -74,12 +75,12 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   });
 
   const listasData = [
-    ['SST', 'Cumple', 'Planear', 'Responsable SG-SST', 'Procedimiento Documentado', 'Abierta'],
-    ['Ambiental', 'Cumple parcialmente', 'Hacer', 'Líder Gestión Ambiental', 'Registro o Formato Firmado', 'En proceso'],
-    ['Integral', 'No cumple', 'Verificar', 'Gerencia General / Representante Legal', 'Certificado ARL / SDA', 'Implementada'],
-    ['', 'Pendiente de evaluación', 'Actuar', 'COPASST / Vigía de SST', 'Factura / Manifiesto de Gestor', 'Verificada / Cerrada'],
-    ['', 'No aplica justificado', '', 'Jefe de Planta y Producción', 'Acta de Reunión o Inspección', ''],
-    ['', '', '', 'Gestión Humana', 'Matriz de Peligros o Aspectos', ''],
+    ['SST', 'Por hacer', 'Planear', 'Responsable SG-SST', 'Procedimiento Documentado', 'Por hacer'],
+    ['Ambiental', 'En proceso', 'Hacer', 'Líder Gestión Ambiental', 'Registro o Formato Firmado', 'En proceso'],
+    ['Integral', 'Pendiente de revisión', 'Verificar', 'Gerencia General / Representante Legal', 'Certificado ARL / SDA', 'Pendiente de revisión'],
+    ['', 'Devuelto para ajustes', 'Actuar', 'COPASST / Vigía de SST', 'Factura / Manifiesto de Gestor', 'Devuelto para ajustes'],
+    ['', 'Cumplido', '', 'Jefe de Planta y Producción', 'Acta de Reunión o Inspección', 'Cumplido'],
+    ['', 'Aprobado', '', 'Gestión Humana', 'Matriz de Peligros o Aspectos', 'Aprobado'],
     ['', '', '', 'Asesor Externo SST', 'Informe de Auditoría o Medición', ''],
   ];
 
@@ -188,13 +189,13 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   // Fila de encabezados de métricas
   const kpiHeaders = [
     { col: 'B', label: 'Total Normas' },
-    { col: 'C', label: 'Cumple (Verde)' },
-    { col: 'D', label: 'Cumple Parcial' },
-    { col: 'E', label: 'No Cumple (Rojo)' },
-    { col: 'F', label: 'Pendientes' },
-    { col: 'G', label: 'No Aplica' },
+    { col: 'C', label: 'Cumplido / Aprobado' },
+    { col: 'D', label: 'En proceso / Rev.' },
+    { col: 'E', label: 'Devuelto ajustes' },
+    { col: 'F', label: 'Por hacer' },
+    { col: 'G', label: 'No aplica' },
     { col: 'H', label: '% Cumplimiento' },
-    { col: 'I', label: 'Acciones Abiertas' },
+    { col: 'I', label: 'Acciones por cerrar' },
   ];
 
   kpiHeaders.forEach((kpi) => {
@@ -210,6 +211,21 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   // Fila de valores con fórmulas de Excel
   const maxRowNormas = Math.max(items.length + 2, 80);
 
+  const countCumplidos = items.filter((i) => {
+    const e = normalizarEstadoEstandar(i.estado);
+    return e === 'Cumplido' || e === 'Aprobado';
+  }).length;
+  const countProceso = items.filter((i) => {
+    const e = normalizarEstadoEstandar(i.estado);
+    return e === 'En proceso' || e === 'Pendiente de revisión';
+  }).length;
+  const countDevueltos = items.filter(
+    (i) => normalizarEstadoEstandar(i.estado) === 'Devuelto para ajustes'
+  ).length;
+  const countPorHacer = items.filter(
+    (i) => normalizarEstadoEstandar(i.estado) === 'Por hacer'
+  ).length;
+
   // Total Normas
   const cellTotal = wsInicio.getCell('B17');
   cellTotal.value = { formula: `COUNTA('Matriz PHVA Unificada'!A3:A${maxRowNormas})`, result: items.length };
@@ -218,33 +234,45 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   cellTotal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_GRIS_FONDO } };
   cellTotal.border = BORDER_THIN;
 
-  // Cumple
+  // Cumplido + Aprobado
   const cellCumple = wsInicio.getCell('C17');
-  cellCumple.value = { formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumple")`, result: items.filter((i) => i.estado === 'CUMPLE').length };
+  cellCumple.value = {
+    formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumplido")+COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Aprobado")`,
+    result: countCumplidos,
+  };
   cellCumple.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: COLOR_VERDE_TEXTO } };
   cellCumple.alignment = { horizontal: 'center', vertical: 'middle' };
   cellCumple.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
   cellCumple.border = BORDER_THIN;
 
-  // Cumple Parcial
+  // En proceso + Pendiente de revisión
   const cellParcial = wsInicio.getCell('D17');
-  cellParcial.value = { formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumple parcialmente")`, result: items.filter((i) => i.estado === 'PARCIAL').length };
+  cellParcial.value = {
+    formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "En proceso")+COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Pendiente de revisión")`,
+    result: countProceso,
+  };
   cellParcial.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: COLOR_AMARILLO_TEXTO } };
   cellParcial.alignment = { horizontal: 'center', vertical: 'middle' };
   cellParcial.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
   cellParcial.border = BORDER_THIN;
 
-  // No Cumple
+  // Devuelto para ajustes
   const cellNoCumple = wsInicio.getCell('E17');
-  cellNoCumple.value = { formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "No cumple")`, result: items.filter((i) => i.estado === 'NO_CUMPLE').length };
+  cellNoCumple.value = {
+    formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Devuelto para ajustes")`,
+    result: countDevueltos,
+  };
   cellNoCumple.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: COLOR_ROJO_TEXTO } };
   cellNoCumple.alignment = { horizontal: 'center', vertical: 'middle' };
   cellNoCumple.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
   cellNoCumple.border = BORDER_THIN;
 
-  // Pendientes
+  // Por hacer
   const cellPendiente = wsInicio.getCell('F17');
-  cellPendiente.value = { formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Pendiente de evaluación")`, result: items.filter((i) => i.estado === 'PENDIENTE').length };
+  cellPendiente.value = {
+    formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Por hacer")`,
+    result: countPorHacer,
+  };
   cellPendiente.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: COLOR_GRIS_TEXTO } };
   cellPendiente.alignment = { horizontal: 'center', vertical: 'middle' };
   cellPendiente.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_GRIS_PENDIENTE } };
@@ -252,17 +280,17 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
 
   // No Aplica
   const cellNoAplica = wsInicio.getCell('G17');
-  cellNoAplica.value = { formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "No aplica justificado")`, result: 0 };
+  cellNoAplica.value = { formula: `COUNTIF('Matriz PHVA Unificada'!R3:R${maxRowNormas}, "No aplica")`, result: 0 };
   cellNoAplica.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: COLOR_AZUL_MEDIO } };
   cellNoAplica.alignment = { horizontal: 'center', vertical: 'middle' };
   cellNoAplica.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_GRIS_FONDO } };
   cellNoAplica.border = BORDER_THIN;
 
-  // % Cumplimiento General (Fórmula con ponderación: Cumple = 100%, Parcial = 50%, excluyendo no aplica y pendientes del denominador)
+  // % Cumplimiento General
   const cellPorc = wsInicio.getCell('H17');
   cellPorc.value = {
-    formula: `IF((C17+D17+E17)>0, (C17 + (D17*0.5))/(C17+D17+E17), 0)`,
-    result: 0.96,
+    formula: `IF((C17+D17+E17+F17)>0, (C17 + (D17*0.5))/(C17+D17+E17+F17), 0)`,
+    result: items.length > 0 ? (countCumplidos + countProceso * 0.5) / items.length : 0,
   };
   cellPorc.numFmt = '0.0%';
   cellPorc.font = { name: 'Segoe UI', size: 15, bold: true, color: { argb: COLOR_BLANCO } };
@@ -270,9 +298,12 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   cellPorc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_NARANJA } };
   cellPorc.border = BORDER_THIN;
 
-  // Acciones Abiertas
+  // Acciones por cerrar
   const cellAcciones = wsInicio.getCell('I17');
-  cellAcciones.value = { formula: `COUNTIF('Plan de acción'!I3:I50, "Abierta") + COUNTIF('Plan de acción'!I3:I50, "En proceso")`, result: 1 };
+  cellAcciones.value = {
+    formula: `COUNTIF('Plan de acción'!I3:I50, "Por hacer") + COUNTIF('Plan de acción'!I3:I50, "En proceso") + COUNTIF('Plan de acción'!I3:I50, "Pendiente de revisión")`,
+    result: 3,
+  };
   cellAcciones.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: COLOR_AZUL_OSCURO } };
   cellAcciones.alignment = { horizontal: 'center', vertical: 'middle' };
   cellAcciones.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_NARANJA_PASTEL } };
@@ -291,15 +322,15 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   const compAmbHeader = wsInicio.getCell('F20');
   compAmbHeader.value = 'GESTIÓN AMBIENTAL (IMPACTOS, RESIDUOS Y RECURSOS)';
   compAmbHeader.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: COLOR_BLANCO } };
-  compAmbHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF065F46' } }; // Verde esmeralda oscuro
+  compAmbHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF065F46' } };
   compAmbHeader.alignment = { horizontal: 'center', vertical: 'middle' };
   wsInicio.getRow(20).height = 24;
 
   const desgloseRows = [
     { label: 'Normas Aplicables:', fSst: `COUNTIF('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST")`, fAmb: `COUNTIF('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental")` },
-    { label: 'Obligaciones Cumplidas:', fSst: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumple")`, fAmb: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumple")` },
-    { label: 'Cumplimiento Parcial:', fSst: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumple parcialmente")`, fAmb: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumple parcialmente")` },
-    { label: 'No Cumplidas:', fSst: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "No cumple")`, fAmb: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "No cumple")` },
+    { label: 'Cumplido / Aprobado:', fSst: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumplido")+COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Aprobado")`, fAmb: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Cumplido")+COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Aprobado")` },
+    { label: 'En proceso / Rev.:', fSst: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "En proceso")+COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Pendiente de revisión")`, fAmb: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "En proceso")+COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Pendiente de revisión")` },
+    { label: 'Por hacer / Devuelto:', fSst: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Por hacer")+COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "SST", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Devuelto para ajustes")`, fAmb: `COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Por hacer")+COUNTIFS('Matriz PHVA Unificada'!B3:B${maxRowNormas}, "Ambiental", 'Matriz PHVA Unificada'!R3:R${maxRowNormas}, "Devuelto para ajustes")` },
   ];
 
   desgloseRows.forEach((item, idx) => {
@@ -451,26 +482,20 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
 
   // Agregar filas de datos reales
   items.forEach((it, idx) => {
-    const rowNum = 3 + idx;
     const codigo = `OBL-${it.area === 'SST' ? 'SST' : it.area === 'AMBIENTAL' ? 'AMB' : 'INT'}-${String(idx + 1).padStart(3, '0')}`;
-    const estadoTexto =
-      it.estado === 'CUMPLE'
-        ? 'Cumple'
-        : it.estado === 'PARCIAL'
-        ? 'Cumple parcialmente'
-        : it.estado === 'NO_CUMPLE'
-        ? 'No cumple'
-        : 'Pendiente de evaluación';
+    const estadoTexto = normalizarEstadoEstandar(it.estado);
+    const avanceNum =
+      estadoTexto === 'Cumplido' || estadoTexto === 'Aprobado'
+        ? 1.0
+        : estadoTexto === 'En proceso' || estadoTexto === 'Pendiente de revisión'
+        ? 0.5
+        : 0.0;
 
     const [tipoNorma, numAnio] = parseNormaType(it.normaOficial);
 
-    // Planear estructurado
     const planearDesc = `Meta: Cumplir ${it.normaOficial} en Frikaz S.A.S. | Encargado: ${it.responsable} | Meta: 100%`;
-    // Hacer estructurado
     const hacerDesc = `Lo que hacemos: ${it.tituloSituacion}. Soporte: ${it.evidenciaCumplimiento}`;
-    // Verificar estructurado
-    const verificarDesc = `Cómo revisamos: Recorrido en planta y revisión de soportes. Fecha: ${it.fechaVerificacion || '2026-10-01'}.`;
-    // Actuar estructurado
+    const verificarDesc = `Cómo revisamos: Recorrido en planta y revisión de soportes. Fecha: ${it.fechaVerificacion || 'Pendiente'}.`;
     const actuarDesc = `Mejora: Mantener medidas seguras en planta Bosa y actualizar el plan anual. Encargado: ${it.responsable}`;
 
     const row = wsMatriz.addRow([
@@ -492,7 +517,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       verificarDesc,
       actuarDesc,
       estadoTexto,
-      it.estado === 'CUMPLE' ? 1.0 : it.estado === 'PARCIAL' ? 0.6 : 0.0,
+      avanceNum,
       '2026-12-15',
       it.observaciones || 'Registrado en sistema automatizado Frikaz S.A.S.',
     ]);
@@ -508,13 +533,13 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       // Columna Estado (Col 18)
       if (colNumber === 18) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (estadoTexto === 'Cumple') {
+        if (estadoTexto === 'Cumplido' || estadoTexto === 'Aprobado') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
           cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_VERDE_TEXTO } };
-        } else if (estadoTexto === 'Cumple parcialmente') {
+        } else if (estadoTexto === 'En proceso' || estadoTexto === 'Pendiente de revisión') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
           cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_AMARILLO_TEXTO } };
-        } else if (estadoTexto === 'No cumple') {
+        } else if (estadoTexto === 'Devuelto para ajustes') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
           cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_ROJO_TEXTO } };
         } else {
@@ -526,7 +551,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
         cell.dataValidation = {
           type: 'list',
           allowBlank: true,
-          formulae: ["'Listas'!$B$2:$B$6"],
+          formulae: ["'Listas'!$B$2:$B$7"],
           showErrorMessage: true,
           errorTitle: 'Estado inválido',
           error: 'Por favor seleccione un estado de la lista desplegable.',
@@ -599,7 +624,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   });
 
   sstItems.forEach((it, idx) => {
-    const estadoTexto = it.estado === 'CUMPLE' ? 'Cumple' : it.estado === 'PARCIAL' ? 'Cumple parcialmente' : it.estado === 'NO_CUMPLE' ? 'No cumple' : 'Pendiente de evaluación';
+    const estadoTexto = normalizarEstadoEstandar(it.estado);
     const row = wsSst.addRow([
       `SST-${String(idx + 1).padStart(3, '0')}`,
       it.normaOficial,
@@ -609,7 +634,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       it.tituloSituacion,
       it.evidenciaCumplimiento,
       estadoTexto,
-      it.fechaVerificacion || '2026-10-01',
+      it.fechaVerificacion || 'Pendiente',
     ]);
     row.height = 32;
     row.eachCell((cell, cNum) => {
@@ -618,9 +643,9 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       cell.border = BORDER_THIN;
       if (cNum === 8) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (estadoTexto === 'Cumple') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
-        else if (estadoTexto === 'Cumple parcialmente') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
-        else if (estadoTexto === 'No cumple') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
+        if (estadoTexto === 'Cumplido' || estadoTexto === 'Aprobado') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
+        else if (estadoTexto === 'En proceso' || estadoTexto === 'Pendiente de revisión') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
+        else if (estadoTexto === 'Devuelto para ajustes') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
         else cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_GRIS_PENDIENTE } };
       }
       if (cNum === 1 || cNum === 3 || cNum === 9) cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -679,7 +704,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   });
 
   ambItems.forEach((it, idx) => {
-    const estadoTexto = it.estado === 'CUMPLE' ? 'Cumple' : it.estado === 'PARCIAL' ? 'Cumple parcialmente' : it.estado === 'NO_CUMPLE' ? 'No cumple' : 'Pendiente de evaluación';
+    const estadoTexto = normalizarEstadoEstandar(it.estado);
     const row = wsAmb.addRow([
       `AMB-${String(idx + 1).padStart(3, '0')}`,
       it.normaOficial,
@@ -689,7 +714,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       it.tituloSituacion,
       it.evidenciaCumplimiento,
       estadoTexto,
-      it.fechaVerificacion || '2026-10-01',
+      it.fechaVerificacion || 'Pendiente',
     ]);
     row.height = 32;
     row.eachCell((cell, cNum) => {
@@ -698,9 +723,9 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       cell.border = BORDER_THIN;
       if (cNum === 8) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (estadoTexto === 'Cumple') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
-        else if (estadoTexto === 'Cumple parcialmente') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
-        else if (estadoTexto === 'No cumple') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
+        if (estadoTexto === 'Cumplido' || estadoTexto === 'Aprobado') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
+        else if (estadoTexto === 'En proceso' || estadoTexto === 'Pendiente de revisión') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
+        else if (estadoTexto === 'Devuelto para ajustes') cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
         else cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_GRIS_PENDIENTE } };
       }
       if (cNum === 1 || cNum === 3 || cNum === 9) cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -771,7 +796,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       '2026-09-01',
       '2026-11-30',
       'En proceso',
-      'Comprobante de inscripción y avance del 80% en el curso.',
+      'Comprobante de inscripción y avance del curso.',
       'En seguimiento',
     ],
     [
@@ -783,9 +808,9 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       'Coordinador Ambiental',
       '2026-09-15',
       '2026-10-30',
-      'Abierta',
-      'Recibo sellado por entrega de 220 litros de aceite usado.',
-      'Pendiente de cierre',
+      'Por hacer',
+      'Recibo sellado por entrega de aceite usado.',
+      'Pendiente',
     ],
     [
       'ACT-2026-003',
@@ -796,9 +821,9 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       'Responsable SG-SST / Jefe Planta',
       '2026-08-01',
       '2026-08-20',
-      'Verificada / Cerrada',
-      'Ficha de inspección y etiqueta de recarga vigente hasta 2027.',
-      'Funcionando al 100%',
+      'Pendiente de revisión',
+      'Ficha de inspección subida para visto bueno del Gerente.',
+      'En revisión de Gerencia',
     ],
   ];
 
@@ -811,15 +836,18 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       cell.border = BORDER_THIN;
       if (cNum === 9) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        if (cell.value === 'Verificada / Cerrada') {
+        if (cell.value === 'Cumplido' || cell.value === 'Aprobado') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_VERDE_CUMPLE } };
           cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_VERDE_TEXTO } };
-        } else if (cell.value === 'En proceso') {
+        } else if (cell.value === 'En proceso' || cell.value === 'Pendiente de revisión') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_AMARILLO_PARCIAL } };
           cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_AMARILLO_TEXTO } };
-        } else {
+        } else if (cell.value === 'Devuelto para ajustes') {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_ROJO_NO_CUMPLE } };
           cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_ROJO_TEXTO } };
+        } else {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_GRIS_PENDIENTE } };
+          cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: COLOR_GRIS_TEXTO } };
         }
       }
       if (cNum === 1 || cNum === 2 || cNum === 7 || cNum === 8 || cNum === 11) {

@@ -2,11 +2,16 @@ import React, { useState, useMemo } from 'react';
 import {
   ActividadPlanAnual,
   AreaPlanAnual,
-  EstadoActividadPlan,
   OrigenActividadPlan,
   PlanAnualVigencia,
   ResponsablePlanOption,
 } from '../../types/planAnual';
+import {
+  EstadoEstandarFrikaz,
+  ESTADOS_ESTANDAR_FRIKAZ,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../../services/gerenteControlService';
 import {
   Calendar,
   List,
@@ -58,7 +63,7 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
   const [filtroArea, setFiltroArea] = useState<AreaPlanAnual | 'TODAS'>('TODAS');
   const [filtroOrigen, setFiltroOrigen] = useState<OrigenActividadPlan | 'TODOS'>('TODOS');
   const [filtroRecurrencia, setFiltroRecurrencia] = useState<'TODAS' | 'RECURRENTES' | 'UNICAS'>('TODAS');
-  const [filtroEstado, setFiltroEstado] = useState<EstadoActividadPlan | 'TODOS'>('TODOS');
+  const [filtroEstado, setFiltroEstado] = useState<EstadoEstandarFrikaz | 'TODOS'>('TODOS');
   const [filtroResponsable, setFiltroResponsable] = useState<string>('TODOS');
   const [mesCalendario, setMesCalendario] = useState<number>(new Date().getMonth() + 1);
 
@@ -92,7 +97,8 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
           : filtroRecurrencia === 'RECURRENTES'
           ? a.esRecurrente
           : !a.esRecurrente;
-      const matchEstado = filtroEstado === 'TODOS' || a.estado === filtroEstado;
+      const matchEstado =
+        filtroEstado === 'TODOS' || normalizarEstadoEstandar(a.estado) === filtroEstado;
       const matchResp =
         filtroResponsable === 'TODOS' || a.responsableNombre === filtroResponsable;
       return (
@@ -129,19 +135,8 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
     return { estimado, ejecutado, disponible, pct };
   }, [actividadesFiltradas]);
 
-  const getEstadoBadge = (estado: EstadoActividadPlan) => {
-    switch (estado) {
-      case 'CUMPLIDA':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-      case 'VENCIDA':
-        return 'bg-rose-100 text-rose-800 border-rose-300';
-      case 'REQUIERE_REVISION':
-        return 'bg-amber-100 text-amber-900 border-amber-300';
-      case 'EN_PROCESO':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-300';
-    }
+  const getEstadoBadge = (estado: string) => {
+    return getBadgeClassesEstadoFrikaz(estado).light;
   };
 
   // Construcción de matriz de días para la vista Calendario Mensual
@@ -326,11 +321,11 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
             className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white"
           >
             <option value="TODOS">Estado: Todos</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="EN_PROCESO">En Proceso</option>
-            <option value="REQUIERE_REVISION">Requiere Revisión</option>
-            <option value="CUMPLIDA">Cumplida</option>
-            <option value="VENCIDA">Vencida</option>
+            {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
+              <option key={est} value={est}>
+                {est}
+              </option>
+            ))}
           </select>
 
           <select
@@ -443,7 +438,7 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                             act.estado
                           )}`}
                         >
-                          {act.estado.replace('_', ' ')}
+                          {getBadgeClassesEstadoFrikaz(act.estado).label}
                         </span>
                         <p className="text-[10px] font-mono text-slate-500 mt-1">
                           Límite: {act.fechaLimite}
@@ -460,15 +455,16 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                       {MESES_CORTOS.map((_, idx) => {
                         const mNum = idx + 1;
                         const prog = act.programacionMensual.includes(mNum);
+                        const estNorm = normalizarEstadoEstandar(act.estado);
                         const colorCell = !prog
                           ? 'bg-transparent'
-                          : act.estado === 'CUMPLIDA'
+                          : estNorm === 'Cumplido' || estNorm === 'Aprobado'
                           ? 'bg-emerald-500'
-                          : act.estado === 'VENCIDA'
+                          : estNorm === 'Devuelto para ajustes'
                           ? 'bg-rose-500'
-                          : act.estado === 'REQUIERE_REVISION'
+                          : estNorm === 'Pendiente de revisión'
                           ? 'bg-amber-500'
-                          : act.estado === 'EN_PROCESO'
+                          : estNorm === 'En proceso'
                           ? 'bg-[#f97316]'
                           : 'bg-[#0f172a]';
 
@@ -613,7 +609,7 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                           act.estado
                         )}`}
                       >
-                        7. {act.estado.replace('_', ' ')}
+                        7. {getBadgeClassesEstadoFrikaz(act.estado).label}
                       </span>
                       {act.esRecurrente && (
                         <span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold text-[10px]">
@@ -642,16 +638,17 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                       <Edit3 className="h-3.5 w-3.5" />
                       <span>Editar</span>
                     </button>
-                    {plan.estadoAprobacion !== 'CERRADO' && (
-                      <button
-                        type="button"
-                        onClick={() => onEliminarActividad(act.id)}
-                        className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700 cursor-pointer"
-                        title="Eliminar actividad"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                    {normalizarEstadoEstandar(plan.estadoAprobacion) !== 'Aprobado' &&
+                      normalizarEstadoEstandar(plan.estadoAprobacion) !== 'Cumplido' && (
+                        <button
+                          type="button"
+                          onClick={() => onEliminarActividad(act.id)}
+                          className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700 cursor-pointer"
+                          title="Eliminar actividad"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                   </div>
                 </div>
 

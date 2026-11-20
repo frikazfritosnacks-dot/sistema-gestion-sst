@@ -15,6 +15,10 @@ import { CaracterizacionEmpresaDinamica } from '../../types/dynamicConfig';
 import { exportarPlanAnualExcel } from '../../services/planAnualService';
 import { calcularResultadoIndicadorPeriodo } from '../../services/planAnualSgsstService';
 import {
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../../services/gerenteControlService';
+import {
   FileSpreadsheet,
   Printer,
   BarChart3,
@@ -90,14 +94,17 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
 
   const resumen = useMemo(() => {
     const total = actividadesFiltradas.length;
-    const cumplidas = actividadesFiltradas.filter((a) => a.estado === 'CUMPLIDA').length;
-    const vencidas = actividadesFiltradas.filter((a) => a.estado === 'VENCIDA').length;
-    const pendientes = actividadesFiltradas.filter(
-      (a) =>
-        a.estado === 'PENDIENTE' ||
-        a.estado === 'EN_PROCESO' ||
-        a.estado === 'REQUIERE_REVISION'
+    const cumplidas = actividadesFiltradas.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
+    const vencidas = actividadesFiltradas.filter(
+      (a) => normalizarEstadoEstandar(a.estado) === 'Devuelto para ajustes'
     ).length;
+    const pendientes = actividadesFiltradas.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return est === 'Por hacer' || est === 'En proceso' || est === 'Pendiente de revisión';
+    }).length;
     const recurrentes = actividadesFiltradas.filter((a) => a.esRecurrente).length;
     const pctCumplimiento = total > 0 ? Math.round((cumplidas / total) * 1000) / 10 : 0;
 
@@ -117,11 +124,19 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
     );
     const evidenciasPendientes = actividadesFiltradas.reduce(
       (acc, a) =>
-        acc + a.evidencias.filter((e) => e.estadoRevision === 'PENDIENTE_REVISION').length,
+        acc +
+        a.evidencias.filter(
+          (e) => normalizarEstadoEstandar(e.estadoRevision) === 'Pendiente de revisión'
+        ).length,
       0
     );
     const evidenciasAprobadas = actividadesFiltradas.reduce(
-      (acc, a) => acc + a.evidencias.filter((e) => e.estadoRevision === 'APROBADA').length,
+      (acc, a) =>
+        acc +
+        a.evidencias.filter((e) => {
+          const est = normalizarEstadoEstandar(e.estadoRevision);
+          return est === 'Aprobado' || est === 'Cumplido';
+        }).length,
       0
     );
 
@@ -165,8 +180,9 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
         ejec: 0,
       };
       cur.programadas += 1;
-      if (a.estado === 'CUMPLIDA') cur.cumplidas += 1;
-      else if (a.estado === 'VENCIDA') cur.vencidas += 1;
+      const est = normalizarEstadoEstandar(a.estado);
+      if (est === 'Cumplido' || est === 'Aprobado') cur.cumplidas += 1;
+      else if (est === 'Devuelto para ajustes') cur.vencidas += 1;
       else cur.pendientes += 1;
       cur.presup += a.presupuestoEstimado || 0;
       cur.ejec += a.gastoEjecutado || 0;
@@ -181,7 +197,10 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
       const acts = actividadesFiltradas.filter((a) =>
         a.programacionMensual.some((m) => meses.includes(m))
       );
-      const comp = acts.filter((a) => a.estado === 'CUMPLIDA').length;
+      const comp = acts.filter((a) => {
+        const est = normalizarEstadoEstandar(a.estado);
+        return est === 'Cumplido' || est === 'Aprobado';
+      }).length;
       const pct = acts.length > 0 ? Math.round((comp / acts.length) * 100) : 0;
       return {
         trimestre: q,
@@ -197,7 +216,10 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
     return MESES_NOMBRES.map((nombre, idx) => {
       const mesNum = idx + 1;
       const acts = actividadesFiltradas.filter((a) => a.programacionMensual.includes(mesNum));
-      const comp = acts.filter((a) => a.estado === 'CUMPLIDA').length;
+      const comp = acts.filter((a) => {
+        const est = normalizarEstadoEstandar(a.estado);
+        return est === 'Cumplido' || est === 'Aprobado';
+      }).length;
       const pct = acts.length > 0 ? Math.round((comp / acts.length) * 100) : 0;
       return {
         mes: nombre,
@@ -317,7 +339,7 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
           </span>
         </div>
         <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-xs">
-          <span className="text-[10px] font-bold uppercase text-emerald-700 block">Ya hechas</span>
+          <span className="text-[10px] font-bold uppercase text-emerald-700 block">Cumplidas</span>
           <span className="text-2xl font-black font-mono text-emerald-950">
             {resumen.cumplidas}
           </span>
@@ -326,13 +348,13 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
           </span>
         </div>
         <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 shadow-xs">
-          <span className="text-[10px] font-bold uppercase text-amber-800 block">Por hacer</span>
+          <span className="text-[10px] font-bold uppercase text-amber-800 block">Activas / Revisión</span>
           <span className="text-2xl font-black font-mono text-amber-950">
             {resumen.pendientes}
           </span>
         </div>
         <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 shadow-xs">
-          <span className="text-[10px] font-bold uppercase text-rose-700 block">Atrasadas</span>
+          <span className="text-[10px] font-bold uppercase text-rose-700 block">Devueltas / Ajustes</span>
           <span className="text-2xl font-black font-mono text-rose-950">{resumen.vencidas}</span>
         </div>
         <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
@@ -397,8 +419,8 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
                 <tr className="border-b border-slate-200 text-slate-500 uppercase text-[10px]">
                   <th className="py-2 pr-2">Encargado</th>
                   <th className="py-2 text-center">Plan.</th>
-                  <th className="py-2 text-center">Listas</th>
-                  <th className="py-2 text-center">Atras.</th>
+                  <th className="py-2 text-center">Cumpl.</th>
+                  <th className="py-2 text-center">Ajustes</th>
                   <th className="py-2 text-right">Separado</th>
                   <th className="py-2 text-right">Gastado</th>
                 </tr>
@@ -540,19 +562,29 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
             <h5 className="font-black text-slate-900 flex items-center gap-1.5">
               <Award className="h-4 w-4 text-emerald-600" />
-              <span>Siete Estándares Mínimos ({plan.vigencia})</span>
+              <span>Siete Estándares Mínimos (3. VERIFICAR · {plan.vigencia})</span>
             </h5>
             <p className="text-[11px] text-slate-600">
-              Verificados como cumplidos:{' '}
+              Aprobados / Cumplidos por Gerencia:{' '}
               <strong className="text-emerald-700">
-                {estandares.filter((e) => e.estadoRevision === 'CUMPLE_VERIFICADO').length} de{' '}
-                {estandares.length}
+                {
+                  estandares.filter((e) => {
+                    const est = normalizarEstadoEstandar(e.estadoRevision);
+                    return est === 'Cumplido' || est === 'Aprobado';
+                  }).length
+                }{' '}
+                de {estandares.length}
               </strong>
             </p>
             <p className="text-[11px] text-slate-600">
-              Con soporte pendiente o mejora:{' '}
+              Pendientes o en proceso:{' '}
               <strong className="text-amber-700">
-                {estandares.filter((e) => e.estadoRevision !== 'CUMPLE_VERIFICADO').length}
+                {
+                  estandares.filter((e) => {
+                    const est = normalizarEstadoEstandar(e.estadoRevision);
+                    return est !== 'Cumplido' && est !== 'Aprobado';
+                  }).length
+                }
               </strong>
             </p>
           </div>
@@ -560,16 +592,26 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
             <h5 className="font-black text-slate-900 flex items-center gap-1.5">
               <Wrench className="h-4 w-4 text-[#f97316]" />
-              <span>Acciones de Mejora (ACTUAR)</span>
+              <span>Acciones de Mejora (4. ACTUAR)</span>
             </h5>
             <p className="text-[11px] text-slate-600">
               Total registradas: <strong>{accionesMejora.length}</strong> · Cumplidas:{' '}
               <strong className="text-emerald-700">
-                {accionesMejora.filter((a) => a.estado === 'CUMPLIDA').length}
+                {
+                  accionesMejora.filter((a) => {
+                    const est = normalizarEstadoEstandar(a.estado);
+                    return est === 'Cumplido' || est === 'Aprobado';
+                  }).length
+                }
               </strong>{' '}
-              · Pendientes/En proceso:{' '}
+              · Por hacer / En revisión:{' '}
               <strong className="text-amber-700">
-                {accionesMejora.filter((a) => a.estado !== 'CUMPLIDA').length}
+                {
+                  accionesMejora.filter((a) => {
+                    const est = normalizarEstadoEstandar(a.estado);
+                    return est !== 'Cumplido' && est !== 'Aprobado';
+                  }).length
+                }
               </strong>
             </p>
           </div>
@@ -665,11 +707,15 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
             <tbody className="divide-y divide-slate-100">
               {vigenciasOrdenadas.map((v) => {
                 const tot = v.actividades.length;
-                const cump = v.actividades.filter((a) => a.estado === 'CUMPLIDA').length;
+                const cump = v.actividades.filter((a) => {
+                  const est = normalizarEstadoEstandar(a.estado);
+                  return est === 'Cumplido' || est === 'Aprobado';
+                }).length;
                 const pct = tot > 0 ? Math.round((cump / tot) * 1000) / 10 : 0;
                 const pres = v.actividades.reduce((s, a) => s + (a.presupuestoEstimado || 0), 0);
                 const ej = v.actividades.reduce((s, a) => s + (a.gastoEjecutado || 0), 0);
                 const esActual = v.vigencia === plan.vigencia;
+                const badgeVig = getBadgeClassesEstadoFrikaz(v.estadoAprobacion);
 
                 return (
                   <tr
@@ -680,8 +726,10 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
                       {v.vigencia}
                     </td>
                     <td className="p-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold text-[10px]">
-                        {v.estadoAprobacion}
+                      <span
+                        className={`px-2 py-0.5 rounded border font-bold text-[10px] ${badgeVig.light}`}
+                      >
+                        {badgeVig.label}
                       </span>
                     </td>
                     <td className="p-3">{v.empresaSnapshot.grupoEstandares0312}</td>

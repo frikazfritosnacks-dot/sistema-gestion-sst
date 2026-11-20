@@ -3,6 +3,8 @@
 // Frikaz S.A.S. — Sistema de Acreditación y Gamificación SG-SST
 // ============================================================================
 
+import avatarAndreaGerente from '../assets/images/avatar_andrea_gerente_1795180599660.jpg';
+
 export interface GameAssetInfo {
   webp: string;
   jpg: string;
@@ -14,9 +16,9 @@ export const GAME_IMAGES = {
   // Los 6 Avatares Ilustrados Canónicos (exclusivos sin fotos reales)
   avatars: {
     gerente: {
-      webp: '/assets/images/avatar_gerente.webp',
-      jpg: '/assets/images/avatar_gerente.jpg',
-      alt: 'Avatar Ilustrado: Gerente General Frikaz S.A.S.',
+      webp: avatarAndreaGerente,
+      jpg: avatarAndreaGerente,
+      alt: 'Avatar Ilustrado: Andrea Orjuela – Gerente Frikaz S.A.S.',
     },
     operarioFrito: {
       webp: '/assets/images/avatar_operario_frito.webp',
@@ -117,8 +119,14 @@ export const GAME_IMAGES = {
 export function getAvatarUrlPorCargo(cargoIdOrNombre: string): string {
   const norm = (cargoIdOrNombre || '').toLowerCase();
 
-  if (norm.includes('gerent') || norm.includes('direc') || norm.includes('admin') || norm.includes('vigia')) {
-    return GAME_IMAGES.avatars.gerente.webp;
+  if (
+    norm.includes('gerent') ||
+    norm.includes('andrea') ||
+    norm.includes('direc') ||
+    norm.includes('admin') ||
+    norm.includes('vigia')
+  ) {
+    return GAME_IMAGES.avatars.gerente.jpg;
   }
   if (norm.includes('frito') || norm.includes('coccion') || norm.includes('freid')) {
     return GAME_IMAGES.avatars.operarioFrito.webp;
@@ -179,7 +187,7 @@ export function precargarRecursosCriticos(): void {
     GAME_IMAGES.scenes.heroLobby.webp,
     GAME_IMAGES.scenes.guiaPersonaje.webp,
     GAME_IMAGES.avatars.operarioFrito.webp,
-    GAME_IMAGES.avatars.gerente.webp,
+    GAME_IMAGES.avatars.gerente.jpg,
   ];
 
   // Ejecutar en requestIdleCallback o timeout para no bloquear el hilo de ejecución principal

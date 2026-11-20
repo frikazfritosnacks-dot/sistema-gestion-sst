@@ -12,14 +12,13 @@ import {
 import { GameAvatar } from './GameAvatar';
 import {
   Users,
-  ShieldCheck,
   CheckCircle2,
   Clock,
-  KeyRound,
+  Mail,
   X,
   ChevronRight,
-  Flame,
 } from 'lucide-react';
+import { CORREO_GERENTE_AUTORIZADO, useGerenteAutorizado } from '../../services/gerenteControlService';
 
 interface WorkerSelectorModalProps {
   isOpen: boolean;
@@ -34,6 +33,7 @@ export const WorkerSelectorModal: React.FC<WorkerSelectorModalProps> = ({
   trabajadorActual,
   onSeleccionarTrabajador,
 }) => {
+  const { esGerente } = useGerenteAutorizado();
   if (!isOpen) return null;
 
   const trabajadores = getStoredTrabajadores();
@@ -65,12 +65,13 @@ export const WorkerSelectorModal: React.FC<WorkerSelectorModalProps> = ({
         {/* Lista de trabajadores */}
         <div className="p-6 space-y-3 max-h-[70vh] overflow-y-auto">
           <p className="text-xs text-slate-400 mb-2">
-            Elige a un compañero para ver su avance en los recorridos de <em>Misión Frikaz</em>:
+            Elige a un compañero para ver su avance en los recorridos de <em>Misión Frikaz</em>. El perfil de Gerencia requiere ingresar con el correo <strong className="text-amber-300">{CORREO_GERENTE_AUTORIZADO}</strong>:
           </p>
 
           {trabajadores.map((trab) => {
             const esActivo = trab.id === trabajadorActual.id;
             const pasaporte = getPasaporteDigital(trab.id);
+            const requiereCorreoGerente = Boolean(trab.esAdmin && !esGerente);
 
             return (
               <button
@@ -94,11 +95,12 @@ export const WorkerSelectorModal: React.FC<WorkerSelectorModalProps> = ({
                     size="md"
                   />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-bold text-xs sm:text-sm text-white truncate">{trab.nombre}</h4>
                       {trab.esAdmin && (
-                        <span className="text-[10px] px-2 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                          Admin SST
+                        <span className="text-[10px] px-2 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 inline-flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {requiereCorreoGerente ? 'Ingreso con correo' : 'Gerente Verificada'}
                         </span>
                       )}
                       {esActivo && (

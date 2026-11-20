@@ -34,6 +34,10 @@ import {
   Wrench,
   ArrowRight,
 } from 'lucide-react';
+import {
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../../services/gerenteControlService';
 
 export type SubTabPlanear =
   | 'riesgos'
@@ -110,7 +114,10 @@ export const PlanAnualPlanearTab: React.FC<PlanAnualPlanearTabProps> = ({
 }) => {
   const [subTab, setSubTab] = useState<SubTabPlanear>(subTabInicial);
 
-  const accionesPendientes = accionesMejora.filter((a) => a.estado !== 'CUMPLIDA');
+  const accionesPendientes = accionesMejora.filter((a) => {
+    const est = normalizarEstadoEstandar(a.estado);
+    return est !== 'Cumplido' && est !== 'Aprobado';
+  });
   const riesgosCriticosCount = riesgos.filter(
     (r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II'
   ).length;
@@ -120,14 +127,14 @@ export const PlanAnualPlanearTab: React.FC<PlanAnualPlanearTabProps> = ({
 
   return (
     <div className="space-y-5 text-xs">
-      {/* Cabecera interna de PLANEAR */}
+      {/* Cabecera interna de 1. PLANEAR */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
         <div>
           <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-            4. PLANEAR — Riesgos Prioritarios, Normas, Objetivos, Cronograma, Alertas y Reportes ({plan.vigencia})
+            1. PLANEAR — Objetivos, Metas, Riesgos Nivel I y II, Normas, Fechas y Recursos ({plan.vigencia})
           </h3>
           <p className="text-[11px] text-slate-500">
-            Organice todo el trabajo del año conectando los riesgos Nivel I y II de la matriz, las leyes aplicables, los objetivos y metas, los indicadores de VERIFICAR y el calendario editable.
+            Organice todo el trabajo del año conectando los riesgos Nivel I y II de la matriz, las leyes aplicables, los objetivos y metas, los indicadores y el calendario editable.
           </p>
         </div>
 
@@ -302,23 +309,26 @@ export const PlanAnualPlanearTab: React.FC<PlanAnualPlanearTabProps> = ({
                 </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {accionesPendientes.map((acc) => (
-                  <div
-                    key={acc.id}
-                    className="p-2.5 rounded-xl bg-white border border-orange-200 text-[11px]"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <strong className="font-mono text-[#0f172a]">{acc.codigo}</strong>
-                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
-                        {acc.estado.replace(/_/g, ' ')}
+                {accionesPendientes.map((acc) => {
+                  const badgeAcc = getBadgeClassesEstadoFrikaz(acc.estado);
+                  return (
+                    <div
+                      key={acc.id}
+                      className="p-2.5 rounded-xl bg-white border border-orange-200 text-[11px]"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <strong className="font-mono text-[#0f172a]">{acc.codigo}</strong>
+                        <span className={`px-2 py-0.5 rounded border font-bold text-[10px] ${badgeAcc.light}`}>
+                          {badgeAcc.label}
+                        </span>
+                      </div>
+                      <p className="text-slate-700 mt-1">{acc.actividadARealizar}</p>
+                      <span className="text-[10px] text-slate-500">
+                        Responsable: {acc.responsable} · Fecha límite: {acc.fechaLimite}
                       </span>
                     </div>
-                    <p className="text-slate-700 mt-1">{acc.actividadARealizar}</p>
-                    <span className="text-[10px] text-slate-500">
-                      Responsable: {acc.responsable} · Fecha límite: {acc.fechaLimite}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

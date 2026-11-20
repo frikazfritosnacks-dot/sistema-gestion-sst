@@ -13,6 +13,8 @@ import {
   MetricasAdminMisionFrikaz,
 } from '../types/misionFrikaz';
 import { getStoredPoliticaSST } from './organigramaService';
+import { GAME_IMAGES } from './gameAssets';
+import { esGerenteAutorizado, NOMBRE_GERENTE_OFICIAL } from './gerenteControlService';
 
 const STORAGE_KEY_TRABAJADORES = 'frikaz_mision_trabajadores_v2';
 const STORAGE_KEY_PROGRESOS = 'frikaz_mision_progresos_v2';
@@ -27,13 +29,13 @@ const STORAGE_KEY_SESION_ACTIVA = 'frikaz_mision_sesion_activa_v2';
 export const TRABAJADORES_CANONICOS: TrabajadorFrikaz[] = [
   {
     id: 'FRK-DIR-GERENCIA',
-    nombre: 'Gerente',
+    nombre: NOMBRE_GERENTE_OFICIAL,
     cedula: '1.014.223.889',
     cargoId: 'cargo-gerente-general',
     cargoNombre: 'Gerente',
     correo: 'frikaz.fritosnacks@gmail.com',
     area: 'Dirección General y Gestión Estratégica',
-    avatarUrl: '/assets/images/avatar_gerente.webp',
+    avatarUrl: GAME_IMAGES.avatars.gerente.jpg,
     esAdmin: true,
   },
   {
@@ -948,8 +950,10 @@ export function getStoredTrabajadores(): TrabajadorFrikaz[] {
       const canon = canonicosMap.get(t.id);
       return {
         ...t,
+        nombre: canon ? canon.nombre : t.nombre,
         avatarUrl: canon ? canon.avatarUrl : t.avatarUrl,
         cargoNombre: canon ? canon.cargoNombre : t.cargoNombre,
+        esAdmin: canon ? canon.esAdmin : t.esAdmin,
       };
     });
   } catch (err) {
@@ -960,24 +964,42 @@ export function getStoredTrabajadores(): TrabajadorFrikaz[] {
 
 export function getStoredSesionActiva(): TrabajadorFrikaz {
   try {
+    if (esGerenteAutorizado()) {
+      const gerenteCanon = TRABAJADORES_CANONICOS[0];
+      const raw = localStorage.getItem(STORAGE_KEY_SESION_ACTIVA);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.id) {
+          const coincide = TRABAJADORES_CANONICOS.find((t) => t.id === parsed.id || t.cargoId === parsed.cargoId);
+          if (coincide) return coincide;
+        }
+      }
+      return gerenteCanon;
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY_SESION_ACTIVA);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.id) {
-        // Cotejar con la lista canónica para evitar nombres ficticios persistidos de sesiones anteriores
+        // Cotejar con la lista canónica y no permitir perfil de Gerencia sin correo verificado
         const coincide = TRABAJADORES_CANONICOS.find((t) => t.id === parsed.id || t.cargoId === parsed.cargoId);
-        if (coincide) return coincide;
+        if (coincide && coincide.id !== 'FRK-DIR-GERENCIA' && !coincide.esAdmin) {
+          return coincide;
+        }
       }
     }
   } catch (err) {
     console.error('Error leyendo sesión activa:', err);
   }
-  // Por defecto el primer operario de planta (Operario de Frito) para activación obligatoria de la Misión
-  return TRABAJADORES_CANONICOS[0];
+  // Por defecto el primer operario de planta (Operario de Frito)
+  return TRABAJADORES_CANONICOS[1];
 }
 
 export function setStoredSesionActiva(trabajador: TrabajadorFrikaz): void {
   try {
+    if ((trabajador.id === 'FRK-DIR-GERENCIA' || trabajador.esAdmin) && !esGerenteAutorizado()) {
+      return;
+    }
     localStorage.setItem(STORAGE_KEY_SESION_ACTIVA, JSON.stringify(trabajador));
   } catch (err) {
     console.error('Error guardando sesión activa:', err);
@@ -1071,7 +1093,7 @@ export function saveStoredIntentos(intentos: IntentoEvaluacion[]): void {
 
 export function getPasaporteDigital(trabajadorId: string): PasaporteDigital {
   const trabajadores = getStoredTrabajadores();
-  const trabajador = trabajadores.find((t) => t.id === trabajadorId) || TRABAJADORES_CANONICOS[0];
+  const trabajador = trabajadores.find((t) => t.id === trabajadorId) || TRABAJADORES_CANONICOS[1];
   const politicas = getStoredPoliticasMision();
   const todosLosProgresos = getStoredProgresos();
   const trabajadorProgresos = todosLosProgresos[trabajadorId] || {};
@@ -1159,7 +1181,7 @@ export async function procesarEvaluacionMision(
   const politicas = getStoredPoliticasMision();
   const politica = politicas.find((p) => p.id === payload.politicaId);
   const trabajadores = getStoredTrabajadores();
-  const trabajador = trabajadores.find((t) => t.id === payload.trabajadorId) || TRABAJADORES_CANONICOS[0];
+  const trabajador = trabajadores.find((t) => t.id === payload.trabajadorId) || TRABAJADORES_CANONICOS[1];
 
   if (!politica) {
     throw new Error(`Política no encontrada: ${payload.politicaId}`);

@@ -30,6 +30,7 @@ const STORAGE_KEY_POLITICA = 'frikaz_politica_sgsst_v1';
 const STORAGE_KEY_CARGOS = 'frikaz_cargos_sgsst_v1';
 const PLAIN_LANG_POLITICA_FLAG = 'frikaz_politica_plain_lang_v1';
 const PLAIN_LANG_CARGOS_FLAG = 'frikaz_cargos_plain_lang_v1';
+const GERENTE_GATE_POLITICA_FLAG = 'frikaz_politica_gerente_gate_v1';
 
 // ============================================================================
 // DATOS CANÓNICOS DEL ORGANIGRAMA Y RESPONSABILIDADES SST (FRIKAZ S.A.S.)
@@ -38,7 +39,7 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
   // NIVEL 1. ALTA DIRECCIÓN
   {
     id: 'cargo-gerente-general',
-    nombre: 'Gerente General',
+    nombre: 'Andrea Orjuela – Gerente',
     nivelJerarquico: 'ALTA_DIRECCION',
     nivelNombre: 'Nivel 1. Dirección de la Empresa',
     areaProceso: 'Dirección General y Toma de Decisiones',
@@ -312,9 +313,9 @@ export const POLITICA_SST_CANONICA: PoliticaSSTData = {
   ],
   comunicacionRevision:
     'Esta política se comparte con todos los trabajadores, está visible en la planta para quien quiera leerla y se revisa al menos una vez cada año.',
-  nombreFirmante: 'Gerente General',
-  cargoFirmante: 'Gerente General – Frikaz S.A.S.',
-  estado: 'Pendiente de aprobación',
+  nombreFirmante: 'Andrea Orjuela – Gerente',
+  cargoFirmante: 'Gerente – Frikaz S.A.S.',
+  estado: 'En proceso',
   fechaUltimaActualizacion: new Date().toISOString().split('T')[0],
   fechaAprobacion: undefined,
   versionActual: 'Versión 1.0 (2026)',
@@ -326,9 +327,9 @@ export const POLITICA_SST_CANONICA: PoliticaSSTData = {
       version: 'Versión 1.0',
       autor: 'Encargado de SST / Frikaz S.A.S.',
       motivoCambio: 'Redacción clara de los compromisos de seguridad de Frikaz S.A.S.',
-      estado: 'Pendiente de aprobación',
+      estado: 'En proceso',
       detallesModificacion:
-        'Se organizaron los 4 compromisos principales en lenguaje claro y sencillo conforme al Decreto 1072 de 2015.',
+        'Se organizaron los 4 compromisos principales en lenguaje claro y sencillo conforme al Decreto 1072 de 2015; pendiente revisión y aprobación por el Gerente.',
     },
   ],
 };
@@ -341,24 +342,58 @@ export function getStoredPoliticaSST(): PoliticaSSTData {
     const raw = localStorage.getItem(STORAGE_KEY_POLITICA);
     if (!raw) {
       localStorage.setItem(PLAIN_LANG_POLITICA_FLAG, '1');
+      localStorage.setItem(GERENTE_GATE_POLITICA_FLAG, '1');
       return POLITICA_SST_CANONICA;
     }
-    const parsed: PoliticaSSTData = JSON.parse(raw);
+    let parsed: PoliticaSSTData = JSON.parse(raw);
     const alreadyMigrated = localStorage.getItem(PLAIN_LANG_POLITICA_FLAG) === '1';
     if (!alreadyMigrated) {
       localStorage.setItem(PLAIN_LANG_POLITICA_FLAG, '1');
       const esBorradorInicial =
-        parsed.estado === 'Pendiente de aprobación' &&
+        (parsed.estado === 'Pendiente de aprobación' || parsed.estado === 'En proceso') &&
         (!parsed.historialCambios || parsed.historialCambios.length <= 1);
       if (esBorradorInicial) {
-        const refreshed = {
+        parsed = {
           ...POLITICA_SST_CANONICA,
-          fechaUltimaActualizacion: parsed.fechaUltimaActualizacion || POLITICA_SST_CANONICA.fechaUltimaActualizacion,
+          fechaUltimaActualizacion:
+            parsed.fechaUltimaActualizacion || POLITICA_SST_CANONICA.fechaUltimaActualizacion,
         };
-        localStorage.setItem(STORAGE_KEY_POLITICA, JSON.stringify(refreshed));
-        return refreshed;
+        localStorage.setItem(STORAGE_KEY_POLITICA, JSON.stringify(parsed));
       }
     }
+
+    if (localStorage.getItem(GERENTE_GATE_POLITICA_FLAG) !== '1') {
+      localStorage.setItem(GERENTE_GATE_POLITICA_FLAG, '1');
+      const sinRevisionGerente = !parsed.resultadoRevision;
+      if (
+        sinRevisionGerente &&
+        (parsed.estado === 'Vigente' ||
+          parsed.estado === 'Aprobado' ||
+          parsed.estado === 'Cumplido' ||
+          parsed.estado === 'Devuelto para ajustes' ||
+          parsed.estado === 'Pendiente de aprobación')
+      ) {
+        parsed = {
+          ...parsed,
+          estado: parsed.estado === 'Pendiente de aprobación' ? 'Pendiente de revisión' : 'En proceso',
+          fechaAprobacion: undefined,
+        };
+        localStorage.setItem(STORAGE_KEY_POLITICA, JSON.stringify(parsed));
+      }
+    }
+
+    if (
+      parsed.nombreFirmante === 'Gerente General' ||
+      parsed.cargoFirmante === 'Gerente General – Frikaz S.A.S.'
+    ) {
+      parsed = {
+        ...parsed,
+        nombreFirmante: 'Andrea Orjuela – Gerente',
+        cargoFirmante: 'Gerente – Frikaz S.A.S.',
+      };
+      localStorage.setItem(STORAGE_KEY_POLITICA, JSON.stringify(parsed));
+    }
+
     return parsed;
   } catch (e) {
     console.error('Error cargando política SST de localStorage:', e);

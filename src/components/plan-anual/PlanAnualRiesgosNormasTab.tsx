@@ -13,6 +13,11 @@ import {
   extraerMedidasRiesgo,
 } from '../../services/planAnualService';
 import {
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
+import {
   ShieldAlert,
   Scale,
   CheckCircle2,
@@ -26,6 +31,7 @@ import {
   Check,
   XCircle,
   Sparkles,
+  Mail,
 } from 'lucide-react';
 
 interface PlanAnualRiesgosNormasTabProps {
@@ -57,6 +63,7 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
   onResolverSolicitud,
   onReescanearFuentes,
 }) => {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [subSeccion, setSubSeccion] = useState<'riesgos' | 'normas' | 'cambios'>(
     mode === 'normativa' ? 'normas' : 'riesgos'
   );
@@ -361,7 +368,8 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                           {actVinculada ? (
                             <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] inline-flex items-center gap-1">
                               <CheckCircle2 className="h-3 w-3" />
-                              Vinculado a {actVinculada.codigo} ({actVinculada.estado})
+                              Vinculado a {actVinculada.codigo} (
+                              {getBadgeClassesEstadoFrikaz(actVinculada.estado).label})
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">
@@ -588,16 +596,21 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 <span>Ver ({actVinculada.codigo})</span>
                               </button>
-                              {actVinculada.estado !== 'CUMPLIDA' && (
-                                <span className="block text-[10px] text-amber-700 font-bold">
-                                  Pendiente de verificación
-                                </span>
-                              )}
+                              {(() => {
+                                const badgeAct = getBadgeClassesEstadoFrikaz(actVinculada.estado);
+                                return (
+                                  <span
+                                    className={`inline-block px-2 py-0.5 rounded border text-[10px] font-bold ${badgeAct.light}`}
+                                  >
+                                    {badgeAct.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           ) : req.aplicaEmpresaActual ? (
                             <div className="space-y-1">
-                              <span className="block text-[10px] text-amber-700 font-bold">
-                                Pendiente de verificación
+                              <span className="inline-block px-2 py-0.5 rounded border bg-slate-100 text-slate-700 border-slate-300 text-[10px] font-bold">
+                                Por hacer
                               </span>
                               <button
                                 type="button"
@@ -635,9 +648,9 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
             <p className="text-[11px] text-slate-500 mt-1">
               Cuando cambia algo en la Matriz de Peligros, las Normas o la cantidad de trabajadores, el sistema le avisa aquí.{' '}
               <strong>
-                Ningún plan ya aprobado ({plan.estadoAprobacion}) se cambia ni se borra solo
+                Ningún plan ya aprobado ({getBadgeClassesEstadoFrikaz(plan.estadoAprobacion).label}) se cambia ni se borra solo
               </strong>
-              : primero espera a que usted revise y apruebe cada ajuste.
+              : primero espera a que Gerencia revise y apruebe cada ajuste.
             </p>
           </div>
 
@@ -651,7 +664,15 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
             </div>
           ) : (
             <div className="space-y-3">
-              {plan.solicitudesRevision.map((sol) => (
+              {plan.solicitudesRevision.map((sol) => {
+                const badgeSol = getBadgeClassesEstadoFrikaz(
+                  sol.estado === 'PENDIENTE'
+                    ? 'Pendiente de revisión'
+                    : sol.estado === 'APROBADA'
+                    ? 'Aprobado'
+                    : 'Devuelto para ajustes'
+                );
+                return (
                 <div
                   key={sol.id}
                   className={`rounded-2xl border bg-white p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
@@ -666,15 +687,9 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                         {sol.tipoFuente.replace('_', ' ')}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded font-black text-[10px] ${
-                          sol.estado === 'PENDIENTE'
-                            ? 'bg-amber-100 text-amber-900'
-                            : sol.estado === 'APROBADA'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-slate-200 text-slate-700'
-                        }`}
+                        className={`px-2 py-0.5 rounded border font-black text-[10px] ${badgeSol.light}`}
                       >
-                        {sol.estado}
+                        {badgeSol.label}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
                         Detectado: {sol.fechaDeteccion}
@@ -691,29 +706,46 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => onResolverSolicitud(sol, 'APROBADA')}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-black hover:bg-emerald-700 cursor-pointer shadow-xs"
+                        onClick={() => {
+                          if (!esGerente) {
+                            solicitarAccesoGerente();
+                            return;
+                          }
+                          onResolverSolicitud(sol, 'APROBADA');
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-black cursor-pointer shadow-xs ${
+                          esGerente
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        }`}
                       >
-                        <Check className="h-3.5 w-3.5" />
-                        <span>Aprobar e Incorporar</span>
+                        {esGerente ? <Check className="h-3.5 w-3.5" /> : <Mail className="h-3.5 w-3.5" />}
+                        <span>{esGerente ? 'Aprobar e Incorporar' : 'Ingresar como Gerente'}</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => onResolverSolicitud(sol, 'RECHAZADA')}
+                        onClick={() => {
+                          if (!esGerente) {
+                            solicitarAccesoGerente();
+                            return;
+                          }
+                          onResolverSolicitud(sol, 'RECHAZADA');
+                        }}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-rose-100 hover:text-rose-800 cursor-pointer"
                       >
                         <XCircle className="h-3.5 w-3.5" />
-                        <span>Descartar</span>
+                        <span>Devolver / Descartar</span>
                       </button>
                     </div>
                   ) : (
                     <div className="text-[11px] text-slate-500 text-right shrink-0">
                       <p className="font-bold">Resuelto: {sol.fechaDecision || '-'}</p>
-                      <p>{sol.decididoPor || 'Responsable SG-SST'}</p>
+                      <p>{sol.decididoPor || 'Andrea Orjuela – Gerente'}</p>
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

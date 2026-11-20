@@ -8,6 +8,13 @@ import {
   CUENTA_INSTITUCIONAL,
 } from '../../../services/documentosFirmadosService';
 import {
+  ESTADOS_ESTANDAR_FRIKAZ,
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../../services/gerenteControlService';
+import {
   X,
   FileText,
   Download,
@@ -41,11 +48,14 @@ export const ModalVisorDocumentoFirmado: React.FC<ModalVisorDocumentoFirmadoProp
   documento: docInicial,
   onEstadoActualizado,
 }) => {
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [doc, setDoc] = useState<DocumentoFirmadoRecibido>(docInicial);
-  const [nuevoEstado, setNuevoEstado] = useState<EstadoDocumentoFirmado>(docInicial.estado);
+  const [nuevoEstado, setNuevoEstado] = useState<EstadoDocumentoFirmado>(
+    normalizarEstadoEstandar(docInicial.estado)
+  );
   const [observaciones, setObservaciones] = useState(docInicial.observacionesRevision || '');
   const [nombreRevisor, setNombreRevisor] = useState(
-    docInicial.revisadoPor || 'Talento Humano / Responsable SG-SST Frikaz'
+    docInicial.revisadoPor || nombreGerente
   );
   const [guardando, setGuardando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
@@ -54,51 +64,40 @@ export const ModalVisorDocumentoFirmado: React.FC<ModalVisorDocumentoFirmadoProp
   if (!isOpen) return null;
 
   const renderBadgeEstado = (estado: EstadoDocumentoFirmado) => {
-    switch (estado) {
-      case 'Aprobado':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>Aprobado</span>
-          </span>
-        );
-      case 'Pendiente de revisión':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            <Clock className="h-3.5 w-3.5" />
-            <span>Pendiente de revisión</span>
-          </span>
-        );
-      case 'Requiere corrección':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>Requiere corrección</span>
-          </span>
-        );
-      case 'Recibido':
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500/30">
-            <Mail className="h-3.5 w-3.5" />
-            <span>Recibido</span>
-          </span>
-        );
-    }
+    const badge = getBadgeClassesEstadoFrikaz(estado);
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${badge.dark}`}
+      >
+        <span className={`h-2 w-2 rounded-full ${badge.dot}`} />
+        <span>{badge.label}</span>
+      </span>
+    );
   };
 
   const handleGuardarCambiosEstado = () => {
+    const estadoNorm = normalizarEstadoEstandar(nuevoEstado);
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
+
     setGuardando(true);
     setTimeout(() => {
-      const res = actualizarEstadoDocumento(doc.id, nuevoEstado, observaciones, nombreRevisor);
+      const res = actualizarEstadoDocumento(
+        doc.id,
+        estadoNorm,
+        observaciones,
+        esEstadoExclusivoGerente(estadoNorm) ? nombreGerente : nombreRevisor
+      );
       if (res) {
         setDoc(res);
         if (onEstadoActualizado) onEstadoActualizado(res);
-        setMensajeExito(`El estado cambió a "${nuevoEstado}".`);
+        setMensajeExito(`El estado cambió a "${estadoNorm}".`);
         setTimeout(() => setMensajeExito(null), 3500);
       }
       setGuardando(false);
-    }, 400);
+    }, 300);
   };
 
   const handleDescargarSimulado = () => {
@@ -407,13 +406,25 @@ Fecha de firma: ${doc.detallesFirma.fechaFirma}
                     </label>
                     <select
                       value={nuevoEstado}
-                      onChange={(e) => setNuevoEstado(e.target.value as EstadoDocumentoFirmado)}
+                      onChange={(e) => {
+                        const val = e.target.value as EstadoDocumentoFirmado;
+                        if (esEstadoExclusivoGerente(val) && !esGerente) {
+                          solicitarAccesoGerente();
+                          return;
+                        }
+                        setNuevoEstado(val);
+                      }}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500 font-bold"
                     >
-                      <option value="Recibido">Recibido (Recién llegó, falta revisar)</option>
-                      <option value="Pendiente de revisión">Pendiente de revisión (En cola para revisar)</option>
-                      <option value="Aprobado">Aprobado (Firma clara y ya archivado)</option>
-                      <option value="Requiere corrección">Requiere corrección (Pedir foto o firma más clara)</option>
+                      {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                        const soloGerente = esEstadoExclusivoGerente(est);
+                        return (
+                          <option key={est} value={est}>
+                            {est}
+                            {soloGerente && !esGerente ? ' (Solo Gerente)' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -430,6 +441,22 @@ Fecha de firma: ${doc.detallesFirma.fechaFirma}
                     />
                   </div>
                 </div>
+
+                {!esGerente && (
+                  <div className="p-3 rounded-xl bg-amber-950/50 border border-amber-500/40 text-amber-200 text-[11px] flex items-center justify-between gap-3">
+                    <span>
+                      Para editar o marcar como <strong>{nuevoEstado}</strong> debes ingresar con el correo de Gerencia.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => solicitarAccesoGerente()}
+                      className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <Mail className="h-3 w-3" />
+                      <span>Ingresar como Gerente</span>
+                    </button>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1.5">
@@ -454,6 +481,11 @@ Fecha de firma: ${doc.detallesFirma.fechaFirma}
                       <>
                         <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         <span>Guardando...</span>
+                      </>
+                    ) : !esGerente ? (
+                      <>
+                        <Mail className="h-4 w-4" />
+                        <span>Ingresar como Gerente</span>
                       </>
                     ) : (
                       <>

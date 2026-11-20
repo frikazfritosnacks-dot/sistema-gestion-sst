@@ -12,28 +12,25 @@ import {
 import { SoundFX } from '../../services/soundEffects';
 import { GameAvatar } from './GameAvatar';
 import { GameSceneImage } from './GameSceneImage';
-import { precargarRecursosCriticos, GAME_IMAGES } from '../../services/gameAssets';
+import { precargarRecursosCriticos } from '../../services/gameAssets';
 import { TRABAJADORES_CANONICOS } from '../../services/misionFrikazService';
+import { useGerenteAutorizado } from '../../services/gerenteControlService';
 import {
   ShieldCheck,
-  ShieldAlert,
-  Lock,
   Award,
   Play,
   Users,
-  KeyRound,
+  Mail,
   Flame,
   Volume2,
   VolumeX,
   Compass,
-  Sparkles,
   ChevronRight,
   Target,
   Zap,
   ArrowRight,
   CheckCircle2,
   Factory,
-  Eye,
   Check,
 } from 'lucide-react';
 
@@ -60,6 +57,7 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
   const [vistaLobby, setVistaLobby] = useState<'PORTADA_HERO' | 'MAPA_MISIONES'>('PORTADA_HERO');
   const [sonidoActivo, setSonidoActivo] = useState(SoundFX.isEnabled());
   const [zonaHover, setZonaHover] = useState<string | null>(null);
+  const { esGerente, nombreGerente, avatarGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   useEffect(() => {
     precargarRecursosCriticos();
@@ -179,20 +177,33 @@ export const MisionFrikazGatekeeper: React.FC<MisionFrikazGatekeeperProps> = ({
               <span className="hidden lg:inline">Cambiar</span>
             </button>
 
-            {/* Acceso Administrador (Solo para cargos con rol directivo o con clave de supervisión) */}
-            {trabajador.esAdmin ? (
-              <button
-                onClick={() => {
-                  SoundFX.playClick();
+            {/* Ingreso de Gerencia por correo / Acceso Panel Gerencia */}
+            <button
+              onClick={() => {
+                SoundFX.playClick();
+                if (esGerente) {
                   onEntrarComoAdmin();
-                }}
-                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-500/40 text-purple-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                title="Modo Supervisor SG-SST (Solo Alta Dirección y Vigía)"
-              >
-                <KeyRound className="w-4 h-4 text-purple-400" />
-                <span className="hidden lg:inline">Supervisor</span>
-              </button>
-            ) : null}
+                } else {
+                  solicitarAccesoGerente();
+                }
+              }}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-500/40 text-purple-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Ingresar con el correo de Andrea Orjuela – Gerente"
+            >
+              {esGerente ? (
+                <img
+                  src={avatarGerente}
+                  alt={nombreGerente}
+                  referrerPolicy="no-referrer"
+                  className="w-4 h-4 rounded-full object-cover border border-emerald-400"
+                />
+              ) : (
+                <Mail className="w-4 h-4 text-purple-300" />
+              )}
+              <span className="hidden lg:inline">
+                {esGerente ? nombreGerente : 'Ingreso Gerencia'}
+              </span>
+            </button>
           </div>
 
         </div>

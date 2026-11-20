@@ -9,6 +9,12 @@ import {
 } from '../../types/planAnual';
 import { sendEmailReal } from '../../services/emailService';
 import {
+  EstadoEstandarFrikaz,
+  ESTADOS_ESTANDAR_FRIKAZ,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../../services/gerenteControlService';
+import {
   Bell,
   Mail,
   FileCheck2,
@@ -43,9 +49,7 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
 }) => {
   const [filtroTipo, setFiltroTipo] = useState<TipoAlertaPlan | 'TODAS'>('TODAS');
   const [filtroResp, setFiltroResp] = useState<string>('TODOS');
-  const [filtroEstadoEv, setFiltroEstadoEv] = useState<
-    'TODAS' | 'PENDIENTE_REVISION' | 'APROBADA' | 'DEVUELTA'
-  >('TODAS');
+  const [filtroEstadoEv, setFiltroEstadoEv] = useState<'TODAS' | EstadoEstandarFrikaz>('TODAS');
   const [enviandoId, setEnviandoId] = useState<string | null>(null);
   const [feedbackEnvio, setFeedbackEnvio] = useState<{
     tipo: 'ok' | 'info' | 'err';
@@ -61,12 +65,17 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
   }, [alertas, filtroTipo, filtroResp]);
 
   const actividadesParaRevision = useMemo(() => {
-    return plan.actividades.filter(
-      (a) =>
-        a.estado === 'REQUIERE_REVISION' ||
-        a.evidencias.some((e) => e.estadoRevision === 'PENDIENTE_REVISION') ||
-        (a.estado !== 'CUMPLIDA' && a.evidencias.length === 0)
-    );
+    return plan.actividades.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return (
+        est === 'Pendiente de revisión' ||
+        est === 'Devuelto para ajustes' ||
+        a.evidencias.some(
+          (e) => normalizarEstadoEstandar(e.estadoRevision) === 'Pendiente de revisión'
+        ) ||
+        (est !== 'Cumplido' && est !== 'Aprobado' && a.evidencias.length === 0)
+      );
+    });
   }, [plan.actividades]);
 
   const todasLasEvidencias = useMemo(() => {
@@ -77,7 +86,9 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
       }))
     );
     return lista.filter((item) =>
-      filtroEstadoEv === 'TODAS' ? true : item.ev.estadoRevision === filtroEstadoEv
+      filtroEstadoEv === 'TODAS'
+        ? true
+        : normalizarEstadoEstandar(item.ev.estadoRevision) === filtroEstadoEv
     );
   }, [plan.actividades, filtroEstadoEv]);
 
@@ -113,7 +124,7 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
       `- Quién la revisa y aprueba: ${alerta.aprobadorNombre}`,
       `- Qué hacer ahora: ${alerta.accionRecomendada}`,
       '',
-      'Cuando la termines, por favor entra al módulo Plan Anual en PLANEAR y sube la foto, acta o certificado de respaldo.',
+      'Cuando la termines, por favor entra al módulo PLAN ANUAL (1. PLANEAR / 2. HACER) y sube la foto, acta o certificado de respaldo.',
       '¡Muchas gracias por cuidarte y cuidar a tus compañeros!',
     ].join('\n');
 
@@ -363,9 +374,11 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
                 className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white"
               >
                 <option value="TODAS">Todas las pruebas</option>
-                <option value="PENDIENTE_REVISION">Por revisar</option>
-                <option value="APROBADA">Aprobadas</option>
-                <option value="DEVUELTA">Para corregir</option>
+                {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
+                  <option key={est} value={est}>
+                    {est}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -405,21 +418,16 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
                         </td>
                         <td className="p-2.5 text-slate-600">{ev.revisadoPor || act.aprobadorNombre}</td>
                         <td className="p-2.5">
-                          <span
-                            className={`px-2 py-0.5 rounded font-black text-[10px] ${
-                              ev.estadoRevision === 'APROBADA'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : ev.estadoRevision === 'DEVUELTA'
-                                ? 'bg-rose-100 text-rose-800'
-                                : 'bg-amber-100 text-amber-900'
-                            }`}
-                          >
-                            {ev.estadoRevision === 'APROBADA'
-                              ? 'APROBADA'
-                              : ev.estadoRevision === 'DEVUELTA'
-                              ? 'PARA CORREGIR'
-                              : 'POR REVISAR'}
-                          </span>
+                          {(() => {
+                            const badgeEv = getBadgeClassesEstadoFrikaz(ev.estadoRevision);
+                            return (
+                              <span
+                                className={`px-2 py-0.5 rounded border font-black text-[10px] ${badgeEv.light}`}
+                              >
+                                {badgeEv.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="p-2.5 text-right">
                           <button
@@ -445,7 +453,7 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
             <span>Revisión y Cierre de Tareas con Prueba</span>
           </h3>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Regla importante: ninguna tarea se da por <strong>CUMPLIDA</strong> si no tiene escrita qué se hizo, su foto o documento adjunto y el visto bueno de quien revisa.
+            Regla importante: ninguna tarea pasa a <strong>Cumplido</strong> si no tiene escrita qué se hizo, su foto o documento adjunto y el visto bueno oficial de Gerencia tras revisar el soporte.
           </p>
         </div>
 
@@ -457,7 +465,7 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
           ) : (
             actividadesParaRevision.map((act) => {
               const pendientesRev = act.evidencias.filter(
-                (e) => e.estadoRevision === 'PENDIENTE_REVISION'
+                (e) => normalizarEstadoEstandar(e.estadoRevision) === 'Pendiente de revisión'
               ).length;
               return (
                 <div

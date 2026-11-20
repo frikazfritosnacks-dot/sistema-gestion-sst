@@ -11,6 +11,7 @@ import {
   saveStoredPartesInteresadas,
   exportarMatrizExcel,
 } from '../../../services/partesInteresadasService';
+import { useGerenteAutorizado } from '../../../services/gerenteControlService';
 import {
   Search,
   Plus,
@@ -39,6 +40,7 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
   onActualizarPartes,
   onIrAChecklist,
 }) => {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [busqueda, setBusqueda] = useState('');
   const [filtroClasificacion, setFiltroClasificacion] = useState<'todas' | ClasificacionParteInteresada>('todas');
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
@@ -73,6 +75,10 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
   }, [partes, filtroClasificacion, busqueda]);
 
   const abrirModalNuevo = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setParteEnEdicion(null);
     setFormNombre('');
     setFormClasificacion('interna');
@@ -86,6 +92,10 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
   };
 
   const abrirModalEditar = (parte: ParteInteresada) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setParteEnEdicion(parte);
     setFormNombre(parte.nombre);
     setFormClasificacion(parte.clasificacion);
@@ -100,6 +110,10 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
 
   const guardarParte = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!formNombre.trim()) return;
 
     let actualizadas: ParteInteresada[];
@@ -145,10 +159,18 @@ export const MatrizPartesInteresadasTab: React.FC<MatrizPartesInteresadasTabProp
   };
 
   const solicitarEliminarParte = (id: string, nombre: string) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setParteAEliminar({ id, nombre });
   };
 
   const confirmarEliminarParte = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!parteAEliminar) return;
     const actualizadas = partes.filter((p) => p.id !== parteAEliminar.id);
     onActualizarPartes(actualizadas);

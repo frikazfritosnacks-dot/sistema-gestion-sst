@@ -23,7 +23,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
       'Aplica en toda Colombia para los 10 trabajadores con contrato fijo o indefinido.',
     evidenciaCumplimiento:
       'Contrato firmado, comprobante de afiliación a la ARL con fecha anterior al ingreso y planilla mensual PILA pagada al día.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gestión Humana / Gerencia',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Todo el equipo afiliado al día (Riesgo III en planta y Riesgo I en oficina).',
@@ -48,7 +48,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia para todo el equipo de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Tabla de exámenes por cargo (Profesiograma) firmada y certificados médicos de aptitud guardados bajo reserva médica.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST / IPS Ocupacional',
     fechaVerificacion: '2026-09-18',
     observaciones: 'Chequeos enfocados en manipulación de alimentos y cuidado de espalda y manos.',
@@ -73,7 +73,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia y en la planta de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Registro de inducción firmado por el trabajador, temas vistos y evaluación corta de comprensión.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Inducción práctica en planta antes de operar cualquier equipo.',
@@ -98,7 +98,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia para manipuladores de alimentos.',
     evidenciaCumplimiento:
       'Certificado anual de manipulación de alimentos (mínimo 10 horas) y registro de charla de ahorro de agua y manejo de residuos.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Calidad / Higiene de Planta',
     fechaVerificacion: '2026-09-15',
     observaciones: 'Todo el personal de producción tiene su curso de manipulación vigente.',
@@ -125,7 +125,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia y dentro de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Carta de nombramiento del Vigía SST, acta de votación del Comité de Convivencia y actas de recorridos y reuniones.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerencia General / Trabajadores',
     fechaVerificacion: '2026-09-10',
     observaciones: 'Vigía SST y Comité de Convivencia activos para el periodo 2026-2028.',
@@ -150,7 +150,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia para todo el equipo operativo de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Planilla individual firmada con fecha cada vez que recibes tus EPP o tu dotación.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Jefe de Planta / Responsable SG-SST',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Planillas de entrega firmadas con fecha y firma de cada trabajador.',
@@ -175,7 +175,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia.',
     evidenciaCumplimiento:
       'Fichas técnicas y hojas de seguridad de los productos de aseo donde dice que son biodegradables.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Compras / Gestión Ambiental',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Todos los desengrasantes de planta cuentan con ficha biodegradable.',
@@ -202,7 +202,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia para toda la nómina.',
     evidenciaCumplimiento:
       'Informe confidencial del psicólogo con licencia en SST y registro de pausas activas y charlas de bienestar.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Psicólogo Especialista SST / Gerencia',
     fechaVerificacion: '2026-08-15',
     observaciones: 'Encuesta aplicada con plan de pausas activas y turnos equilibrados.',
@@ -227,7 +227,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia y en las zonas operativas de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Lista de peligros al día, permisos escritos para tareas de alto riesgo, uso de candados de bloqueo (LOTO) y registro de mantenimiento de máquinas.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Mantenimiento / Responsable SG-SST',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Guardas protectoras instaladas y regla de apagar y bloquear antes de limpiar.',
@@ -252,7 +252,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia.',
     evidenciaCumplimiento:
       'Tabla visible de compatibilidad química, hojas de seguridad en español (sistema SGA con dibujos de peligro) y kit antiderrames completo.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Seguridad Química / Gestión Ambiental',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Kit antiderrames listo junto al almacén de aseo.',
@@ -279,7 +279,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia y en toda la sede física de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Envases con etiqueta SGA, Plan de Emergencias escrito, extintores Clase K y ABC recargados al día, botiquín y acta del simulacro anual con fotos.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Brigada de Emergencias / Líder SST',
     fechaVerificacion: '2026-10-02',
     observaciones: 'Extintores Clase K instalados junto a freidoras y simulacro realizado.',
@@ -304,7 +304,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia y en el área de freidoras de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Registro ante la autoridad ambiental, contrato con gestor autorizado y recibos firmados por cada entrega de aceite usado.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Líder Ambiental / Cocina Industrial',
     fechaVerificacion: '2026-10-02',
     observaciones: 'Entregamos entre 180 y 250 litros mensuales con certificado oficial.',
@@ -329,7 +329,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia.',
     evidenciaCumplimiento:
       'Canecas marcadas con los tres colores, guía de manejo de residuos (PGIRS) y planillas de entrega.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Servicios Generales / Gestión Ambiental',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Puntos ecológicos señalizados en recepción, planta y empaque.',
@@ -354,7 +354,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia.',
     evidenciaCumplimiento:
       'Planilla mensual de cantidades entregadas, zona de acopio segura y certificados de disposición de empresa con licencia ambiental.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Mantenimiento / Gestión Ambiental',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Bitácora mensual al día con certificados de gestor autorizado.',
@@ -379,7 +379,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia.',
     evidenciaCumplimiento:
       'Comprobantes de entrega en puntos posconsumo o a gestores autorizados.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Mantenimiento / Gestión Ambiental',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Entrega periódica de pilas y partes electrónicas en puntos posconsumo.',
@@ -404,7 +404,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia.',
     evidenciaCumplimiento:
       'Plan de manejo de envases y empaques (propio o en grupo ante la ANLA) y registros de material reciclado.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Desarrollo de Producto / Gestión Ambiental',
     fechaVerificacion: '2026-09-15',
     observaciones: 'Uso optimizado de rollo de empaque y reciclaje de cartón limpio.',
@@ -430,7 +430,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
       'Aplica en Bogotá y toda Colombia bajo revisión de la Secretaría de Ambiente o la CAR.',
     evidenciaCumplimiento:
       'Pruebas periódicas de laboratorio acreditado sobre el agua de salida, planilla semanal de limpieza de la Trampa de Grasas y revisión técnica de campanas y extractores.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Operaciones / Mantenimiento de Planta',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Trampa de grasas con limpieza semanal registrada en planilla.',

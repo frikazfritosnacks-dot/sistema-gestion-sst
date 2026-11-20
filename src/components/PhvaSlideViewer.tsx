@@ -28,6 +28,12 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { PlanAnualView } from './plan-anual/PlanAnualView';
+import {
+  ESTADOS_TRABAJADOR_FRIKAZ,
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  useGerenteAutorizado,
+} from '../services/gerenteControlService';
 
 interface PhvaSlideViewerProps {
   items: NormaPhvaItem[];
@@ -61,6 +67,8 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [areaFilter, setAreaFilter] = useState<'TODAS' | 'SST' | 'AMBIENTAL'>('TODAS');
 
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
   // Groups items for current phase
   const faseItems = useMemo(() => {
     return items.filter((i) => {
@@ -78,29 +86,16 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
   }, [items, activeFase, searchTerm, areaFilter]);
 
   const getStatusButton = (item: NormaPhvaItem) => {
-    switch (item.estado) {
-      case 'CUMPLE':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <CheckCircle2 className="h-3 w-3" />
-            Cumple
-          </span>
-        );
-      case 'PARCIAL':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#ffedd5] text-[#ea580c] border border-[#fed7aa]">
-            <Clock className="h-3 w-3" />
-            Parcial
-          </span>
-        );
-      case 'NO_CUMPLE':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-100 text-[#991b1b] border border-red-300">
-            <AlertTriangle className="h-3 w-3" />
-            No Cumple
-          </span>
-        );
-    }
+    const badge = getBadgeClassesEstadoFrikaz(item.estado);
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${badge.light}`}
+        title={badge.descripcionCorta}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+        {badge.label}
+      </span>
+    );
   };
 
   const currentFaseResumen = indicadores.porFase[activeFase];
@@ -156,10 +151,10 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                 type="button"
                 onClick={onOpenMatrizExcel}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 px-3 py-2 text-xs font-black text-white transition-all shadow-md cursor-pointer"
-                title="Abrir y descargar la lista completa en Excel (.xlsx)"
+                title="Abrir la tabla completa de normas"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                <span>Ver en Excel (.xlsx)</span>
+                <span>Ver Tabla Completa</span>
               </button>
             )}
 
@@ -464,54 +459,55 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                           {item.normaOficial}
                         </div>
 
-                        {/* Quick Interactive Automation Toggle */}
-                        <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between gap-1 text-[10px]">
-                          <span className="text-slate-400 font-medium">Estado rápido:</span>
-                          <div className="flex items-center gap-1">
+                        {/* Quick Interactive Status Toggle with Gerente Gate */}
+                        <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-1 text-[10px]">
+                          <span className="text-slate-400 font-medium">Cambiar estado:</span>
+                          <div className="flex flex-wrap items-center gap-1">
+                            {ESTADOS_TRABAJADOR_FRIKAZ.map((est) => {
+                              const activo = getBadgeClassesEstadoFrikaz(item.estado).label === est;
+                              const etiquetaCorta =
+                                est === 'Pendiente de revisión' ? 'Para revisar' : est;
+                              return (
+                                <button
+                                  key={est}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUpdateStatus(item.id, est);
+                                  }}
+                                  className={`px-1.5 py-0.5 rounded font-bold transition-colors cursor-pointer ${
+                                    activo
+                                      ? 'bg-[#0f172a] text-white'
+                                      : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                  title={`Marcar como: ${est}`}
+                                >
+                                  {etiquetaCorta}
+                                </button>
+                              );
+                            })}
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onUpdateStatus(item.id, 'CUMPLE');
+                                if (!esGerente) {
+                                  solicitarAccesoGerente();
+                                } else {
+                                  onUpdateStatus(item.id, 'Cumplido');
+                                }
                               }}
-                              className={`px-1.5 py-0.5 rounded font-bold transition-colors ${
-                                item.estado === 'CUMPLE'
-                                  ? 'bg-emerald-700 text-white'
-                                  : 'bg-white border border-slate-300 text-slate-600 hover:bg-emerald-50'
+                              className={`px-1.5 py-0.5 rounded font-bold transition-colors inline-flex items-center gap-0.5 cursor-pointer ${
+                                getBadgeClassesEstadoFrikaz(item.estado).label === 'Cumplido'
+                                  ? 'bg-teal-700 text-white'
+                                  : 'bg-white border border-teal-300 text-teal-800 hover:bg-teal-50'
                               }`}
-                              title="Marcar que ya cumplimos (100%)"
+                              title={
+                                esGerente
+                                  ? 'Marcar como Cumplido (Gerencia)'
+                                  : 'Requiere ingreso con correo de Andrea Orjuela – Gerente'
+                              }
                             >
-                              ✓ Cumple
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUpdateStatus(item.id, 'PARCIAL');
-                              }}
-                              className={`px-1.5 py-0.5 rounded font-bold transition-colors ${
-                                item.estado === 'PARCIAL'
-                                  ? 'bg-[#f97316] text-white'
-                                  : 'bg-white border border-slate-300 text-slate-600 hover:bg-orange-50'
-                              }`}
-                              title="Marcar que vamos a medias (50%)"
-                            >
-                              ~ Parcial
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUpdateStatus(item.id, 'NO_CUMPLE');
-                              }}
-                              className={`px-1.5 py-0.5 rounded font-bold transition-colors ${
-                                item.estado === 'NO_CUMPLE'
-                                  ? 'bg-[#991b1b] text-white'
-                                  : 'bg-white border border-slate-300 text-slate-600 hover:bg-red-50'
-                              }`}
-                              title="Marcar pendiente por cumplir (0%)"
-                            >
-                              ✕ No
+                              <span>Cumplido</span>
                             </button>
                           </div>
                         </div>

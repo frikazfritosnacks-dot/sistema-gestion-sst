@@ -37,18 +37,29 @@ export const GameAvatar: React.FC<GameAvatarProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
 
-  // Obtener URL oficial ilustrada (si la URL dada es de Unsplash o está rota, se mapea al cargo oficial)
+  // Obtener URL oficial ilustrada (si la URL dada es de Unsplash, HTTP externo o legado avatar_gerente, se mapea al cargo oficial)
   const resolvedUrl = React.useMemo(() => {
+    const normCargo = (cargoNombre || '').toLowerCase();
+    const normNombre = (nombre || '').toLowerCase();
+    if (
+      normCargo.includes('gerent') ||
+      normNombre.includes('andrea') ||
+      (avatarUrl && avatarUrl.includes('avatar_gerente'))
+    ) {
+      return GAME_IMAGES.avatars.gerente.jpg;
+    }
     if (avatarUrl && !avatarUrl.includes('unsplash.com') && !avatarUrl.includes('http')) {
       return avatarUrl;
     }
     return getAvatarUrlPorCargo(cargoNombre);
-  }, [avatarUrl, cargoNombre]);
+  }, [avatarUrl, cargoNombre, nombre]);
 
-  // JPG fallback en caso de navegador antiguo
+  const isWebp = resolvedUrl.toLowerCase().endsWith('.webp');
+
+  // JPG fallback en caso de navegador antiguo cuando se usa .webp
   const jpgFallback = React.useMemo(() => {
-    return resolvedUrl.replace('.webp', '.jpg');
-  }, [resolvedUrl]);
+    return isWebp ? resolvedUrl.replace('.webp', '.jpg') : resolvedUrl;
+  }, [resolvedUrl, isWebp]);
 
   const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
 
@@ -58,7 +69,7 @@ export const GameAvatar: React.FC<GameAvatarProps> = ({
     let bgGradient = 'from-amber-600 to-orange-700';
     let Icon = Flame;
 
-    if (norm.includes('gerent')) {
+    if (norm.includes('gerent') || (nombre || '').toLowerCase().includes('andrea')) {
       bgGradient = 'from-blue-700 to-indigo-900';
       Icon = Award;
     } else if (norm.includes('conduct')) {
@@ -88,18 +99,31 @@ export const GameAvatar: React.FC<GameAvatarProps> = ({
         borderAccent ? 'ring-2 ring-amber-400/80 shadow-md shadow-amber-500/20' : ''
       } ${className}`}
     >
-      <picture>
-        <source srcSet={resolvedUrl} type="image/webp" />
-        <source srcSet={jpgFallback} type="image/jpeg" />
+      {isWebp ? (
+        <picture>
+          <source srcSet={resolvedUrl} type="image/webp" />
+          <source srcSet={jpgFallback} type="image/jpeg" />
+          <img
+            src={resolvedUrl}
+            alt={`Avatar ilustrado de ${cargoNombre || nombre}`}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => setHasError(true)}
+            className="w-full h-full object-cover object-center bg-slate-800"
+          />
+        </picture>
+      ) : (
         <img
           src={resolvedUrl}
           alt={`Avatar ilustrado de ${cargoNombre || nombre}`}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
+          referrerPolicy="no-referrer"
           onError={() => setHasError(true)}
           className="w-full h-full object-cover object-center bg-slate-800"
         />
-      </picture>
+      )}
     </div>
   );
 };

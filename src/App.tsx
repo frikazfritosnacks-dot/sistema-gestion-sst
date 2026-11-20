@@ -52,9 +52,16 @@ import {
   ShieldAlert,
   Flame,
   Users,
-  KeyRound,
-  Lock,
+  Bot,
+  Mail,
 } from 'lucide-react';
+import {
+  getBadgeClassesEstadoFrikaz,
+  useGerenteAutorizado,
+} from './services/gerenteControlService';
+import { ModalAccesoGerente } from './components/ModalAccesoGerente';
+import { RiskAssistantModal } from './components/matriz-gtc45/RiskAssistantModal';
+import { loadStoredRisks } from './services/riskMatrixStorage';
 import {
   TrabajadorFrikaz,
   PoliticaMisionFrikaz,
@@ -67,6 +74,7 @@ import {
   getPasaporteDigital,
   tienePoliticasPendientes,
   getStoredTrabajadores,
+  TRABAJADORES_CANONICOS,
 } from './services/misionFrikazService';
 import { MisionFrikazEscapeRoom } from './components/misionFrikaz/MisionFrikazEscapeRoom';
 import { PasaporteDigitalModal } from './components/misionFrikaz/PasaporteDigitalModal';
@@ -105,6 +113,29 @@ export default function App() {
   );
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [normaToDelete, setNormaToDelete] = useState<NormaPhvaItem | null>(null);
+  const [isGlobalAssistantOpen, setIsGlobalAssistantOpen] = useState(false);
+
+  const { esGerente, nombreGerente, avatarGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
+  // Reconocer automáticamente a Andrea Orjuela – Gerente al iniciar sesión con su correo autorizado
+  useEffect(() => {
+    const gerenteCanon = TRABAJADORES_CANONICOS[0];
+    if (esGerente) {
+      setIsAdminMode(true);
+      setCurrentWorker(gerenteCanon);
+      setStoredSesionActiva(gerenteCanon);
+    } else {
+      setIsAdminMode(false);
+      setCurrentWorker((prev) => {
+        if (prev.id === 'FRK-DIR-GERENCIA' || prev.esAdmin) {
+          const operarioDefault = TRABAJADORES_CANONICOS[1];
+          setStoredSesionActiva(operarioDefault);
+          return operarioDefault;
+        }
+        return prev;
+      });
+    }
+  }, [esGerente]);
 
   // Recalcular pasaporte dinámicamente
   const pasaporte = useMemo(() => {
@@ -113,17 +144,24 @@ export default function App() {
 
   // Verificar si el colaborador tiene políticas obligatorias pendientes (Gatekeeper)
   const isGatekeeperActive = useMemo(() => {
-    if (isAdminMode) return false;
+    if (isAdminMode || esGerente) return false;
     return tienePoliticasPendientes(currentWorker.id);
-  }, [isAdminMode, currentWorker.id, pasaporte]);
+  }, [isAdminMode, esGerente, currentWorker.id, pasaporte]);
 
   // Cambiar colaborador activo
-  const handleSelectWorker = useCallback((worker: TrabajadorFrikaz) => {
-    setCurrentWorker(worker);
-    setStoredSesionActiva(worker);
-    setIsAdminMode(false);
-    setActiveMissionPolicyId(null);
-  }, []);
+  const handleSelectWorker = useCallback(
+    (worker: TrabajadorFrikaz) => {
+      if ((worker.id === 'FRK-DIR-GERENCIA' || worker.esAdmin) && !esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
+      setCurrentWorker(worker);
+      setStoredSesionActiva(worker);
+      setIsAdminMode(Boolean(esGerente && worker.esAdmin));
+      setActiveMissionPolicyId(null);
+    },
+    [esGerente, solicitarAccesoGerente]
+  );
 
   // Iniciar Misión Frikaz para una política específica
   const handleStartMission = useCallback((politicaId: string) => {
@@ -142,21 +180,29 @@ export default function App() {
     return calcularIndicadoresPhva(items);
   }, [items]);
 
-  // Save full norm edit
+  // Save full norm edit (exclusivo Gerencia autenticada)
   const handleSaveNorma = useCallback(
     (updatedItem: NormaPhvaItem) => {
+      if (!esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
       const updated = updatePhvaNormFull(updatedItem);
       setItems(updated);
       if (selectedNorma && selectedNorma.id === updatedItem.id) {
         setSelectedNorma(updatedItem);
       }
     },
-    [selectedNorma]
+    [selectedNorma, esGerente, solicitarAccesoGerente]
   );
 
-  // Delete norm
+  // Delete norm (exclusivo Gerencia autenticada)
   const handleDeleteNorma = useCallback(
     (id: string) => {
+      if (!esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
       const updated = deletePhvaNorm(id);
       setItems(updated);
       if (selectedNorma && selectedNorma.id === id) {
@@ -164,12 +210,16 @@ export default function App() {
         setIsModalOpen(false);
       }
     },
-    [selectedNorma]
+    [selectedNorma, esGerente, solicitarAccesoGerente]
   );
 
-  // Add brand new norm
+  // Add brand new norm (exclusivo Gerencia autenticada)
   const handleAddNewNorma = useCallback(
     (fase?: any) => {
+      if (!esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
       const newNorm: NormaPhvaItem = {
         id: `norma-${Date.now()}`,
         fase: fase || 'PLANEAR',
@@ -187,7 +237,7 @@ export default function App() {
         textoVigencia: 'Regla vigente hoy en Colombia.',
         jurisdiccionAlcance: 'Aplica en toda Colombia y en Bogotá D.C.',
         evidenciaCumplimiento: 'Acta firmada, foto, planilla o documento guardado.',
-        estado: 'NO_CUMPLE',
+        estado: 'Por hacer',
         responsable: 'Encargado de SST (Seguridad y Salud en el Trabajo)',
         fechaVerificacion: new Date().toISOString().split('T')[0],
         observaciones: 'Nueva regla agregada para hacerle seguimiento.',
@@ -199,40 +249,60 @@ export default function App() {
       setModalInitialEdit(true);
       setIsModalOpen(true);
     },
-    [items]
+    [items, esGerente, solicitarAccesoGerente]
   );
 
-  // Change individual norm status
+  // Change individual norm status (exclusivo Gerencia autenticada)
   const handleUpdateStatus = useCallback(
     (id: string, nuevoEstado: EstadoCumplimiento) => {
+      if (!esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
       const updated = updatePhvaNormStatus(id, nuevoEstado);
       setItems(updated);
       if (selectedNorma && selectedNorma.id === id) {
-        setSelectedNorma((prev) => (prev ? { ...prev, estado: nuevoEstado } : null));
+        const refreshed = updated.find((u) => u.id === id);
+        if (refreshed) setSelectedNorma(refreshed);
       }
     },
-    [selectedNorma]
+    [selectedNorma, esGerente, solicitarAccesoGerente]
   );
 
   // Reset to default seed (opens inline confirmation modal)
   const handleReset = useCallback(() => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setConfirmResetOpen(true);
-  }, []);
+  }, [esGerente, solicitarAccesoGerente]);
 
   const confirmResetNorms = useCallback(() => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const defaultItems = resetPhvaNormsToDefault();
     setItems(defaultItems);
     setSelectedNorma(null);
     setIsModalOpen(false);
     setConfirmResetOpen(false);
-  }, []);
+  }, [esGerente, solicitarAccesoGerente]);
 
   // Open modal in read-only or edit mode
-  const handleOpenNorma = useCallback((norma: NormaPhvaItem, editMode: boolean = false) => {
-    setSelectedNorma(norma);
-    setModalInitialEdit(editMode);
-    setIsModalOpen(true);
-  }, []);
+  const handleOpenNorma = useCallback(
+    (norma: NormaPhvaItem, editMode: boolean = false) => {
+      if (editMode && !esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
+      setSelectedNorma(norma);
+      setModalInitialEdit(editMode);
+      setIsModalOpen(true);
+    },
+    [esGerente, solicitarAccesoGerente]
+  );
 
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
@@ -243,16 +313,24 @@ export default function App() {
   // Update presentation config
   const handleUpdatePresentationConfig = useCallback(
     (newConfig: ConfiguracionPresentacion) => {
+      if (!esGerente) {
+        solicitarAccesoGerente();
+        return;
+      }
       savePresentationConfig(newConfig);
       setPresentationConfig(newConfig);
     },
-    []
+    [esGerente, solicitarAccesoGerente]
   );
 
   const handleResetPresentationConfig = useCallback(() => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const def = resetPresentationConfig();
     setPresentationConfig(def);
-  }, []);
+  }, [esGerente, solicitarAccesoGerente]);
 
   // 1. Si hay una misión de Escape Room activa, renderizar la experiencia interactiva de 4 etapas
   if (activeMissionPolicyId) {
@@ -295,11 +373,13 @@ export default function App() {
           trabajadorActual={currentWorker}
           onSeleccionarTrabajador={handleSelectWorker}
         />
+
+        <ModalAccesoGerente />
       </>
     );
   }
 
-  // 2. Si el gatekeeper está activo (trabajador con políticas obligatorias pendientes sin modo admin)
+  // 2. Si el gatekeeper está activo (trabajador con políticas obligatorias pendientes sin sesión de Gerencia)
   if (isGatekeeperActive) {
     return (
       <>
@@ -316,7 +396,13 @@ export default function App() {
               setIsWorkerSelectorOpen(true);
             }
           }}
-          onEntrarComoAdmin={() => setIsAdminMode(true)}
+          onEntrarComoAdmin={() => {
+            if (!esGerente) {
+              solicitarAccesoGerente();
+              return;
+            }
+            setIsAdminMode(true);
+          }}
         />
 
         <PasaporteDigitalModal
@@ -348,6 +434,8 @@ export default function App() {
             }
           }}
         />
+
+        <ModalAccesoGerente />
       </>
     );
   }
@@ -378,9 +466,9 @@ export default function App() {
               <span className="text-slate-500 text-[10px] underline">Cambiar</span>
             </button>
 
-            {isAdminMode && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
-                MODO ENCARGADO ACTIVO
+            {esGerente && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                EDICIÓN GERENCIA ACTIVA
               </span>
             )}
           </div>
@@ -407,12 +495,53 @@ export default function App() {
               <span>Mi Pasaporte ({pasaporte.porcentajeAvance}%)</span>
             </button>
 
+            {/* Botón de Asistente SST en lenguaje claro */}
+            <button
+              onClick={() => setIsGlobalAssistantOpen(true)}
+              className="px-2.5 py-1 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Abrir guía y asistente virtual en lenguaje sencillo"
+            >
+              <Bot className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Asistente SST</span>
+            </button>
+
+            {/* Botón de Acceso / Perfil de Gerencia por Correo */}
+            <button
+              onClick={solicitarAccesoGerente}
+              className={`px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                esGerente
+                  ? 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-200 border-emerald-500/50'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700'
+              }`}
+              title="Ingresar con el correo de Andrea Orjuela – Gerente para editar toda la herramienta"
+            >
+              {esGerente ? (
+                <img
+                  src={avatarGerente}
+                  alt={nombreGerente}
+                  referrerPolicy="no-referrer"
+                  className="w-4 h-4 rounded-full object-cover border border-emerald-400"
+                />
+              ) : (
+                <Mail className="w-3.5 h-3.5 text-orange-400" />
+              )}
+              <span className="hidden sm:inline">
+                {esGerente ? nombreGerente : 'Ingreso Gerencia'}
+              </span>
+            </button>
+
             {/* Botón de Panel Admin SST */}
             <button
-              onClick={() => setIsAdminPanelOpen(true)}
-              className="px-2.5 py-1 rounded-lg bg-purple-950/60 hover:bg-purple-900 text-purple-200 border border-purple-500/40 font-semibold flex items-center gap-1.5 transition-colors"
+              onClick={() => {
+                if (!esGerente) {
+                  solicitarAccesoGerente();
+                  return;
+                }
+                setIsAdminPanelOpen(true);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-purple-950/60 hover:bg-purple-900 text-purple-200 border border-purple-500/40 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <KeyRound className="w-3.5 h-3.5 text-purple-400" />
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
               <span className="hidden sm:inline">Control SST</span>
             </button>
           </div>
@@ -480,7 +609,7 @@ export default function App() {
                 }`}
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-300" />
-                <span>Tabla Excel</span>
+                <span>Tabla de Normas</span>
               </button>
 
               <button
@@ -580,7 +709,7 @@ export default function App() {
               }`}
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-300" />
-              <span>Tabla Excel</span>
+              <span>Tabla de Normas</span>
             </button>
             <button
               onClick={() => {
@@ -745,19 +874,18 @@ export default function App() {
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            {it.estado === 'CUMPLE' ? (
-                              <span className="px-2 py-0.5 rounded-sm font-bold text-[10px] bg-emerald-100 text-emerald-800">
-                                Cumple
-                              </span>
-                            ) : it.estado === 'PARCIAL' ? (
-                              <span className="px-2 py-0.5 rounded-sm font-bold text-[10px] bg-orange-100 text-orange-800">
-                                Parcial
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-sm font-bold text-[10px] bg-red-100 text-red-800">
-                                No Cumple
-                              </span>
-                            )}
+                            {(() => {
+                              const badge = getBadgeClassesEstadoFrikaz(it.estado);
+                              return (
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-bold text-[10px] border ${badge.light}`}
+                                  title={badge.descripcionCorta}
+                                >
+                                  <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+                                  {badge.label}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="px-4 py-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
@@ -773,7 +901,13 @@ export default function App() {
 
                               <button
                                 type="button"
-                                onClick={() => setNormaToDelete(it)}
+                                onClick={() => {
+                                  if (!esGerente) {
+                                    solicitarAccesoGerente();
+                                    return;
+                                  }
+                                  setNormaToDelete(it);
+                                }}
                                 className="p-1 rounded-md text-slate-400 hover:text-[#991b1b] hover:bg-red-50"
                                 title="Quitar esta regla"
                               >
@@ -797,6 +931,10 @@ export default function App() {
               normas={items}
               indicadores={indicadores}
               onActualizarNormas={(nuevasNormas) => {
+                if (!esGerente) {
+                  solicitarAccesoGerente();
+                  return;
+                }
                 setItems(nuevasNormas);
                 savePhvaNorms(nuevasNormas);
               }}
@@ -946,6 +1084,18 @@ export default function App() {
           </div>
         </div>
       )}
+      {/* MODAL GLOBAL DE ACCESO DE GERENCIA */}
+      <ModalAccesoGerente />
+
+      {/* ASISTENTE VIRTUAL GLOBAL DE LA HERRAMIENTA */}
+      <RiskAssistantModal
+        isOpen={isGlobalAssistantOpen}
+        onClose={() => setIsGlobalAssistantOpen(false)}
+        dataset={isGlobalAssistantOpen ? loadStoredRisks() : []}
+        onSelectRisk={() => {
+          setActiveTab('matriz_riesgos');
+        }}
+      />
     </div>
   );
 }

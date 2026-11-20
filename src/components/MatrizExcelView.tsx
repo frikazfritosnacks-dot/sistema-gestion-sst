@@ -20,12 +20,19 @@ import {
   FileCheck,
 } from 'lucide-react';
 
+import {
+  EstadoEstandarFrikaz,
+  ESTADOS_ESTANDAR_FRIKAZ,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../services/gerenteControlService';
+
 interface MatrizExcelViewProps {
   items: NormaPhvaItem[];
   onSelectNorma?: (norma: NormaPhvaItem) => void;
 }
 
-type ExcelSheetTab = 'inicio' | 'phva_unificada' | 'gestion_sst' | 'gestion_ambiental' | 'plan_accion' | 'listas';
+type ExcelSheetTab = 'inicio' | 'phva_unificada' | 'gestion_sst' | 'gestion_ambiental' | 'plan_accion';
 
 export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelectNorma }) => {
   const [activeSheet, setActiveSheet] = useState<ExcelSheetTab>('inicio');
@@ -34,21 +41,33 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
   const [exportError, setExportError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterArea, setFilterArea] = useState<'TODAS' | 'SST' | 'AMBIENTAL'>('TODAS');
-  const [filterEstado, setFilterEstado] = useState<'TODOS' | 'CUMPLE' | 'PARCIAL' | 'NO_CUMPLE' | 'PENDIENTE'>('TODOS');
+  const [filterEstado, setFilterEstado] = useState<'TODOS' | EstadoEstandarFrikaz>('TODOS');
 
-  // Cálculos dinámicos
+  // Cálculos dinámicos estandarizados con los 6 estados oficiales
   const totalNormas = items.length;
-  const cumplidas = items.filter((i) => i.estado === 'CUMPLE').length;
-  const parciales = items.filter((i) => i.estado === 'PARCIAL').length;
-  const noCumplidas = items.filter((i) => i.estado === 'NO_CUMPLE').length;
-  const pendientes = items.filter((i) => i.estado === 'PENDIENTE').length;
-  const evaluadas = cumplidas + parciales + noCumplidas;
-  const porcentajeCumplimiento = evaluadas > 0 ? Math.round(((cumplidas + parciales * 0.5) / evaluadas) * 100) : 0;
+  const porHacer = items.filter((i) => normalizarEstadoEstandar(i.estado) === 'Por hacer').length;
+  const enProceso = items.filter((i) => normalizarEstadoEstandar(i.estado) === 'En proceso').length;
+  const pendienteRevision = items.filter((i) => normalizarEstadoEstandar(i.estado) === 'Pendiente de revisión').length;
+  const devueltoAjustes = items.filter((i) => normalizarEstadoEstandar(i.estado) === 'Devuelto para ajustes').length;
+  const cumplidas = items.filter((i) => normalizarEstadoEstandar(i.estado) === 'Cumplido').length;
+  const aprobadas = items.filter((i) => normalizarEstadoEstandar(i.estado) === 'Aprobado').length;
+  const cerradasOk = cumplidas + aprobadas;
+  const evaluadas = items.filter((i) => i.estado !== 'NO_APLICA').length;
+  const porcentajeCumplimiento =
+    evaluadas > 0
+      ? Math.round(((cerradasOk + (enProceso + pendienteRevision) * 0.5) / evaluadas) * 100)
+      : 0;
 
   const sstItems = items.filter((i) => i.area === 'SST' || i.area === 'INTEGRAL');
   const ambItems = items.filter((i) => i.area === 'AMBIENTAL' || i.area === 'INTEGRAL');
-  const sstCumplidas = sstItems.filter((i) => i.estado === 'CUMPLE').length;
-  const ambCumplidas = ambItems.filter((i) => i.estado === 'CUMPLE').length;
+  const sstCumplidas = sstItems.filter((i) => {
+    const est = normalizarEstadoEstandar(i.estado);
+    return est === 'Cumplido' || est === 'Aprobado';
+  }).length;
+  const ambCumplidas = ambItems.filter((i) => {
+    const est = normalizarEstadoEstandar(i.estado);
+    return est === 'Cumplido' || est === 'Aprobado';
+  }).length;
 
   const handleDownloadExcel = async () => {
     try {
@@ -88,34 +107,35 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
       (filterArea === 'SST' && item.area === 'INTEGRAL') ||
       (filterArea === 'AMBIENTAL' && item.area === 'INTEGRAL');
 
-    const matchesEstado = filterEstado === 'TODOS' || item.estado === filterEstado;
+    const matchesEstado =
+      filterEstado === 'TODOS' || normalizarEstadoEstandar(item.estado) === filterEstado;
 
     return matchesSearch && matchesArea && matchesEstado;
   });
 
   return (
     <div className="space-y-6">
-      {/* BANNER PRINCIPAL DEL MÓDULO MATRIZ EXCEL */}
+      {/* BANNER PRINCIPAL DEL MÓDULO TABLA DE NORMAS */}
       <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] p-6 text-white shadow-xl border-2 border-emerald-500/40">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-black uppercase tracking-wider">
                 <FileSpreadsheet className="h-3.5 w-3.5" />
-                Archivo en Excel (.xlsx)
+                Tabla Completa de Normas
               </span>
               <span className="rounded-md bg-orange-500/20 px-2.5 py-0.5 text-xs font-bold text-orange-300 border border-orange-400/30">
-                Con cuentas automáticas (sin macros)
+                Con cuentas automáticas
               </span>
               <span className="rounded-md bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-300 border border-slate-700">
-                6 Hojas · {items.length} Normas Registradas
+                5 Vistas · {items.length} Normas Registradas
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Lista de Normas en Excel — Frikaz S.A.S.
+              Tabla de Normas SST y Ambientales — Frikaz S.A.S.
             </h1>
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Aquí puedes revisar y descargar todas las normas de seguridad y ambiente en un libro de Excel organizado en 6 pestañas. Trae listas desplegables y sumas automáticas que funcionan en Microsoft Excel, LibreOffice o Google Sheets.
+              Aquí puedes revisar todas las normas de seguridad y cuidado ambiental organizadas en 5 secciones claras, y descargar el archivo completo cuando lo necesites para revisarlo en tu computador.
             </p>
           </div>
 
@@ -128,12 +148,12 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
               {isExporting ? (
                 <>
                   <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Preparando archivo Excel...</span>
+                  <span>Preparando descarga...</span>
                 </>
               ) : (
                 <>
                   <Download className="h-5 w-5" />
-                  <span>Descargar Lista en Excel (.xlsx)</span>
+                  <span>Descargar Tabla Completa</span>
                 </>
               )}
             </button>
@@ -144,7 +164,7 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
           <div className="mt-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-400 text-emerald-200 text-xs font-medium flex items-center gap-2 animate-fadeIn">
             <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
             <span>
-              ¡Listo! Ya se descargó el archivo Excel con las 6 hojas, listas desplegables y cuentas automáticas para abrir en tu computador.
+              ¡Listo! Ya se descargó el archivo con todas las normas, sumas automáticas y estados al día para abrir en tu computador.
             </span>
           </div>
         )}
@@ -226,25 +246,8 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
               }`}
             >
               <FileCheck className="h-4 w-4 text-purple-500" />
-              <span>Hoja 5. Plan de Acción</span>
+              <span>5. Plan de Acción</span>
             </button>
-
-            <button
-              onClick={() => setActiveSheet('listas')}
-              className={`px-4 py-2.5 rounded-t-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-                activeSheet === 'listas'
-                  ? 'bg-white text-[#0f172a] shadow-md border-t-2 border-orange-500'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <Info className="h-4 w-4 text-slate-400" />
-              <span>Hoja 6. Listas & Desplegables</span>
-            </button>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-2 text-xs text-slate-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Vista Previa Fiel al Libro Excel .xlsx</span>
           </div>
         </div>
 
@@ -264,7 +267,7 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                       FRIKAZ S.A.S. — RESUMEN DE SEGURIDAD, SALUD Y AMBIENTE
                     </h2>
                     <p className="text-xs text-orange-200 font-medium">
-                      Panel claro con sumas automáticas para seguir nuestro cumplimiento en Excel
+                      Resumen claro y automático de nuestras normas de seguridad, salud y cuidado ambiental
                     </p>
                   </div>
                 </div>
@@ -281,7 +284,7 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
               {/* Botones de navegación interna */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                 <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider mb-3">
-                  Accesos Rápidos a cada Pestaña del Excel
+                  Accesos Rápidos a cada Sección
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <button
@@ -330,15 +333,15 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                 </div>
               </div>
 
-              {/* Panel de Indicadores de Fórmulas */}
+              {/* Panel de Indicadores por los 6 Estados Oficiales */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black text-[#0f172a] uppercase tracking-wide flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-orange-500" />
-                    Panel de Indicadores Automatizados (Cálculo con Fórmulas Dinámicas)
+                    Resumen de Estados de Cumplimiento (6 Estados Oficiales)
                   </h3>
-                  <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                    =COUNTIF('Matriz PHVA Unificada'!R3:R80, "Cumple")
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md font-semibold">
+                    Solo Gerencia marca Cumplido, Aprobado o Devuelto
                   </span>
                 </div>
 
@@ -346,51 +349,43 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
                     <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Normas</span>
                     <span className="text-2xl font-black text-[#0f172a] font-mono">{totalNormas}</span>
-                    <span className="text-[9px] text-slate-400 block font-mono mt-0.5">=COUNTA()</span>
-                  </div>
-
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase block">Cumple</span>
-                    <span className="text-2xl font-black text-emerald-700 font-mono">{cumplidas}</span>
-                    <span className="text-[9px] text-emerald-600 block font-mono mt-0.5">=COUNTIF("Cumple")</span>
-                  </div>
-
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-amber-800 uppercase block">Parcial</span>
-                    <span className="text-2xl font-black text-amber-700 font-mono">{parciales}</span>
-                    <span className="text-[9px] text-amber-600 block font-mono mt-0.5">=COUNTIF("Parcial")</span>
-                  </div>
-
-                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-rose-800 uppercase block">No Cumple</span>
-                    <span className="text-2xl font-black text-rose-700 font-mono">{noCumplidas}</span>
-                    <span className="text-[9px] text-rose-600 block font-mono mt-0.5">=COUNTIF("No cumple")</span>
                   </div>
 
                   <div className="bg-slate-100 border border-slate-300 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-slate-600 uppercase block">Pendientes</span>
-                    <span className="text-2xl font-black text-slate-700 font-mono">{pendientes}</span>
-                    <span className="text-[9px] text-slate-500 block font-mono mt-0.5">=COUNTIF("Pendiente")</span>
+                    <span className="text-[10px] font-bold text-slate-700 uppercase block">Por hacer</span>
+                    <span className="text-2xl font-black text-slate-800 font-mono">{porHacer}</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase block">No Aplica</span>
-                    <span className="text-2xl font-black text-slate-700 font-mono">0</span>
-                    <span className="text-[9px] text-slate-400 block font-mono mt-0.5">Excluido denom.</span>
+                  <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-sky-800 uppercase block">En proceso</span>
+                    <span className="text-2xl font-black text-sky-700 font-mono">{enProceso}</span>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-amber-800 uppercase block">Pend. revisión</span>
+                    <span className="text-2xl font-black text-amber-700 font-mono">{pendienteRevision}</span>
+                  </div>
+
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-rose-800 uppercase block">Devuelto ajustes</span>
+                    <span className="text-2xl font-black text-rose-700 font-mono">{devueltoAjustes}</span>
+                  </div>
+
+                  <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-teal-800 uppercase block">Cumplido</span>
+                    <span className="text-2xl font-black text-teal-700 font-mono">{cumplidas}</span>
+                  </div>
+
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase block">Aprobado</span>
+                    <span className="text-2xl font-black text-emerald-700 font-mono">{aprobadas}</span>
                   </div>
 
                   <div className="bg-linear-to-b from-orange-500 to-orange-600 rounded-xl p-3 text-center text-white shadow-md">
                     <span className="text-[10px] font-black uppercase tracking-wider block text-orange-100">
-                      % Cumplimiento
+                      % Avance Real
                     </span>
                     <span className="text-2xl font-black font-mono">{porcentajeCumplimiento}%</span>
-                    <span className="text-[9px] text-orange-200 block font-mono mt-0.5">=FÓRMULA NATIVA</span>
-                  </div>
-
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-orange-800 uppercase block">Acciones</span>
-                    <span className="text-2xl font-black text-orange-900 font-mono">1</span>
-                    <span className="text-[9px] text-orange-600 block font-mono mt-0.5">1 En proceso</span>
                   </div>
                 </div>
               </div>
@@ -497,10 +492,11 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                     className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-700 focus:outline-hidden"
                   >
                     <option value="TODOS">Todos los Estados</option>
-                    <option value="CUMPLE">Cumple (Verde)</option>
-                    <option value="PARCIAL">Cumple Parcial (Amarillo)</option>
-                    <option value="NO_CUMPLE">No Cumple (Rojo)</option>
-                    <option value="PENDIENTE">Pendiente (Gris)</option>
+                    {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
+                      <option key={est} value={est}>
+                        {est}
+                      </option>
+                    ))}
                   </select>
 
                   <span className="text-xs text-slate-500 font-bold ml-2">
@@ -579,28 +575,26 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                             Actualizar matriz GTC 45 y control.
                           </td>
                           <td className="p-2 border-r border-slate-200 text-center">
-                            <span
-                              className={`inline-block px-2.5 py-1 rounded-md text-xs font-black ${
-                                item.estado === 'CUMPLE'
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                  : item.estado === 'PARCIAL'
-                                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                  : item.estado === 'NO_CUMPLE'
-                                  ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                  : 'bg-slate-100 text-slate-700 border border-slate-300'
-                              }`}
-                            >
-                              {item.estado === 'CUMPLE'
-                                ? 'Cumple'
-                                : item.estado === 'PARCIAL'
-                                ? 'Parcial'
-                                : item.estado === 'NO_CUMPLE'
-                                ? 'No Cumple'
-                                : 'Pendiente'}
-                            </span>
+                            {(() => {
+                              const badge = getBadgeClassesEstadoFrikaz(item.estado);
+                              return (
+                                <span
+                                  className={`inline-block px-2.5 py-1 rounded-md text-xs font-black border ${badge.light}`}
+                                >
+                                  {badge.label}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="p-2 border-r border-slate-200 text-center font-mono font-bold text-slate-700">
-                            {item.estado === 'CUMPLE' ? '100%' : item.estado === 'PARCIAL' ? '60%' : '0%'}
+                            {(() => {
+                              const est = normalizarEstadoEstandar(item.estado);
+                              return est === 'Cumplido' || est === 'Aprobado'
+                                ? '100%'
+                                : est === 'En proceso' || est === 'Pendiente de revisión'
+                                  ? '50%'
+                                  : '0%';
+                            })()}
                           </td>
                           <td className="p-2 text-slate-600 text-[11px] truncate max-w-[140px]">
                             {item.responsable}
@@ -658,9 +652,14 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                         <td className="p-2 text-slate-700 font-medium">{it.responsable}</td>
                         <td className="p-2 text-slate-500 text-[11px]">{it.evidenciaCumplimiento}</td>
                         <td className="p-2 text-center">
-                          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            {it.estado}
-                          </span>
+                          {(() => {
+                            const badge = getBadgeClassesEstadoFrikaz(it.estado);
+                            return (
+                              <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border ${badge.light}`}>
+                                {badge.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}
@@ -714,9 +713,14 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                         <td className="p-2 text-slate-700 font-medium">{it.responsable}</td>
                         <td className="p-2 text-slate-500 text-[11px]">{it.evidenciaCumplimiento}</td>
                         <td className="p-2 text-center">
-                          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            {it.estado}
-                          </span>
+                          {(() => {
+                            const badge = getBadgeClassesEstadoFrikaz(it.estado);
+                            return (
+                              <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border ${badge.light}`}>
+                                {badge.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}
@@ -783,11 +787,11 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                       <td className="p-2 text-slate-600">Coordinador Ambiental</td>
                       <td className="p-2 font-mono text-slate-600">2026-10-30</td>
                       <td className="p-2 text-center">
-                        <span className="px-2 py-0.5 rounded-sm bg-rose-100 text-rose-800 font-bold text-[10px]">
-                          Abierta
+                        <span className="px-2 py-0.5 rounded-sm bg-slate-100 text-slate-700 border border-slate-300 font-bold text-[10px]">
+                          Por hacer
                         </span>
                       </td>
-                      <td className="p-2 text-slate-600 text-[11px]">Pendiente de cierre</td>
+                      <td className="p-2 text-slate-600 text-[11px]">Pendiente de revisión de Gerencia</td>
                     </tr>
                     <tr className="hover:bg-slate-50">
                       <td className="p-2 font-mono font-bold text-slate-700">ACT-2026-003</td>
@@ -798,78 +802,14 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
                       <td className="p-2 text-slate-600">Jefe de Planta</td>
                       <td className="p-2 font-mono text-slate-600">2026-08-20</td>
                       <td className="p-2 text-center">
-                        <span className="px-2 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                          Cerrada
+                        <span className="px-2 py-0.5 rounded-sm bg-amber-100 text-amber-800 border border-amber-300 font-bold text-[10px]">
+                          Pendiente de revisión
                         </span>
                       </td>
-                      <td className="p-2 text-emerald-700 font-bold text-[11px]">Eficaz (100% operativo)</td>
+                      <td className="p-2 text-amber-700 font-bold text-[11px]">Esperando revisión de Gerencia</td>
                     </tr>
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {/* HOJA 6: LISTAS & DESPLEGABLES */}
-          {activeSheet === 'listas' && (
-            <div className="space-y-4">
-              <div className="bg-slate-100 border border-slate-300 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 uppercase">
-                    Hoja 6: Opciones Fijas para Elegir en Excel (Listas Desplegables)
-                  </h3>
-                  <p className="text-xs text-slate-600">
-                    Opciones predefinidas en Excel para evitar errores al escribir el estado o responsable de cada norma
-                  </p>
-                </div>
-                <span className="px-3 py-1 bg-slate-700 text-white font-bold rounded-lg text-xs">
-                  Listas de Opciones
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
-                  <h4 className="text-xs font-black text-slate-800 uppercase mb-2">1. Estados de Cumplimiento</h4>
-                  <ul className="text-xs space-y-1 text-slate-600">
-                    <li className="flex items-center gap-1.5 font-bold text-emerald-700">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" /> Cumple
-                    </li>
-                    <li className="flex items-center gap-1.5 font-bold text-amber-700">
-                      <span className="h-2 w-2 rounded-full bg-amber-500" /> Cumple parcialmente
-                    </li>
-                    <li className="flex items-center gap-1.5 font-bold text-rose-700">
-                      <span className="h-2 w-2 rounded-full bg-rose-500" /> No cumple
-                    </li>
-                    <li className="flex items-center gap-1.5 font-bold text-slate-600">
-                      <span className="h-2 w-2 rounded-full bg-slate-400" /> Pendiente de evaluación
-                    </li>
-                    <li className="flex items-center gap-1.5 font-medium text-slate-500">
-                      <span className="h-2 w-2 rounded-full bg-blue-400" /> No aplica justificado
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
-                  <h4 className="text-xs font-black text-slate-800 uppercase mb-2">2. Fases del Ciclo PHVA</h4>
-                  <ul className="text-xs space-y-1 text-slate-600">
-                    <li className="font-bold text-blue-700">· Planear (P)</li>
-                    <li className="font-bold text-emerald-700">· Hacer (H)</li>
-                    <li className="font-bold text-amber-700">· Verificar (V)</li>
-                    <li className="font-bold text-purple-700">· Actuar (A)</li>
-                  </ul>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
-                  <h4 className="text-xs font-black text-slate-800 uppercase mb-2">3. Tipos de Evidencia</h4>
-                  <ul className="text-xs space-y-1 text-slate-600">
-                    <li>· Procedimiento Documentado</li>
-                    <li>· Registro o Formato Firmado</li>
-                    <li>· Certificado ARL / SDA</li>
-                    <li>· Factura / Manifiesto de Gestor</li>
-                    <li>· Acta de Reunión o Inspección</li>
-                    <li>· Matriz de Peligros / Aspectos</li>
-                  </ul>
-                </div>
               </div>
             </div>
           )}

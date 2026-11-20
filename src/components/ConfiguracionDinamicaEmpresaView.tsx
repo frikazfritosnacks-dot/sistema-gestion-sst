@@ -52,6 +52,10 @@ import {
   Inbox,
   Mail,
 } from 'lucide-react';
+import {
+  getBadgeClassesEstadoFrikaz,
+  useGerenteAutorizado,
+} from '../services/gerenteControlService';
 import { OrganigramaInteractivoView } from './configuracion-dinamica/OrganigramaInteractivoView';
 import { PoliticaSstView } from './configuracion-dinamica/PoliticaSstView';
 import { PartesInteresadasView } from './configuracion-dinamica/partes-interesadas/PartesInteresadasView';
@@ -120,6 +124,8 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     () => evaluacionActual?.propuestas || []
   );
 
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
   // Sincronizar evaluación cuando cambia la configuración
   const ejecutarEvaluacionAutomatica = (
     nuevaConfig: CaracterizacionEmpresaDinamica,
@@ -138,6 +144,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
   // Handler para cambios de trabajadores
   const handleCambioTrabajadores = (nuevoValor: number) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const clamp = Math.max(1, Math.min(500, nuevoValor));
     const ant = { ...config };
     const nueva = { ...config, numeroTrabajadores: clamp };
@@ -147,6 +157,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
   // Handler para modalidades de contrato
   const handleToggleModalidadContrato = (modalidad: ModalidadContrato) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const ant = { ...config };
     const existe = config.modalidadesContrato.includes(modalidad);
     const nuevasModalidades = existe
@@ -163,6 +177,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
   // Handler para sector económico
   const handleCambioSector = (sector: SectorEconomico) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const ant = { ...config };
     let ciiu = config.ciiuPrincipal;
     let actividad = config.actividadEconomicaConcreta;
@@ -191,6 +209,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
   // Handler para clase de riesgo
   const handleCambioRiesgo = (riesgo: ClaseRiesgoLaboral) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const ant = { ...config };
     const nueva = { ...config, claseRiesgoSST: riesgo };
     setConfig(nueva);
@@ -202,6 +224,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     campo: 'procesosProductivos' | 'maquinariaEquipos' | 'sustanciasQuimicas',
     item: string
   ) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const ant = { ...config };
     const listaActual = [...config[campo]];
     const index = listaActual.indexOf(item);
@@ -215,11 +241,15 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     ejecutarEvaluacionAutomatica(nueva, ant);
   };
 
-  // APROBAR O RECHAZAR UNA PROPUESTA ESPECÍFICA
+  // APROBAR O RECHAZAR UNA PROPUESTA ESPECÍFICA (EXCLUSIVO GERENTE)
   const handleAccionPropuesta = (
     propuestaId: string,
     accion: 'APROBAR' | 'RECHAZAR'
   ) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setPropuestasEditables((prev) =>
       prev.map((p) => {
         if (p.id === propuestaId) {
@@ -229,11 +259,11 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             decisionUsuario: {
               accion,
               fecha: new Date().toISOString(),
-              responsable: 'Encargado SST Frikaz',
+              responsable: nombreGerente,
               justificacion:
                 accion === 'APROBAR'
-                  ? 'Aprobado luego de revisar que sí aplica en la planta.'
-                  : 'Descartado porque no aplica a nuestra forma de trabajo actual.',
+                  ? 'Aprobado por Gerencia luego de revisar que sí aplica en la planta.'
+                  : 'Devuelto para ajustes / descartado por Gerencia porque no aplica a nuestra forma de trabajo actual.',
             },
           };
         }
@@ -242,19 +272,34 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     );
   };
 
-  // APLICAR TODAS LAS PROPUESTAS APROBADAS A LAS 74 NORMAS Y REGISTRAR EN HISTORIAL
+  // APLICAR TODAS LAS PROPUESTAS APROBADAS A LAS NORMAS Y REGISTRAR EN HISTORIAL (EXCLUSIVO GERENTE)
   const handleAplicarCambiosDefinitivos = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!evaluacionActual) return;
 
     const propuestasParaAplicar = propuestasEditables.filter(
-      (p) => p.estadoPropuesta === 'APROBADA' || p.estadoPropuesta === 'PENDIENTE'
+      (p) => p.estadoPropuesta === 'APROBADA'
     );
+    const rechazadas = propuestasEditables.filter(
+      (p) => p.estadoPropuesta === 'RECHAZADA'
+    ).length;
+
+    if (propuestasParaAplicar.length === 0 && rechazadas === 0) {
+      setMensajeExito(
+        'Primero revisa y aprueba o descarta las propuestas antes de guardar.'
+      );
+      setTimeout(() => setMensajeExito(null), 4000);
+      return;
+    }
 
     const { normasActualizadas, conteoActualizadas } = aplicarPropuestasANormas(
       normas,
       propuestasParaAplicar,
       config,
-      'Encargado SST Frikaz'
+      nombreGerente
     );
 
     // Actualizar estado general en App
@@ -262,14 +307,11 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
     // Registrar en Historial Inmutable
     const aprobadas = propuestasParaAplicar.length;
-    const rechazadas = propuestasEditables.filter(
-      (p) => p.estadoPropuesta === 'RECHAZADA'
-    ).length;
 
     const registro: RegistroHistorialCambio = {
       id: `hist-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      usuario: 'Encargado SST Frikaz',
+      usuario: nombreGerente,
       caracteristicaModificada: evaluacionActual.variableModificada,
       valorAnterior: JSON.stringify(evaluacionActual.valorAnterior).slice(0, 80),
       valorNuevo: JSON.stringify(evaluacionActual.valorNuevo).slice(0, 80),
@@ -290,7 +332,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
     saveCaracterizacion(config);
 
     setMensajeExito(
-      `¡Listo! Se actualizaron ${conteoActualizadas} reglas en el Ciclo PHVA y en la Lista de Normas.`
+      `¡Listo! Gerencia actualizó ${conteoActualizadas} reglas en el Ciclo PHVA y en la Lista de Normas.`
     );
     setTimeout(() => setMensajeExito(null), 5000);
     setIsRevisionModalOpen(false);
@@ -298,6 +340,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
   // EJECUCIÓN DIRECTA DE LOS ESCENARIOS DE PRUEBA EXIGIDOS
   const handleEjecutarPruebaControlada = (escenario: number) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const ant = { ...config };
     let nueva: CaracterizacionEmpresaDinamica = { ...config };
 
@@ -544,10 +590,10 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             <button
               onClick={onOpenMatrizExcel}
               className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-xs font-bold border border-emerald-500/40 transition-all cursor-pointer"
-              title="Abrir la Tabla Excel de normas"
+              title="Abrir la Tabla de Normas"
             >
               <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-              <span>Tabla Excel</span>
+              <span>Tabla de Normas</span>
             </button>
           </div>
         </div>
@@ -1342,21 +1388,22 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
                         {/* Estado de Aprobación */}
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          {(() => {
+                            const badge = getBadgeClassesEstadoFrikaz(
                               esAprobada
-                                ? 'bg-emerald-600 text-white'
+                                ? 'Aprobado'
                                 : esRechazada
-                                  ? 'bg-rose-600 text-white'
-                                  : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {esAprobada
-                              ? 'APROBADA'
-                              : esRechazada
-                                ? 'DESCARTADA'
-                                : 'POR DECIDIR'}
-                          </span>
+                                  ? 'Devuelto para ajustes'
+                                  : 'Pendiente de revisión'
+                            );
+                            return (
+                              <span
+                                className={`px-2 py-0.5 rounded border text-[10px] font-bold ${badge.light}`}
+                              >
+                                {badge.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -1398,7 +1445,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                                 : 'bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800'
                             }`}
                           >
-                            <Check className="h-3.5 w-3.5" />
+                            {esGerente ? <Check className="h-3.5 w-3.5" /> : <Mail className="h-3.5 w-3.5" />}
                             <span>Aprobar</span>
                           </button>
 
@@ -1411,8 +1458,8 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                                 : 'bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800'
                             }`}
                           >
-                            <X className="h-3.5 w-3.5" />
-                            <span>Descartar</span>
+                            {esGerente ? <X className="h-3.5 w-3.5" /> : <Mail className="h-3.5 w-3.5" />}
+                            <span>Devolver / Descartar</span>
                           </button>
                         </div>
                       </div>
@@ -1425,7 +1472,9 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
             {/* Modal Footer con Aprobación Definitiva */}
             <div className="bg-slate-50 p-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               <span className="text-xs text-slate-500">
-                Al guardar, estos cambios pasan de una vez al Ciclo PHVA y a los indicadores de la planta.
+                {esGerente
+                  ? 'Al guardar como Gerente, los cambios aprobados pasan al Ciclo PHVA y a los indicadores de la planta.'
+                  : 'Solo Gerencia puede aprobar y aplicar cambios normativos al Ciclo PHVA.'}
               </span>
 
               <div className="flex items-center gap-2.5">
@@ -1442,8 +1491,8 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                   onClick={handleAplicarCambiosDefinitivos}
                   className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black shadow-md shadow-orange-600/30 flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Guardar y Actualizar Reglas</span>
+                  {esGerente ? <CheckCircle2 className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                  <span>{esGerente ? 'Guardar y Actualizar Reglas' : 'Ingresar como Gerente'}</span>
                 </button>
               </div>
             </div>
@@ -1497,9 +1546,20 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
                           · {item.usuario}
                         </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
-                        {item.estadoFinal}
-                      </span>
+                      {(() => {
+                        const badgeHist = getBadgeClassesEstadoFrikaz(
+                          item.estadoFinal === 'APLICADO_TOTAL'
+                            ? 'Aprobado'
+                            : item.estadoFinal === 'APLICADO_PARCIAL'
+                              ? 'En proceso'
+                              : 'Devuelto para ajustes'
+                        );
+                        return (
+                          <span className={`px-2 py-0.5 rounded border font-extrabold text-[10px] ${badgeHist.light}`}>
+                            {badgeHist.label}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <p className="text-slate-800 font-medium text-xs">

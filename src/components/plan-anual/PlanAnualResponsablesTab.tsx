@@ -1,10 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import {
   ActividadPlanAnual,
-  EstadoActividadPlan,
   PlanAnualVigencia,
   ResponsablePlanOption,
 } from '../../types/planAnual';
+import {
+  EstadoEstandarFrikaz,
+  ESTADOS_ESTANDAR_FRIKAZ,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+} from '../../services/gerenteControlService';
 import {
   UserCheck,
   Search,
@@ -30,28 +35,35 @@ export const PlanAnualResponsablesTab: React.FC<PlanAnualResponsablesTabProps> =
   onAbrirActividad,
 }) => {
   const [responsableSeleccionado, setResponsableSeleccionado] = useState<string>('TODOS');
-  const [filtroEstado, setFiltroEstado] = useState<EstadoActividadPlan | 'TODOS'>('TODOS');
+  const [filtroEstado, setFiltroEstado] = useState<EstadoEstandarFrikaz | 'TODOS'>('TODOS');
   const [busqueda, setBusqueda] = useState('');
 
   const resumenPorResponsable = useMemo(() => {
     return responsables.map((r) => {
       const asignadas = plan.actividades.filter((a) => a.responsableNombre === r.nombre);
-      const cumplidas = asignadas.filter((a) => a.estado === 'CUMPLIDA').length;
-      const vencidas = asignadas.filter((a) => a.estado === 'VENCIDA').length;
-      const pendientes = asignadas.length - cumplidas - vencidas;
+      const cumplidas = asignadas.filter((a) => {
+        const est = normalizarEstadoEstandar(a.estado);
+        return est === 'Cumplido' || est === 'Aprobado';
+      }).length;
+      const devueltas = asignadas.filter(
+        (a) => normalizarEstadoEstandar(a.estado) === 'Devuelto para ajustes'
+      ).length;
+      const pendientes = asignadas.length - cumplidas - devueltas;
       const pct = asignadas.length > 0 ? Math.round((cumplidas / asignadas.length) * 100) : 0;
       const porAprobar = plan.actividades.filter(
         (a) =>
           a.aprobadorNombre === r.nombre &&
-          (a.estado === 'REQUIERE_REVISION' ||
-            a.evidencias.some((e) => e.estadoRevision === 'PENDIENTE_REVISION'))
+          (normalizarEstadoEstandar(a.estado) === 'Pendiente de revisión' ||
+            a.evidencias.some(
+              (e) => normalizarEstadoEstandar(e.estadoRevision) === 'Pendiente de revisión'
+            ))
       ).length;
       return {
         ...r,
         total: asignadas.length,
         cumplidas,
         pendientes,
-        vencidas,
+        vencidas: devueltas,
         pct,
         porAprobar,
       };
@@ -62,7 +74,8 @@ export const PlanAnualResponsablesTab: React.FC<PlanAnualResponsablesTabProps> =
     return plan.actividades.filter((a) => {
       const mResp =
         responsableSeleccionado === 'TODOS' || a.responsableNombre === responsableSeleccionado;
-      const mEstado = filtroEstado === 'TODOS' || a.estado === filtroEstado;
+      const mEstado =
+        filtroEstado === 'TODOS' || normalizarEstadoEstandar(a.estado) === filtroEstado;
       const q = busqueda.trim().toLowerCase();
       const mQ =
         !q ||
@@ -139,16 +152,16 @@ export const PlanAnualResponsablesTab: React.FC<PlanAnualResponsablesTabProps> =
                       {r.total} tareas
                     </span>
                     <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                      {r.cumplidas} listas
+                      {r.cumplidas} cumplido(s)
                     </span>
                     {r.vencidas > 0 && (
                       <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800">
-                        {r.vencidas} atrasada(s)
+                        {r.vencidas} devuelto(s) para ajustes
                       </span>
                     )}
                     {r.porAprobar > 0 && (
                       <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">
-                        {r.porAprobar} por revisar
+                        {r.porAprobar} pendiente(s) de revisión
                       </span>
                     )}
                   </div>
@@ -181,11 +194,11 @@ export const PlanAnualResponsablesTab: React.FC<PlanAnualResponsablesTabProps> =
               className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white"
             >
               <option value="TODOS">Estado: Todos</option>
-              <option value="PENDIENTE">Por hacer</option>
-              <option value="EN_PROCESO">En marcha</option>
-              <option value="REQUIERE_REVISION">Falta revisar prueba</option>
-              <option value="CUMPLIDA">Lista / Cumplida</option>
-              <option value="VENCIDA">Atrasada</option>
+              {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
+                <option key={est} value={est}>
+                  {est}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -221,26 +234,23 @@ export const PlanAnualResponsablesTab: React.FC<PlanAnualResponsablesTabProps> =
                   <td className="p-3 text-slate-600">{a.aprobadorNombre}</td>
                   <td className="p-3 font-mono whitespace-nowrap">{a.fechaLimite}</td>
                   <td className="p-3 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-black text-[10px] ${
-                        a.estado === 'CUMPLIDA'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : a.estado === 'VENCIDA'
-                          ? 'bg-rose-100 text-rose-800'
-                          : a.estado === 'REQUIERE_REVISION'
-                          ? 'bg-amber-100 text-amber-900'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {a.estado === 'CUMPLIDA' ? (
-                        <CheckCircle2 className="h-3 w-3" />
-                      ) : a.estado === 'VENCIDA' ? (
-                        <AlertTriangle className="h-3 w-3" />
-                      ) : (
-                        <Clock className="h-3 w-3" />
-                      )}
-                      {a.estado.replace('_', ' ')}
-                    </span>
+                    {(() => {
+                      const badge = getBadgeClassesEstadoFrikaz(a.estado);
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-black text-[10px] ${badge.light}`}
+                        >
+                          {badge.label === 'Cumplido' || badge.label === 'Aprobado' ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : badge.label === 'Devuelto para ajustes' ? (
+                            <AlertTriangle className="h-3 w-3" />
+                          ) : (
+                            <Clock className="h-3 w-3" />
+                          )}
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="p-3 text-right whitespace-nowrap">
                     <div className="inline-flex items-center gap-1">

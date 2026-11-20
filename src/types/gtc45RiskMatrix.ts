@@ -1,5 +1,9 @@
 // Types for GTC 45 Risk Identification, Evaluation and Assessment Matrix
 // (Matriz de Identificación de Peligros, Evaluación y Valoración de Riesgos GTC 45)
+import type {
+  EstadoEstandarFrikaz,
+  RegistroRevisionGerente,
+} from '../services/gerenteControlService';
 
 export type TipoClasificacionPeligro =
   | 'Físico'
@@ -133,4 +137,6 @@ export interface RiesgoGTC45Item {
   // Metadata opcional
   observaciones?: string;
   fechaEvaluacion?: string;
+  estadoControl?: EstadoEstandarFrikaz;
+  revisionGerente?: RegistroRevisionGerente;
 }

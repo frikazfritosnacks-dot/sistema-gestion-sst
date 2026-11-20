@@ -23,7 +23,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para medir cómo funciona el SG-SST en Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Fichas sencillas de indicadores, resultados mensuales, listas de asistencia a charlas, recorridos de seguridad y plan de mejoras.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Indicadores de organización, actividades y resultados organizados en la herramienta.',
@@ -49,7 +49,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para las áreas de planta y oficina de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Política firmada, presupuesto aprobado, Plan Anual, nombramiento del Vigía SST, lista de peligros y plan de emergencias.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST / Gerente General',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Documentos base y presupuesto de seguridad revisados al 100%.',
@@ -75,7 +75,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para todas las actividades diarias de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Seguimiento mensual al Plan Anual, listas de asistencia, reportes de condiciones inseguras cerrados e informes de simulacro.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Seguimiento mensual de actividades y capacitaciones al día.',
@@ -101,7 +101,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para evaluar si las medidas evitan accidentes y enfermedades.',
     evidenciaCumplimiento:
       'Estadísticas de accidentalidad e incapacidades, evaluación de metas del año, revisión de leyes y actas de cierre de mejoras.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerencia General / Líder SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Cero accidentes graves y metas de prevención cumplidas.',
@@ -127,7 +127,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Guía internacional voluntaria aplicada en la planta de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Planilla mensual de agua y energía, registro de kilos reciclados y litros de aceite usado entregados, e informe de desempeño ambiental.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gestión Ambiental / Jefe de Planta',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Medición mensual de agua, energía y aceite vegetal usado (AVU).',
@@ -152,7 +152,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     jurisdiccionAlcance: 'Aplica en toda Colombia para todas las tareas de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Autoevaluación anual de estándares mínimos firmada, lista de peligros, Plan Anual y presupuesto.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Autoevaluación anual según la Resolución 0312 de 2019 completada.',
@@ -178,7 +178,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para definir, comunicar y revisar las metas del SG-SST.',
     evidenciaCumplimiento:
       'Documento de metas anuales, actas donde se compartieron con el equipo y revisión de avance.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerente General / Líder SST',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Metas revisadas y compartidas en jornada de inducción.',
@@ -206,7 +206,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para todas las tareas de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Actas de recorridos de seguridad, planillas de EPP, registros de capacitaciones y reportes de condiciones inseguras solucionados.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Equipo Auditor / Vigía de SST',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Revisión en campo hecha directamente en el puesto de fritura.',
@@ -232,7 +232,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para revisar todo el SG-SST una vez al año.',
     evidenciaCumplimiento:
       'Plan de revisión anual, lista de chequeo, informe de hallazgos encontrados y plan de mejoras con fechas.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Auditor Interno de SST / Vigía',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Revisión interna anual ejecutada junto con el Vigía SST.',
@@ -258,7 +258,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para la gerencia y responsables de SST.',
     evidenciaCumplimiento:
       'Acta anual de revisión gerencial firmada, resumen de indicadores y compromisos aprobados para el siguiente año.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerente General / Representante Legal',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Acta de revisión gerencial firmada por el representante legal.',
@@ -284,7 +284,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Guía internacional voluntaria aplicada en la gerencia de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Acta de revisión ambiental de gerencia, indicadores de agua/energía/residuos y plan de mejoras.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerencia General / Líder Ambiental',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Revisión ambiental incluida en la reunión anual de gerencia.',
@@ -310,7 +310,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para el control del agua residual que sale hacia el alcantarillado.',
     evidenciaCumplimiento:
       'Planilla semanal de limpieza de la trampa de grasas, análisis del agua de salida cuando aplique y actas de revisión.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gestión Ambiental / Mantenimiento',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Limpieza semanal de trampa de grasas al día.',
@@ -336,7 +336,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia a descargas de aguas de lavado industrial al alcantarillado.',
     evidenciaCumplimiento:
       'Resultados de laboratorio acreditado por el IDEAM, planilla de limpieza de trampa de grasas y revisión de desagües.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gestión Ambiental / Laboratorio Acreditado',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Muestras de agua verificadas con laboratorio acreditado.',
@@ -362,7 +362,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Guía internacional aplicada en toda la planta de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Lista de chequeo ambiental, informe de hallazgos y seguimiento de las correcciones hechas.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Auditor Ambiental Interno / Gerencia',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Revisión interna ambiental realizada con verificación de residuos y AVU.',
@@ -390,7 +390,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para todas las empresas y trabajadores.',
     evidenciaCumplimiento:
       'Planillas de afiliación a ARL, lista de peligros, constancias de entrega de EPP y capacitaciones.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST / Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Cumplimiento revisado cada seis meses.',
@@ -416,7 +416,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para todas las empresas.',
     evidenciaCumplimiento:
       'Evaluación inicial, lista de peligros, Plan Anual, capacitaciones, entrega de EPP, auditoría y revisión de gerencia.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Responsable SG-SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Revisión semestral de cumplimiento del Decreto 1072 al día.',
@@ -442,7 +442,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia bajo vigilancia de la Secretaría de Ambiente en Bogotá.',
     evidenciaCumplimiento:
       'Lista de aspectos ambientales, recibos de entrega de residuos, planillas de trampa de grasas y charlas ambientales.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Líder Ambiental / Gerencia',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Verificación periódica al día frente a la Secretaría Distrital de Ambiente.',
@@ -468,7 +468,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para promover el bienestar emocional en el trabajo.',
     evidenciaCumplimiento:
       'Plan de bienestar y salud mental, ruta visible de apoyo emocional ("Código Dorado"), charlas de buen trato y seguimiento con la ARL.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gestión Humana / Responsable SG-SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Ruta de apoyo emocional "Código Dorado" articulada con la ARL.',
@@ -496,7 +496,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para la gerencia y líderes de SST.',
     evidenciaCumplimiento:
       'Acta anual de revisión gerencial, presupuesto aprobado del SG-SST y acta de socialización con el Vigía SST.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerente General / Representante Legal',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Reunión gerencial con acta y presupuesto aprobado.',
@@ -522,7 +522,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Guía internacional aplicada en la dirección de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Política ambiental firmada, asignación de responsables, presupuesto ambiental y seguimiento a metas.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerencia General',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Compromiso firme de cero aceite al desagüe y ahorro de agua.',
@@ -548,7 +548,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Guía internacional aplicada en la revisión directiva de Frikaz S.A.S.',
     evidenciaCumplimiento:
       'Informe ambiental presentado a gerencia, acta de revisión y aprobación de acciones de mejora.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerencia General / Líder Ambiental',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Informe ambiental presentado con indicadores claros.',
@@ -574,7 +574,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia a empresas con aprendices en estudio o práctica.',
     evidenciaCumplimiento:
       'Contrato de aprendizaje, afiliación a EPS y ARL, planilla PILA, examen médico de ingreso, registro de inducción, entrega de EPP y actas de comités.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gestión Humana / Responsable SG-SST',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Afiliación a ARL y exámenes médicos garantizados para aprendices SENA.',
@@ -600,7 +600,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
       'Aplica en toda Colombia para trabajadores, aprendices y cualquier tipo de contrato.',
     evidenciaCumplimiento:
       'Política y protocolo contra violencia y acoso, canal confidencial de quejas, programación de turnos con descansos y registro de pausas activas.',
-    estado: 'CUMPLE',
+    estado: 'Por hacer',
     responsable: 'Gerencia General / Comité de Convivencia Laboral',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Protocolo de buen trato y horarios saludables implementado.',

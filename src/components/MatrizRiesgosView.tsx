@@ -52,14 +52,18 @@ import {
   FileSpreadsheet,
   Bot,
   RefreshCw,
-  BarChart2,
   Briefcase,
   FolderTree,
 } from 'lucide-react';
+import {
+  getBadgeClassesEstadoFrikaz,
+  useGerenteAutorizado,
+} from '../services/gerenteControlService';
 
-export type ModoVistaMatriz = 'ficha' | 'por_cargos' | 'tabla' | 'indicadores';
+export type ModoVistaMatriz = 'ficha' | 'por_cargos' | 'tabla';
 
 export function MatrizRiesgosView() {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   // Primary State initialized from persistent storage
   const [dataset, setDataset] = useState<RiesgoGTC45Item[]>(() => loadStoredRisks());
 
@@ -181,10 +185,18 @@ export function MatrizRiesgosView() {
 
   // Reset to initial canonical base dataset
   const handleResetToCanonical = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setIsResetModalOpen(true);
   };
 
   const handleConfirmResetToCanonical = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const base = resetToInitialRisks();
     setDataset(base);
     handleLimpiarFiltros();
@@ -195,6 +207,10 @@ export function MatrizRiesgosView() {
 
   // CRUD: Save (Create or Update)
   const handleSaveRisk = (savedRisk: RiesgoGTC45Item) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const exists = dataset.some((r) => r.id === savedRisk.id);
     let updated: RiesgoGTC45Item[];
     if (exists) {
@@ -212,6 +228,10 @@ export function MatrizRiesgosView() {
 
   // CRUD: Delete
   const handleConfirmDelete = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!deletingRisk) return;
     const updated = dataset.filter((r) => r.id !== deletingRisk.id);
     updateDatasetAndPersist(updated);
@@ -225,18 +245,30 @@ export function MatrizRiesgosView() {
 
   // Open Edit Modal
   const handleOpenEdit = (risk: RiesgoGTC45Item) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setEditingRisk(risk);
     setIsFormModalOpen(true);
   };
 
   // Open Create Modal
   const handleOpenCreate = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setEditingRisk(null);
     setIsFormModalOpen(true);
   };
 
   // Open Delete Modal
   const handleOpenDelete = (risk: RiesgoGTC45Item) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setDeletingRisk(risk);
     setIsDeleteModalOpen(true);
   };
@@ -252,7 +284,7 @@ export function MatrizRiesgosView() {
           ? `Área: ${selectedArea}`
           : 'Matriz Completa Frikaz S.A.S.';
       await exportarMatrizGTC45AExcel(riesgosFiltrados, title);
-      triggerNotification('Archivo Excel (.xlsx) generado y descargado correctamente');
+      triggerNotification('Archivo de matriz de riesgos generado y descargado correctamente');
     } catch (err) {
       console.error('Error exportando Excel:', err);
       triggerNotification('No pudimos crear el archivo Excel en este momento. Intenta de nuevo.');
@@ -315,7 +347,7 @@ export function MatrizRiesgosView() {
     }
   };
 
-  // Statistics & Indicators Calculation (Requirement 6)
+  // Summary counts for header cards & filters
   const estadisticas = useMemo(() => {
     const total = dataset.length;
     const nivelI = dataset.filter((r) => r.interpretacionNR === 'I').length;
@@ -323,99 +355,14 @@ export function MatrizRiesgosView() {
     const nivelIII = dataset.filter((r) => r.interpretacionNR === 'III').length;
     const nivelIV = dataset.filter((r) => r.interpretacionNR === 'IV').length;
 
-    // By Cargo
-    const porCargoMap = new Map<
-      string,
-      { total: number; nivelI: number; nivelII: number; nivelIII: number; nivelIV: number; areas: Set<string> }
-    >();
-    cargosDisponibles.forEach((cargo) => {
-      const risks = obtenerRiesgosPorCargo(dataset, cargo);
-      porCargoMap.set(cargo, {
-        total: risks.length,
-        nivelI: risks.filter((r) => r.interpretacionNR === 'I').length,
-        nivelII: risks.filter((r) => r.interpretacionNR === 'II').length,
-        nivelIII: risks.filter((r) => r.interpretacionNR === 'III').length,
-        nivelIV: risks.filter((r) => r.interpretacionNR === 'IV').length,
-        areas: new Set(risks.map((r) => r.zonaLugar)),
-      });
-    });
-
-    const listaCargosOrdenados = Array.from(porCargoMap.entries())
-      .map(([cargo, data]) => ({ cargo, ...data, areas: Array.from(data.areas) }))
-      .sort((a, b) => b.total - a.total || b.nivelI - a.nivelI);
-
-    // By Area
-    const porAreaMap = new Map<
-      string,
-      { total: number; nivelI: number; nivelII: number; nivelIII: number; nivelIV: number }
-    >();
-    areasDisponibles.forEach((area) => {
-      const risks = dataset.filter((r) => r.zonaLugar === area);
-      porAreaMap.set(area, {
-        total: risks.length,
-        nivelI: risks.filter((r) => r.interpretacionNR === 'I').length,
-        nivelII: risks.filter((r) => r.interpretacionNR === 'II').length,
-        nivelIII: risks.filter((r) => r.interpretacionNR === 'III').length,
-        nivelIV: risks.filter((r) => r.interpretacionNR === 'IV').length,
-      });
-    });
-    const listaAreasOrdenadas = Array.from(porAreaMap.entries())
-      .map(([area, data]) => ({ area, ...data }))
-      .sort((a, b) => b.total - a.total || b.nivelI - a.nivelI);
-
-    // By Classification
-    const clasificacionesMap = new Map<TipoClasificacionPeligro, number>();
-    dataset.forEach((r) => {
-      clasificacionesMap.set(r.peligroClasificacion, (clasificacionesMap.get(r.peligroClasificacion) || 0) + 1);
-    });
-    const listaClasificaciones = Array.from(clasificacionesMap.entries())
-      .map(([clasif, cantidad]) => ({ clasif, cantidad }))
-      .sort((a, b) => b.cantidad - a.cantidad);
-
-    // Controls Implemented vs Pending
-    const conControlFuente = dataset.filter(
-      (r) => r.controlesFuente && r.controlesFuente !== 'Sin información registrada'
-    ).length;
-    const conControlMedio = dataset.filter(
-      (r) => r.controlesMedio && r.controlesMedio !== 'Sin información registrada'
-    ).length;
-    const conControlIndividuo = dataset.filter(
-      (r) => r.controlesIndividuo && r.controlesIndividuo !== 'Sin información registrada'
-    ).length;
-
-    // Interventions Formulated
-    const conIngenieria = dataset.filter(
-      (r) =>
-        r.medidaControlesIngenieria &&
-        r.medidaControlesIngenieria !== 'Sin información registrada' &&
-        r.medidaControlesIngenieria.toLowerCase() !== 'no aplica'
-    ).length;
-    const conAdmin = dataset.filter(
-      (r) =>
-        r.medidaControlesAdministrativos &&
-        r.medidaControlesAdministrativos !== 'Sin información registrada'
-    ).length;
-    const conEPP = dataset.filter(
-      (r) => r.medidaEquiposEPP && r.medidaEquiposEPP !== 'Sin información registrada'
-    ).length;
-
     return {
       total,
       nivelI,
       nivelII,
       nivelIII,
       nivelIV,
-      listaCargosOrdenados,
-      listaAreasOrdenadas,
-      listaClasificaciones,
-      conControlFuente,
-      conControlMedio,
-      conControlIndividuo,
-      conIngenieria,
-      conAdmin,
-      conEPP,
     };
-  }, [dataset, cargosDisponibles, areasDisponibles]);
+  }, [dataset]);
 
   // Grouped by Cargo map for the 'por_cargos' view
   const riesgosAgrupadosPorCargo = useMemo(() => {
@@ -544,17 +491,6 @@ export function MatrizRiesgosView() {
               <TableIcon className="h-3.5 w-3.5" />
               <span>3. Tabla Completa</span>
             </button>
-            <button
-              onClick={() => setViewMode('indicadores')}
-              className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'indicadores'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              <BarChart2 className="h-3.5 w-3.5" />
-              <span>4. Resumen y Gráficas</span>
-            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -562,10 +498,10 @@ export function MatrizRiesgosView() {
               onClick={handleExportExcel}
               disabled={isExportingExcel}
               className="px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 transition-colors flex items-center gap-1.5 cursor-pointer font-semibold disabled:opacity-50"
-              title="Descargar matriz en Excel (.xlsx) con fórmulas, cargos y formatos GTC 45"
+              title="Descargar matriz completa con cargos y formatos GTC 45"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-              <span>{isExportingExcel ? 'Generando Excel...' : 'Exportar Excel (.xlsx)'}</span>
+              <span>{isExportingExcel ? 'Generando archivo...' : 'Descargar Matriz'}</span>
             </button>
 
             <button
@@ -867,6 +803,18 @@ export function MatrizRiesgosView() {
                     Cargo: {selectedRisk.cargo || selectedRisk.cargosExpuestos}
                   </span>
                 )}
+                {(() => {
+                  const estBadge = getBadgeClassesEstadoFrikaz(selectedRisk.estadoControl || 'Por hacer');
+                  return (
+                    <span
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold border inline-flex items-center gap-1.5 ${estBadge.dark}`}
+                      title={estBadge.descripcionCorta}
+                    >
+                      <span className={`h-2 w-2 rounded-full ${estBadge.dot}`} />
+                      Estado control: {estBadge.label}
+                    </span>
+                  );
+                })()}
               </div>
 
               {/* Acceptability & NR Pill */}
@@ -1601,6 +1549,18 @@ export function MatrizRiesgosView() {
                 </span>
               </div>
             )}
+
+            {selectedRisk.revisionGerente && (
+              <div className="mt-2 p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-200 flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  <strong>Revisión de Gerencia:</strong> {selectedRisk.revisionGerente.resultadoRevision} —{' '}
+                  {selectedRisk.revisionGerente.revisadoPor}
+                </span>
+                <span className="text-[11px] text-emerald-300">
+                  Fecha: {selectedRisk.revisionGerente.fechaRevision}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1911,232 +1871,6 @@ export function MatrizRiesgosView() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          VIEW MODE 4: INDICADORES DENTRO DE LA MATRIZ (GTC 45)
-         ========================================================================= */}
-      {viewMode === 'indicadores' && (
-        <div className="space-y-6">
-          <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <BarChart2 className="h-5 w-5 text-emerald-400" />
-              <span>Resumen de Peligros y Medidas en Frikaz S.A.S.</span>
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Vista rápida de cuántos peligros hay por puesto de trabajo, por zona de la planta y qué tan urgentes son.
-            </p>
-          </div>
-
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl text-center">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Peligros</span>
-              <span className="text-3xl font-black text-white font-mono my-1 block">{estadisticas.total}</span>
-              <span className="text-[11px] text-emerald-400">100% evaluados</span>
-            </div>
-            <div className="bg-slate-900 border border-rose-500/30 bg-rose-950/10 p-4 rounded-xl text-center">
-              <span className="text-[10px] uppercase font-bold text-rose-400 block">Críticos (Nivel I)</span>
-              <span className="text-3xl font-black text-rose-400 font-mono my-1 block">{estadisticas.nivelI}</span>
-              <span className="text-[11px] text-rose-300 font-bold">No Aceptables</span>
-            </div>
-            <div className="bg-slate-900 border border-amber-500/30 bg-amber-950/10 p-4 rounded-xl text-center">
-              <span className="text-[10px] uppercase font-bold text-amber-400 block">Riesgo Alto (Nivel II)</span>
-              <span className="text-3xl font-black text-amber-400 font-mono my-1 block">{estadisticas.nivelII}</span>
-              <span className="text-[11px] text-amber-300">Control Específico</span>
-            </div>
-            <div className="bg-slate-900 border border-emerald-500/30 bg-emerald-950/10 p-4 rounded-xl text-center">
-              <span className="text-[10px] uppercase font-bold text-emerald-400 block">Aceptables (III y IV)</span>
-              <span className="text-3xl font-black text-emerald-400 font-mono my-1 block">
-                {estadisticas.nivelIII + estadisticas.nivelIV}
-              </span>
-              <span className="text-[11px] text-emerald-300">Mejorable / Aceptable</span>
-            </div>
-          </div>
-
-          {/* TWO TABLES: TOP CARGOS & AREAS CON MAYOR EXPOSICIÓN */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Table: Cargos con Mayor Cantidad de Peligros */}
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-emerald-400" />
-                  <h4 className="text-sm font-bold text-white uppercase tracking-wide">
-                    Cargos con Mayor Cantidad de Peligros
-                  </h4>
-                </div>
-                <span className="text-xs text-slate-400">{estadisticas.listaCargosOrdenados.length} cargos</span>
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-slate-800">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950 text-slate-300 text-[10px] font-bold uppercase border-b border-slate-800">
-                      <th className="p-2.5">Puesto / Cargo</th>
-                      <th className="p-2.5 text-center">Peligros</th>
-                      <th className="p-2.5 text-center text-rose-400">Nivel I</th>
-                      <th className="p-2.5 text-center text-amber-400">Nivel II</th>
-                      <th className="p-2.5 text-center">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-normal">
-                    {estadisticas.listaCargosOrdenados.map((item) => (
-                      <tr key={item.cargo} className="hover:bg-slate-850/50 transition-colors">
-                        <td className="p-2.5 font-bold text-white">{item.cargo}</td>
-                        <td className="p-2.5 text-center font-mono font-bold text-emerald-400">{item.total}</td>
-                        <td className="p-2.5 text-center font-mono font-bold text-rose-400">{item.nivelI}</td>
-                        <td className="p-2.5 text-center font-mono font-bold text-amber-400">{item.nivelII}</td>
-                        <td className="p-2.5 text-center">
-                          <button
-                            onClick={() => {
-                              setSelectedCargo(item.cargo);
-                              setViewMode('por_cargos');
-                            }}
-                            className="text-emerald-400 hover:text-emerald-300 text-[11px] font-semibold cursor-pointer"
-                          >
-                            Filtrar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Table: Áreas con Mayor Exposición */}
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-emerald-400" />
-                  <h4 className="text-sm font-bold text-white uppercase tracking-wide">
-                    Áreas con Mayor Exposición de Peligros
-                  </h4>
-                </div>
-                <span className="text-xs text-slate-400">{estadisticas.listaAreasOrdenadas.length} áreas</span>
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-slate-800">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950 text-slate-300 text-[10px] font-bold uppercase border-b border-slate-800">
-                      <th className="p-2.5">Zona / Lugar</th>
-                      <th className="p-2.5 text-center">Peligros</th>
-                      <th className="p-2.5 text-center text-rose-400">Nivel I</th>
-                      <th className="p-2.5 text-center text-amber-400">Nivel II</th>
-                      <th className="p-2.5 text-center">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-normal">
-                    {estadisticas.listaAreasOrdenadas.map((item) => (
-                      <tr key={item.area} className="hover:bg-slate-850/50 transition-colors">
-                        <td className="p-2.5 font-bold text-white">{item.area}</td>
-                        <td className="p-2.5 text-center font-mono font-bold text-emerald-400">{item.total}</td>
-                        <td className="p-2.5 text-center font-mono font-bold text-rose-400">{item.nivelI}</td>
-                        <td className="p-2.5 text-center font-mono font-bold text-amber-400">{item.nivelII}</td>
-                        <td className="p-2.5 text-center">
-                          <button
-                            onClick={() => {
-                              setSelectedArea(item.area);
-                              setViewMode('tabla');
-                            }}
-                            className="text-emerald-400 hover:text-emerald-300 text-[11px] font-semibold cursor-pointer"
-                          >
-                            Filtrar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* TWO TABLES: CLASIFICACIÓN & ESTADO DE CONTROLES */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Peligros Más Frecuentes por Clasificación */}
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-3">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                <Layers className="h-4 w-4 text-emerald-400" />
-                <h4 className="text-sm font-bold text-white uppercase tracking-wide">
-                  Peligros Más Frecuentes (Por Clasificación)
-                </h4>
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-slate-800">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-950 text-slate-300 text-[10px] font-bold uppercase border-b border-slate-800">
-                      <th className="p-2.5">Clasificación GTC 45</th>
-                      <th className="p-2.5 text-center">Peligros</th>
-                      <th className="p-2.5 text-center">Porcentaje</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-normal">
-                    {estadisticas.listaClasificaciones.map((item) => (
-                      <tr key={item.clasif} className="hover:bg-slate-850/50 transition-colors">
-                        <td className="p-2.5">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getBadgeClasificacion(item.clasif)}`}>
-                            {item.clasif}
-                          </span>
-                        </td>
-                        <td className="p-2.5 text-center font-mono font-bold text-white">{item.cantidad}</td>
-                        <td className="p-2.5 text-center font-mono text-slate-300">
-                          {((item.cantidad / estadisticas.total) * 100).toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Estado de Controles y Medidas de Intervención */}
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-3">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                <Wrench className="h-4 w-4 text-emerald-400" />
-                <h4 className="text-sm font-bold text-white uppercase tracking-wide">
-                  Controles Existentes y Medidas Formuladas
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  <span className="text-[10px] text-cyan-400 font-bold uppercase block">Control en Fuente</span>
-                  <span className="text-lg font-black text-white font-mono mt-1 block">
-                    {estadisticas.conControlFuente} / {estadisticas.total}
-                  </span>
-                  <span className="text-[10px] text-slate-400">Implementados en maquinaria</span>
-                </div>
-
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  <span className="text-[10px] text-emerald-400 font-bold uppercase block">Control en Medio</span>
-                  <span className="text-lg font-black text-white font-mono mt-1 block">
-                    {estadisticas.conControlMedio} / {estadisticas.total}
-                  </span>
-                  <span className="text-[10px] text-slate-400">Barreras y ventilación</span>
-                </div>
-
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  <span className="text-[10px] text-amber-400 font-bold uppercase block">Control en Individuo</span>
-                  <span className="text-lg font-black text-white font-mono mt-1 block">
-                    {estadisticas.conControlIndividuo} / {estadisticas.total}
-                  </span>
-                  <span className="text-[10px] text-slate-400">Capacitación y EPP actual</span>
-                </div>
-
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                  <span className="text-[10px] text-teal-400 font-bold uppercase block">Medidas de Ingeniería</span>
-                  <span className="text-lg font-black text-white font-mono mt-1 block">
-                    {estadisticas.conIngenieria} / {estadisticas.total}
-                  </span>
-                  <span className="text-[10px] text-slate-400">Intervenciones pendientes</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

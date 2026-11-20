@@ -20,7 +20,14 @@ export interface ParteInteresada {
 
 export type CargoChecklistInterno = 'gerente' | 'operarios' | 'conductor';
 
-export type EstadoCumplimientoChecklist = 'Cumplido' | 'Pendiente' | 'En proceso';
+export type EstadoCumplimientoChecklist =
+  | 'Por hacer'
+  | 'En proceso'
+  | 'Pendiente de revisión'
+  | 'Devuelto para ajustes'
+  | 'Cumplido'
+  | 'Aprobado'
+  | 'Pendiente';
 
 export interface ItemChecklistNecesidad {
   id: string;
@@ -32,6 +39,10 @@ export interface ItemChecklistNecesidad {
   evidencias: string;
   responsable: string;
   fechaVerificacion: string;
+  fechaRevision?: string;
+  revisadoPor?: string;
+  resultadoRevision?: 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes';
+  observacionesRevision?: string;
 }
 
 export interface RegistroHistorialChecklist {

@@ -2,13 +2,24 @@
 // TIPOS DEL MÓDULO INTEGRADO «PLAN ANUAL» (DENTRO DE PLANEAR) — FRIKAZ S.A.S.
 // ============================================================================
 
-export type EstadoAprobacionPlan = 'BORRADOR' | 'EN_REVISION' | 'APROBADO' | 'CERRADO';
+import type { RegistroRevisionGerente } from '../services/gerenteControlService';
+
+export type EstadoAprobacionPlan =
+  | 'BORRADOR'
+  | 'EN_PROCESO'
+  | 'EN_REVISION'
+  | 'DEVUELTO_AJUSTES'
+  | 'CUMPLIDO'
+  | 'APROBADO'
+  | 'CERRADO';
 
 export type EstadoActividadPlan =
   | 'PENDIENTE'
   | 'EN_PROCESO'
   | 'REQUIERE_REVISION'
+  | 'DEVUELTA'
   | 'CUMPLIDA'
+  | 'APROBADA'
   | 'VENCIDA';
 
 export type PeriodicidadActividad =
@@ -112,10 +123,12 @@ export interface EvidenciaActividad {
   urlReferencia?: string;
   fechaCarga: string;
   cargadoPor: string;
-  estadoRevision: 'PENDIENTE_REVISION' | 'APROBADA' | 'DEVUELTA';
+  estadoRevision: 'PENDIENTE_REVISION' | 'CUMPLIDA' | 'APROBADA' | 'DEVUELTA';
   revisadoPor?: string;
   fechaRevision?: string;
   comentarioRevisor?: string;
+  resultadoRevision?: 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes';
+  revisionGerente?: RegistroRevisionGerente;
 }
 
 export interface HistorialRevisionActividad {
@@ -198,6 +211,7 @@ export interface ActividadPlanAnual {
   fechaCierre?: string;
   cerradoPor?: string;
   observaciones: string;
+  revisionGerente?: RegistroRevisionGerente;
   historialRevisiones: HistorialRevisionActividad[];
 }
 
@@ -257,6 +271,7 @@ export interface PlanAnualVigencia {
   aprobadorNombre: string;
   estadoAprobacion: EstadoAprobacionPlan;
   fechaAprobacion?: string;
+  revisionGerente?: RegistroRevisionGerente;
   empresaSnapshot: EmpresaSnapshotPlan;
   objetivosEspecificos: ObjetivoEspecificoPlan[];
   indicadores: IndicadorGestionPlan[];
@@ -447,6 +462,7 @@ export interface RegistroPeriodoIndicador {
   valoresPersonalizados?: Record<string, number | null>;
   validado: boolean;
   validadoPor?: string;
+  revisionGerente?: RegistroRevisionGerente;
   fechaActualizacion: string;
   observaciones?: string;
 }
@@ -475,9 +491,21 @@ export interface EvaluacionEstandarMinimo {
   descripcionSencilla: string;
   normaReferencia: string;
   informacionNecesaria: string[];
-  estadoRevision: 'PENDIENTE_REVISION' | 'EN_REVISION' | 'FALTA_SOPORTE' | 'CUMPLE_VERIFICADO' | 'REQUIERE_MEJORA';
+  estadoRevision:
+    | 'PENDIENTE'
+    | 'EN_PROCESO'
+    | 'PENDIENTE_REVISION'
+    | 'EN_REVISION'
+    | 'FALTA_SOPORTE'
+    | 'DEVUELTO_AJUSTES'
+    | 'CUMPLE_VERIFICADO'
+    | 'CUMPLIDO'
+    | 'APROBADO'
+    | 'REQUIERE_MEJORA';
   revisadoPor?: string;
   fechaRevision?: string;
+  resultadoRevision?: 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes';
+  revisionGerente?: RegistroRevisionGerente;
   observacionesRevision: string;
   aplicaSegunEmpresa: boolean;
   motivoAplicabilidad: string;
@@ -532,8 +560,16 @@ export interface AccionMejoraPlan {
   fechaLimite: string;
   evidenciaNecesaria: string;
   evidenciasAdjuntas: EvidenciaActividad[];
-  estado: 'PENDIENTE' | 'EN_PROCESO' | 'CUMPLIDA' | 'ATRASADA' | 'DEVUELTA_CORRECCION';
+  estado:
+    | 'PENDIENTE'
+    | 'EN_PROCESO'
+    | 'PENDIENTE_REVISION'
+    | 'CUMPLIDA'
+    | 'APROBADA'
+    | 'ATRASADA'
+    | 'DEVUELTA_CORRECCION';
   resultadoSeguimiento: string;
+  revisionGerente?: RegistroRevisionGerente;
   // Conexiones sin duplicación
   riesgoId?: string;
   actividadPlanId?: string;

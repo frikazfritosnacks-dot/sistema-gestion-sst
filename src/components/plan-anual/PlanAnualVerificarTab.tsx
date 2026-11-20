@@ -39,7 +39,13 @@ import {
   ShieldAlert,
   ShieldCheck,
   TrendingUp,
+  Mail,
 } from 'lucide-react';
+import {
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
 
 interface PlanAnualVerificarTabProps {
   plan: PlanAnualVigencia;
@@ -156,6 +162,7 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   // Edición de revisión manual de estándares
   const [editingEstandarNum, setEditingEstandarNum] = useState<number | null>(null);
   const [estandarDraft, setEstandarDraft] = useState<EvaluacionEstandarMinimo | null>(null);
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   const activosCount = useMemo(
     () => trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO').length,
@@ -209,7 +216,10 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
 
   const resumenActividades = useMemo(() => {
     const total = plan.actividades.length;
-    const cumplidas = plan.actividades.filter((a) => a.estado === 'CUMPLIDA').length;
+    const cumplidas = plan.actividades.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
     const vencidas = plan.actividades.filter((a) => a.estado === 'VENCIDA').length;
     const pendientes = total - cumplidas - vencidas;
     const pct = total > 0 ? Math.round((cumplidas / total) * 100) : 0;
@@ -217,10 +227,14 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   }, [plan.actividades]);
 
   const resumenEstandares = useMemo(() => {
-    const verificados = estandares.filter((e) => e.estadoRevision === 'CUMPLE_VERIFICADO').length;
-    const requierenMejora = estandares.filter(
-      (e) => e.estadoRevision === 'REQUIERE_MEJORA' || e.estadoRevision === 'FALTA_SOPORTE'
-    ).length;
+    const verificados = estandares.filter((e) => {
+      const est = normalizarEstadoEstandar(e.estadoRevision);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
+    const requierenMejora = estandares.filter((e) => {
+      const est = normalizarEstadoEstandar(e.estadoRevision);
+      return est === 'Devuelto para ajustes' || est === 'Por hacer' || est === 'En proceso';
+    }).length;
     return { verificados, requierenMejora, total: estandares.length };
   }, [estandares]);
 
@@ -322,7 +336,7 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-              2. VERIFICAR — Indicadores Reales (Res. 0312), Riesgos y 7 Estándares Mínimos
+              3. VERIFICAR — Indicadores Reales (Res. 0312), Riesgos y 7 Estándares Mínimos
             </h3>
             <p className="text-[11px] text-slate-500">
               Revise cómo van las cuentas de accidentalidad, incapacidad y enfermedades laborales con datos reales (nunca inventados en cero), los controles de riesgos y los 7 estándares de ley.
@@ -1113,15 +1127,40 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                   />
                 </div>
                 <div className="flex items-end">
-                  <label className="inline-flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-300 w-full cursor-pointer font-bold">
+                  <label
+                    onClick={(e) => {
+                      if (!esGerente) {
+                        e.preventDefault();
+                        solicitarAccesoGerente();
+                      }
+                    }}
+                    className={`inline-flex items-center gap-2 p-2 rounded-lg border w-full cursor-pointer font-bold ${
+                      esGerente
+                        ? 'bg-white border-slate-300 text-slate-900'
+                        : 'bg-slate-100 border-slate-300 text-slate-600'
+                    }`}
+                    title={
+                      esGerente
+                        ? 'Marcar como revisado y aprobado por Gerencia'
+                        : 'Solo Andrea Orjuela – Gerente puede validar el periodo oficial'
+                    }
+                  >
                     <input
                       type="checkbox"
                       checked={periodoDraft.validado}
-                      onChange={(e) =>
-                        setPeriodoDraft({ ...periodoDraft, validado: e.target.checked })
-                      }
+                      disabled={!esGerente}
+                      onChange={(e) => {
+                        if (!esGerente) {
+                          solicitarAccesoGerente();
+                          return;
+                        }
+                        setPeriodoDraft({ ...periodoDraft, validado: e.target.checked });
+                      }}
                     />
-                    <span>Periodo Validado</span>
+                    <span className="inline-flex items-center gap-1">
+                      {!esGerente && <Mail className="h-3 w-3 text-[#f97316]" />}
+                      <span>{esGerente ? 'Validado por Gerencia' : 'Ingresar como Gerente'}</span>
+                    </span>
                   </label>
                 </div>
               </div>
@@ -1153,7 +1192,9 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                       onSaveRegistroPeriodo({
                         ...periodoDraft,
                         validadoPor: periodoDraft.validado
-                          ? 'Coordinador / Vigía de SST'
+                          ? esGerente
+                            ? nombreGerente
+                            : undefined
                           : undefined,
                         fechaActualizacion: new Date().toISOString().split('T')[0],
                       });
@@ -1229,12 +1270,12 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                           </td>
                           <td className="p-2.5">
                             {reg.validado ? (
-                              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-black text-[10px]">
-                                Validado
+                              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-black text-[10px]">
+                                Aprobado
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
-                                Pendiente de validar
+                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-bold text-[10px]">
+                                Pendiente de revisión
                               </span>
                             )}
                           </td>
@@ -1375,8 +1416,8 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
 
                 {acciones.length > 0 && (
                   <div className="pt-2 border-t border-slate-100 text-[11px] text-indigo-900">
-                    <strong>Acciones de mejora ya abiertas en ACTUAR:</strong>{' '}
-                    {acciones.map((a) => `${a.codigo} (${a.estado})`).join(' · ')}
+                    <strong>Acciones de mejora ya abiertas en 4. ACTUAR:</strong>{' '}
+                    {acciones.map((a) => `${a.codigo} (${normalizarEstadoEstandar(a.estado)})`).join(' · ')}
                   </div>
                 )}
               </div>
@@ -1397,8 +1438,8 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
             </h4>
             <p className="text-[11px] text-slate-600 mt-1">
               Cada punto reúne automáticamente la información real de trabajadores, matriz GTC 45, capacitación y plan anual.{' '}
-              <strong>Ningún estándar se marca como cumplido solo por llenar un formulario:</strong>{' '}
-              usted revisa qué existe y qué falta, y aprueba manualmente su estado.
+              <strong>Ningún estándar se marca como cumplido ni aprobado automáticamente:</strong>{' '}
+              el equipo registra los soportes y únicamente Andrea Orjuela – Gerente aprueba o devuelve para ajustes tras su revisión.
             </p>
           </div>
 
@@ -1412,12 +1453,7 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                 accionesMejora
               );
               const isEditing = editingEstandarNum === est.numero && estandarDraft;
-              const badgeColor =
-                est.estadoRevision === 'CUMPLE_VERIFICADO'
-                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                  : est.estadoRevision === 'FALTA_SOPORTE' || est.estadoRevision === 'REQUIERE_MEJORA'
-                  ? 'bg-rose-100 text-rose-900 border-rose-300'
-                  : 'bg-amber-100 text-amber-900 border-amber-300';
+              const estBadge = getBadgeClassesEstadoFrikaz(est.estadoRevision);
 
               return (
                 <div
@@ -1427,8 +1463,8 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                   <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`px-2.5 py-0.5 rounded-lg border font-black text-[10px] ${badgeColor}`}>
-                          {est.estadoRevision.replace(/_/g, ' ')}
+                        <span className={`px-2.5 py-0.5 rounded-lg border font-black text-[10px] ${estBadge.light}`}>
+                          {estBadge.label}
                         </span>
                         <span className="text-[10px] font-bold text-slate-500">
                           {est.normaReferencia}
@@ -1515,15 +1551,31 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                     <p className="text-[11px] text-slate-600">
                       <strong>Nota de revisión ({est.fechaRevision || 'En curso'}):</strong>{' '}
                       {est.observacionesRevision}
+                      {est.revisadoPor ? ` · Revisado por: ${est.revisadoPor}` : ''}
                     </p>
                   )}
 
                   {isEditing && estandarDraft && (
                     <div className="rounded-xl border border-orange-300 bg-orange-50/50 p-3.5 space-y-3">
+                      {!esGerente && (
+                        <div className="rounded-lg bg-white border border-amber-300 p-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-amber-900">
+                          <span>
+                            Solo Andrea Orjuela – Gerente puede aprobar, marcar como <strong>Cumplido</strong> o devolver para ajustes. Como colaborador puedes pasarlo a <strong>Pendiente de revisión</strong>.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={solicitarAccesoGerente}
+                            className="px-2.5 py-1 rounded-lg bg-[#0f172a] text-[#fed7aa] font-black cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <Mail className="h-3 w-3" />
+                            <span>Ingresar como Gerente</span>
+                          </button>
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="font-bold text-slate-700 block mb-1">
-                            Resultado real de la revisión
+                            Estado estándar del punto
                           </label>
                           <select
                             value={estandarDraft.estadoRevision}
@@ -1535,22 +1587,30 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                             }
                             className="w-full rounded-lg border border-slate-300 p-2 bg-white font-bold"
                           >
+                            <option value="PENDIENTE">Por hacer</option>
+                            <option value="EN_PROCESO">En proceso</option>
                             <option value="PENDIENTE_REVISION">Pendiente de revisión</option>
-                            <option value="EN_REVISION">En revisión</option>
-                            <option value="FALTA_SOPORTE">Falta soporte</option>
-                            <option value="REQUIERE_MEJORA">Requiere mejora</option>
-                            <option value="CUMPLE_VERIFICADO">Cumple (Verificado manualmente)</option>
+                            <option value="DEVUELTO_AJUSTES" disabled={!esGerente}>
+                              Devuelto para ajustes {!esGerente ? '(Solo Gerente)' : ''}
+                            </option>
+                            <option value="CUMPLE_VERIFICADO" disabled={!esGerente}>
+                              Cumplido {!esGerente ? '(Solo Gerente)' : ''}
+                            </option>
+                            <option value="APROBADO" disabled={!esGerente}>
+                              Aprobado {!esGerente ? '(Solo Gerente)' : ''}
+                            </option>
                           </select>
                         </div>
                         <div>
                           <label className="font-bold text-slate-700 block mb-1">Revisado por</label>
                           <select
-                            value={estandarDraft.revisadoPor || responsables[0]?.nombre || ''}
+                            value={estandarDraft.revisadoPor || (esGerente ? nombreGerente : responsables[0]?.nombre || '')}
                             onChange={(e) =>
                               setEstandarDraft({ ...estandarDraft, revisadoPor: e.target.value })
                             }
                             className="w-full rounded-lg border border-slate-300 p-2 bg-white"
                           >
+                            {esGerente && <option value={nombreGerente}>{nombreGerente}</option>}
                             {responsables.map((r) => (
                               <option key={r.id} value={r.nombre}>
                                 {r.nombre}

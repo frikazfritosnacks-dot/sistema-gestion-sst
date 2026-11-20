@@ -16,6 +16,12 @@ import {
   sincronizarConMensajesGmail,
 } from '../../../services/documentosFirmadosService';
 import {
+  ESTADOS_ESTANDAR_FRIKAZ,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../../services/gerenteControlService';
+import {
   getEmailServiceStatus,
   verifySmtpConnection,
   getEmailHistory,
@@ -68,6 +74,7 @@ import {
 } from 'lucide-react';
 
 export const DocumentosFirmadosRecibidosView: React.FC = () => {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [documentos, setDocumentos] = useState<DocumentoFirmadoRecibido[]>(() =>
     getStoredDocumentosFirmados()
   );
@@ -133,6 +140,10 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
   }, []);
 
   const handleVerificarSmtp = async () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setVerificandoSmtp(true);
     setSmtpVerifyResult(null);
     try {
@@ -154,6 +165,10 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
   const handleEnviarPrueba = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!testTo.trim() || !testTo.includes('@')) {
       triggerToast('Escribe un correo válido para hacer la prueba.');
       return;
@@ -220,6 +235,10 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
   };
 
   const handleReintentarCorreo = async (id: string) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     triggerToast('Intentando enviar de nuevo...');
     const res = await retryEmailSend(id);
     await cargarDiagnosticoYHistorial();
@@ -278,6 +297,10 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
 
   // Simular respuesta del trabajador devolviendo documento firmado
   const handleSimularDevolucion = (envio: RegistroEnvioPendiente) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const nuevoRecibido = simularRespuestaTrabajador(envio);
     const actualizadosRec = getStoredDocumentosFirmados();
     const actualizadosEnv = getStoredEnviosPendientes();
@@ -319,7 +342,7 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
         return false;
       }
 
-      if (filtroEstado !== 'todos' && d.estado !== filtroEstado) {
+      if (filtroEstado !== 'todos' && normalizarEstadoEstandar(d.estado) !== filtroEstado) {
         return false;
       }
 
@@ -328,37 +351,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
   }, [documentos, busquedaTexto, filtroTipo, filtroEstado]);
 
   const renderBadgeEstado = (estado: EstadoDocumentoFirmado) => {
-    switch (estado) {
-      case 'Aprobado':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
-            <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-            <span>Aprobado</span>
-          </span>
-        );
-      case 'Pendiente de revisión':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-            <Clock className="h-3 w-3 text-amber-400" />
-            <span>Pendiente de revisión</span>
-          </span>
-        );
-      case 'Requiere corrección':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 whitespace-nowrap">
-            <AlertTriangle className="h-3 w-3 text-rose-400" />
-            <span>Requiere corrección</span>
-          </span>
-        );
-      case 'Recibido':
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 whitespace-nowrap">
-            <Mail className="h-3 w-3 text-sky-400" />
-            <span>Recibido</span>
-          </span>
-        );
-    }
+    const badge = getBadgeClassesEstadoFrikaz(estado);
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border whitespace-nowrap ${badge.dark}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+        <span>{badge.label}</span>
+      </span>
+    );
   };
 
   const renderBadgeEstadoEmail = (estado: EstadoEnvioCorreo) => {
@@ -459,7 +460,13 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsModalEnvioOpen(true)}
+              onClick={() => {
+                if (!esGerente) {
+                  solicitarAccesoGerente();
+                  return;
+                }
+                setIsModalEnvioOpen(true);
+              }}
               className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white text-xs font-black transition-all shadow-lg shadow-orange-500/30 flex items-center gap-2 cursor-pointer"
               title="Enviar un documento por correo a un trabajador para que lo firme"
             >
@@ -501,34 +508,34 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-sky-400 block">Recién Llegados</span>
+          <span className="text-[10px] uppercase font-bold text-sky-400 block">Por hacer / En proceso</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-sky-300 font-mono">{metricas.recibidos}</span>
             <Mail className="h-4 w-4 text-sky-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Sin revisar aún</span>
+          <span className="text-[10px] text-slate-400 block">En trámite o recién llegados</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-amber-400 block">Por Revisar</span>
+          <span className="text-[10px] uppercase font-bold text-amber-400 block">Pendiente de revisión</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-amber-300 font-mono">{metricas.pendientesRevision}</span>
             <Clock className="h-4 w-4 text-amber-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Falta aprobar firma</span>
+          <span className="text-[10px] text-slate-400 block">Falta revisión de Gerencia</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-emerald-400 block">Aprobados</span>
+          <span className="text-[10px] uppercase font-bold text-emerald-400 block">Cumplido / Aprobado</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-emerald-300 font-mono">{metricas.aprobados}</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
-          <span className="text-[10px] text-slate-400 block">Firmados y archivados</span>
+          <span className="text-[10px] text-slate-400 block">Aprobados por Gerencia</span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-rose-400 block">Por Corregir</span>
+          <span className="text-[10px] uppercase font-bold text-rose-400 block">Devuelto para ajustes</span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-black text-rose-300 font-mono">{metricas.requierenCorreccion}</span>
             <AlertTriangle className="h-4 w-4 text-rose-400" />
@@ -639,10 +646,11 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
                   className="bg-transparent text-white focus:outline-none cursor-pointer"
                 >
                   <option value="todos" className="bg-slate-900 text-white">Todos los estados</option>
-                  <option value="Recibido" className="bg-slate-900 text-white">Recibido</option>
-                  <option value="Pendiente de revisión" className="bg-slate-900 text-white">Pendiente de revisión</option>
-                  <option value="Aprobado" className="bg-slate-900 text-white">Aprobado</option>
-                  <option value="Requiere corrección" className="bg-slate-900 text-white">Requiere corrección</option>
+                  {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
+                    <option key={est} value={est} className="bg-slate-900 text-white">
+                      {est}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -789,15 +797,15 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
               <div className="flex items-center gap-4 text-[11px]">
                 <span className="flex items-center gap-1 text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Aprobados: {metricas.aprobados}
+                  Cumplido / Aprobado: {metricas.aprobados}
                 </span>
                 <span className="flex items-center gap-1 text-amber-400">
                   <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  Pendientes: {metricas.pendientesRevision}
+                  Pendiente de revisión: {metricas.pendientesRevision}
                 </span>
                 <span className="flex items-center gap-1 text-rose-400">
                   <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  Corrección: {metricas.requierenCorreccion}
+                  Devuelto para ajustes: {metricas.requierenCorreccion}
                 </span>
               </div>
             </div>
@@ -821,7 +829,13 @@ export const DocumentosFirmadosRecibidosView: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setIsModalEnvioOpen(true)}
+              onClick={() => {
+                if (!esGerente) {
+                  solicitarAccesoGerente();
+                  return;
+                }
+                setIsModalEnvioOpen(true);
+              }}
               className="px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Plus className="h-4 w-4" />

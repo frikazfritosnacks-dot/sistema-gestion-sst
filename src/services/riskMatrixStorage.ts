@@ -4,9 +4,11 @@ import {
   TABLA_TECNICA_NC,
 } from '../types/gtc45RiskMatrix';
 import { RIESGOS_GTC45_DATASET } from '../data/gtc45RiskMatrixData';
+import { normalizarEstadoEstandar } from './gerenteControlService';
 
 const STORAGE_KEY = 'frikaz_gtc45_matrix_v2';
 const PLAIN_LANG_FLAG = 'frikaz_gtc45_plain_lang_v1';
+const GERENTE_GATE_RISKS_FLAG = 'frikaz_gtc45_gerente_gate_v1';
 
 /**
  * Loads risks from localStorage or falls back to the canonical GTC 45 dataset.
@@ -55,21 +57,39 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
           }
           return item;
         });
-        if (needsPlainRefresh) {
+        const needsGateMigration = !localStorage.getItem(GERENTE_GATE_RISKS_FLAG);
+        const sanitized = needsGateMigration
+          ? merged.map((item: RiesgoGTC45Item) => {
+              const est = normalizarEstadoEstandar(item.estadoControl || 'Por hacer');
+              if ((est === 'Cumplido' || est === 'Aprobado') && !item.revisionGerente) {
+                return { ...item, estadoControl: 'Por hacer' as const };
+              }
+              return { ...item, estadoControl: est };
+            })
+          : merged.map((item: RiesgoGTC45Item) => ({
+              ...item,
+              estadoControl: normalizarEstadoEstandar(item.estadoControl || 'Por hacer'),
+            }));
+
+        if (needsPlainRefresh || needsGateMigration) {
           try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-            localStorage.setItem(PLAIN_LANG_FLAG, '1');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+            if (needsPlainRefresh) localStorage.setItem(PLAIN_LANG_FLAG, '1');
+            if (needsGateMigration) localStorage.setItem(GERENTE_GATE_RISKS_FLAG, '1');
           } catch {
             // ignore quota errors
           }
         }
-        return merged;
+        return sanitized;
       }
     }
   } catch (err) {
     console.warn('Error reading risks from localStorage, using initial dataset:', err);
   }
-  return RIESGOS_GTC45_DATASET;
+  return RIESGOS_GTC45_DATASET.map((r) => ({
+    ...r,
+    estadoControl: normalizarEstadoEstandar(r.estadoControl || 'Por hacer'),
+  }));
 }
 
 /**

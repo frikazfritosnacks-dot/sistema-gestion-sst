@@ -32,6 +32,11 @@ import {
   ExternalLink,
   Save,
 } from 'lucide-react';
+import {
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  type EstadoEstandarFrikaz,
+} from '../../services/gerenteControlService';
 
 interface PlanAnualHacerTabProps {
   plan: PlanAnualVigencia;
@@ -92,7 +97,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   const [diagGuardadoMsg, setDiagGuardadoMsg] = useState<string | null>(null);
 
   // Evidencias filtro
-  const [filtroEstadoEv, setFiltroEstadoEv] = useState<'TODAS' | 'PENDIENTE_REVISION' | 'APROBADA' | 'DEVUELTA'>('TODAS');
+  const [filtroEstadoEv, setFiltroEstadoEv] = useState<'TODAS' | EstadoEstandarFrikaz>('TODAS');
 
   const resumenSociodemo = useMemo(
     () => construirResumenSociodemografico(trabajadores),
@@ -151,7 +156,9 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
       act.evidencias.map((ev) => ({ act, ev }))
     );
     return lista.filter((item) =>
-      filtroEstadoEv === 'TODAS' ? true : item.ev.estadoRevision === filtroEstadoEv
+      filtroEstadoEv === 'TODAS'
+        ? true
+        : normalizarEstadoEstandar(item.ev.estadoRevision) === filtroEstadoEv
     );
   }, [plan.actividades, filtroEstadoEv]);
 
@@ -212,7 +219,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-              1. HACER — Personas, Condiciones de Salud, Riesgos y Tareas Realizadas
+              2. HACER — Personas, Condiciones de Salud, Riesgos y Tareas Realizadas
             </h3>
             <p className="text-[11px] text-slate-500">
               Registre a cada trabajador una sola vez, consulte su perfil grupal de salud, conecte los peligros de su puesto y guarde las pruebas de lo que ya se hizo.
@@ -840,7 +847,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                         <div key={act.id} className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <span className="font-mono font-bold text-[10px] text-[#f97316] block">
-                              {act.codigo} · {act.estado}
+                              {act.codigo} · {normalizarEstadoEstandar(act.estado)}
                             </span>
                             <p className="font-bold text-slate-800 truncate">{act.nombre}</p>
                           </div>
@@ -856,7 +863,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                       ))}
                       {conexionesRiesgoActivo.actividadesPlan.length === 0 && (
                         <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg">
-                          Este riesgo aún no tiene tarea en el Plan Anual. Puede programarla desde la pestaña PLANEAR.
+                          Este riesgo aún no tiene tarea en el Plan Anual. Puede programarla desde la pestaña 1. PLANEAR.
                         </p>
                       )}
                     </div>
@@ -872,7 +879,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                       <div key={ev.id} className="text-[11px] bg-emerald-50/70 p-2 rounded-lg border border-emerald-200">
                         <strong className="text-emerald-950">{ev.nombreArchivo}</strong>
                         <span className="block text-[10px] text-emerald-800">
-                          {ev.actividadCodigo} · Estado: {ev.estadoRevision}
+                          {ev.actividadCodigo} · Estado: {normalizarEstadoEstandar(ev.estadoRevision)}
                         </span>
                       </div>
                     ))}
@@ -883,11 +890,11 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
 
                   <div className="p-3.5 rounded-xl border border-slate-200 space-y-1.5">
                     <h5 className="font-black text-slate-900">
-                      Acciones de mejora en ACTUAR ({conexionesRiesgoActivo.acciones.length})
+                      Acciones de mejora en 4. ACTUAR ({conexionesRiesgoActivo.acciones.length})
                     </h5>
                     {conexionesRiesgoActivo.acciones.map((acm) => (
                       <div key={acm.id} className="text-[11px] bg-orange-50/70 p-2 rounded-lg border border-orange-200">
-                        <strong className="text-orange-950">{acm.codigo} ({acm.estado})</strong>
+                        <strong className="text-orange-950">{acm.codigo} ({normalizarEstadoEstandar(acm.estado)})</strong>
                         <p className="text-slate-700">{acm.actividadARealizar}</p>
                       </div>
                     ))}
@@ -929,17 +936,9 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                       {act.codigo}
                     </span>
                     <span
-                      className={`px-2 py-0.5 rounded font-black text-[10px] ${
-                        act.estado === 'CUMPLIDA'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : act.estado === 'VENCIDA'
-                          ? 'bg-rose-100 text-rose-800'
-                          : act.estado === 'REQUIERE_REVISION'
-                          ? 'bg-indigo-100 text-indigo-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
+                      className={`px-2 py-0.5 rounded border font-black text-[10px] ${getBadgeClassesEstadoFrikaz(act.estado).light}`}
                     >
-                      {act.estado}
+                      {getBadgeClassesEstadoFrikaz(act.estado).label}
                     </span>
                     {act.riesgoCodigo && (
                       <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-900 font-bold text-[10px]">
@@ -999,14 +998,17 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
               className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white font-bold"
             >
               <option value="TODAS">Todos los estados</option>
-              <option value="APROBADA">Aprobadas</option>
-              <option value="PENDIENTE_REVISION">Pendientes de revisión</option>
-              <option value="DEVUELTA">Devueltas para corregir</option>
+              <option value="Pendiente de revisión">Pendiente de revisión</option>
+              <option value="Devuelto para ajustes">Devuelto para ajustes</option>
+              <option value="Aprobado">Aprobado</option>
+              <option value="Cumplido">Cumplido</option>
             </select>
           </div>
 
           <div className="space-y-2.5">
-            {todasEvidencias.map(({ act, ev }) => (
+            {todasEvidencias.map(({ act, ev }) => {
+              const badgeEv = getBadgeClassesEstadoFrikaz(ev.estadoRevision);
+              return (
               <div
                 key={ev.id}
                 className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -1020,15 +1022,9 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                       {ev.tipoSoporte}
                     </span>
                     <span
-                      className={`px-2 py-0.5 rounded font-bold text-[10px] ${
-                        ev.estadoRevision === 'APROBADA'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : ev.estadoRevision === 'DEVUELTA'
-                          ? 'bg-rose-100 text-rose-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
+                      className={`px-2 py-0.5 rounded border font-bold text-[10px] ${badgeEv.light}`}
                     >
-                      {ev.estadoRevision}
+                      {badgeEv.label}
                     </span>
                   </div>
                   <p className="font-bold text-slate-900">{ev.nombreArchivo}</p>
@@ -1044,7 +1040,8 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                   Abrir Soporte en Actividad
                 </button>
               </div>
-            ))}
+              );
+            })}
             {todasEvidencias.length === 0 && (
               <p className="text-slate-500 text-center py-6">
                 No hay evidencias con el filtro seleccionado.

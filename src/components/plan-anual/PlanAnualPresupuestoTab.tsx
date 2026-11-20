@@ -4,6 +4,7 @@ import {
   AreaPlanAnual,
   PlanAnualVigencia,
 } from '../../types/planAnual';
+import { getBadgeClassesEstadoFrikaz } from '../../services/gerenteControlService';
 import {
   DollarSign,
   Search,
@@ -241,9 +242,16 @@ export const PlanAnualPresupuestoTab: React.FC<PlanAnualPresupuestoTabProps> = (
                       ${disp.toLocaleString('es-CO')}
                     </td>
                     <td className="p-3 text-center">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold text-[10px]">
-                        {a.estado.replace('_', ' ')}
-                      </span>
+                      {(() => {
+                        const badge = getBadgeClassesEstadoFrikaz(a.estado);
+                        return (
+                          <span
+                            className={`px-2 py-0.5 rounded border font-bold text-[10px] ${badge.light}`}
+                          >
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="p-3 text-right">
                       <button

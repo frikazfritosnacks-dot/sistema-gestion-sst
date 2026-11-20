@@ -13,6 +13,12 @@ import {
 } from '../../types/planAnual';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import {
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
+import {
   Target,
   BarChart3,
   Plus,
@@ -26,6 +32,7 @@ import {
   TrendingUp,
   Eye,
   X,
+  Mail,
 } from 'lucide-react';
 
 interface PlanAnualObjetivosKpiTabProps {
@@ -49,6 +56,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
   mode = 'ambos',
   onUpdatePlan,
 }) => {
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+  const planCerrado =
+    normalizarEstadoEstandar(plan.estadoAprobacion) === 'Aprobado' ||
+    normalizarEstadoEstandar(plan.estadoAprobacion) === 'Cumplido';
   const [hojaVidaModal, setHojaVidaModal] = useState<HojaVidaIndicadorSST | null>(null);
   const [editVinculosObjId, setEditVinculosObjId] = useState<string | null>(null);
   // Edición de Objetivo General
@@ -124,6 +135,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
   }, [plan.vigencia, plan.objetivoGeneral, plan.fechaElaboracion, plan.responsableNombre, plan.aprobadorNombre, plan.estadoAprobacion]);
 
   const handleDeleteObjetivo = (objId: string) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const target = plan.objetivosEspecificos.find((o) => o.id === objId);
     if (!target) return;
     onUpdatePlan(
@@ -136,6 +151,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
   };
 
   const handleDeleteIndicador = (indId: string) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const target = plan.indicadores.find((i) => i.id === indId);
     if (!target) return;
     onUpdatePlan(
@@ -153,6 +172,11 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
 
   const handleSaveGeneral = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
+    const estadoNorm = normalizarEstadoEstandar(objGeneralForm.estadoAprobacion);
     onUpdatePlan(
       {
         ...plan,
@@ -162,17 +186,21 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
         aprobadorNombre: objGeneralForm.aprobadorNombre,
         estadoAprobacion: objGeneralForm.estadoAprobacion,
         fechaAprobacion:
-          objGeneralForm.estadoAprobacion === 'APROBADO' && !plan.fechaAprobacion
+          estadoNorm === 'Aprobado' && !plan.fechaAprobacion
             ? new Date().toISOString().split('T')[0]
             : plan.fechaAprobacion,
       },
-      `Actualización de Objetivo General / Estado (${objGeneralForm.estadoAprobacion})`
+      `Actualización de Objetivo General / Estado (${estadoNorm})`
     );
     setEditingGeneral(false);
   };
 
   const handleAddObjetivoEspecifico = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!newObj.titulo.trim()) return;
     const codigo = `OBJ-0${plan.objetivosEspecificos.length + 1}`;
     const obj: ObjetivoEspecificoPlan = {
@@ -213,6 +241,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
 
   const handleAddIndicador = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!newInd.nombre.trim()) return;
     const codigo = `IND-0${plan.indicadores.length + 1}`;
     const indId = `ind-${plan.vigencia}-${Date.now()}`;
@@ -254,6 +286,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
   };
 
   const handleRegistrarMedicionSnapshot = (ind: IndicadorCalculado) => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const nuevaMed = {
       id: `med-${Date.now()}`,
       periodo: medicionPeriodo.trim() || `${plan.vigencia}`,
@@ -297,6 +333,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
           <button
             type="button"
             onClick={() => {
+              if (!esGerente) {
+                solicitarAccesoGerente();
+                return;
+              }
               setObjGeneralForm({
                 objetivoGeneral: plan.objetivoGeneral,
                 fechaElaboracion: plan.fechaElaboracion,
@@ -343,17 +383,16 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                 <span className="text-[10px] font-bold uppercase text-slate-400 block">
                   Estado
                 </span>
-                <span
-                  className={`inline-block mt-0.5 px-2 py-0.5 rounded font-black text-[10px] ${
-                    plan.estadoAprobacion === 'APROBADO'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : plan.estadoAprobacion === 'CERRADO'
-                      ? 'bg-slate-200 text-slate-800'
-                      : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
-                  {plan.estadoAprobacion}
-                </span>
+                {(() => {
+                  const badgePlan = getBadgeClassesEstadoFrikaz(plan.estadoAprobacion);
+                  return (
+                    <span
+                      className={`inline-block mt-0.5 px-2 py-0.5 rounded border font-black text-[10px] ${badgePlan.light}`}
+                    >
+                      {badgePlan.label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -416,21 +455,37 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                 </select>
               </div>
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Estado del Plan</label>
+                <label className="font-bold text-slate-700 flex items-center gap-1 mb-1">
+                  <span>Estado del Plan</span>
+                  {!esGerente && <Mail className="h-3 w-3 text-amber-600" />}
+                </label>
                 <select
                   value={objGeneralForm.estadoAprobacion}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = e.target.value as EstadoAprobacionPlan;
+                    if (esEstadoExclusivoGerente(val) && !esGerente) {
+                      solicitarAccesoGerente();
+                      return;
+                    }
                     setObjGeneralForm({
                       ...objGeneralForm,
-                      estadoAprobacion: e.target.value as EstadoAprobacionPlan,
-                    })
-                  }
+                      estadoAprobacion: val,
+                    });
+                  }}
                   className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white font-bold"
                 >
-                  <option value="BORRADOR">Borrador</option>
-                  <option value="EN_REVISION">En Revisión</option>
-                  <option value="APROBADO">Aprobado</option>
-                  <option value="CERRADO">Cerrado</option>
+                  <option value="Por hacer">Por hacer</option>
+                  <option value="En proceso">En proceso</option>
+                  <option value="Pendiente de revisión">Pendiente de revisión</option>
+                  <option value="Devuelto para ajustes" disabled={!esGerente}>
+                    Devuelto para ajustes (Solo Gerente)
+                  </option>
+                  <option value="Cumplido" disabled={!esGerente}>
+                    Cumplido (Solo Gerente)
+                  </option>
+                  <option value="Aprobado" disabled={!esGerente}>
+                    Aprobado (Solo Gerente)
+                  </option>
                 </select>
               </div>
             </div>
@@ -547,7 +602,10 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
             const actsRelacionadas = plan.actividades.filter(
               (a) => a.objetivoEspecificoId === obj.id
             );
-            const actsCumplidas = actsRelacionadas.filter((a) => a.estado === 'CUMPLIDA').length;
+            const actsCumplidas = actsRelacionadas.filter((a) => {
+              const est = normalizarEstadoEstandar(a.estado);
+              return est === 'Cumplido' || est === 'Aprobado';
+            }).length;
 
             return (
               <div
@@ -571,7 +629,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                       >
                         {obj.area}
                       </span>
-                      {plan.estadoAprobacion !== 'CERRADO' && (
+                      {!planCerrado && (
                         <button
                           type="button"
                           onClick={() => handleDeleteObjetivo(obj.id)}
@@ -615,7 +673,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                     </strong>
                   </div>
 
-                  {/* Riesgos, Estándares e Indicadores (desde VERIFICAR sin duplicar) */}
+                  {/* Riesgos, Estándares e Indicadores (desde 3. VERIFICAR sin duplicar) */}
                   {(obj.riesgosRelacionadosIds?.length || 0) > 0 && (
                     <div className="text-[10px] text-rose-900">
                       <strong>Riesgos asociados:</strong>{' '}
@@ -675,7 +733,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                     ))}
                   </div>
 
-                  {plan.estadoAprobacion !== 'CERRADO' && (
+                  {!planCerrado && (
                     <button
                       type="button"
                       onClick={() =>
@@ -693,7 +751,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                     <div className="mt-2 p-2.5 rounded-xl bg-white border border-orange-200 space-y-2 text-[10px]">
                       <div>
                         <span className="font-bold text-slate-700 block mb-1">
-                          Indicadores (sin duplicar, desde VERIFICAR):
+                          Indicadores (sin duplicar, desde 3. VERIFICAR):
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {hojasVidaIndicadores.map((hv) => {
@@ -1120,7 +1178,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                         ? 'EN SEGUIMIENTO'
                         : 'EN RIESGO'}
                     </span>
-                    {plan.estadoAprobacion !== 'CERRADO' && (
+                    {!planCerrado && (
                       <button
                         type="button"
                         onClick={() => handleDeleteIndicador(ind.id)}

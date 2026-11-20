@@ -3,6 +3,7 @@ import {
   PoliticaSSTData,
   CompromisoPolitica,
   RegistroHistorialPolitica,
+  EstadoPoliticaSST,
 } from '../../types/organigramaSst';
 import {
   getStoredPoliticaSST,
@@ -10,6 +11,14 @@ import {
   resetStoredPoliticaSST,
   exportarPoliticaWord,
 } from '../../services/organigramaService';
+import {
+  ESTADOS_ESTANDAR_FRIKAZ,
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  crearRegistroRevisionGerente,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
 import {
   ShieldCheck,
   FileText,
@@ -51,8 +60,14 @@ export const PoliticaSstView: React.FC = () => {
   const [editComunicacion, setEditComunicacion] = useState(politica.comunicacionRevision);
   const [editNombreFirmante, setEditNombreFirmante] = useState(politica.nombreFirmante);
   const [editCargoFirmante, setEditCargoFirmante] = useState(politica.cargoFirmante);
-  const [editEstado, setEditEstado] = useState<'Pendiente de aprobación' | 'Vigente'>(politica.estado);
+  const [editEstado, setEditEstado] = useState<EstadoPoliticaSST>(
+    normalizarEstadoEstandar(politica.estado)
+  );
   const [motivoCambio, setMotivoCambio] = useState('');
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
+  const badgePolitica = getBadgeClassesEstadoFrikaz(politica.estado);
+  const estaAprobada = badgePolitica.label === 'Aprobado' || badgePolitica.label === 'Cumplido';
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -67,13 +82,17 @@ export const PoliticaSstView: React.FC = () => {
 
   // Iniciar modo edición
   const handleStartEdit = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setEditTitulo(politica.titulo);
     setEditIntroduccion(politica.declaracionIntroductoria);
     setEditCompromisos([...politica.compromisos]);
     setEditComunicacion(politica.comunicacionRevision);
     setEditNombreFirmante(politica.nombreFirmante);
     setEditCargoFirmante(politica.cargoFirmante);
-    setEditEstado(politica.estado);
+    setEditEstado(normalizarEstadoEstandar(politica.estado));
     setMotivoCambio('');
     setIsEditing(true);
   };
@@ -87,6 +106,13 @@ export const PoliticaSstView: React.FC = () => {
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
+
+    const estadoNormalizado = normalizarEstadoEstandar(editEstado);
+
     const ahora = new Date();
     const fechaIso = ahora.toISOString().split('T')[0];
     const horaFormato = ahora.toLocaleTimeString('es-CO', {
@@ -97,17 +123,24 @@ export const PoliticaSstView: React.FC = () => {
 
     const versionNum = (politica.historialCambios.length + 1).toFixed(1);
     const nuevaVersion = `Versión ${versionNum} (${ahora.getFullYear()})`;
+    const esRevisionGerente = esEstadoExclusivoGerente(estadoNormalizado);
+    const registroGerente = esRevisionGerente
+      ? crearRegistroRevisionGerente(
+          estadoNormalizado as 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes',
+          motivoCambio.trim() || `Política revisada y marcada como ${estadoNormalizado}.`
+        )
+      : null;
 
     const nuevoRegistroHistorial: RegistroHistorialPolitica = {
       id: `hist-${Date.now()}`,
       fecha: fechaIso,
       hora: horaFormato,
       version: nuevaVersion,
-      autor: 'Alta Dirección / Responsable SG-SST Frikaz',
+      autor: esRevisionGerente ? nombreGerente : 'Responsable SG-SST Frikaz',
       motivoCambio:
         motivoCambio.trim() || 'Actualización periódica del documento de Política de SST.',
-      estado: editEstado,
-      detallesModificacion: `Política guardada en estado ${editEstado}. Se actualizaron compromisos y declaraciones.`,
+      estado: estadoNormalizado,
+      detallesModificacion: `Política guardada en estado "${estadoNormalizado}". Se actualizaron compromisos y declaraciones.`,
     };
 
     const updatedPolitica: PoliticaSSTData = {
@@ -118,9 +151,20 @@ export const PoliticaSstView: React.FC = () => {
       comunicacionRevision: editComunicacion.trim(),
       nombreFirmante: editNombreFirmante.trim(),
       cargoFirmante: editCargoFirmante.trim(),
-      estado: editEstado,
+      estado: estadoNormalizado,
       fechaUltimaActualizacion: fechaIso,
-      fechaAprobacion: editEstado === 'Vigente' ? fechaIso : politica.fechaAprobacion,
+      fechaAprobacion:
+        estadoNormalizado === 'Aprobado' || estadoNormalizado === 'Cumplido'
+          ? fechaIso
+          : politica.fechaAprobacion,
+      fechaRevision: registroGerente ? registroGerente.fechaRevision : politica.fechaRevision,
+      revisadoPor: registroGerente ? registroGerente.revisadoPor : politica.revisadoPor,
+      resultadoRevision: registroGerente
+        ? registroGerente.resultadoRevision
+        : politica.resultadoRevision,
+      observacionesRevision: registroGerente
+        ? registroGerente.observaciones
+        : politica.observacionesRevision,
       versionActual: nuevaVersion,
       historialCambios: [nuevoRegistroHistorial, ...politica.historialCambios],
     };
@@ -128,7 +172,7 @@ export const PoliticaSstView: React.FC = () => {
     setPolitica(updatedPolitica);
     saveStoredPoliticaSST(updatedPolitica);
     setIsEditing(false);
-    triggerToast('¡Política del SG-SST actualizada y guardada con éxito!');
+    triggerToast(`¡Política del SG-SST guardada en estado "${estadoNormalizado}"!`);
   };
 
   // Cambiar compromiso individual
@@ -160,10 +204,18 @@ export const PoliticaSstView: React.FC = () => {
 
   // Restablecer política original (abre confirmación en pantalla)
   const handleResetearOriginal = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setConfirmResetOpen(true);
   };
 
   const confirmResetearPolitica = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     const reset = resetStoredPoliticaSST();
     setPolitica(reset);
     setIsEditing(false);
@@ -171,12 +223,24 @@ export const PoliticaSstView: React.FC = () => {
     triggerToast('La política volvió a su texto inicial en lenguaje sencillo.');
   };
 
-  // Toggle rápido de estado de aprobación
+  // Toggle rápido de estado de aprobación (EXCLUSIVO GERENTE)
   const handleToggleEstadoAprobacion = () => {
-    const nuevoEstado =
-      politica.estado === 'Vigente' ? 'Pendiente de aprobación' : 'Vigente';
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
+
+    const nuevoEstado: EstadoPoliticaSST = estaAprobada
+      ? 'Pendiente de revisión'
+      : 'Aprobado';
     const ahora = new Date();
     const fechaIso = ahora.toISOString().split('T')[0];
+    const registroGerente = crearRegistroRevisionGerente(
+      nuevoEstado === 'Aprobado' ? 'Aprobado' : 'Devuelto para ajustes',
+      nuevoEstado === 'Aprobado'
+        ? `Política aprobada formalmente por ${nombreGerente}.`
+        : 'Política enviada nuevamente a revisión antes de aprobación.'
+    );
 
     const nuevoRegistro: RegistroHistorialPolitica = {
       id: `hist-${Date.now()}`,
@@ -187,19 +251,23 @@ export const PoliticaSstView: React.FC = () => {
         hour12: true,
       }),
       version: politica.versionActual,
-      autor: 'Gerente General / Representante Legal Frikaz S.A.S.',
+      autor: nombreGerente,
       motivoCambio: `Cambio de estado formal: ${nuevoEstado}`,
       estado: nuevoEstado,
       detallesModificacion:
-        nuevoEstado === 'Vigente'
-          ? 'Política formalmente aprobada por la Gerencia General para vigencia anual.'
-          : 'Política devuelta a estado pendiente de revisión o aprobación.',
+        nuevoEstado === 'Aprobado'
+          ? `Política revisada y aprobada por ${nombreGerente} para vigencia anual.`
+          : 'Política marcada como Pendiente de revisión para ajustes.',
     };
 
     const updated: PoliticaSSTData = {
       ...politica,
       estado: nuevoEstado,
-      fechaAprobacion: nuevoEstado === 'Vigente' ? fechaIso : undefined,
+      fechaAprobacion: nuevoEstado === 'Aprobado' ? fechaIso : undefined,
+      fechaRevision: registroGerente.fechaRevision,
+      revisadoPor: registroGerente.revisadoPor,
+      resultadoRevision: nuevoEstado === 'Aprobado' ? 'Aprobado' : undefined,
+      observacionesRevision: registroGerente.observaciones,
       fechaUltimaActualizacion: fechaIso,
       historialCambios: [nuevoRegistro, ...politica.historialCambios],
     };
@@ -207,9 +275,9 @@ export const PoliticaSstView: React.FC = () => {
     setPolitica(updated);
     saveStoredPoliticaSST(updated);
     triggerToast(
-      nuevoEstado === 'Vigente'
-        ? '¡Política aprobada formalmente y marcada como VIGENTE!'
-        : 'Política marcada como PENDIENTE DE APROBACIÓN.'
+      nuevoEstado === 'Aprobado'
+        ? '¡Política aprobada por Gerencia!'
+        : 'Política marcada como Pendiente de revisión.'
     );
   };
 
@@ -265,7 +333,13 @@ export const PoliticaSstView: React.FC = () => {
 
             {/* Enviar Política por Correo */}
             <button
-              onClick={() => setIsModalEnviarOpen(true)}
+              onClick={() => {
+                if (!esGerente) {
+                  solicitarAccesoGerente();
+                  return;
+                }
+                setIsModalEnviarOpen(true);
+              }}
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-sky-950/40 flex items-center gap-1.5 cursor-pointer"
               title="Enviar la política institucional por correo electrónico a los trabajadores"
             >
@@ -313,12 +387,12 @@ export const PoliticaSstView: React.FC = () => {
         <div className="flex items-center gap-3">
           <div
             className={`p-2.5 rounded-xl ${
-              politica.estado === 'Vigente'
+              estaAprobada
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                 : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
             }`}
           >
-            {politica.estado === 'Vigente' ? (
+            {estaAprobada ? (
               <CheckCircle2 className="h-5 w-5" />
             ) : (
               <Clock className="h-5 w-5" />
@@ -328,22 +402,18 @@ export const PoliticaSstView: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">Estado de la Política:</span>
               <span
-                className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-full ${
-                  politica.estado === 'Vigente'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                }`}
+                className={`text-xs font-black uppercase px-2.5 py-0.5 rounded-full border ${badgePolitica.dark}`}
               >
-                {politica.estado}
+                {badgePolitica.label}
               </span>
               <span className="text-[11px] font-mono text-slate-400">
                 · {politica.versionActual}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              {politica.estado === 'Vigente'
-                ? `Aprobada el ${politica.fechaAprobacion || politica.fechaUltimaActualizacion} por Gerencia General.`
-                : 'El documento está redactado y pendiente de firma / aprobación gerencial.'}
+              {estaAprobada
+                ? `Aprobada el ${politica.fechaAprobacion || politica.fechaUltimaActualizacion} por ${politica.revisadoPor || nombreGerente}.`
+                : badgePolitica.descripcionCorta}
             </p>
           </div>
         </div>
@@ -352,16 +422,22 @@ export const PoliticaSstView: React.FC = () => {
           <button
             onClick={handleToggleEstadoAprobacion}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              politica.estado === 'Vigente'
+              estaAprobada
                 ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
                 : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/40'
             }`}
           >
-            <UserCheck className="h-3.5 w-3.5" />
+            {esGerente ? (
+              <UserCheck className="h-3.5 w-3.5" />
+            ) : (
+              <Mail className="h-3.5 w-3.5" />
+            )}
             <span>
-              {politica.estado === 'Vigente'
-                ? 'Marcar como Pendiente'
-                : 'Aprobar Política (Marcar como Vigente)'}
+              {estaAprobada
+                ? 'Enviar a Pendiente de revisión'
+                : esGerente
+                  ? 'Aprobar Política (Gerencia)'
+                  : 'Ingresar como Gerente'}
             </span>
           </button>
 
@@ -417,12 +493,8 @@ export const PoliticaSstView: React.FC = () => {
               </div>
               <div>
                 <span className="font-bold">Estado:</span>{' '}
-                <span
-                  className={`font-bold ${
-                    politica.estado === 'Vigente' ? 'text-emerald-700' : 'text-amber-700'
-                  }`}
-                >
-                  {politica.estado}
+                <span className={`px-2 py-0.5 rounded border text-[11px] font-bold ${badgePolitica.light}`}>
+                  {badgePolitica.label}
                 </span>
               </div>
               <div>
@@ -478,10 +550,10 @@ export const PoliticaSstView: React.FC = () => {
             <div className="space-y-2">
               <div className="h-16 flex items-end">
                 <div className="w-full border-b-2 border-slate-800 pb-1">
-                  {politica.estado === 'Vigente' && (
+                  {estaAprobada && (
                     <span className="text-xs font-mono font-bold text-emerald-800 flex items-center gap-1.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      <span>Firma aprobada por Gerencia General (Frikaz S.A.S.)</span>
+                      <span>Firma aprobada por {politica.nombreFirmante || nombreGerente} (Frikaz S.A.S.)</span>
                     </span>
                   )}
                 </div>
@@ -568,13 +640,25 @@ export const PoliticaSstView: React.FC = () => {
                 </label>
                 <select
                   value={editEstado}
-                  onChange={(e) =>
-                    setEditEstado(e.target.value as 'Pendiente de aprobación' | 'Vigente')
-                  }
+                  onChange={(e) => {
+                    const nextVal = e.target.value as EstadoPoliticaSST;
+                    if (esEstadoExclusivoGerente(nextVal) && !esGerente) {
+                      solicitarAccesoGerente();
+                      return;
+                    }
+                    setEditEstado(nextVal);
+                  }}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-orange-500"
                 >
-                  <option value="Pendiente de aprobación">Pendiente de aprobación</option>
-                  <option value="Vigente">Vigente (Aprobada por Gerencia)</option>
+                  {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                    const soloGerente = esEstadoExclusivoGerente(est);
+                    return (
+                      <option key={est} value={est}>
+                        {est}
+                        {soloGerente && !esGerente ? ' (Solo Gerente)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
@@ -633,7 +717,7 @@ export const PoliticaSstView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-300">
-                  Nombre del Firmante (Gerente General):
+                  Nombre del Firmante (Gerente):
                 </label>
                 <input
                   type="text"
@@ -735,15 +819,16 @@ export const PoliticaSstView: React.FC = () => {
                         <span className="font-mono text-xs font-bold text-orange-400">
                           {reg.version}
                         </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            reg.estado === 'Vigente'
-                              ? 'bg-emerald-500/20 text-emerald-300'
-                              : 'bg-amber-500/20 text-amber-300'
-                          }`}
-                        >
-                          {reg.estado}
-                        </span>
+                        {(() => {
+                          const badgeReg = getBadgeClassesEstadoFrikaz(reg.estado);
+                          return (
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeReg.dark}`}
+                            >
+                              {badgeReg.label}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <span className="text-xs text-slate-400 font-mono">
                         {reg.fecha} · {reg.hora}

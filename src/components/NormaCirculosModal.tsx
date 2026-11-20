@@ -14,9 +14,18 @@ import {
   Trash2,
   Check,
   CalendarCheck,
+  Mail,
+  UserCheck,
 } from 'lucide-react';
 import { getCaracterizacionActual } from '../services/dynamicRulesEngine';
 import { identificarRequisitosObligatorios } from '../services/planAnualService';
+import {
+  ESTADOS_ESTANDAR_FRIKAZ,
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../services/gerenteControlService';
 
 interface NormaCirculosModalProps {
   item: NormaPhvaItem | null;
@@ -41,15 +50,19 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
   const [formData, setFormData] = useState<NormaPhvaItem | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   useEffect(() => {
     if (item) {
-      setFormData({ ...item });
-      setIsEditing(Boolean(initialEditMode));
+      setFormData({
+        ...item,
+        estado: normalizarEstadoEstandar(item.estado),
+      });
+      setIsEditing(Boolean(initialEditMode && esGerente));
       setSaveSuccess(false);
       setConfirmDelete(false);
     }
-  }, [item, isOpen, initialEditMode]);
+  }, [item, isOpen, initialEditMode, esGerente]);
 
   if (!isOpen || !item || !formData) return null;
 
@@ -62,6 +75,10 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!formData) return;
 
     if (onSaveNorma) {
@@ -75,6 +92,10 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
   };
 
   const handleDelete = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
@@ -132,9 +153,15 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
             {!isEditing ? (
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#f97316] text-white text-xs font-bold hover:bg-[#ea580c] transition-colors shadow-xs"
-                title="Habilitar edición de los 6 círculos y campos de la norma"
+                onClick={() => {
+                  if (!esGerente) {
+                    solicitarAccesoGerente();
+                    return;
+                  }
+                  setIsEditing(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#f97316] text-white text-xs font-bold hover:bg-[#ea580c] transition-colors shadow-xs cursor-pointer"
+                title="Habilitar edición de los 6 círculos y campos de la norma (Andrea Orjuela – Gerente)"
               >
                 <span>Editar Norma</span>
               </button>
@@ -304,15 +331,26 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                       Estado de Cumplimiento:
                     </label>
                     <select
-                      value={formData.estado}
-                      onChange={(e) => handleChange('estado', e.target.value as any)}
+                      value={normalizarEstadoEstandar(formData.estado)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (esEstadoExclusivoGerente(val) && !esGerente) {
+                          solicitarAccesoGerente();
+                          return;
+                        }
+                        handleChange('estado', val as any);
+                      }}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white font-bold"
                     >
-                      <option value="CUMPLE">✓ CUMPLE (100%)</option>
-                      <option value="PARCIAL">~ CUMPLE PARCIALMENTE (50%)</option>
-                      <option value="NO_CUMPLE">✕ NO CUMPLE (0%)</option>
-                      <option value="PENDIENTE">⏳ PENDIENTE DE EVALUACIÓN</option>
-                      <option value="NO_APLICA">∅ NO APLICA JUSTIFICADO</option>
+                      {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                        const bloqueado = esEstadoExclusivoGerente(est) && !esGerente;
+                        return (
+                          <option key={est} value={est} disabled={bloqueado}>
+                            {est}
+                            {bloqueado ? ' (Solo Gerente)' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>
@@ -463,7 +501,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     value={formData.responsable}
                     onChange={(e) => handleChange('responsable', e.target.value)}
                     className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                    placeholder="Ej. Líder SST / Gerente General"
+                    placeholder="Ej. Líder SST / Andrea Orjuela – Gerente"
                   />
                 </div>
 
@@ -547,81 +585,86 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
             /* MODO LECTURA Y SEGUIMIENTO AUTOMATIZADO                                   */
             /* ========================================================================= */
             <>
-              {/* Interactive Status Bar */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-xs font-bold uppercase text-slate-600 block">
-                    ¿Cómo vamos con esta norma?
-                  </span>
-                  <p className="text-xs text-slate-500">
-                    Al elegir un estado aquí, los porcentajes del panel se actualizan solos de inmediato.
-                  </p>
+              {/* Interactive Status Bar with 6 Standardized States + Gerente Gate */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-bold uppercase text-slate-700 block">
+                      ¿En qué estado va esta norma?
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      El equipo puede consultar el avance. Solo{' '}
+                      <strong>Andrea Orjuela – Gerente</strong> (ingresando con su correo) aprueba, devuelve, edita o marca como Cumplido.
+                    </p>
+                  </div>
+                  {!esGerente && (
+                    <button
+                      type="button"
+                      onClick={solicitarAccesoGerente}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0f172a] text-[#fed7aa] text-xs font-bold hover:bg-slate-800 cursor-pointer shrink-0"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      <span>Ingresar como Gerente</span>
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus(formData.id, 'CUMPLE')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      formData.estado === 'CUMPLE'
-                        ? 'bg-emerald-700 text-white shadow-xs'
-                        : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Cumple (100%)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus(formData.id, 'PARCIAL')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      formData.estado === 'PARCIAL'
-                        ? 'bg-[#f97316] text-white shadow-xs'
-                        : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Clock className="h-4 w-4" />
-                    <span>Parcial (50%)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus(formData.id, 'NO_CUMPLE')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      formData.estado === 'NO_CUMPLE'
-                        ? 'bg-[#991b1b] text-white shadow-xs'
-                        : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>No Cumple (0%)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus(formData.id, 'PENDIENTE')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      formData.estado === 'PENDIENTE'
-                        ? 'bg-slate-700 text-white shadow-xs'
-                        : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>Pendiente</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus(formData.id, 'NO_APLICA')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      formData.estado === 'NO_APLICA'
-                        ? 'bg-blue-700 text-white shadow-xs'
-                        : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>No Aplica</span>
-                  </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {ESTADOS_ESTANDAR_FRIKAZ.map((est) => {
+                    const actual = normalizarEstadoEstandar(formData.estado) === est;
+                    const exclusivoGerente = esEstadoExclusivoGerente(est);
+                    const badge = getBadgeClassesEstadoFrikaz(est);
+                    return (
+                      <button
+                        key={est}
+                        type="button"
+                        onClick={() => {
+                          if (!esGerente) {
+                            solicitarAccesoGerente();
+                            return;
+                          }
+                          onUpdateStatus(formData.id, est);
+                          setFormData((prev) => (prev ? { ...prev, estado: est } : prev));
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                          actual
+                            ? 'bg-[#0f172a] text-white border-[#0f172a] shadow-xs'
+                            : !esGerente
+                              ? 'bg-slate-100 border-slate-300 text-slate-500 hover:border-orange-300 hover:text-slate-700'
+                              : `${badge.light} hover:opacity-90`
+                        }`}
+                        title={
+                          !esGerente
+                            ? 'Requiere ingresar con el correo de Andrea Orjuela – Gerente'
+                            : exclusivoGerente
+                              ? `${badge.descripcionCorta} (Gerencia)`
+                              : badge.descripcionCorta
+                        }
+                      >
+                        <span>{est}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {formData.resultadoRevision && (
+                  <div className="rounded-lg bg-white border border-emerald-200 p-3 text-xs flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-emerald-900 font-bold">
+                      <UserCheck className="h-4 w-4 text-emerald-600" />
+                      <span>
+                        Revisión de Gerencia: {formData.resultadoRevision} por {formData.revisadoPor}
+                      </span>
+                    </div>
+                    <span className="text-slate-500">
+                      Fecha: {formData.fechaRevision || formData.fechaVerificacion}
+                    </span>
+                    {formData.observacionesRevision && (
+                      <p className="w-full text-[11px] text-slate-600">
+                        Observación: {formData.observacionesRevision}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* LOS 6 PUNTOS EXPLICADOS EN LENGUAJE SENCILLO */}

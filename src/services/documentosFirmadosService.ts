@@ -10,10 +10,18 @@ import {
   TipoDocumentoFirmado,
   MetricasDocumentosFirmados,
 } from '../types/documentosFirmados';
+import {
+  crearRegistroRevisionGerente,
+  esEstadoExclusivoGerente,
+  esGerenteAutorizado,
+  NOMBRE_GERENTE_OFICIAL,
+  normalizarEstadoEstandar,
+} from './gerenteControlService';
 
 const STORAGE_KEY_RECIBIDOS = 'frikaz_documentos_firmados_recibidos_v2';
 const STORAGE_KEY_ENVIOS = 'frikaz_envios_pendientes_documentos_v2';
 const STORAGE_KEY_DOCS_PLAIN_LANG = 'frikaz_docs_firmados_plain_lang_v1';
+const STORAGE_KEY_DOCS_GERENTE_GATE = 'frikaz_docs_firmados_gerente_v1';
 export const CUENTA_INSTITUCIONAL = 'frikaz.fritosnacks@gmail.com';
 
 // ----------------------------------------------------------------------------
@@ -32,13 +40,13 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
     asuntoCorreo: 'Re: Tus responsabilidades de seguridad en el trabajo – Frikaz S.A.S. [FRK-ENV-2026-001]',
     fechaEnvioOriginal: '2026-02-10 09:15',
     fechaRecepcion: '2026-02-12 14:32',
-    estado: 'Aprobado',
+    estado: 'Pendiente de revisión',
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: 'thread-gmail-frk-882193',
     mensajeTrabajador: 'Buenas tardes equipo de seguridad, aquí les envío el documento firmado con mi cédula donde acepto mis cuidados en la freidora. Quedo pendiente de las charlas del mes.',
-    observacionesRevision: 'Documento completo con firma clara y cédula revisada. Cumple con el Decreto 1072/2015 Art. 2.2.4.6.8.',
-    revisadoPor: 'Coordinador / Vigía de SST (Frikaz S.A.S.)',
-    fechaRevision: '2026-02-13 10:20',
+    observacionesRevision: 'Archivo recibido del trabajador. Falta revisión y aprobación del Gerente General.',
+    revisadoPor: null,
+    fechaRevision: null,
     detallesFirma: {
       numeroDocumento: '1.020.485.912 de Bogotá D.C.',
       empresa: 'Frikaz S.A.S. (Planta Bosa)',
@@ -53,23 +61,15 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
         evento: 'Envío de documento de responsabilidades',
         responsable: 'frikaz.fritosnacks@gmail.com',
         detalles: 'Se envió el documento desde el Organigrama de Cargos con el código FRK-ENV-2026-001.',
-        estadoResultante: 'Recibido',
+        estadoResultante: 'En proceso',
       },
       {
         id: 'tz-2',
         fechaHora: '2026-02-12 14:32',
         evento: 'Llegó respuesta con documento firmado',
         responsable: 'Bandeja Gmail (frikaz.fritosnacks@gmail.com)',
-        detalles: 'El trabajador respondió con el archivo PDF firmado (1.4 MB).',
-        estadoResultante: 'Recibido',
-      },
-      {
-        id: 'tz-3',
-        fechaHora: '2026-02-13 10:20',
-        evento: 'Documento revisado y aprobado',
-        responsable: 'Coordinador / Vigía de SST',
-        detalles: 'Firma verificada sin problemas. Guardado en la carpeta digital del trabajador.',
-        estadoResultante: 'Aprobado',
+        detalles: 'El trabajador respondió con el archivo PDF firmado (1.4 MB). Pendiente de revisión de Gerencia.',
+        estadoResultante: 'Pendiente de revisión',
       },
     ],
   },
@@ -85,13 +85,13 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
     asuntoCorreo: 'Re: Compromiso de Seguridad y Salud (Política SST) – Frikaz S.A.S. [FRK-ENV-2026-002]',
     fechaEnvioOriginal: '2026-02-14 11:00',
     fechaRecepcion: '2026-02-15 16:45',
-    estado: 'Aprobado',
+    estado: 'Pendiente de revisión',
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: 'thread-gmail-frk-882204',
     mensajeTrabajador: 'Hola, envío firmado el compromiso de seguridad (Política SST) donde confirmo que apoyaré las reglas de higiene y prevención de accidentes en la planta.',
-    observacionesRevision: 'Firma clara y completa. Guardado como prueba de entrega de nuestra Política de Seguridad.',
-    revisadoPor: 'Gerente General (Frikaz S.A.S.)',
-    fechaRevision: '2026-02-16 08:30',
+    observacionesRevision: 'Archivo recibido por correo. Pendiente de revisión y aprobación por el Gerente General.',
+    revisadoPor: null,
+    fechaRevision: null,
     detallesFirma: {
       numeroDocumento: '1.032.441.876 de Bogotá D.C.',
       empresa: 'Frikaz S.A.S.',
@@ -106,23 +106,15 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
         evento: 'Envío de compromiso de seguridad (Política SST)',
         responsable: 'frikaz.fritosnacks@gmail.com',
         detalles: 'Enviado desde la sección de Política de Seguridad.',
-        estadoResultante: 'Recibido',
+        estadoResultante: 'En proceso',
       },
       {
         id: 'tz-5',
         fechaHora: '2026-02-15 16:45',
         evento: 'Documento firmado recibido',
         responsable: 'Bandeja Gmail (frikaz.fritosnacks@gmail.com)',
-        detalles: 'Archivo PDF recibido en frikaz.fritosnacks@gmail.com.',
-        estadoResultante: 'Recibido',
-      },
-      {
-        id: 'tz-6',
-        fechaHora: '2026-02-16 08:30',
-        evento: 'Aprobación final',
-        responsable: 'Gerente General',
-        detalles: 'Guardado como prueba del cumplimiento de la Resolución 0312/2019 (estándar 1.1.1).',
-        estadoResultante: 'Aprobado',
+        detalles: 'Archivo PDF recibido en frikaz.fritosnacks@gmail.com. Pendiente revisión del Gerente.',
+        estadoResultante: 'Pendiente de revisión',
       },
     ],
   },
@@ -142,7 +134,7 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: 'thread-gmail-frk-882255',
     mensajeTrabajador: 'Buenas noches, aquí envío el documento firmado. Hoy estuve haciendo entregas entre Bosa y Soacha y apenas pude conectarme para mandarlo.',
-    observacionesRevision: 'El archivo ya llegó. Falta que el encargado de seguridad lo revise y lo apruebe.',
+    observacionesRevision: 'El archivo ya llegó. Falta que la Gerencia lo revise y lo apruebe.',
     revisadoPor: null,
     fechaRevision: null,
     detallesFirma: {
@@ -159,7 +151,7 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
         evento: 'Envío de responsabilidades del cargo',
         responsable: 'frikaz.fritosnacks@gmail.com',
         detalles: 'Correo enviado correctamente al conductor.',
-        estadoResultante: 'Recibido',
+        estadoResultante: 'En proceso',
       },
       {
         id: 'tz-8',
@@ -183,19 +175,19 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
     asuntoCorreo: 'Re: Tus responsabilidades de seguridad en el trabajo – Frikaz S.A.S. [FRK-ENV-2026-004]',
     fechaEnvioOriginal: '2026-02-20 10:15',
     fechaRecepcion: '2026-02-21 09:20',
-    estado: 'Requiere corrección',
+    estado: 'Pendiente de revisión',
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: 'thread-gmail-frk-882280',
     mensajeTrabajador: 'Adjunto el documento que me enviaron ya firmado.',
-    observacionesRevision: 'La firma en la hoja 3 salió borrosa y faltó la última página. Por favor tómale una foto más clara con buena luz o escanéala de nuevo.',
-    revisadoPor: 'Coordinador / Vigía de SST (Frikaz S.A.S.)',
-    fechaRevision: '2026-02-21 11:45',
+    observacionesRevision: 'Archivo recibido para validar si la firma de la hoja 3 es legible.',
+    revisadoPor: null,
+    fechaRevision: null,
     detallesFirma: {
       numeroDocumento: '52.981.442 de Bogotá D.C.',
       empresa: 'Frikaz S.A.S.',
-      declaracionAceptacion: 'Firma poco legible: se pidió volver a enviarla más clara.',
+      declaracionAceptacion: 'Documento recibido; pendiente revisión visual de firma por el Gerente.',
       fechaFirma: '20 de Febrero de 2026',
-      firmaRegistrada: false,
+      firmaRegistrada: true,
     },
     trazabilidad: [
       {
@@ -204,23 +196,15 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
         evento: 'Envío de documento',
         responsable: 'frikaz.fritosnacks@gmail.com',
         detalles: 'Se envió el documento por correo.',
-        estadoResultante: 'Recibido',
+        estadoResultante: 'En proceso',
       },
       {
         id: 'tz-10',
         fechaHora: '2026-02-21 09:20',
         evento: 'Archivo recibido',
         responsable: 'frikaz.fritosnacks@gmail.com',
-        detalles: 'Llegó archivo escaneado de 850 KB.',
-        estadoResultante: 'Recibido',
-      },
-      {
-        id: 'tz-11',
-        fechaHora: '2026-02-21 11:45',
-        evento: 'Se pidió corregir el archivo',
-        responsable: 'Coordinador / Vigía de SST',
-        detalles: 'Se le pidió al trabajador firmar con esfero negro y enviar una imagen o escaneo nítido.',
-        estadoResultante: 'Requiere corrección',
+        detalles: 'Llegó archivo escaneado de 850 KB. Pendiente revisión de Gerencia.',
+        estadoResultante: 'Pendiente de revisión',
       },
     ],
   },
@@ -306,8 +290,42 @@ function ensureDocsPlainLangMigration(): void {
   }
 }
 
+function ensureDocsGerenteGateMigration(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY_DOCS_GERENTE_GATE) === '1') return;
+    const rawDocs = localStorage.getItem(STORAGE_KEY_RECIBIDOS);
+    if (rawDocs) {
+      const parsed: DocumentoFirmadoRecibido[] = JSON.parse(rawDocs);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const cleaned = parsed.map((d) => {
+          const norm = normalizarEstadoEstandar(d.estado);
+          if (!d.resultadoRevision && esEstadoExclusivoGerente(norm)) {
+            return {
+              ...d,
+              estado: 'Pendiente de revisión' as EstadoDocumentoFirmado,
+              revisadoPor: null,
+              fechaRevision: null,
+              observacionesRevision:
+                'Archivo recibido; pendiente de revisión y aprobación por el Gerente General.',
+            };
+          }
+          if (norm !== d.estado) {
+            return { ...d, estado: norm };
+          }
+          return d;
+        });
+        localStorage.setItem(STORAGE_KEY_RECIBIDOS, JSON.stringify(cleaned));
+      }
+    }
+    localStorage.setItem(STORAGE_KEY_DOCS_GERENTE_GATE, '1');
+  } catch (err) {
+    console.error('Error aplicando compuerta de Gerente a documentos firmados:', err);
+  }
+}
+
 export function getStoredDocumentosFirmados(): DocumentoFirmadoRecibido[] {
   ensureDocsPlainLangMigration();
+  ensureDocsGerenteGateMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_RECIBIDOS);
     if (!raw) {
@@ -442,11 +460,11 @@ export function simularRespuestaTrabajador(envio: RegistroEnvioPendiente): Docum
     asuntoCorreo: `Re: ${envio.asunto}`,
     fechaEnvioOriginal: envio.fechaEnvio,
     fechaRecepcion: fechaIso,
-    estado: 'Recibido',
+    estado: 'Pendiente de revisión',
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: `thread-gmail-frk-${Math.floor(800000 + Math.random() * 199999)}`,
     mensajeTrabajador: `Buen día equipo de Frikaz S.A.S., adjunto envío el documento firmado para el cargo ${envio.cargo} con el compromiso de cuidar mi seguridad en el trabajo. Por favor me confirman si llegó bien.`,
-    observacionesRevision: 'Documento recién llegado por correo. Falta que el encargado de seguridad lo revise.',
+    observacionesRevision: 'Documento recién llegado por correo. Pendiente de revisión y aprobación por el Gerente.',
     revisadoPor: null,
     fechaRevision: null,
     detallesFirma: {
@@ -466,15 +484,15 @@ export function simularRespuestaTrabajador(envio: RegistroEnvioPendiente): Docum
         evento: 'Envío del documento al trabajador',
         responsable: CUENTA_INSTITUCIONAL,
         detalles: `Enviado al correo ${envio.correoTrabajador} (código ${envio.envioId})`,
-        estadoResultante: 'Recibido',
+        estadoResultante: 'En proceso',
       },
       {
         id: `tz-${Date.now()}-2`,
         fechaHora: fechaIso,
         evento: 'Llegó el documento firmado',
         responsable: `Bandeja Gmail (${CUENTA_INSTITUCIONAL})`,
-        detalles: `El trabajador respondió con el archivo ${nombreArchivoRecibido}.`,
-        estadoResultante: 'Recibido',
+        detalles: `El trabajador respondió con el archivo ${nombreArchivoRecibido}. Pendiente revisión de Gerencia.`,
+        estadoResultante: 'Pendiente de revisión',
       },
     ],
   };
@@ -497,8 +515,13 @@ export function actualizarEstadoDocumento(
   docId: string,
   nuevoEstado: EstadoDocumentoFirmado,
   observaciones: string,
-  revisor: string = 'Talento Humano / Responsable SG-SST Frikaz'
+  revisor: string = NOMBRE_GERENTE_OFICIAL
 ): DocumentoFirmadoRecibido | null {
+  const estadoNorm = normalizarEstadoEstandar(nuevoEstado);
+  if (esEstadoExclusivoGerente(estadoNorm) && !esGerenteAutorizado()) {
+    return null;
+  }
+
   const docs = getStoredDocumentosFirmados();
   const index = docs.findIndex((d) => d.id === docId);
   if (index === -1) return null;
@@ -512,21 +535,30 @@ export function actualizarEstadoDocumento(
   });
 
   const doc = docs[index];
+  const esRevisionGerente = esEstadoExclusivoGerente(estadoNorm);
+  const regGerente = esRevisionGerente
+    ? crearRegistroRevisionGerente(
+        estadoNorm as 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes',
+        observaciones.trim() || `Estado actualizado a ${estadoNorm}`
+      )
+    : null;
+
   const nuevoEvento = {
     id: `tz-${Date.now()}`,
     fechaHora: fechaIso,
-    evento: `Cambio de estado a "${nuevoEstado}"`,
-    responsable: revisor,
-    detalles: observaciones.trim() || `Estado actualizado a ${nuevoEstado}`,
-    estadoResultante: nuevoEstado,
+    evento: `Cambio de estado a "${estadoNorm}"`,
+    responsable: esRevisionGerente ? NOMBRE_GERENTE_OFICIAL : revisor,
+    detalles: observaciones.trim() || `Estado actualizado a ${estadoNorm}`,
+    estadoResultante: estadoNorm,
   };
 
   const actualizado: DocumentoFirmadoRecibido = {
     ...doc,
-    estado: nuevoEstado,
+    estado: estadoNorm,
     observacionesRevision: observaciones.trim() || doc.observacionesRevision,
-    revisadoPor: revisor,
-    fechaRevision: fechaIso,
+    revisadoPor: esRevisionGerente ? NOMBRE_GERENTE_OFICIAL : doc.revisadoPor,
+    fechaRevision: esRevisionGerente ? fechaIso : doc.fechaRevision,
+    resultadoRevision: regGerente ? regGerente.resultadoRevision : doc.resultadoRevision,
     trazabilidad: [nuevoEvento, ...doc.trazabilidad],
   };
 
@@ -540,10 +572,20 @@ export function actualizarEstadoDocumento(
 // ----------------------------------------------------------------------------
 export function calcularMetricasDocumentos(docs: DocumentoFirmadoRecibido[]): MetricasDocumentosFirmados {
   const total = docs.length;
-  const recibidos = docs.filter((d) => d.estado === 'Recibido').length;
-  const pendientesRevision = docs.filter((d) => d.estado === 'Pendiente de revisión').length;
-  const aprobados = docs.filter((d) => d.estado === 'Aprobado').length;
-  const requierenCorreccion = docs.filter((d) => d.estado === 'Requiere corrección').length;
+  const recibidos = docs.filter((d) => {
+    const est = normalizarEstadoEstandar(d.estado);
+    return est === 'Por hacer' || est === 'En proceso';
+  }).length;
+  const pendientesRevision = docs.filter(
+    (d) => normalizarEstadoEstandar(d.estado) === 'Pendiente de revisión'
+  ).length;
+  const aprobados = docs.filter((d) => {
+    const est = normalizarEstadoEstandar(d.estado);
+    return est === 'Aprobado' || est === 'Cumplido';
+  }).length;
+  const requierenCorreccion = docs.filter(
+    (d) => normalizarEstadoEstandar(d.estado) === 'Devuelto para ajustes'
+  ).length;
 
   const porcentajeAprobados = total > 0 ? Math.round((aprobados / total) * 100) : 0;
 
@@ -608,11 +650,11 @@ export function sincronizarConMensajesGmail(mensajes: any[]): {
       asuntoCorreo: msg.subject || 'Respuesta documental – Frikaz S.A.S.',
       fechaEnvioOriginal: envioPendiente?.fechaEnvio || msg.date || 'Reciente',
       fechaRecepcion: msg.date || new Date().toLocaleString('es-CO'),
-      estado: 'Recibido',
+      estado: 'Pendiente de revisión',
       cuentaReceptora: CUENTA_INSTITUCIONAL,
       hiloCorreoId: msg.threadId || `thread-${msg.id}`,
       mensajeTrabajador: msg.snippet || 'Documento firmado adjunto.',
-      observacionesRevision: 'Documento recibido en tiempo real desde la bandeja de Gmail.',
+      observacionesRevision: 'Documento recibido desde la bandeja de Gmail. Pendiente revisión del Gerente.',
       revisadoPor: null,
       fechaRevision: null,
       detallesFirma: {
@@ -628,8 +670,8 @@ export function sincronizarConMensajesGmail(mensajes: any[]): {
           fechaHora: new Date().toLocaleString('es-CO'),
           evento: 'Llegó correo directo a Gmail',
           responsable: CUENTA_INSTITUCIONAL,
-          detalles: `Mensaje traído desde la bandeja de entrada (ID: ${msg.id})`,
-          estadoResultante: 'Recibido',
+          detalles: `Mensaje traído desde la bandeja de entrada (ID: ${msg.id}). Pendiente revisión del Gerente.`,
+          estadoResultante: 'Pendiente de revisión',
         },
       ],
     };

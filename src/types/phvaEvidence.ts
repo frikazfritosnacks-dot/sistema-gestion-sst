@@ -23,6 +23,12 @@ export type SubtemaPhva =
   | 'CIERRE DE CICLO';
 
 export type EstadoCumplimiento =
+  | 'Por hacer'
+  | 'En proceso'
+  | 'Pendiente de revisión'
+  | 'Devuelto para ajustes'
+  | 'Cumplido'
+  | 'Aprobado'
   | 'CUMPLE'
   | 'PARCIAL'
   | 'NO_CUMPLE'
@@ -53,6 +59,11 @@ export interface NormaPhvaItem {
   responsable: string;
   fechaVerificacion: string;
   observaciones: string;
+  // Revisión y aprobación de Gerencia
+  fechaRevision?: string;
+  revisadoPor?: string;
+  resultadoRevision?: 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes';
+  observacionesRevision?: string;
 }
 
 export interface ResumenFaseCalculado {

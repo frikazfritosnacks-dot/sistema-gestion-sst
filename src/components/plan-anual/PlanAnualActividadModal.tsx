@@ -22,7 +22,13 @@ import {
   History,
   FileText,
   ExternalLink,
+  Mail,
 } from 'lucide-react';
+import {
+  esEstadoExclusivoGerente,
+  getBadgeClassesEstadoFrikaz,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
 
 interface PlanAnualActividadModalProps {
   isOpen: boolean;
@@ -73,6 +79,7 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
   const [nuevaUrlReferencia, setNuevaUrlReferencia] = useState('');
   const [nuevoArchivoDataUrl, setNuevoArchivoDataUrl] = useState<string | undefined>(undefined);
   const [comentarioRevisor, setComentarioRevisor] = useState('');
+  const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   useEffect(() => {
     if (isOpen && actividad) {
@@ -144,6 +151,10 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
   };
 
   const handleAdjuntarEvidencia = () => {
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!nuevoNombreArchivo.trim() && !nuevaUrlReferencia.trim()) {
       setErrorMsg('Por favor elija un archivo de su equipo o escriba el enlace de la prueba.');
       return;
@@ -168,7 +179,7 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
     const actualizado: ActividadPlanAnual = {
       ...form,
       evidencias: [...form.evidencias, nuevaEv],
-      estado: form.estado === 'CUMPLIDA' ? 'CUMPLIDA' : 'REQUIERE_REVISION',
+      estado: 'REQUIERE_REVISION',
       historialRevisiones: [
         {
           id: `hrev-${Date.now()}`,
@@ -193,6 +204,10 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
 
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     setErrorMsg(null);
 
     if (!form.nombre.trim()) {
@@ -244,6 +259,10 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
 
   const handleEjecutarCierreAprobado = () => {
     setErrorMsg(null);
+    if (!esGerente) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!tieneEvidencias) {
       setErrorMsg(
         `Falta subir una prueba (foto, acta o documento) para cerrar la tarea. Se pide: ${form.evidenciaRequerida}`
@@ -257,7 +276,7 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
     onAprobarYCerrar(
       form,
       form.resultadoActividad.trim(),
-      comentarioRevisor.trim() || 'Prueba revisada y aprobada. Cumple con lo acordado.'
+      comentarioRevisor.trim() || 'Prueba revisada y aprobada por Gerencia. Cumple con lo acordado.'
     );
     onClose();
   };
@@ -639,16 +658,28 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                     <label className="font-semibold text-slate-600 block mb-1">7. Estado</label>
                     <select
                       value={form.estado}
-                      onChange={(e) =>
-                        setForm({ ...form, estado: e.target.value as EstadoActividadPlan })
-                      }
+                      onChange={(e) => {
+                        const val = e.target.value as EstadoActividadPlan;
+                        if (esEstadoExclusivoGerente(val) && !esGerente) {
+                          solicitarAccesoGerente();
+                          return;
+                        }
+                        setForm({ ...form, estado: val });
+                      }}
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white font-bold"
                     >
-                      <option value="PENDIENTE">Pendiente</option>
-                      <option value="EN_PROCESO">En Marcha</option>
-                      <option value="REQUIERE_REVISION">Falta Revisar</option>
-                      <option value="VENCIDA">Vencida</option>
-                      <option value="CUMPLIDA">Cumplida (necesita prueba aprobada)</option>
+                      <option value="PENDIENTE">Por hacer</option>
+                      <option value="EN_PROCESO">En proceso</option>
+                      <option value="REQUIERE_REVISION">Pendiente de revisión</option>
+                      <option value="DEVUELTA" disabled={!esGerente}>
+                        Devuelto para ajustes {!esGerente ? '(Solo Gerente)' : ''}
+                      </option>
+                      <option value="CUMPLIDA" disabled={!esGerente}>
+                        Cumplido {!esGerente ? '(Solo Gerente)' : ''}
+                      </option>
+                      <option value="APROBADA" disabled={!esGerente}>
+                        Aprobado {!esGerente ? '(Solo Gerente)' : ''}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -817,7 +848,9 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                     Todavía no se ha subido ninguna foto o documento.
                   </p>
                 ) : (
-                  form.evidencias.map((ev) => (
+                  form.evidencias.map((ev) => {
+                    const badgeEv = getBadgeClassesEstadoFrikaz(ev.estadoRevision);
+                    return (
                     <div
                       key={ev.id}
                       className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -829,25 +862,16 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                             {ev.tipoSoporte}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                              ev.estadoRevision === 'APROBADA'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : ev.estadoRevision === 'DEVUELTA'
-                                ? 'bg-rose-100 text-rose-800'
-                                : 'bg-amber-100 text-amber-800'
-                            }`}
+                            className={`px-2 py-0.5 rounded border text-[10px] font-black ${badgeEv.light}`}
                           >
-                            {ev.estadoRevision === 'APROBADA'
-                              ? 'APROBADA'
-                              : ev.estadoRevision === 'DEVUELTA'
-                              ? 'PARA CORREGIR'
-                              : 'POR REVISAR'}
+                            {badgeEv.label}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-600">{ev.descripcionSoporte}</p>
                         <p className="text-[10px] text-slate-400">
                           Subido el {ev.fechaCarga} por {ev.cargadoPor}
-                          {ev.comentarioRevisor ? ` · Comentario de quien revisó: "${ev.comentarioRevisor}"` : ''}
+                          {ev.revisadoPor ? ` · Revisado por: ${ev.revisadoPor}` : ''}
+                          {ev.comentarioRevisor ? ` · Observaciones: "${ev.comentarioRevisor}"` : ''}
                         </p>
                       </div>
 
@@ -862,34 +886,52 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                             <span>Ver o Bajar</span>
                           </a>
                         )}
-                        {ev.estadoRevision !== 'APROBADA' && form.estado !== 'CUMPLIDA' && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const motivo =
-                                comentarioRevisor.trim() ||
-                                'La imagen no se ve clara o falta información. Por favor vuelva a subirla.';
-                              onDevolverEvidencia(form, ev.id, motivo);
-                              onClose();
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300 font-bold hover:bg-rose-200 inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <RotateCcw className="h-3 w-3" />
-                            <span>Pedir Corrección</span>
-                          </button>
-                        )}
+                        {ev.estadoRevision !== 'APROBADA' &&
+                          form.estado !== 'CUMPLIDA' &&
+                          form.estado !== 'APROBADA' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!esGerente) {
+                                  solicitarAccesoGerente();
+                                  return;
+                                }
+                                const motivo =
+                                  comentarioRevisor.trim() ||
+                                  'La imagen no se ve clara o falta información. Por favor vuelva a subirla.';
+                                onDevolverEvidencia(form, ev.id, motivo);
+                                onClose();
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg border font-bold inline-flex items-center gap-1 cursor-pointer ${
+                                esGerente
+                                  ? 'bg-rose-100 text-rose-800 border-rose-300 hover:bg-rose-200'
+                                  : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-orange-50'
+                              }`}
+                            >
+                              {esGerente ? (
+                                <RotateCcw className="h-3 w-3" />
+                              ) : (
+                                <Mail className="h-3 w-3" />
+                              )}
+                              <span>
+                                {esGerente ? 'Devolver para ajustes' : 'Ingresar como Gerente'}
+                              </span>
+                            </button>
+                          )}
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
-              {/* Paso 3: Revisión y Cierre Definitivo */}
-              {form.estado !== 'CUMPLIDA' ? (
+              {/* Paso 3: Revisión y Cierre Definitivo (Exclusivo Gerente) */}
+              {form.estado !== 'CUMPLIDA' && form.estado !== 'APROBADA' ? (
                 <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/70 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-black text-emerald-950">
-                      Paso 3. Revisión por {form.aprobadorNombre} y Cierre de Tarea
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-black text-emerald-950 inline-flex items-center gap-1.5">
+                      {!esGerente && <Mail className="h-3.5 w-3.5 text-amber-700" />}
+                      <span>Paso 3. Revisión de Andrea Orjuela – Gerente y Cierre como «Cumplido»</span>
                     </span>
                     {form.esRecurrente && (
                       <span className="px-2 py-0.5 rounded bg-emerald-200 text-emerald-900 text-[10px] font-bold">
@@ -901,17 +943,29 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                     type="text"
                     value={comentarioRevisor}
                     onChange={(e) => setComentarioRevisor(e.target.value)}
-                    placeholder="Escriba aquí su visto bueno o qué falta corregir..."
+                    placeholder="Observaciones de Gerencia (visto bueno o ajustes requeridos)..."
                     className="w-full rounded-lg border border-emerald-300 p-2 text-xs bg-white"
                   />
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={handleEjecutarCierreAprobado}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 text-white font-black hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer"
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-black transition-colors shadow-xs cursor-pointer ${
+                        esGerente
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          : 'bg-[#0f172a] text-[#fed7aa] hover:bg-slate-800'
+                      }`}
                     >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Aprobar Prueba y Cerrar Tarea</span>
+                      {esGerente ? (
+                        <CheckCircle2 className="h-4 w-4" />
+                      ) : (
+                        <Mail className="h-4 w-4" />
+                      )}
+                      <span>
+                        {esGerente
+                          ? 'Aprobar Soporte y Marcar «Cumplido»'
+                          : 'Ingresar como Gerente para Aprobar'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -919,11 +973,18 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                 <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 flex items-center gap-3 text-emerald-900">
                   <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
                   <div>
-                    <p className="font-black">Tarea Terminada y Aprobada con su Prueba</p>
-                    <p className="text-[11px]">
-                      Cerrada el: <strong>{form.fechaCierre}</strong> · Aprobada por:{' '}
-                      <strong>{form.cerradoPor || form.aprobadorNombre}</strong>
+                    <p className="font-black">
+                      Tarea Verificada por Gerencia ({getBadgeClassesEstadoFrikaz(form.estado).label})
                     </p>
+                    <p className="text-[11px]">
+                      Fecha de revisión: <strong>{form.revisionGerente?.fechaRevision || form.fechaCierre}</strong> · Revisado por:{' '}
+                      <strong>{form.revisionGerente?.revisadoPor || form.cerradoPor || form.aprobadorNombre}</strong>
+                    </p>
+                    {form.revisionGerente?.observaciones && (
+                      <p className="text-[11px] text-emerald-800 mt-0.5">
+                        Observaciones: {form.revisionGerente.observaciones}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

@@ -60,13 +60,22 @@ import {
   ShieldCheck,
   X,
   History,
+  Mail,
 } from 'lucide-react';
+import {
+  crearRegistroRevisionGerente,
+  esEstadoExclusivoGerente,
+  esGerenteAutorizado,
+  getBadgeClassesEstadoFrikaz,
+  normalizarEstadoEstandar,
+  useGerenteAutorizado,
+} from '../../services/gerenteControlService';
 
 interface PlanAnualViewProps {
   normas: NormaPhvaItem[];
 }
 
-type FasePhvaPlanAnual = 'hacer' | 'verificar' | 'actuar' | 'planear';
+type FasePhvaPlanAnual = 'planear' | 'hacer' | 'verificar' | 'actuar';
 
 export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   const [vigencias, setVigencias] = useState<Record<number, PlanAnualVigencia>>(() =>
@@ -86,10 +95,11 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     loadSgsstData(getCaracterizacionActual(), loadStoredRisks())
   );
 
-  // Exactamente las 4 pestañas internas solicitadas en orden: HACER, VERIFICAR, ACTUAR, PLANEAR
-  const [faseActiva, setFaseActiva] = useState<FasePhvaPlanAnual>('hacer');
+  // Las 4 etapas del ciclo PHVA en su orden oficial: 1. PLANEAR, 2. HACER, 3. VERIFICAR, 4. ACTUAR
+  const [faseActiva, setFaseActiva] = useState<FasePhvaPlanAnual>('planear');
   const [planearSubTabReset, setPlanearSubTabReset] = useState<SubTabPlanear>('riesgos');
   const [planearKey, setPlanearKey] = useState(0);
+  const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   // Control de confidencialidad médica individual
   const [accesoMedicoAutorizado, setAccesoMedicoAutorizado] = useState(false);
@@ -264,30 +274,59 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     );
   }, [sgsstData.diagnosticosSalud, anioActivo, config.ciiuPrincipal]);
 
-  // Guardar cambios del Plan Anual (actividades, objetivos, etc.)
+  // Guardar cambios del Plan Anual (actividades, objetivos, etc.) con control de Gerencia
   const handleUpdatePlan = useCallback(
     (updated: PlanAnualVigencia, logAction?: string) => {
+      if (!esGerenteAutorizado()) {
+        solicitarAccesoGerente();
+        setStatusBanner(
+          'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede editar o aprobar el Plan Anual.'
+        );
+        return;
+      }
+      const estadoCambio = updated.estadoAprobacion !== planActivo?.estadoAprobacion;
+
+      const planConRevision: PlanAnualVigencia =
+        estadoCambio && esEstadoExclusivoGerente(updated.estadoAprobacion)
+          ? {
+              ...updated,
+              aprobadorNombre: nombreGerente,
+              revisionGerente:
+                updated.revisionGerente ||
+                crearRegistroRevisionGerente(
+                  normalizarEstadoEstandar(updated.estadoAprobacion) as
+                    | 'Aprobado'
+                    | 'Cumplido'
+                    | 'Devuelto para ajustes',
+                  logAction
+                ),
+            }
+          : updated;
+
       setSaveFeedback('saving');
       const withLog: PlanAnualVigencia = logAction
         ? {
-            ...updated,
+            ...planConRevision,
             historialCambios: [
               {
                 id: `h-${Date.now()}`,
                 fechaHora: new Date().toISOString(),
-                usuario: updated.responsableNombre,
+                usuario:
+                  estadoCambio && esEstadoExclusivoGerente(updated.estadoAprobacion)
+                    ? nombreGerente
+                    : planConRevision.responsableNombre,
                 accion: logAction,
-                detalle: `Actualización registrada en vigencia ${updated.vigencia}.`,
+                detalle: `Actualización registrada en vigencia ${planConRevision.vigencia}.`,
               },
-              ...updated.historialCambios,
+              ...planConRevision.historialCambios,
             ],
           }
-        : updated;
+        : planConRevision;
       const all = saveVigencia(withLog);
       setVigencias(all);
       setSaveFeedback('saved');
     },
-    []
+    [planActivo?.estadoAprobacion, nombreGerente, solicitarAccesoGerente]
   );
 
   const abrirActividadEnModal = useCallback(
@@ -337,6 +376,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   // HANDLERS FASE HACER (TRABAJADORES, SALUD, MATRIZ GTC 45)
   // =========================================================================
   const handleSaveTrabajador = (trab: TrabajadorFichaSST) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     persistSgsst(
       (prev) => {
         const existe = prev.trabajadores.some((t) => t.id === trab.id);
@@ -357,6 +400,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleSaveDiagnosticoSalud = (diag: DiagnosticoSaludEmpresa) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     persistSgsst(
       (prev) => ({
         ...prev,
@@ -374,6 +421,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleUpdateRiesgoControles = (riesgoActualizado: RiesgoGTC45Item) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     setSaveFeedback('saving');
     const actualizados = riesgos.map((r) =>
       r.id === riesgoActualizado.id ? riesgoActualizado : r
@@ -411,27 +462,43 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   // HANDLERS FASE VERIFICAR (INDICADORES RES 0312, CAPTURA, 7 ESTÁNDARES)
   // =========================================================================
   const handleSaveRegistroPeriodo = (reg: RegistroPeriodoIndicador) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede registrar o validar datos oficiales de indicadores.'
+      );
+      return;
+    }
+
+    const regFinal: RegistroPeriodoIndicador = reg.validado
+      ? { ...reg, validadoPor: reg.validadoPor || nombreGerente }
+      : { ...reg, validadoPor: undefined };
+
     persistSgsst(
       (prev) => {
-        const existe = prev.registrosPeriodosIndicadores.some((p) => p.id === reg.id);
+        const existe = prev.registrosPeriodosIndicadores.some((p) => p.id === regFinal.id);
         return {
           ...prev,
           registrosPeriodosIndicadores: existe
-            ? prev.registrosPeriodosIndicadores.map((p) => (p.id === reg.id ? reg : p))
-            : [...prev.registrosPeriodosIndicadores, reg],
+            ? prev.registrosPeriodosIndicadores.map((p) => (p.id === regFinal.id ? regFinal : p))
+            : [...prev.registrosPeriodosIndicadores, regFinal],
         };
       },
       {
         modulo: 'VERIFICAR',
-        accion: `Registro de indicadores guardado: ${reg.periodoLabel}`,
-        detalle: reg.validado
-          ? 'Datos guardados y validados para cálculo automático.'
-          : 'Datos guardados (pendiente de validación).',
+        accion: `Registro de indicadores guardado: ${regFinal.periodoLabel}`,
+        detalle: regFinal.validado
+          ? `Datos validados por ${regFinal.validadoPor || nombreGerente}.`
+          : 'Datos guardados (Pendiente de revisión por Gerencia).',
       }
     );
   };
 
   const handleSyncTrabajadoresPeriodos = (anio: number) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     const activos = sgsstData.trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO').length;
     const totalTrab = activos > 0 ? activos : config.numeroTrabajadores;
     persistSgsst(
@@ -451,6 +518,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleAddIndicadorCustom = (nuevo: HojaVidaIndicadorSST) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     persistSgsst(
       (prev) => ({
         ...prev,
@@ -465,6 +536,27 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleUpdateEstandar = (estandar: EvaluacionEstandarMinimo) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede revisar o actualizar un Estándar Mínimo.'
+      );
+      return;
+    }
+    const estadoNorm = normalizarEstadoEstandar(estandar.estadoRevision);
+
+    const estandarFinal: EvaluacionEstandarMinimo = esEstadoExclusivoGerente(estadoNorm)
+      ? {
+          ...estandar,
+          revisadoPor: nombreGerente,
+          fechaRevision: estandar.fechaRevision || new Date().toISOString().split('T')[0],
+          resultadoRevision: estadoNorm as 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes',
+        }
+      : {
+          ...estandar,
+          resultadoRevision: undefined,
+        };
+
     persistSgsst(
       (prev) => {
         const baseAnio =
@@ -474,15 +566,15 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           estandaresMinimos: {
             ...prev.estandaresMinimos,
             [anioActivo]: baseAnio.map((e) =>
-              e.numero === estandar.numero ? estandar : e
+              e.numero === estandarFinal.numero ? estandarFinal : e
             ),
           },
         };
       },
       {
         modulo: 'VERIFICAR',
-        accion: `Revisión Estándar #${estandar.numero} (${anioActivo})`,
-        detalle: `Estado actualizado a ${estandar.estadoRevision}. ${estandar.observacionesRevision}`,
+        accion: `Revisión Estándar #${estandarFinal.numero} (${anioActivo})`,
+        detalle: `Estado: ${estadoNorm}. ${estandarFinal.observacionesRevision}`,
       }
     );
   };
@@ -491,6 +583,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   // HANDLERS FASE ACTUAR (RECOMENDACIONES Y ACCIONES DE MEJORA)
   // =========================================================================
   const handleAddRecomendacion = (rec: RecomendacionIntervencion) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     persistSgsst(
       (prev) => ({
         ...prev,
@@ -507,19 +603,41 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleSaveAccion = (accion: AccionMejoraPlan) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede crear, editar o aprobar una acción de mejora.'
+      );
+      return;
+    }
+    const previa = sgsstData.accionesMejora.find((a) => a.id === accion.id);
+    const estadoNuevoNorm = normalizarEstadoEstandar(accion.estado);
+    const cambioEstadoGerente =
+      esEstadoExclusivoGerente(estadoNuevoNorm) && previa?.estado !== accion.estado;
+
+    const accionFinal: AccionMejoraPlan = cambioEstadoGerente
+      ? {
+          ...accion,
+          revisionGerente: crearRegistroRevisionGerente(
+            estadoNuevoNorm as 'Aprobado' | 'Cumplido' | 'Devuelto para ajustes',
+            accion.resultadoSeguimiento
+          ),
+        }
+      : accion;
+
     persistSgsst(
       (prev) => {
-        const existe = prev.accionesMejora.some((a) => a.id === accion.id);
+        const existe = prev.accionesMejora.some((a) => a.id === accionFinal.id);
         const accionesNext = existe
-          ? prev.accionesMejora.map((a) => (a.id === accion.id ? accion : a))
-          : [accion, ...prev.accionesMejora];
-        const recsNext = accion.recomendacionId
+          ? prev.accionesMejora.map((a) => (a.id === accionFinal.id ? accionFinal : a))
+          : [accionFinal, ...prev.accionesMejora];
+        const recsNext = accionFinal.recomendacionId
           ? prev.recomendaciones.map((r) =>
-              r.id === accion.recomendacionId
+              r.id === accionFinal.recomendacionId
                 ? {
                     ...r,
                     estado: 'CONVERTIDA_EN_ACCION' as const,
-                    accionMejoraId: accion.id,
+                    accionMejoraId: accionFinal.id,
                   }
                 : r
             )
@@ -532,17 +650,21 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       },
       {
         modulo: 'ACTUAR',
-        accion: `Acción de mejora ${accion.codigo} (${accion.estado})`,
-        detalle: accion.actividadARealizar,
+        accion: `Acción de mejora ${accionFinal.codigo} (${estadoNuevoNorm})`,
+        detalle: accionFinal.actividadARealizar,
       }
     );
-    setStatusBanner(`Acción de mejora ${accion.codigo} guardada (${accion.estado}).`);
+    setStatusBanner(`Acción de mejora ${accionFinal.codigo} guardada (${estadoNuevoNorm}).`);
   };
 
   // =========================================================================
   // HANDLERS FASE PLANEAR (ACTIVIDADES, RIESGOS I/II, NORMAS, CAMBIOS, VIGENCIA)
   // =========================================================================
   const handleAbrirNuevaActividad = () => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     const num = planActivo.actividades.length + 1;
     const defResp = responsables[0] || {
       id: 'cargo-coordinador-vigia-sst',
@@ -590,6 +712,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleProgramarRiesgo = (r: RiesgoGTC45Item) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     const medidas = extraerMedidasRiesgo(r);
     const num = planActivo.actividades.length + 1;
     const defResp =
@@ -652,6 +778,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleProgramarTodosRiesgosCriticos = (pendientes: RiesgoGTC45Item[]) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     const defAprob =
       responsables.find((resp) => resp.id === 'cargo-coordinador-vigia-sst') || responsables[0];
     const mesActual = new Date().getMonth() + 1;
@@ -784,6 +914,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleIncorporarRequisito = (req: RequisitoObligatorioIdentificado) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     const nueva = construirActividadDesdeRequisito(req, planActivo.actividades.length + 1);
     handleUpdatePlan(
       { ...planActivo, actividades: [...planActivo.actividades, nueva] },
@@ -793,6 +927,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleIncorporarTodosRequisitos = (reqsPendientes: RequisitoObligatorioIdentificado[]) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     let seq = planActivo.actividades.length + 1;
     const nuevas = reqsPendientes.map((r) => construirActividadDesdeRequisito(r, seq++));
     handleUpdatePlan(
@@ -806,6 +944,13 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     sol: SolicitudRevisionPlan,
     decision: 'APROBADA' | 'RECHAZADA'
   ) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede aprobar o descartar propuestas de cambios en el Plan Anual.'
+      );
+      return;
+    }
     const hoy = new Date().toISOString().split('T')[0];
     let actividadesActualizadas = [...planActivo.actividades];
     let snapshotActualizado = planActivo.empresaSnapshot;
@@ -921,7 +1066,16 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   };
 
   const handleSaveActividad = (act: ActividadPlanAnual) => {
-    const existe = planActivo.actividades.some((a) => a.id === act.id);
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede crear, editar o aprobar tareas del Plan Anual.'
+      );
+      return;
+    }
+    const prevAct = planActivo.actividades.find((a) => a.id === act.id);
+
+    const existe = Boolean(prevAct);
     const updatedActs = existe
       ? planActivo.actividades.map((a) => (a.id === act.id ? act : a))
       : [...planActivo.actividades, act];
@@ -936,15 +1090,24 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     resultadoActividad: string,
     comentarioRevisor: string
   ) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede aprobar los soportes y marcar la actividad como Cumplido.'
+      );
+      return;
+    }
+
     const hoy = new Date().toISOString().split('T')[0];
     const evidenciasAprobadas = act.evidencias.map((e) =>
-      e.estadoRevision === 'PENDIENTE_REVISION'
+      e.estadoRevision === 'PENDIENTE_REVISION' || e.estadoRevision === 'DEVUELTA'
         ? {
             ...e,
             estadoRevision: 'APROBADA' as const,
-            revisadoPor: act.aprobadorNombre,
+            revisadoPor: nombreGerente,
             fechaRevision: hoy,
             comentarioRevisor,
+            resultadoRevision: 'Aprobado' as const,
           }
         : e
     );
@@ -954,16 +1117,17 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       estado: 'CUMPLIDA',
       resultadoActividad,
       fechaCierre: hoy,
-      cerradoPor: act.aprobadorNombre,
+      cerradoPor: nombreGerente,
       evidencias: evidenciasAprobadas,
+      revisionGerente: crearRegistroRevisionGerente('Cumplido', comentarioRevisor),
       historialRevisiones: [
         {
           id: `hrev-${Date.now()}`,
           fecha: new Date().toISOString(),
-          usuario: act.aprobadorNombre,
-          rol: 'Aprobador',
+          usuario: nombreGerente,
+          rol: 'Gerente',
           accion: 'APROBADA_CERRADA',
-          detalle: `Actividad cerrada como CUMPLIDA. Comentario: ${comentarioRevisor}`,
+          detalle: `Aprobado y cerrado como Cumplido por Gerencia. Observaciones: ${comentarioRevisor}`,
         },
         ...act.historialRevisiones,
       ],
@@ -990,9 +1154,9 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
 
     handleUpdatePlan(
       { ...planActivo, actividades: nuevasActs },
-      `Aprobada y cerrada ${act.codigo}${siguiente ? ' + próxima fecha programada' : ''}`
+      `Aprobada y marcada como Cumplido por Gerencia: ${act.codigo}${siguiente ? ' + próxima fecha programada' : ''}`
     );
-    setStatusBanner(`Tarea ${act.codigo} aprobada y cerrada con su soporte.${msgRec}`);
+    setStatusBanner(`Tarea ${act.codigo} aprobada por Gerencia y cerrada como Cumplido.${msgRec}`);
   };
 
   const handleDevolverEvidencia = (
@@ -1000,32 +1164,42 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     evidenciaId: string,
     comentarioRevisor: string
   ) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      setStatusBanner(
+        'Solo Andrea Orjuela – Gerente (ingresando con su correo) puede devolver soportes para ajustes con observaciones.'
+      );
+      return;
+    }
+
     const hoy = new Date().toISOString().split('T')[0];
     const evsActualizadas = act.evidencias.map((e) =>
       e.id === evidenciaId
         ? {
             ...e,
             estadoRevision: 'DEVUELTA' as const,
-            revisadoPor: act.aprobadorNombre,
+            revisadoPor: nombreGerente,
             fechaRevision: hoy,
             comentarioRevisor,
+            resultadoRevision: 'Devuelto para ajustes' as const,
           }
         : e
     );
 
     const actividadDevuelta: ActividadPlanAnual = {
       ...act,
-      estado: 'EN_PROCESO',
+      estado: 'DEVUELTA',
       evidencias: evsActualizadas,
-      observaciones: `Devuelta para corregir por ${act.aprobadorNombre}: ${comentarioRevisor}`,
+      observaciones: `Devuelto para ajustes por ${nombreGerente}: ${comentarioRevisor}`,
+      revisionGerente: crearRegistroRevisionGerente('Devuelto para ajustes', comentarioRevisor),
       historialRevisiones: [
         {
           id: `hrev-${Date.now()}`,
           fecha: new Date().toISOString(),
-          usuario: act.aprobadorNombre,
-          rol: 'Aprobador',
+          usuario: nombreGerente,
+          rol: 'Gerente',
           accion: 'DEVUELTA',
-          detalle: `Se pidió corregir o completar el soporte: "${comentarioRevisor}". No se borró lo que ya estaba subido.`,
+          detalle: `Devuelto para ajustes por Gerencia: "${comentarioRevisor}". No se borra el historial ni los soportes previos.`,
         },
         ...act.historialRevisiones,
       ],
@@ -1036,14 +1210,18 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         ...planActivo,
         actividades: planActivo.actividades.map((a) => (a.id === act.id ? actividadDevuelta : a)),
       },
-      `Soporte devuelto para corregir en ${act.codigo}`
+      `Soporte devuelto para ajustes por Gerencia en ${act.codigo}`
     );
     setStatusBanner(
-      `Se devolvió el soporte de ${act.codigo} con indicaciones claras para ${act.responsableNombre}.`
+      `Se devolvió el soporte de ${act.codigo} para ajustes con indicaciones claras para ${act.responsableNombre}.`
     );
   };
 
   const handleEliminarActividad = (actividadId: string) => {
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     const target = planActivo.actividades.find((a) => a.id === actividadId);
     if (!target) return;
     handleUpdatePlan(
@@ -1057,6 +1235,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
 
   const handleCrearNuevaVigencia = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esGerenteAutorizado()) {
+      solicitarAccesoGerente();
+      return;
+    }
     if (!nuevoAnioInput || nuevoAnioInput < 2020 || nuevoAnioInput > 2050) return;
     if (vigencias[nuevoAnioInput]) {
       setAnioActivo(nuevoAnioInput);
@@ -1144,16 +1326,23 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     (s) => s.estado === 'PENDIENTE'
   ).length;
   const totalActividades = planActivo.actividades.length;
-  const cumplidasCount = planActivo.actividades.filter((a) => a.estado === 'CUMPLIDA').length;
+  const cumplidasCount = planActivo.actividades.filter((a) => {
+    const est = normalizarEstadoEstandar(a.estado);
+    return est === 'Cumplido' || est === 'Aprobado';
+  }).length;
   const pctGeneral =
     totalActividades > 0 ? Math.round((cumplidasCount / totalActividades) * 1000) / 10 : 0;
   const trabajadoresActivosCount = sgsstData.trabajadores.filter(
     (t) => t.estadoLaboral === 'ACTIVO'
   ).length;
-  const accionesAbiertasCount = sgsstData.accionesMejora.filter(
-    (a) => a.estado !== 'CUMPLIDA'
-  ).length;
+  const accionesAbiertasCount = sgsstData.accionesMejora.filter((a) => {
+    const est = normalizarEstadoEstandar(a.estado);
+    return est !== 'Cumplido' && est !== 'Aprobado';
+  }).length;
 
+  const estadoPlanBadge = getBadgeClassesEstadoFrikaz(planActivo.estadoAprobacion);
+
+  // Orden oficial del ciclo PHVA dentro de PLAN ANUAL: 1. PLANEAR, 2. HACER, 3. VERIFICAR, 4. ACTUAR
   const pestanasPrincipales: Array<{
     id: FasePhvaPlanAnual;
     numero: number;
@@ -1163,36 +1352,36 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     icon: React.ComponentType<{ className?: string }>;
   }> = [
     {
-      id: 'hacer',
+      id: 'planear',
       numero: 1,
-      label: '1. HACER',
-      subtitulo: 'Trabajadores, Salud, Riesgos y Ejecución',
+      label: '1. PLANEAR',
+      subtitulo: 'Objetivos, metas, riesgos I/II, normas, fechas y recursos',
+      badge: `${totalActividades} tar.`,
+      icon: CalendarRange,
+    },
+    {
+      id: 'hacer',
+      numero: 2,
+      label: '2. HACER',
+      subtitulo: 'Trabajadores, salud, matriz de riesgos, avances y soportes',
       badge: `${trabajadoresActivosCount} trab.`,
       icon: ClipboardCheck,
     },
     {
       id: 'verificar',
-      numero: 2,
-      label: '2. VERIFICAR',
-      subtitulo: '6 Indicadores Res. 0312, Riesgos y 7 Estándares',
+      numero: 3,
+      label: '3. VERIFICAR',
+      subtitulo: '6 Indicadores Res. 0312, riesgos y 7 Estándares Mínimos',
       badge: `${sgsstData.hojasVidaIndicadores.length} ind.`,
       icon: TrendingUp,
     },
     {
       id: 'actuar',
-      numero: 3,
-      label: '3. ACTUAR',
-      subtitulo: 'Recomendaciones y Acciones de Mejora',
+      numero: 4,
+      label: '4. ACTUAR',
+      subtitulo: 'Acciones correctivas, preventivas y de mejora',
       badge: `${accionesAbiertasCount} ab.`,
       icon: Wrench,
-    },
-    {
-      id: 'planear',
-      numero: 4,
-      label: '4. PLANEAR',
-      subtitulo: 'Riesgos I/II, Normas, Objetivos, Cronograma y Reportes',
-      badge: `${totalActividades} tar.`,
-      icon: CalendarRange,
     },
   ];
 
@@ -1204,23 +1393,32 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-md bg-[#0f172a] text-[#fed7aa] font-black text-[10px] uppercase tracking-wider">
-                PLAN ANUAL · SG-SST INTEGRADO
+                PLAN ANUAL · CICLO PHVA INTEGRADO
               </span>
               <span
-                className={`px-2 py-0.5 rounded-md font-black text-[10px] inline-flex items-center gap-1 ${
-                  planActivo.estadoAprobacion === 'APROBADO'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : planActivo.estadoAprobacion === 'CERRADO'
-                    ? 'bg-slate-200 text-slate-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}
+                className={`px-2 py-0.5 rounded-md border font-black text-[10px] inline-flex items-center gap-1 ${estadoPlanBadge.light}`}
+                title={estadoPlanBadge.descripcionCorta}
               >
-                {planActivo.estadoAprobacion === 'APROBADO' && <Lock className="h-3 w-3" />}
-                Estado: {planActivo.estadoAprobacion}
+                {(estadoPlanBadge.label === 'Aprobado' || estadoPlanBadge.label === 'Cumplido') && (
+                  <CheckCircle2 className="h-3 w-3" />
+                )}
+                Estado: {estadoPlanBadge.label}
               </span>
               <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 font-black text-[10px] font-mono">
                 {pctGeneral}% Cumplido ({cumplidasCount}/{totalActividades} tareas)
               </span>
+              <button
+                type="button"
+                onClick={solicitarAccesoGerente}
+                className={`px-2 py-0.5 rounded-md font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer border ${
+                  esGerente
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-orange-50'
+                }`}
+              >
+                {esGerente ? <ShieldCheck className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
+                <span>{esGerente ? nombreGerente : 'Ingresar como Gerente'}</span>
+              </button>
               <span
                 className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
                   saveFeedback === 'saving'
@@ -1279,6 +1477,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
             <button
               type="button"
               onClick={() => {
+                if (!esGerenteAutorizado()) {
+                  solicitarAccesoGerente();
+                  return;
+                }
                 const maxYear = Math.max(...Object.keys(vigencias).map(Number), 2026);
                 setNuevoAnioInput(maxYear + 1);
                 setShowNewYearForm(!showNewYearForm);
@@ -1357,7 +1559,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
                   Hay {solicitudesPendientesCount} novedad(es) en Peligros, Normas o Trabajadores
                 </p>
                 <p className="text-[11px] text-amber-800">
-                  Ningún plan ya aprobado cambia solo sin su permiso. Revíselas en «4. PLANEAR → B. Normas» para decidir si las incorpora.
+                  Ningún plan ya aprobado cambia solo sin su permiso. Revíselas en «1. PLANEAR → B. Normas» para decidir si las incorpora.
                 </p>
               </div>
             </div>
@@ -1392,7 +1594,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           </div>
         )}
 
-        {/* LAS CUATRO PESTAÑAS INTERNAS EN EL ORDEN EXACTO: 1. HACER, 2. VERIFICAR, 3. ACTUAR, 4. PLANEAR */}
+        {/* LAS CUATRO ETAPAS DEL CICLO PHVA EN ORDEN EXACTO: 1. PLANEAR, 2. HACER, 3. VERIFICAR, 4. ACTUAR */}
         <div className="pt-2 border-t border-slate-100">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {pestanasPrincipales.map((tab) => {
@@ -1444,7 +1646,39 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         </div>
       </div>
 
-      {/* CONTENIDO DE LA PESTAÑA ACTIVA (SOLO MONTA LA FASE EN USO PARA MÁXIMA FLUIDEZ) */}
+      {/* CONTENIDO DE LA ETAPA ACTIVA EN ORDEN PHVA: 1. PLANEAR -> 2. HACER -> 3. VERIFICAR -> 4. ACTUAR */}
+      {faseActiva === 'planear' && (
+        <PlanAnualPlanearTab
+          key={`planear-${anioActivo}-${planearKey}`}
+          plan={planActivo}
+          todasLasVigencias={vigencias}
+          riesgos={riesgos}
+          config={config}
+          requisitosObligatorios={requisitosObligatorios}
+          indicadoresCalculados={indicadoresCalculados}
+          hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
+          registrosPeriodosIndicadores={sgsstData.registrosPeriodosIndicadores}
+          trabajadores={sgsstData.trabajadores}
+          estandares={estandaresAnioActivo}
+          accionesMejora={sgsstData.accionesMejora}
+          alertas={alertas}
+          responsables={responsables}
+          subTabInicial={planearSubTabReset}
+          onUpdatePlan={handleUpdatePlan}
+          onSeleccionarVigencia={(anio) => setAnioActivo(anio)}
+          onNuevaActividad={handleAbrirNuevaActividad}
+          onAbrirActividad={abrirActividadEnModal}
+          onEliminarActividad={handleEliminarActividad}
+          onProgramarRiesgo={handleProgramarRiesgo}
+          onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
+          onIncorporarRequisito={handleIncorporarRequisito}
+          onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
+          onResolverSolicitud={handleResolverSolicitud}
+          onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
+          onIrAActuar={() => setFaseActiva('actuar')}
+        />
+      )}
+
       {faseActiva === 'hacer' && (
         <PlanAnualHacerTab
           plan={planActivo}
@@ -1502,38 +1736,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           onClearPresetAccion={() => setPresetAccionActuar(null)}
           onAddRecomendacion={handleAddRecomendacion}
           onSaveAccion={handleSaveAccion}
-        />
-      )}
-
-      {faseActiva === 'planear' && (
-        <PlanAnualPlanearTab
-          key={`planear-${anioActivo}-${planearKey}`}
-          plan={planActivo}
-          todasLasVigencias={vigencias}
-          riesgos={riesgos}
-          config={config}
-          requisitosObligatorios={requisitosObligatorios}
-          indicadoresCalculados={indicadoresCalculados}
-          hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
-          registrosPeriodosIndicadores={sgsstData.registrosPeriodosIndicadores}
-          trabajadores={sgsstData.trabajadores}
-          estandares={estandaresAnioActivo}
-          accionesMejora={sgsstData.accionesMejora}
-          alertas={alertas}
-          responsables={responsables}
-          subTabInicial={planearSubTabReset}
-          onUpdatePlan={handleUpdatePlan}
-          onSeleccionarVigencia={(anio) => setAnioActivo(anio)}
-          onNuevaActividad={handleAbrirNuevaActividad}
-          onAbrirActividad={abrirActividadEnModal}
-          onEliminarActividad={handleEliminarActividad}
-          onProgramarRiesgo={handleProgramarRiesgo}
-          onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
-          onIncorporarRequisito={handleIncorporarRequisito}
-          onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
-          onResolverSolicitud={handleResolverSolicitud}
-          onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
-          onIrAActuar={() => setFaseActiva('actuar')}
         />
       )}
 
