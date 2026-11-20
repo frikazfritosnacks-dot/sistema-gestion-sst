@@ -2,10 +2,18 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NormaPhvaItem } from '../../types/phvaEvidence';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import {
+  AccionMejoraPlan,
   ActividadPlanAnual,
+  DiagnosticoSaludEmpresa,
+  EvaluacionEstandarMinimo,
+  HojaVidaIndicadorSST,
+  PlanAnualSgsstData,
   PlanAnualVigencia,
+  RecomendacionIntervencion,
+  RegistroPeriodoIndicador,
   RequisitoObligatorioIdentificado,
   SolicitudRevisionPlan,
+  TrabajadorFichaSST,
 } from '../../types/planAnual';
 import {
   calcularIndicadoresPlan,
@@ -22,54 +30,43 @@ import {
   saveAllVigencias,
   saveVigencia,
 } from '../../services/planAnualService';
-import { loadStoredRisks } from '../../services/riskMatrixStorage';
+import {
+  MESES_NOMBRES,
+  agregarRegistroAuditoria,
+  construirEstandaresBaseAnio,
+  loadSgsstData,
+  saveSgsstData,
+} from '../../services/planAnualSgsstService';
+import { loadStoredRisks, saveStoredRisks } from '../../services/riskMatrixStorage';
+import { getStoredCargosSST } from '../../services/organigramaService';
 import { getCaracterizacionActual } from '../../services/dynamicRulesEngine';
 import { PlanAnualActividadModal } from './PlanAnualActividadModal';
-import { PlanAnualObjetivosKpiTab } from './PlanAnualObjetivosKpiTab';
-import { PlanAnualRiesgosNormasTab } from './PlanAnualRiesgosNormasTab';
-import { PlanAnualCronogramaTab } from './PlanAnualCronogramaTab';
-import { PlanAnualPresupuestoTab } from './PlanAnualPresupuestoTab';
-import { PlanAnualResponsablesTab } from './PlanAnualResponsablesTab';
-import { PlanAnualAlertasEvidenciasTab } from './PlanAnualAlertasEvidenciasTab';
-import { PlanAnualReportesTab } from './PlanAnualReportesTab';
+import { PlanAnualHacerTab } from './PlanAnualHacerTab';
+import { PlanAnualVerificarTab } from './PlanAnualVerificarTab';
+import { PlanAnualActuarTab } from './PlanAnualActuarTab';
+import { PlanAnualPlanearTab, SubTabPlanear } from './PlanAnualPlanearTab';
 import {
-  LayoutDashboard,
-  ShieldAlert,
-  Scale,
-  Target,
+  ClipboardCheck,
   TrendingUp,
-  GanttChart,
-  DollarSign,
-  UserCheck,
-  FileCheck2,
-  Bell,
-  BarChart3,
+  Wrench,
+  CalendarRange,
   Plus,
   CheckCircle2,
-  AlertTriangle,
   GitPullRequest,
   Building2,
   ArrowRight,
   Lock,
-  Search,
+  Unlock,
+  ShieldCheck,
+  X,
+  History,
 } from 'lucide-react';
 
 interface PlanAnualViewProps {
   normas: NormaPhvaItem[];
 }
 
-type PlanTabId =
-  | 'resumen'
-  | 'riesgos'
-  | 'normativa'
-  | 'objetivos'
-  | 'indicadores'
-  | 'cronograma'
-  | 'presupuesto'
-  | 'responsables'
-  | 'evidencias'
-  | 'alertas'
-  | 'reportes';
+type FasePhvaPlanAnual = 'hacer' | 'verificar' | 'actuar' | 'planear';
 
 export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   const [vigencias, setVigencias] = useState<Record<number, PlanAnualVigencia>>(() =>
@@ -84,20 +81,49 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
 
   const [riesgos, setRiesgos] = useState<RiesgoGTC45Item[]>(() => loadStoredRisks());
   const [config, setConfig] = useState(() => getCaracterizacionActual());
-  const [subTab, setSubTab] = useState<PlanTabId>('resumen');
-  const [busquedaRapidaResumen, setBusquedaRapidaResumen] = useState('');
+  const [cargos] = useState(() => getStoredCargosSST());
+  const [sgsstData, setSgsstData] = useState<PlanAnualSgsstData>(() =>
+    loadSgsstData(getCaracterizacionActual(), loadStoredRisks())
+  );
 
-  // Modal unificado de creación / edición / evidencias / historial de actividad
+  // Exactamente las 4 pestañas internas solicitadas en orden: HACER, VERIFICAR, ACTUAR, PLANEAR
+  const [faseActiva, setFaseActiva] = useState<FasePhvaPlanAnual>('hacer');
+  const [planearSubTabReset, setPlanearSubTabReset] = useState<SubTabPlanear>('riesgos');
+  const [planearKey, setPlanearKey] = useState(0);
+
+  // Control de confidencialidad médica individual
+  const [accesoMedicoAutorizado, setAccesoMedicoAutorizado] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [privacyRol, setPrivacyRol] = useState('Médico Ocupacional / IPS Autorizada');
+  const [privacyPin, setPrivacyPin] = useState('');
+  const [privacyError, setPrivacyError] = useState<string | null>(null);
+
+  // Modal unificado de actividad / evidencias / historial
   const [modalOpen, setModalOpen] = useState(false);
   const [actividadEditando, setActividadEditando] = useState<ActividadPlanAnual | null>(null);
   const [modalInitialTab, setModalInitialTab] = useState<'datos' | 'evidencias' | 'historial'>(
     'datos'
   );
 
-  // Creación de nueva vigencia independiente
+  // Nueva vigencia independiente
   const [showNewYearForm, setShowNewYearForm] = useState(false);
   const [nuevoAnioInput, setNuevoAnioInput] = useState<number>(2027);
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
+  const [saveFeedback, setSaveFeedback] = useState<'idle' | 'saving' | 'saved' | 'error'>('saved');
+  const [showAuditModal, setShowAuditModal] = useState(false);
+
+  // Preset al enviar un hallazgo de HACER o VERIFICAR directo a ACTUAR
+  const [presetAccionActuar, setPresetAccionActuar] = useState<{
+    origen: AccionMejoraPlan['origen'];
+    tipo: AccionMejoraPlan['tipo'];
+    situacionEncontrada: string;
+    queSeNecesitaCorregir: string;
+    actividadARealizar: string;
+    riesgoId?: string;
+    actividadPlanId?: string;
+    estandarNumero?: number;
+    recomendacionId?: string;
+  } | null>(null);
 
   const responsables = useMemo(() => getResponsablesDisponibles(), []);
 
@@ -105,16 +131,40 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     return vigencias[anioActivo] || Object.values(vigencias)[0];
   }, [vigencias, anioActivo]);
 
-  const abrirActividadEnModal = useCallback(
-    (act: ActividadPlanAnual, tab: 'datos' | 'evidencias' | 'historial' = 'datos') => {
-      setActividadEditando(act);
-      setModalInitialTab(tab);
-      setModalOpen(true);
+  const markSaved = useCallback((ok: boolean) => {
+    setSaveFeedback(ok ? 'saved' : 'error');
+  }, []);
+
+  const persistSgsst = useCallback(
+    (
+      updater: (prev: PlanAnualSgsstData) => PlanAnualSgsstData,
+      audit?: {
+        modulo: 'HACER' | 'VERIFICAR' | 'ACTUAR' | 'PLANEAR' | 'SEGURIDAD_MEDICA';
+        accion: string;
+        detalle: string;
+      }
+    ) => {
+      setSaveFeedback('saving');
+      setSgsstData((prev) => {
+        let next = updater(prev);
+        if (audit) {
+          next = agregarRegistroAuditoria(
+            next,
+            audit.modulo,
+            audit.accion,
+            audit.detalle,
+            planActivo?.responsableNombre || 'Responsable SG-SST'
+          );
+        }
+        const ok = saveSgsstData(next);
+        markSaved(ok);
+        return next;
+      });
     },
-    []
+    [markSaved, planActivo?.responsableNombre]
   );
 
-  // Sincronización automática en vivo cuando cambian Riesgos, Normas o Configuración Dinámica
+  // Sincronización automática en vivo cuando cambian Riesgos, Normas o Caracterización de la Empresa
   const sincronizarFuentesEnVivo = useCallback(
     (forceToast: boolean = false) => {
       const freshRisks = loadStoredRisks();
@@ -129,7 +179,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         if (nuevasSolicitudes.length === 0) {
           if (forceToast) {
             setStatusBanner(
-              `Todo está al día (${freshRisks.length} peligros revisados, ${normas.length} normas y ${freshConfig.numeroTrabajadores} trabajadores). No hay cambios nuevos pendientes.`
+              `Todo está al día (${freshRisks.length} peligros revisados, ${normas.length} normas y ${freshConfig.numeroTrabajadores} trabajadores). No hay cambios pendientes.`
             );
           }
           return prev;
@@ -142,8 +192,8 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
               id: `h-sync-${Date.now()}`,
               fechaHora: new Date().toISOString(),
               usuario: 'Revisión Automática',
-              accion: 'Cambios encontrados para revisar',
-              detalle: `Se encontraron ${nuevasSolicitudes.length} cambio(s) en Peligros, Normas o Datos de la empresa para que usted decida si se agregan.`,
+              accion: 'Cambios detectados para revisar',
+              detalle: `Se detectaron ${nuevasSolicitudes.length} cambio(s) en Peligros, Normas o Datos de la empresa para revisión manual.`,
             },
             ...current.historialCambios,
           ],
@@ -151,7 +201,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         const updatedAll = { ...prev, [current.vigencia]: actualizado };
         saveAllVigencias(updatedAll);
         setStatusBanner(
-          `Hay ${nuevasSolicitudes.length} cambio(s) nuevo(s) en Peligros o Normas para que usted los revise antes de cambiar el Plan ${current.vigencia}.`
+          `Hay ${nuevasSolicitudes.length} novedad(es) en Peligros o Normas para revisar en PLANEAR sin alterar tareas ya aprobadas.`
         );
         return updatedAll;
       });
@@ -185,8 +235,39 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
 
   const alertas = useMemo(() => generarAlertasPlan(planActivo), [planActivo]);
 
+  const estandaresAnioActivo = useMemo(() => {
+    return (
+      sgsstData.estandaresMinimos[anioActivo] ||
+      construirEstandaresBaseAnio(anioActivo, config)
+    );
+  }, [sgsstData.estandaresMinimos, anioActivo, config]);
+
+  const diagnosticoSaludAnioActivo: DiagnosticoSaludEmpresa = useMemo(() => {
+    return (
+      sgsstData.diagnosticosSalud[anioActivo] || {
+        anio: anioActivo,
+        bateriaPsicosocial: {
+          fechaAplicacion: '',
+          estado: 'PENDIENTE',
+          nivelRiesgoIntralaboral: 'Pendiente',
+          nivelRiesgoExtralaboral: 'Pendiente',
+          nivelEstres: 'Pendiente',
+          observacionesGenerales: '',
+        },
+        analisisFactibilidad: {
+          actividadEconomicaCIIU: config.ciiuPrincipal,
+          gruposPoblacionalesAnalizados: 'Todos los cargos activos de Frikaz S.A.S.',
+          conclusionesFactibilidad: '',
+          fechaActualizacion: new Date().toISOString().split('T')[0],
+        },
+      }
+    );
+  }, [sgsstData.diagnosticosSalud, anioActivo, config.ciiuPrincipal]);
+
+  // Guardar cambios del Plan Anual (actividades, objetivos, etc.)
   const handleUpdatePlan = useCallback(
     (updated: PlanAnualVigencia, logAction?: string) => {
+      setSaveFeedback('saving');
       const withLog: PlanAnualVigencia = logAction
         ? {
             ...updated,
@@ -204,11 +285,263 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         : updated;
       const all = saveVigencia(withLog);
       setVigencias(all);
+      setSaveFeedback('saved');
     },
     []
   );
 
-  // Abrir modal para nueva actividad vacía
+  const abrirActividadEnModal = useCallback(
+    (act: ActividadPlanAnual, tab: 'datos' | 'evidencias' | 'historial' = 'datos') => {
+      setActividadEditando(act);
+      setModalInitialTab(tab);
+      setModalOpen(true);
+    },
+    []
+  );
+
+  // =========================================================================
+  // HANDLERS PRIVACIDAD MÉDICA INDIVIDUAL
+  // =========================================================================
+  const handleTogglePrivacidadMedica = () => {
+    if (accesoMedicoAutorizado) {
+      setAccesoMedicoAutorizado(false);
+      persistSgsst((prev) => prev, {
+        modulo: 'SEGURIDAD_MEDICA',
+        accion: 'Bloqueo de historia médica individual',
+        detalle: 'Se cerraron los registros médicos individuales para mantener confidencialidad.',
+      });
+    } else {
+      setPrivacyPin('');
+      setPrivacyError(null);
+      setShowPrivacyModal(true);
+    }
+  };
+
+  const handleConfirmarAccesoMedico = (e: React.FormEvent) => {
+    e.preventDefault();
+    const codigoValido = privacyPin.trim().toUpperCase();
+    if (codigoValido !== '' && codigoValido !== 'FRIKAZ-SST' && codigoValido !== 'SST2026') {
+      setPrivacyError('Clave incorrecta. Use FRIKAZ-SST o déjelo vacío si ingresa con rol autorizado.');
+      return;
+    }
+    setAccesoMedicoAutorizado(true);
+    setShowPrivacyModal(false);
+    persistSgsst((prev) => prev, {
+      modulo: 'SEGURIDAD_MEDICA',
+      accion: 'Acceso médico autorizado activado',
+      detalle: `Consulta habilitada para: ${privacyRol}.`,
+    });
+  };
+
+  // =========================================================================
+  // HANDLERS FASE HACER (TRABAJADORES, SALUD, MATRIZ GTC 45)
+  // =========================================================================
+  const handleSaveTrabajador = (trab: TrabajadorFichaSST) => {
+    persistSgsst(
+      (prev) => {
+        const existe = prev.trabajadores.some((t) => t.id === trab.id);
+        return {
+          ...prev,
+          trabajadores: existe
+            ? prev.trabajadores.map((t) => (t.id === trab.id ? trab : t))
+            : [...prev.trabajadores, trab],
+        };
+      },
+      {
+        modulo: 'HACER',
+        accion: 'Ficha de trabajador guardada',
+        detalle: `${trab.nombreCompleto} (${trab.cargoNombre}) actualizado correctamente.`,
+      }
+    );
+    setStatusBanner(`Ficha de ${trab.nombreCompleto} guardada y conectada con su cargo y estándares.`);
+  };
+
+  const handleSaveDiagnosticoSalud = (diag: DiagnosticoSaludEmpresa) => {
+    persistSgsst(
+      (prev) => ({
+        ...prev,
+        diagnosticosSalud: {
+          ...prev.diagnosticosSalud,
+          [diag.anio]: diag,
+        },
+      }),
+      {
+        modulo: 'HACER',
+        accion: `Diagnóstico de salud ${diag.anio} actualizado`,
+        detalle: `Batería psicosocial (${diag.bateriaPsicosocial.estado}) y análisis de factibilidad guardados.`,
+      }
+    );
+  };
+
+  const handleUpdateRiesgoControles = (riesgoActualizado: RiesgoGTC45Item) => {
+    setSaveFeedback('saving');
+    const actualizados = riesgos.map((r) =>
+      r.id === riesgoActualizado.id ? riesgoActualizado : r
+    );
+    saveStoredRisks(actualizados);
+    setRiesgos(actualizados);
+    persistSgsst((prev) => prev, {
+      modulo: 'HACER',
+      accion: `Controles actualizados en Matriz GTC 45 (${riesgoActualizado.codigo || riesgoActualizado.id})`,
+      detalle: 'Se guardaron las medidas sin alterar automáticamente tareas ya aprobadas del Plan Anual.',
+    });
+    setStatusBanner(
+      `Medidas de ${riesgoActualizado.codigo || riesgoActualizado.id} guardadas en la Matriz GTC 45 oficial.`
+    );
+  };
+
+  const handleEnviarRecomendacionDesdeTrabajador = (trab: TrabajadorFichaSST) => {
+    setPresetAccionActuar({
+      origen: 'CONDICIONES_SALUD',
+      tipo: 'PREVENTIVA',
+      situacionEncontrada: `Seguimiento prioritario de salud ocupacional para el puesto ${trab.cargoNombre} (${trab.areaProceso}).`,
+      queSeNecesitaCorregir:
+        trab.necesidadIntervencion ||
+        trab.recomendacionesSaludOcupacional ||
+        'Aplicar recomendaciones médicas de puesto de trabajo.',
+      actividadARealizar:
+        trab.recomendacionesSaludOcupacional ||
+        `Implementar controles y seguimiento en el puesto ${trab.cargoNombre}.`,
+      estandarNumero: 5,
+    });
+    setFaseActiva('actuar');
+  };
+
+  // =========================================================================
+  // HANDLERS FASE VERIFICAR (INDICADORES RES 0312, CAPTURA, 7 ESTÁNDARES)
+  // =========================================================================
+  const handleSaveRegistroPeriodo = (reg: RegistroPeriodoIndicador) => {
+    persistSgsst(
+      (prev) => {
+        const existe = prev.registrosPeriodosIndicadores.some((p) => p.id === reg.id);
+        return {
+          ...prev,
+          registrosPeriodosIndicadores: existe
+            ? prev.registrosPeriodosIndicadores.map((p) => (p.id === reg.id ? reg : p))
+            : [...prev.registrosPeriodosIndicadores, reg],
+        };
+      },
+      {
+        modulo: 'VERIFICAR',
+        accion: `Registro de indicadores guardado: ${reg.periodoLabel}`,
+        detalle: reg.validado
+          ? 'Datos guardados y validados para cálculo automático.'
+          : 'Datos guardados (pendiente de validación).',
+      }
+    );
+  };
+
+  const handleSyncTrabajadoresPeriodos = (anio: number) => {
+    const activos = sgsstData.trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO').length;
+    const totalTrab = activos > 0 ? activos : config.numeroTrabajadores;
+    persistSgsst(
+      (prev) => ({
+        ...prev,
+        registrosPeriodosIndicadores: prev.registrosPeriodosIndicadores.map((p) =>
+          p.anio === anio ? { ...p, numeroTrabajadores: totalTrab } : p
+        ),
+      }),
+      {
+        modulo: 'VERIFICAR',
+        accion: `Sincronización de trabajadores (${anio})`,
+        detalle: `Actualizados ${totalTrab} trabajadores activos desde HACER en los periodos de ${anio}.`,
+      }
+    );
+    setStatusBanner(`Se actualizó el número de trabajadores (${totalTrab}) en los periodos de ${anio}.`);
+  };
+
+  const handleAddIndicadorCustom = (nuevo: HojaVidaIndicadorSST) => {
+    persistSgsst(
+      (prev) => ({
+        ...prev,
+        hojasVidaIndicadores: [...prev.hojasVidaIndicadores, nuevo],
+      }),
+      {
+        modulo: 'VERIFICAR',
+        accion: `Nuevo indicador propio creado: ${nuevo.codigo}`,
+        detalle: nuevo.nombre,
+      }
+    );
+  };
+
+  const handleUpdateEstandar = (estandar: EvaluacionEstandarMinimo) => {
+    persistSgsst(
+      (prev) => {
+        const baseAnio =
+          prev.estandaresMinimos[anioActivo] || construirEstandaresBaseAnio(anioActivo, config);
+        return {
+          ...prev,
+          estandaresMinimos: {
+            ...prev.estandaresMinimos,
+            [anioActivo]: baseAnio.map((e) =>
+              e.numero === estandar.numero ? estandar : e
+            ),
+          },
+        };
+      },
+      {
+        modulo: 'VERIFICAR',
+        accion: `Revisión Estándar #${estandar.numero} (${anioActivo})`,
+        detalle: `Estado actualizado a ${estandar.estadoRevision}. ${estandar.observacionesRevision}`,
+      }
+    );
+  };
+
+  // =========================================================================
+  // HANDLERS FASE ACTUAR (RECOMENDACIONES Y ACCIONES DE MEJORA)
+  // =========================================================================
+  const handleAddRecomendacion = (rec: RecomendacionIntervencion) => {
+    persistSgsst(
+      (prev) => ({
+        ...prev,
+        recomendaciones: [rec, ...prev.recomendaciones],
+      }),
+      {
+        modulo: 'ACTUAR',
+        accion: 'Nueva recomendación registrada',
+        detalle: rec.esConfidencialMedica
+          ? 'Recomendación médica confidencial registrada.'
+          : rec.titulo,
+      }
+    );
+  };
+
+  const handleSaveAccion = (accion: AccionMejoraPlan) => {
+    persistSgsst(
+      (prev) => {
+        const existe = prev.accionesMejora.some((a) => a.id === accion.id);
+        const accionesNext = existe
+          ? prev.accionesMejora.map((a) => (a.id === accion.id ? accion : a))
+          : [accion, ...prev.accionesMejora];
+        const recsNext = accion.recomendacionId
+          ? prev.recomendaciones.map((r) =>
+              r.id === accion.recomendacionId
+                ? {
+                    ...r,
+                    estado: 'CONVERTIDA_EN_ACCION' as const,
+                    accionMejoraId: accion.id,
+                  }
+                : r
+            )
+          : prev.recomendaciones;
+        return {
+          ...prev,
+          accionesMejora: accionesNext,
+          recomendaciones: recsNext,
+        };
+      },
+      {
+        modulo: 'ACTUAR',
+        accion: `Acción de mejora ${accion.codigo} (${accion.estado})`,
+        detalle: accion.actividadARealizar,
+      }
+    );
+    setStatusBanner(`Acción de mejora ${accion.codigo} guardada (${accion.estado}).`);
+  };
+
+  // =========================================================================
+  // HANDLERS FASE PLANEAR (ACTIVIDADES, RIESGOS I/II, NORMAS, CAMBIOS, VIGENCIA)
+  // =========================================================================
   const handleAbrirNuevaActividad = () => {
     const num = planActivo.actividades.length + 1;
     const defResp = responsables[0] || {
@@ -256,7 +589,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     setModalOpen(true);
   };
 
-  // Programar 1 riesgo GTC 45 abriendo el modal prellenado
   const handleProgramarRiesgo = (r: RiesgoGTC45Item) => {
     const medidas = extraerMedidasRiesgo(r);
     const num = planActivo.actividades.length + 1;
@@ -284,6 +616,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       riesgoProceso: r.proceso,
       riesgoMedidasControl: medidas,
       riesgoSnapshot: crearRiesgoSnapshot(r),
+      estandarMinimoNumero: 7,
       objetivoEspecificoId: planActivo.objetivosEspecificos[0]?.id,
       esRecurrente: false,
       periodicidad: 'ANUAL',
@@ -318,7 +651,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     setModalOpen(true);
   };
 
-  // Incorporar masivamente riesgos Nivel I y II pendientes
   const handleProgramarTodosRiesgosCriticos = (pendientes: RiesgoGTC45Item[]) => {
     const defAprob =
       responsables.find((resp) => resp.id === 'cargo-coordinador-vigia-sst') || responsables[0];
@@ -348,6 +680,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         riesgoProceso: r.proceso,
         riesgoMedidasControl: medidas,
         riesgoSnapshot: crearRiesgoSnapshot(r),
+        estandarMinimoNumero: 7,
         objetivoEspecificoId: planActivo.objetivosEspecificos[0]?.id,
         esRecurrente: false,
         periodicidad: 'ANUAL',
@@ -384,10 +717,9 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       { ...planActivo, actividades: [...planActivo.actividades, ...nuevas] },
       `Agregadas ${nuevas.length} tareas para riesgos Nivel I y II`
     );
-    setStatusBanner(`Se agregaron ${nuevas.length} tarea(s) al calendario desde los riesgos más altos (Nivel I y II).`);
+    setStatusBanner(`Se agregaron ${nuevas.length} tarea(s) al calendario desde los riesgos Nivel I y II.`);
   };
 
-  // Incorporar 1 o varios requisitos obligatorios normativos
   const construirActividadDesdeRequisito = (
     req: RequisitoObligatorioIdentificado,
     numeroSecuencia: number
@@ -411,6 +743,11 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       normaOficial: req.normaOficial,
       normaArticulos: req.articulos,
       requisitoObligatorioId: req.id,
+      estandarMinimoNumero: req.requisitoObligatorio.toLowerCase().includes('capacit')
+        ? 3
+        : req.requisitoObligatorio.toLowerCase().includes('médic')
+        ? 5
+        : 4,
       objetivoEspecificoId:
         req.area === 'AMBIENTAL'
           ? planActivo.objetivosEspecificos[2]?.id || planActivo.objetivosEspecificos[1]?.id
@@ -465,7 +802,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     setStatusBanner(`Se incorporaron ${nuevas.length} obligaciones legales aplicables a Frikaz S.A.S.`);
   };
 
-  // Resolver solicitudes de cambio (Bandeja de Control)
   const handleResolverSolicitud = (
     sol: SolicitudRevisionPlan,
     decision: 'APROBADA' | 'RECHAZADA'
@@ -584,7 +920,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     );
   };
 
-  // Guardar actividad desde modal (crea o actualiza)
   const handleSaveActividad = (act: ActividadPlanAnual) => {
     const existe = planActivo.actividades.some((a) => a.id === act.id);
     const updatedActs = existe
@@ -596,7 +931,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     );
   };
 
-  // Aprobar evidencia y cerrar actividad (más generación automática de recurrencia)
   const handleAprobarYCerrarActividad = (
     act: ActividadPlanAnual,
     resultadoActividad: string,
@@ -641,7 +975,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
 
     const siguiente = crearSiguienteOcurrencia(actividadCerrada, planActivo.vigencia);
     let msgRec = '';
-      if (siguiente) {
+    if (siguiente) {
       const yaExisteOcurrencia = nuevasActs.some(
         (a) =>
           a.serieRecurrenteId &&
@@ -661,7 +995,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     setStatusBanner(`Tarea ${act.codigo} aprobada y cerrada con su soporte.${msgRec}`);
   };
 
-  // Devolver evidencia sin borrar historial ni adjuntos
   const handleDevolverEvidencia = (
     act: ActividadPlanAnual,
     evidenciaId: string,
@@ -732,6 +1065,74 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     }
     const all = crearNuevaVigencia(nuevoAnioInput, anioActivo);
     setVigencias(all);
+
+    // Crear también periodos vacíos reales + estándares para el nuevo año en sgsstData
+    persistSgsst(
+      (prev) => {
+        const yaTienePeriodos = prev.registrosPeriodosIndicadores.some(
+          (r) => r.anio === nuevoAnioInput
+        );
+        const activosCount = prev.trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO').length;
+        const nuevosPeriodos: RegistroPeriodoIndicador[] = yaTienePeriodos
+          ? []
+          : [
+              ...Array.from({ length: 12 }, (_, idx) => ({
+                id: `per-${nuevoAnioInput}-${String(idx + 1).padStart(2, '0')}`,
+                anio: nuevoAnioInput,
+                mes: idx + 1,
+                periodoLabel: `${MESES_NOMBRES[idx]} ${nuevoAnioInput}`,
+                numeroTrabajadores: activosCount || config.numeroTrabajadores,
+                accidentesTrabajo: null,
+                accidentesMortales: null,
+                diasIncapacidadAT: null,
+                diasCargadosAT: null,
+                casosNuevosEL: null,
+                casosAntiguosEL: null,
+                diasAusenciaIncapacidadMedica: null,
+                diasTrabajoProgramados: null,
+                validado: false,
+                fechaActualizacion: new Date().toISOString().split('T')[0],
+              })),
+              {
+                id: `per-${nuevoAnioInput}-00`,
+                anio: nuevoAnioInput,
+                mes: 0,
+                periodoLabel: `Consolidado Anual ${nuevoAnioInput}`,
+                numeroTrabajadores: activosCount || config.numeroTrabajadores,
+                accidentesTrabajo: null,
+                accidentesMortales: null,
+                diasIncapacidadAT: null,
+                diasCargadosAT: null,
+                casosNuevosEL: null,
+                casosAntiguosEL: null,
+                diasAusenciaIncapacidadMedica: null,
+                diasTrabajoProgramados: null,
+                validado: false,
+                fechaActualizacion: new Date().toISOString().split('T')[0],
+              },
+            ];
+
+        return {
+          ...prev,
+          registrosPeriodosIndicadores: [
+            ...prev.registrosPeriodosIndicadores,
+            ...nuevosPeriodos,
+          ],
+          estandaresMinimos: {
+            ...prev.estandaresMinimos,
+            [nuevoAnioInput]:
+              prev.estandaresMinimos[nuevoAnioInput] ||
+              construirEstandaresBaseAnio(nuevoAnioInput, config),
+          },
+        };
+      },
+      {
+        modulo: 'PLANEAR',
+        accion: `Año ${nuevoAnioInput} creado`,
+        detalle: `Vigencia independiente ${nuevoAnioInput} creada conservando historial anterior.`,
+      }
+    );
+
     setAnioActivo(nuevoAnioInput);
     setShowNewYearForm(false);
     setStatusBanner(
@@ -742,139 +1143,68 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   const solicitudesPendientesCount = planActivo.solicitudesRevision.filter(
     (s) => s.estado === 'PENDIENTE'
   ).length;
-  const riesgosCriticosCount = riesgos.filter(
-    (r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II'
-  ).length;
-  const riesgosCriticosSinActividad = riesgos.filter(
-    (r) =>
-      (r.interpretacionNR === 'I' || r.interpretacionNR === 'II') &&
-      !planActivo.actividades.some((a) => a.riesgoId === r.id)
-  ).length;
-  const reqsAplicablesCount = requisitosObligatorios.filter((r) => r.aplicaEmpresaActual).length;
-  const reqsPendientesCount = requisitosObligatorios.filter(
-    (r) => r.aplicaEmpresaActual && !r.yaProgramadaEnPlan
-  ).length;
-
   const totalActividades = planActivo.actividades.length;
   const cumplidasCount = planActivo.actividades.filter((a) => a.estado === 'CUMPLIDA').length;
-  const vencidasCount = planActivo.actividades.filter((a) => a.estado === 'VENCIDA').length;
-  const pendientesCount = totalActividades - cumplidasCount;
   const pctGeneral =
     totalActividades > 0 ? Math.round((cumplidasCount / totalActividades) * 1000) / 10 : 0;
+  const trabajadoresActivosCount = sgsstData.trabajadores.filter(
+    (t) => t.estadoLaboral === 'ACTIVO'
+  ).length;
+  const accionesAbiertasCount = sgsstData.accionesMejora.filter(
+    (a) => a.estado !== 'CUMPLIDA'
+  ).length;
 
-  const presupAsignado = planActivo.actividades.reduce(
-    (s, a) => s + (a.presupuestoEstimado || 0),
-    0
-  );
-  const presupEjecutado = planActivo.actividades.reduce(
-    (s, a) => s + (a.gastoEjecutado || 0),
-    0
-  );
-  const presupDisponible = presupAsignado - presupEjecutado;
-  const evidenciasTotales = planActivo.actividades.reduce((s, a) => s + a.evidencias.length, 0);
-  const evidenciasPorAprobar = planActivo.actividades.reduce(
-    (s, a) => s + a.evidencias.filter((e) => e.estadoRevision === 'PENDIENTE_REVISION').length,
-    0
-  );
-
-  const resultadosBusquedaResumen = useMemo(() => {
-    const q = busquedaRapidaResumen.trim().toLowerCase();
-    if (!q) return [];
-    return planActivo.actividades.filter(
-      (a) =>
-        a.nombre.toLowerCase().includes(q) ||
-        a.descripcion.toLowerCase().includes(q) ||
-        a.codigo.toLowerCase().includes(q) ||
-        a.responsableNombre.toLowerCase().includes(q)
-    );
-  }, [planActivo.actividades, busquedaRapidaResumen]);
-
-  const menuSecciones: Array<{
-    id: PlanTabId;
+  const pestanasPrincipales: Array<{
+    id: FasePhvaPlanAnual;
     numero: number;
     label: string;
-    badge?: string | number;
+    subtitulo: string;
+    badge: string | number;
     icon: React.ComponentType<{ className?: string }>;
   }> = [
-    { id: 'resumen', numero: 1, label: 'Resumen del plan', icon: LayoutDashboard },
     {
-      id: 'riesgos',
+      id: 'hacer',
+      numero: 1,
+      label: '1. HACER',
+      subtitulo: 'Trabajadores, Salud, Riesgos y Ejecución',
+      badge: `${trabajadoresActivosCount} trab.`,
+      icon: ClipboardCheck,
+    },
+    {
+      id: 'verificar',
       numero: 2,
-      label: 'Riesgos relacionados',
-      badge: `${riesgosCriticosCount - riesgosCriticosSinActividad}/${riesgosCriticosCount}`,
-      icon: ShieldAlert,
-    },
-    {
-      id: 'normativa',
-      numero: 3,
-      label: 'Requisitos normativos',
-      badge: reqsPendientesCount > 0 ? `${reqsPendientesCount} pend.` : reqsAplicablesCount,
-      icon: Scale,
-    },
-    {
-      id: 'objetivos',
-      numero: 4,
-      label: 'Objetivos y metas',
-      badge: planActivo.objetivosEspecificos.length,
-      icon: Target,
-    },
-    {
-      id: 'indicadores',
-      numero: 5,
-      label: 'Indicadores',
-      badge: indicadoresCalculados.length,
+      label: '2. VERIFICAR',
+      subtitulo: '6 Indicadores Res. 0312, Riesgos y 7 Estándares',
+      badge: `${sgsstData.hojasVidaIndicadores.length} ind.`,
       icon: TrendingUp,
     },
     {
-      id: 'cronograma',
-      numero: 6,
-      label: 'Cronograma de actividades',
-      badge: totalActividades,
-      icon: GanttChart,
+      id: 'actuar',
+      numero: 3,
+      label: '3. ACTUAR',
+      subtitulo: 'Recomendaciones y Acciones de Mejora',
+      badge: `${accionesAbiertasCount} ab.`,
+      icon: Wrench,
     },
     {
-      id: 'presupuesto',
-      numero: 7,
-      label: 'Presupuesto',
-      icon: DollarSign,
-    },
-    {
-      id: 'responsables',
-      numero: 8,
-      label: 'Responsables y seguimiento',
-      icon: UserCheck,
-    },
-    {
-      id: 'evidencias',
-      numero: 9,
-      label: 'Evidencias y aprobaciones',
-      badge: evidenciasPorAprobar > 0 ? `${evidenciasPorAprobar} rev.` : evidenciasTotales,
-      icon: FileCheck2,
-    },
-    {
-      id: 'alertas',
-      numero: 10,
-      label: 'Alertas y recordatorios',
-      badge: alertas.length,
-      icon: Bell,
-    },
-    {
-      id: 'reportes',
-      numero: 11,
-      label: 'Reportes',
-      icon: BarChart3,
+      id: 'planear',
+      numero: 4,
+      label: '4. PLANEAR',
+      subtitulo: 'Riesgos I/II, Normas, Objetivos, Cronograma y Reportes',
+      badge: `${totalActividades} tar.`,
+      icon: CalendarRange,
     },
   ];
 
   return (
     <div className="space-y-5 text-xs">
-      {/* CABECERA PLAN ANUAL DENTRO DEL CICLO PHVA + SELECTOR DE VIGENCIAS */}
+      {/* CABECERA PRINCIPAL PLAN ANUAL (SIN CAMBIAR EL NOMBRE DEL APARTADO) */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-md bg-[#0f172a] text-[#fed7aa] font-black text-[10px] uppercase tracking-wider">
-                PLAN ANUAL · EN CICLO PHVA (ETAPA PLANEAR)
+                PLAN ANUAL · SG-SST INTEGRADO
               </span>
               <span
                 className={`px-2 py-0.5 rounded-md font-black text-[10px] inline-flex items-center gap-1 ${
@@ -889,16 +1219,33 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
                 Estado: {planActivo.estadoAprobacion}
               </span>
               <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 font-black text-[10px] font-mono">
-                {pctGeneral}% Cumplido ({cumplidasCount} de {totalActividades} tareas)
+                {pctGeneral}% Cumplido ({cumplidasCount}/{totalActividades} tareas)
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                  saveFeedback === 'saving'
+                    ? 'bg-amber-100 text-amber-900'
+                    : saveFeedback === 'error'
+                    ? 'bg-rose-100 text-rose-800'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                }`}
+              >
+                {saveFeedback === 'saving'
+                  ? 'Guardando cambios...'
+                  : saveFeedback === 'error'
+                  ? 'Error al guardar en el navegador'
+                  : 'Cambios guardados'}
               </span>
             </div>
+
             <h2 className="text-lg sm:text-xl font-black text-[#0f172a] tracking-tight">
-              {planActivo.titulo}
+              PLAN ANUAL — {planActivo.titulo}
             </h2>
             <p className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
                 <Building2 className="h-3.5 w-3.5 text-[#f97316]" />
-                Frikaz S.A.S. ({config.numeroTrabajadores} trabajadores · {config.claseRiesgoSST})
+                Frikaz S.A.S. ({trabajadoresActivosCount || config.numeroTrabajadores} trabajadores ·{' '}
+                {config.claseRiesgoSST})
               </span>
               <span>·</span>
               <span>{planActivo.empresaSnapshot.grupoEstandares0312}</span>
@@ -907,9 +1254,8 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
             </p>
           </div>
 
-          {/* Selector de Vigencias Multianuales */}
+          {/* Controles derechos: Año, Privacidad Médica y Bitácora */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <span className="text-[11px] font-bold text-slate-500">Año:</span>
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
               {Object.keys(vigencias)
                 .map(Number)
@@ -938,10 +1284,36 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
                 setShowNewYearForm(!showNewYearForm);
               }}
               className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] shadow-xs cursor-pointer"
-              title="Crear el plan de un año nuevo sin borrar los años anteriores"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Nuevo Año</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleTogglePrivacidadMedica}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold border cursor-pointer ${
+                accesoMedicoAutorizado
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                  : 'bg-rose-50 border-rose-300 text-rose-900'
+              }`}
+              title="Proteger o habilitar la consulta individual de diagnósticos y exámenes médicos"
+            >
+              {accesoMedicoAutorizado ? (
+                <Unlock className="h-3.5 w-3.5" />
+              ) : (
+                <Lock className="h-3.5 w-3.5" />
+              )}
+              <span>{accesoMedicoAutorizado ? 'Salud Desbloqueada' : 'Privacidad Médica'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAuditModal(true)}
+              className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
+              title="Ver historial de cambios recientes"
+            >
+              <History className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -975,23 +1347,27 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           </form>
         )}
 
-        {/* Banner de notificación si se detectaron cambios en riesgos/normas/empresa */}
+        {/* Banner de novedades detectadas en Matriz / Normas */}
         {solicitudesPendientesCount > 0 && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-2.5 text-amber-950">
               <GitPullRequest className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-black">
-                  Hay {solicitudesPendientesCount} novedad(es) nueva(s) en Peligros, Normas o Número de Trabajadores
+                  Hay {solicitudesPendientesCount} novedad(es) en Peligros, Normas o Trabajadores
                 </p>
                 <p className="text-[11px] text-amber-800">
-                  El plan aprobado no cambia solo sin su permiso. Revíselas en «Requisitos normativos» para decidir si las agrega.
+                  Ningún plan ya aprobado cambia solo sin su permiso. Revíselas en «4. PLANEAR → B. Normas» para decidir si las incorpora.
                 </p>
               </div>
             </div>
             <button
               type="button"
-              onClick={() => setSubTab('normativa')}
+              onClick={() => {
+                setPlanearSubTabReset('normativa');
+                setPlanearKey((k) => k + 1);
+                setFaseActiva('planear');
+              }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white font-black hover:bg-amber-700 shrink-0 cursor-pointer"
             >
               <span>Revisar Novedades</span>
@@ -1016,44 +1392,51 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           </div>
         )}
 
-        {/* NAVEGACIÓN DE LAS 11 SUBSECCIONES DEL PLAN ANUAL */}
+        {/* LAS CUATRO PESTAÑAS INTERNAS EN EL ORDEN EXACTO: 1. HACER, 2. VERIFICAR, 3. ACTUAR, 4. PLANEAR */}
         <div className="pt-2 border-t border-slate-100">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
-            {menuSecciones.map((tab) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {pestanasPrincipales.map((tab) => {
               const Icon = tab.icon;
-              const active = subTab === tab.id;
+              const active = faseActiva === tab.id;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setSubTab(tab.id)}
-                  className={`px-2.5 py-2 rounded-xl font-bold inline-flex items-center justify-between gap-1.5 text-left transition-all cursor-pointer border ${
+                  onClick={() => setFaseActiva(tab.id)}
+                  className={`p-3 rounded-xl border text-left transition-colors cursor-pointer flex items-start justify-between gap-2 ${
                     active
-                      ? 'bg-[#0f172a] text-white border-[#0f172a] shadow-xs ring-1 ring-[#f97316]'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-orange-50/60 hover:border-orange-200'
+                      ? 'bg-[#0f172a] text-white border-[#0f172a] ring-2 ring-[#f97316]'
+                      : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-orange-50/70 hover:border-orange-300'
                   }`}
                 >
-                  <span className="inline-flex items-center gap-1.5 min-w-0">
-                    <Icon
-                      className={`h-3.5 w-3.5 shrink-0 ${
-                        active ? 'text-[#fed7aa]' : 'text-[#f97316]'
-                      }`}
-                    />
-                    <span className="truncate text-[11px]">
-                      {tab.numero}. {tab.label}
-                    </span>
-                  </span>
-                  {tab.badge !== undefined && (
-                    <span
-                      className={`px-1.5 py-0.5 rounded font-mono text-[9px] font-black shrink-0 ${
-                        active
-                          ? 'bg-[#f97316] text-white'
-                          : 'bg-white text-slate-700 border border-slate-200'
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <Icon
+                        className={`h-4 w-4 shrink-0 ${
+                          active ? 'text-[#fed7aa]' : 'text-[#f97316]'
+                        }`}
+                      />
+                      <span className="font-black text-xs sm:text-sm tracking-tight">
+                        {tab.label}
+                      </span>
+                    </div>
+                    <p
+                      className={`text-[10px] mt-0.5 truncate ${
+                        active ? 'text-slate-300' : 'text-slate-500'
                       }`}
                     >
-                      {tab.badge}
-                    </span>
-                  )}
+                      {tab.subtitulo}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded font-mono text-[10px] font-black shrink-0 ${
+                      active
+                        ? 'bg-[#f97316] text-white'
+                        : 'bg-white text-slate-800 border border-slate-200'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
                 </button>
               );
             })}
@@ -1061,359 +1444,96 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 1. RESUMEN DEL PLAN                                                   */}
-      {/* ===================================================================== */}
-      {subTab === 'resumen' && (
-        <div className="space-y-5">
-          {/* Buscador rápido de actividades en el resumen */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black text-[#0f172a]">
-                  Buscar Tareas del Plan Anual {planActivo.vigencia}
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  Escriba cualquier palabra del nombre o descripción para abrir su ficha completa, fotos de prueba, responsables y presupuesto.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative w-full sm:w-80">
-                  <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={busquedaRapidaResumen}
-                    onChange={(e) => setBusquedaRapidaResumen(e.target.value)}
-                    placeholder="Buscar tarea por nombre o palabra..."
-                    className="w-full rounded-xl border border-slate-300 pl-8 pr-3 py-1.5 text-xs"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAbrirNuevaActividad}
-                  className="px-3 py-1.5 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] shrink-0 cursor-pointer inline-flex items-center gap-1"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Nueva</span>
-                </button>
-              </div>
-            </div>
-
-            {busquedaRapidaResumen.trim() && (
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                {resultadosBusquedaResumen.length === 0 ? (
-                  <p className="text-slate-500 italic">
-                    No hay tareas que coincidan con «{busquedaRapidaResumen}».
-                  </p>
-                ) : (
-                  resultadosBusquedaResumen.map((act) => (
-                    <div
-                      key={act.id}
-                      onClick={() => abrirActividadEnModal(act, 'datos')}
-                      className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50/50 hover:border-[#f97316] cursor-pointer transition-all"
-                    >
-                      <div>
-                        <span className="font-mono font-black text-[10px] bg-[#0f172a] text-[#fed7aa] px-1.5 py-0.5 rounded mr-2">
-                          {act.codigo}
-                        </span>
-                        <span className="font-bold text-slate-900">{act.nombre}</span>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
-                          Encargado: {act.responsableNombre} · Fecha límite: {act.fechaLimite}
-                        </p>
-                      </div>
-                      <span className="px-2 py-0.5 rounded bg-white border border-slate-300 font-bold text-[10px]">
-                        {act.estado.replace('_', ' ')} → Abrir
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Indicadores visuales claros (Cumplimiento, Pendientes, Presupuesto, Riesgos) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                Avance General {planActivo.vigencia}
-              </span>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-2xl font-black font-mono text-[#0f172a]">{pctGeneral}%</span>
-                <span className="text-[11px] text-emerald-700 font-bold">
-                  {cumplidasCount} hechas
-                </span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
-                <div
-                  className="bg-emerald-600 h-2 rounded-full"
-                  style={{ width: `${pctGeneral}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-slate-500 block mt-1">
-                {pendientesCount} por hacer · {vencidasCount} vencida(s)
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSubTab('riesgos')}
-              className="text-left rounded-2xl border border-rose-200 bg-rose-50/60 p-4 shadow-xs hover:border-rose-400 transition-all cursor-pointer"
-            >
-              <span className="text-[10px] font-bold uppercase text-rose-700 block">
-                2. Peligros Altos (Nivel I y II)
-              </span>
-              <span className="text-2xl font-black font-mono text-rose-950 block mt-1">
-                {riesgosCriticosCount - riesgosCriticosSinActividad}/{riesgosCriticosCount}
-              </span>
-              <span className="text-[11px] text-rose-800">
-                {riesgosCriticosSinActividad > 0
-                  ? `${riesgosCriticosSinActividad} sin tarea asignada aún`
-                  : 'Todos tienen tarea asignada'}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSubTab('presupuesto')}
-              className="text-left rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 shadow-xs hover:border-emerald-400 transition-all cursor-pointer"
-            >
-              <span className="text-[10px] font-bold uppercase text-emerald-700 block">
-                7. Dinero Disponible
-              </span>
-              <span className="text-xl font-black font-mono text-emerald-950 block mt-1">
-                ${presupDisponible.toLocaleString('es-CO')}
-              </span>
-              <span className="text-[11px] text-emerald-800">
-                Usado: ${presupEjecutado.toLocaleString('es-CO')} de $
-                {presupAsignado.toLocaleString('es-CO')}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSubTab('alertas')}
-              className="text-left rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-xs hover:border-amber-400 transition-all cursor-pointer"
-            >
-              <span className="text-[10px] font-bold uppercase text-amber-800 block">
-                10. Avisos y Pruebas
-              </span>
-              <span className="text-2xl font-black font-mono text-amber-950 block mt-1">
-                {alertas.length}
-              </span>
-              <span className="text-[11px] text-amber-800">
-                {evidenciasPorAprobar} prueba(s) por revisar
-              </span>
-            </button>
-          </div>
-
-          {/* Objetivo General y Resumen de Objetivos Específicos */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-black text-[#0f172a] flex items-center gap-2">
-                <Target className="h-4 w-4 text-[#f97316]" />
-                <span>Propósito Principal y Metas del Año {planActivo.vigencia}</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSubTab('objetivos')}
-                className="text-[11px] font-bold text-[#f97316] hover:underline cursor-pointer"
-              >
-                Editar propósitos y metas →
-              </button>
-            </div>
-            <p className="text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-200 leading-relaxed font-medium">
-              {planActivo.objetivoGeneral}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {planActivo.objetivosEspecificos.map((obj) => (
-                <div
-                  key={obj.id}
-                  className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded bg-[#0f172a] text-[#fed7aa] font-mono font-black text-[10px]">
-                      {obj.codigo}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-500">{obj.area}</span>
-                  </div>
-                  <p className="font-bold text-slate-900">{obj.titulo}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Alertas prioritarias con acceso directo a la actividad */}
-          {alertas.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-black text-slate-900 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-rose-600" />
-                  <span>Tareas Urgentes o Pendientes de Cerrar ({planActivo.vigencia})</span>
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => setSubTab('alertas')}
-                  className="text-[11px] font-bold text-[#f97316] hover:underline cursor-pointer"
-                >
-                  Ver todos los avisos →
-                </button>
-              </div>
-              <div className="space-y-2">
-                {alertas.slice(0, 4).map((al) => {
-                  const act = planActivo.actividades.find((a) => a.id === al.actividadId);
-                  return (
-                    <div
-                      key={al.id}
-                      className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200"
-                    >
-                      <div>
-                        <span className="font-mono font-black text-[10px] text-rose-700 mr-2">
-                          [{al.severidad}] {al.actividadCodigo}
-                        </span>
-                        <span className="font-bold text-slate-900">{al.actividadNombre}</span>
-                        <p className="text-[11px] text-slate-600">
-                          {al.motivo} · Encargado: <strong>{al.responsableNombre}</strong>
-                        </p>
-                      </div>
-                      {act && (
-                        <button
-                          type="button"
-                          onClick={() => abrirActividadEnModal(act, 'evidencias')}
-                          className="px-3 py-1.5 rounded-lg bg-[#0f172a] text-white font-bold text-[11px] hover:bg-slate-800 cursor-pointer"
-                        >
-                          Abrir Tarea / Subir Prueba
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* CONTENIDO DE LA PESTAÑA ACTIVA (SOLO MONTA LA FASE EN USO PARA MÁXIMA FLUIDEZ) */}
+      {faseActiva === 'hacer' && (
+        <PlanAnualHacerTab
+          plan={planActivo}
+          trabajadores={sgsstData.trabajadores}
+          diagnosticoSalud={diagnosticoSaludAnioActivo}
+          riesgos={riesgos}
+          cargos={cargos}
+          accionesMejora={sgsstData.accionesMejora}
+          accesoMedicoAutorizado={accesoMedicoAutorizado}
+          onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+          onSaveTrabajador={handleSaveTrabajador}
+          onSaveDiagnosticoSalud={handleSaveDiagnosticoSalud}
+          onUpdateRiesgoControles={handleUpdateRiesgoControles}
+          onAbrirActividad={abrirActividadEnModal}
+          onEnviarRecomendacionAActuar={handleEnviarRecomendacionDesdeTrabajador}
+        />
       )}
 
-      {/* 2. RIESGOS RELACIONADOS */}
-      {subTab === 'riesgos' && (
-        <PlanAnualRiesgosNormasTab
+      {faseActiva === 'verificar' && (
+        <PlanAnualVerificarTab
           plan={planActivo}
+          todosLosPlanes={vigencias}
+          anioActivo={anioActivo}
+          trabajadores={sgsstData.trabajadores}
           riesgos={riesgos}
           config={config}
-          requisitos={requisitosObligatorios}
-          mode="riesgos"
-          onProgramarRiesgo={handleProgramarRiesgo}
-          onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
-          onIncorporarRequisito={handleIncorporarRequisito}
-          onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
+          hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
+          registrosPeriodosIndicadores={sgsstData.registrosPeriodosIndicadores}
+          estandares={estandaresAnioActivo}
+          accionesMejora={sgsstData.accionesMejora}
+          alertas={alertas}
+          responsables={responsables}
+          onSaveRegistroPeriodo={handleSaveRegistroPeriodo}
+          onSyncTrabajadoresPeriodos={handleSyncTrabajadoresPeriodos}
+          onAddIndicadorCustom={handleAddIndicadorCustom}
+          onUpdateEstandar={handleUpdateEstandar}
           onAbrirActividad={abrirActividadEnModal}
-          onResolverSolicitud={handleResolverSolicitud}
-          onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
+          onCrearAccionDesdeVerificar={(preset) => {
+            setPresetAccionActuar(preset);
+            setFaseActiva('actuar');
+          }}
         />
       )}
 
-      {/* 3. REQUISITOS NORMATIVOS */}
-      {subTab === 'normativa' && (
-        <PlanAnualRiesgosNormasTab
+      {faseActiva === 'actuar' && (
+        <PlanAnualActuarTab
           plan={planActivo}
           riesgos={riesgos}
+          recomendaciones={sgsstData.recomendaciones}
+          accionesMejora={sgsstData.accionesMejora}
+          responsables={responsables}
+          accesoMedicoAutorizado={accesoMedicoAutorizado}
+          onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+          presetAccion={presetAccionActuar}
+          onClearPresetAccion={() => setPresetAccionActuar(null)}
+          onAddRecomendacion={handleAddRecomendacion}
+          onSaveAccion={handleSaveAccion}
+        />
+      )}
+
+      {faseActiva === 'planear' && (
+        <PlanAnualPlanearTab
+          key={`planear-${anioActivo}-${planearKey}`}
+          plan={planActivo}
+          todasLasVigencias={vigencias}
+          riesgos={riesgos}
           config={config}
-          requisitos={requisitosObligatorios}
-          mode="normativa"
-          onProgramarRiesgo={handleProgramarRiesgo}
-          onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
-          onIncorporarRequisito={handleIncorporarRequisito}
-          onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
-          onAbrirActividad={abrirActividadEnModal}
-          onResolverSolicitud={handleResolverSolicitud}
-          onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
-        />
-      )}
-
-      {/* 4. OBJETIVOS Y METAS */}
-      {subTab === 'objetivos' && (
-        <PlanAnualObjetivosKpiTab
-          plan={planActivo}
+          requisitosObligatorios={requisitosObligatorios}
           indicadoresCalculados={indicadoresCalculados}
+          hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
+          registrosPeriodosIndicadores={sgsstData.registrosPeriodosIndicadores}
+          trabajadores={sgsstData.trabajadores}
+          estandares={estandaresAnioActivo}
+          accionesMejora={sgsstData.accionesMejora}
+          alertas={alertas}
           responsables={responsables}
-          mode="objetivos"
+          subTabInicial={planearSubTabReset}
           onUpdatePlan={handleUpdatePlan}
-        />
-      )}
-
-      {/* 5. INDICADORES (KPI) */}
-      {subTab === 'indicadores' && (
-        <PlanAnualObjetivosKpiTab
-          plan={planActivo}
-          indicadoresCalculados={indicadoresCalculados}
-          responsables={responsables}
-          mode="indicadores"
-          onUpdatePlan={handleUpdatePlan}
-        />
-      )}
-
-      {/* 6. CRONOGRAMA DE ACTIVIDADES */}
-      {subTab === 'cronograma' && (
-        <PlanAnualCronogramaTab
-          plan={planActivo}
-          responsables={responsables}
+          onSeleccionarVigencia={(anio) => setAnioActivo(anio)}
           onNuevaActividad={handleAbrirNuevaActividad}
           onAbrirActividad={abrirActividadEnModal}
           onEliminarActividad={handleEliminarActividad}
-        />
-      )}
-
-      {/* 7. PRESUPUESTO */}
-      {subTab === 'presupuesto' && (
-        <PlanAnualPresupuestoTab
-          plan={planActivo}
-          onAbrirActividad={abrirActividadEnModal}
-        />
-      )}
-
-      {/* 8. RESPONSABLES Y SEGUIMIENTO */}
-      {subTab === 'responsables' && (
-        <PlanAnualResponsablesTab
-          plan={planActivo}
-          responsables={responsables}
-          onAbrirActividad={abrirActividadEnModal}
-        />
-      )}
-
-      {/* 9. EVIDENCIAS Y APROBACIONES */}
-      {subTab === 'evidencias' && (
-        <PlanAnualAlertasEvidenciasTab
-          plan={planActivo}
-          alertas={alertas}
-          responsables={responsables}
-          mode="evidencias"
-          onAbrirActividad={abrirActividadEnModal}
-          onUpdatePlan={handleUpdatePlan}
-        />
-      )}
-
-      {/* 10. ALERTAS Y RECORDATORIOS */}
-      {subTab === 'alertas' && (
-        <PlanAnualAlertasEvidenciasTab
-          plan={planActivo}
-          alertas={alertas}
-          responsables={responsables}
-          mode="alertas"
-          onAbrirActividad={abrirActividadEnModal}
-          onUpdatePlan={handleUpdatePlan}
-        />
-      )}
-
-      {/* 11. REPORTES */}
-      {subTab === 'reportes' && (
-        <PlanAnualReportesTab
-          plan={planActivo}
-          indicadoresCalculados={indicadoresCalculados}
-          todasLasVigencias={vigencias}
-          responsables={responsables}
-          onSeleccionarVigencia={(anio) => {
-            setAnioActivo(anio);
-            setSubTab('resumen');
-          }}
+          onProgramarRiesgo={handleProgramarRiesgo}
+          onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
+          onIncorporarRequisito={handleIncorporarRequisito}
+          onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
+          onResolverSolicitud={handleResolverSolicitud}
+          onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
+          onIrAActuar={() => setFaseActiva('actuar')}
         />
       )}
 
@@ -1433,6 +1553,138 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         onAprobarYCerrar={handleAprobarYCerrarActividad}
         onDevolverEvidencia={handleDevolverEvidencia}
       />
+
+      {/* Modal de Confirmación Autorizada para Información Médica Confidencial */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 z-[130] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleConfirmarAccesoMedico}
+            className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-5 shadow-2xl space-y-4 text-xs"
+          >
+            <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-rose-100 text-rose-800">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">
+                    Acceso Protegido a Salud Ocupacional
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Resolución 2346 de 2007 y custodia de historias médicas individuales.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(false)}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-slate-700 leading-relaxed">
+              Los diagnósticos, morbilidad sentida, hábitos y resultados individuales de laboratorio o audiometría solo pueden ser consultados por personal autorizado. Toda consulta queda registrada en la bitácora.
+            </p>
+
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">Persona o rol que consulta</label>
+              <select
+                value={privacyRol}
+                onChange={(e) => setPrivacyRol(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 p-2 bg-white font-bold"
+              >
+                <option value="Médico Ocupacional / IPS Autorizada">
+                  Médico Ocupacional / IPS Autorizada
+                </option>
+                <option value="Coordinador / Vigía de SST (con reserva)">
+                  Coordinador / Vigía de SST (bajo reserva médica)
+                </option>
+                <option value="Auditoría / Autoridad Competente">
+                  Auditoría / Autoridad Competente
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label className="font-bold text-slate-700 block mb-1">
+                Código de autorización SST (opcional si ya inició sesión autorizada: FRIKAZ-SST)
+              </label>
+              <input
+                type="password"
+                value={privacyPin}
+                onChange={(e) => setPrivacyPin(e.target.value)}
+                placeholder="FRIKAZ-SST"
+                className="w-full rounded-lg border border-slate-300 p-2 bg-white"
+              />
+            </div>
+
+            {privacyError && (
+              <p className="text-rose-700 bg-rose-50 p-2 rounded-lg border border-rose-200 font-bold">
+                {privacyError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(false)}
+                className="px-3.5 py-2 rounded-xl bg-slate-100 font-bold text-slate-700 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-[#0f172a] text-[#fed7aa] font-black cursor-pointer"
+              >
+                Confirmar Acceso Autorizado
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal de Bitácora / Historial de Cambios */}
+      {showAuditModal && (
+        <div className="fixed inset-0 z-[130] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl text-xs">
+            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+              <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <History className="h-4 w-4 text-[#f97316]" />
+                <span>Historial de Cambios Recientes en PLAN ANUAL</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowAuditModal(false)}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto space-y-2">
+              {sgsstData.auditoriaCambios.map((aud) => (
+                <div
+                  key={aud.id}
+                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-0.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-black text-[#0f172a]">
+                      [{aud.modulo}] {aud.accion}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      {new Date(aud.fechaHora).toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    {aud.detalle} · <em className="text-slate-500">{aud.usuario}</em>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

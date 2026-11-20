@@ -205,6 +205,9 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Estos peligros vienen directo de la Matriz GTC 45 sin tener que volver a escribirlos. Puede filtrar por nivel, ver el puesto de trabajo y agregarlos como tarea al Plan {plan.vigencia}.
                 </p>
+                <p className="text-[10px] text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 mt-1.5 inline-block">
+                  <strong>Aclaración importante:</strong> Los Niveles I y II de esta matriz indican qué tan urgente es controlar cada peligro en el puesto; son diferentes a la clasificación general de riesgo laboral ante la ARL de Frikaz S.A.S. ({config.claseRiesgoSST}).
+                </p>
               </div>
 
               {riesgosCriticosPendientes.length > 0 && (
@@ -549,6 +552,9 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                         <td className="p-3 max-w-[160px]">
                           <p className="font-bold text-[#0f172a]">{req.normaOficial}</p>
                           <p className="text-[10px] text-slate-500 font-mono">{req.articulos}</p>
+                          <p className="text-[10px] text-indigo-800 font-bold mt-1">
+                            {req.grupo0312Relacionado || 'Estándar Mínimo Res. 0312'}
+                          </p>
                         </td>
                         <td className="p-3 max-w-[210px] text-slate-700">
                           {req.actividadPropuesta}
@@ -573,23 +579,35 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
                             {req.periodoCumplimiento}
                           </span>
                           {req.yaProgramadaEnPlan && actVinculada ? (
-                            <button
-                              type="button"
-                              onClick={() => onAbrirActividad(actVinculada, 'datos')}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 font-bold hover:bg-emerald-200 cursor-pointer"
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              <span>Ver ({actVinculada.codigo})</span>
-                            </button>
+                            <div className="space-y-1">
+                              <button
+                                type="button"
+                                onClick={() => onAbrirActividad(actVinculada, 'datos')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 font-bold hover:bg-emerald-200 cursor-pointer"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <span>Ver ({actVinculada.codigo})</span>
+                              </button>
+                              {actVinculada.estado !== 'CUMPLIDA' && (
+                                <span className="block text-[10px] text-amber-700 font-bold">
+                                  Pendiente de verificación
+                                </span>
+                              )}
+                            </div>
                           ) : req.aplicaEmpresaActual ? (
-                            <button
-                              type="button"
-                              onClick={() => onIncorporarRequisito(req)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#f97316] text-white font-black hover:bg-[#ea580c] cursor-pointer shadow-xs"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              <span>Agregar al Plan</span>
-                            </button>
+                            <div className="space-y-1">
+                              <span className="block text-[10px] text-amber-700 font-bold">
+                                Pendiente de verificación
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => onIncorporarRequisito(req)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#f97316] text-white font-black hover:bg-[#ea580c] cursor-pointer shadow-xs"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                <span>Agregar al Plan</span>
+                              </button>
+                            </div>
                           ) : (
                             <span className="text-[10px] text-slate-400 italic">No aplica hoy</span>
                           )}

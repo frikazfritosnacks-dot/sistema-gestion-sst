@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   EstadoAprobacionPlan,
+  EvaluacionEstandarMinimo,
+  HojaVidaIndicadorSST,
   IndicadorCalculado,
   IndicadorGestionPlan,
   ObjetivoEspecificoPlan,
@@ -9,6 +11,7 @@ import {
   TipoCalculoIndicador,
   TipoIndicadorPlan,
 } from '../../types/planAnual';
+import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import {
   Target,
   BarChart3,
@@ -21,11 +24,16 @@ import {
   Save,
   Sparkles,
   TrendingUp,
+  Eye,
+  X,
 } from 'lucide-react';
 
 interface PlanAnualObjetivosKpiTabProps {
   plan: PlanAnualVigencia;
   indicadoresCalculados: IndicadorCalculado[];
+  hojasVidaIndicadores?: HojaVidaIndicadorSST[];
+  riesgos?: RiesgoGTC45Item[];
+  estandares?: EvaluacionEstandarMinimo[];
   responsables: ResponsablePlanOption[];
   mode?: 'objetivos' | 'indicadores' | 'ambos';
   onUpdatePlan: (updated: PlanAnualVigencia, logAction?: string) => void;
@@ -34,10 +42,15 @@ interface PlanAnualObjetivosKpiTabProps {
 export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> = ({
   plan,
   indicadoresCalculados,
+  hojasVidaIndicadores = [],
+  riesgos = [],
+  estandares = [],
   responsables,
   mode = 'ambos',
   onUpdatePlan,
 }) => {
+  const [hojaVidaModal, setHojaVidaModal] = useState<HojaVidaIndicadorSST | null>(null);
+  const [editVinculosObjId, setEditVinculosObjId] = useState<string | null>(null);
   // Edición de Objetivo General
   const [editingGeneral, setEditingGeneral] = useState(false);
   const [objGeneralForm, setObjGeneralForm] = useState({
@@ -594,13 +607,62 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 space-y-1.5 text-[11px]">
+                <div className="pt-2 border-t border-slate-200 space-y-2 text-[11px]">
                   <div className="flex items-center justify-between text-slate-600">
                     <span>Actividades vinculadas:</span>
                     <strong className="text-slate-900">
                       {actsCumplidas}/{actsRelacionadas.length} cumplidas
                     </strong>
                   </div>
+
+                  {/* Riesgos, Estándares e Indicadores (desde VERIFICAR sin duplicar) */}
+                  {(obj.riesgosRelacionadosIds?.length || 0) > 0 && (
+                    <div className="text-[10px] text-rose-900">
+                      <strong>Riesgos asociados:</strong>{' '}
+                      {obj.riesgosRelacionadosIds
+                        ?.map((id) => riesgos.find((r) => r.id === id)?.codigo || id)
+                        .join(', ')}
+                    </div>
+                  )}
+                  {(obj.estandaresRelacionadosIds?.length || 0) > 0 && (
+                    <div className="text-[10px] text-indigo-900">
+                      <strong>Estándares mínimos:</strong>{' '}
+                      {obj.estandaresRelacionadosIds?.map((n) => `#${n}`).join(', ')}
+                    </div>
+                  )}
+
+                  {hojasVidaIndicadores.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                        Indicadores conectados (clic para ver Hoja de Vida):
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {hojasVidaIndicadores
+                          .filter(
+                            (hv) =>
+                              obj.indicadoresIds.includes(hv.id) ||
+                              hv.objetivoEspecificoId === obj.id ||
+                              (obj.indicadoresIds.length === 0 && hv.esNormativo0312 && obj.area !== 'AMBIENTAL')
+                          )
+                          .slice(0, 6)
+                          .map((hv) => (
+                            <button
+                              key={hv.id}
+                              type="button"
+                              onClick={() => setHojaVidaModal(hv)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-300 hover:border-[#f97316] text-[10px] font-bold text-slate-800 cursor-pointer"
+                              title={`Ver hoja de vida de ${hv.nombre}`}
+                            >
+                              <Eye className="h-2.5 w-2.5 text-[#f97316]" />
+                              <span>
+                                {hv.codigo}: {hv.nombre.slice(0, 22)}
+                              </span>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-1">
                     {indsRelacionados.map((ind) => (
                       <span
@@ -612,12 +674,188 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                       </span>
                     ))}
                   </div>
+
+                  {plan.estadoAprobacion !== 'CERRADO' && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditVinculosObjId(editVinculosObjId === obj.id ? null : obj.id)
+                      }
+                      className="text-[10px] font-bold text-[#f97316] hover:underline cursor-pointer"
+                    >
+                      {editVinculosObjId === obj.id
+                        ? 'Cerrar conexiones'
+                        : 'Conectar riesgos, estándares e indicadores'}
+                    </button>
+                  )}
+
+                  {editVinculosObjId === obj.id && (
+                    <div className="mt-2 p-2.5 rounded-xl bg-white border border-orange-200 space-y-2 text-[10px]">
+                      <div>
+                        <span className="font-bold text-slate-700 block mb-1">
+                          Indicadores (sin duplicar, desde VERIFICAR):
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {hojasVidaIndicadores.map((hv) => {
+                            const checked = obj.indicadoresIds.includes(hv.id);
+                            return (
+                              <button
+                                key={hv.id}
+                                type="button"
+                                onClick={() => {
+                                  const nextIds = checked
+                                    ? obj.indicadoresIds.filter((i) => i !== hv.id)
+                                    : [...obj.indicadoresIds, hv.id];
+                                  onUpdatePlan({
+                                    ...plan,
+                                    objetivosEspecificos: plan.objetivosEspecificos.map((o) =>
+                                      o.id === obj.id ? { ...o, indicadoresIds: nextIds } : o
+                                    ),
+                                  });
+                                }}
+                                className={`px-2 py-0.5 rounded border cursor-pointer font-bold ${
+                                  checked
+                                    ? 'bg-[#0f172a] text-white border-[#0f172a]'
+                                    : 'bg-slate-50 text-slate-700 border-slate-200'
+                                }`}
+                              >
+                                {hv.codigo}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {estandares.length > 0 && (
+                        <div>
+                          <span className="font-bold text-slate-700 block mb-1">
+                            Siete Estándares Mínimos relacionados:
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {estandares.map((est) => {
+                              const current = obj.estandaresRelacionadosIds || [];
+                              const checked = current.includes(est.numero);
+                              return (
+                                <button
+                                  key={est.numero}
+                                  type="button"
+                                  onClick={() => {
+                                    const nextEst = checked
+                                      ? current.filter((n) => n !== est.numero)
+                                      : [...current, est.numero];
+                                    onUpdatePlan({
+                                      ...plan,
+                                      objetivosEspecificos: plan.objetivosEspecificos.map((o) =>
+                                        o.id === obj.id
+                                          ? { ...o, estandaresRelacionadosIds: nextEst }
+                                          : o
+                                      ),
+                                    });
+                                  }}
+                                  className={`px-2 py-0.5 rounded border cursor-pointer font-bold ${
+                                    checked
+                                      ? 'bg-emerald-600 text-white border-emerald-600'
+                                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                                  }`}
+                                >
+                                  Est. #{est.numero}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {riesgos.length > 0 && (
+                        <div>
+                          <span className="font-bold text-slate-700 block mb-1">
+                            Riesgos prioritarios (Nivel I y II):
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {riesgos
+                              .filter((r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II')
+                              .map((r) => {
+                                const current = obj.riesgosRelacionadosIds || [];
+                                const checked = current.includes(r.id);
+                                return (
+                                  <button
+                                    key={r.id}
+                                    type="button"
+                                    onClick={() => {
+                                      const nextR = checked
+                                        ? current.filter((id) => id !== r.id)
+                                        : [...current, r.id];
+                                      onUpdatePlan({
+                                        ...plan,
+                                        objetivosEspecificos: plan.objetivosEspecificos.map((o) =>
+                                          o.id === obj.id
+                                            ? { ...o, riesgosRelacionadosIds: nextR }
+                                            : o
+                                        ),
+                                      });
+                                    }}
+                                    className={`px-2 py-0.5 rounded border cursor-pointer font-bold ${
+                                      checked
+                                        ? 'bg-rose-600 text-white border-rose-600'
+                                        : 'bg-slate-50 text-slate-700 border-slate-200'
+                                    }`}
+                                  >
+                                    {r.codigo || r.id}
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Modal rápido para consultar la Hoja de Vida de cualquier Indicador desde un Objetivo */}
+      {hojaVidaModal && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-xl w-full p-5 shadow-2xl space-y-3 text-xs">
+            <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <span className="px-2 py-0.5 rounded bg-[#0f172a] text-[#fed7aa] font-mono font-black text-[10px]">
+                  {hojaVidaModal.codigo} · {hojaVidaModal.tipo} · {hojaVidaModal.periodicidad}
+                </span>
+                <h4 className="text-sm font-black text-slate-900 mt-1">{hojaVidaModal.nombre}</h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHojaVidaModal(null)}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-slate-700">
+              <strong>Definición:</strong> {hojaVidaModal.definicion}
+            </p>
+            <p className="font-mono text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <strong>Fórmula:</strong> {hojaVidaModal.formula}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px]">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <strong>Regla de conteo:</strong> {hojaVidaModal.reglaConteo}
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <strong>De dónde sale el dato:</strong> {hojaVidaModal.fuenteInformacion}
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <strong>Meta y Unidad:</strong> {hojaVidaModal.metaTexto} ({hojaVidaModal.unidadMedida})
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <strong>Responsable:</strong> {hojaVidaModal.responsable}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
         </>
       )}
 

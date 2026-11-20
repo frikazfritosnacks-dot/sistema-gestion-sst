@@ -1,0 +1,758 @@
+# ACTUALIZACIÓN COMPLETA DEL APARTADO PLAN ANUAL – FRIKAZ S.A.S.
+
+Necesito que actualices el apartado actual llamado **PLAN ANUAL** de mi herramienta de Seguridad y Salud en el Trabajo de Frikaz S.A.S.
+
+Quiero reemplazar la organización y el contenido que tiene actualmente este apartado por una estructura más completa, organizada, conectada y fácil de utilizar.
+
+El propósito es que toda la información del SG-SST esté relacionada y que los trabajadores puedan quedar registrados individualmente con la información que solicita la herramienta, que los riesgos se relacionen con sus cargos y actividades, y que los siete estándares mínimos puedan verificarse mediante sus respectivos registros y evidencias.
+
+**INSTRUCCIÓN PRINCIPAL: NO QUIERO QUE RECONSTRUYAS TODA LA HERRAMIENTA.**
+
+Debes modificar únicamente el apartado actual PLAN ANUAL. Conserva los demás apartados y todas las funciones que ya existen.
+
+---
+
+# 1. CONSERVAR LA HERRAMIENTA ACTUAL
+
+Antes de realizar cualquier modificación:
+
+- Revisa la estructura actual de la herramienta.
+- Identifica el apartado PLAN ANUAL.
+- Reemplaza su organización interna por la que se describe en este prompt.
+- Conserva los demás apartados, menús, colores, diseño, información y funciones.
+- No elimines registros existentes.
+- No borres información guardada.
+- No cambies el nombre de otros apartados.
+- No reconstruyas la aplicación desde cero.
+- No sustituyas la herramienta por una plantilla genérica.
+- No crees cuatro módulos principales independientes para las fases PHVA.
+
+El apartado principal debe seguir llamándose **PLAN ANUAL**.
+
+Dentro de este apartado deben existir cuatro pestañas internas, organizadas exactamente en este orden:
+
+1. HACER.
+2. VERIFICAR.
+3. ACTUAR.
+4. PLANEAR.
+
+Las cuatro fases deben funcionar dentro del mismo apartado PLAN ANUAL. El usuario debe poder cambiar entre ellas sin salir del apartado.
+
+---
+
+# 2. PRIMERA PESTAÑA: HACER
+
+Esta fase debe permitir registrar la información de los trabajadores, conocer sus condiciones de salud y guardar las actividades que se realizan en la empresa.
+
+## A. Registro individual de trabajadores
+
+Crear un espacio para registrar a cada trabajador de Frikaz S.A.S.
+
+Cada trabajador debe tener su propia ficha, editable y organizada.
+
+La ficha debe permitir registrar toda la información solicitada en las imágenes de referencia:
+
+**Datos demográficos y laborales:**
+- Información demográfica.
+- Información laboral.
+- Cargo.
+- Actividad que realiza.
+- Información necesaria para identificar su relación con los peligros y riesgos de su trabajo.
+
+**Hábitos y estilos de vida:**
+- Consumo de sustancias.
+- Actividad física.
+- Nutrición.
+
+**Morbilidad sentida y diagnosticada:**
+- Información correspondiente a enfermedades reportadas.
+- Información de enfermedades diagnosticadas, según los registros disponibles.
+
+**Evaluaciones y pruebas complementarias:**
+- Audiometrías.
+- Visiometrías.
+- Optometrías.
+- Espirometrías.
+- Exámenes de laboratorio.
+
+**Recomendaciones y prioridades de intervención:**
+- Recomendaciones relacionadas con la salud ocupacional.
+- Necesidades de intervención.
+- Seguimiento correspondiente.
+
+Cada trabajador debe poder ser consultado y actualizado sin tener que registrarlo nuevamente.
+
+Permitir identificar qué información está completa y qué información está pendiente.
+
+La información médica individual debe tener acceso restringido. No debe estar disponible para cualquier persona que utilice la herramienta.
+
+## B. Descripción sociodemográfica y diagnóstico de las condiciones de salud
+
+Crear un apartado que permita organizar y consultar:
+
+- Descripción sociodemográfica.
+- Diagnóstico de las condiciones de salud.
+- Información de los trabajadores.
+- Batería de riesgo psicosocial.
+- Análisis de factibilidad por actividad económica o grupos poblacionales.
+
+La información debe poder relacionarse con los trabajadores registrados y generar consultas generales cuando corresponda.
+
+## C. Matriz de identificación de peligros y valoración de riesgos
+
+Utilizar la matriz que ya existe en la herramienta.
+
+No crear una matriz nueva ni eliminar la información de la actual.
+
+Permitir consultar, actualizar y relacionar:
+
+- Peligros identificados.
+- Riesgos asociados.
+- Cargos relacionados.
+- Actividades de los trabajadores.
+- Nivel de riesgo.
+- Medidas de prevención y control.
+- Responsables.
+- Evidencias.
+
+La matriz debe estar conectada con todas las fases del PLAN ANUAL.
+
+**Relación con los trabajadores:**
+
+Cada trabajador debe poder relacionarse con los peligros y riesgos correspondientes a su cargo y las actividades que realiza.
+
+Al consultar un riesgo, se debe poder identificar qué cargos, actividades y trabajadores están relacionados con él, respetando la confidencialidad de la información personal.
+
+## D. Ejecución de actividades
+
+Relacionar las actividades programadas en el Plan Anual con las actividades que realmente se realizan.
+
+Permitir registrar:
+
+- Nombre de la actividad.
+- Descripción.
+- Responsable.
+- Fecha de realización.
+- Resultado obtenido.
+- Observaciones.
+- Evidencias.
+- Documentos de soporte.
+
+Cuando una actividad esté relacionada con un riesgo, debe quedar vinculada a ese riesgo y a la medida de prevención o control correspondiente.
+
+## E. Evidencias de ejecución
+
+Permitir adjuntar, consultar y organizar documentos, fotografías y otros soportes que demuestren la realización de las actividades.
+
+Las evidencias deben quedar relacionadas con la actividad correspondiente y no guardarse de manera desorganizada.
+
+---
+
+# 3. SEGUNDA PESTAÑA: VERIFICAR
+
+Esta fase debe permitir revisar el cumplimiento de las actividades, validar la información y conocer los resultados del SG-SST.
+
+Debe contener los siguientes apartados:
+
+## A. Módulo de analítica y tablero de indicadores
+
+Crear un espacio donde se puedan consultar los resultados de los indicadores de Seguridad y Salud en el Trabajo.
+
+Debe mostrar información clara y fácil de interpretar.
+
+## B. Hoja de vida de indicadores
+
+Crear una tabla maestra con los indicadores exigidos por las normas aplicables y los indicadores adicionales que Frikaz S.A.S. quiera medir.
+
+Cada indicador debe contener:
+
+- Nombre.
+- Tipo de indicador.
+- Definición.
+- Fórmula.
+- Meta.
+- Regla de conteo: explicar cómo se obtiene la información necesaria.
+- Unidad de medida.
+- Fuente de información.
+- Periodicidad.
+- Responsable.
+- Interpretación del resultado.
+
+### Seis indicadores de la referencia entregada
+
+Precargar los siguientes indicadores:
+
+1. Frecuencia de accidentalidad.
+2. Severidad de accidentalidad.
+3. Proporción de accidentes de trabajo mortales.
+4. Prevalencia de la enfermedad laboral.
+5. Incidencia de la enfermedad laboral.
+6. Ausentismo por causa médica.
+
+Conservar sus definiciones, fórmulas y periodicidades según la fuente normativa aplicable.
+
+No inventar fórmulas ni modificar las que correspondan a la normativa.
+
+Permitir agregar indicadores propios de Frikaz S.A.S. sin modificar ni eliminar los indicadores normativos.
+
+## C. Base de datos mensual: captura y validación
+
+Crear un apartado para registrar los datos necesarios para calcular cada indicador.
+
+El sistema debe aprovechar la información que ya esté registrada en la herramienta, por ejemplo:
+
+- Número de trabajadores.
+- Accidentes de trabajo.
+- Días de incapacidad.
+- Días de ausencia.
+- Casos de enfermedad laboral.
+- Información correspondiente a los periodos de medición.
+
+No solicitar dos veces la misma información.
+
+Cuando un dato ya exista en otro apartado, debe utilizarse desde su registro original.
+
+Validar que los datos estén completos antes de calcular los indicadores.
+
+Si falta información, mostrar un mensaje como "Información pendiente de registro" o "Pendiente de validación".
+
+No inventar resultados ni presentar información faltante como si fuera un resultado de cero.
+
+## D. Dashboard o tablero de control
+
+Crear un tablero que permita consultar:
+
+- Resultados de los indicadores.
+- Cumplimiento de metas.
+- Resultados mensuales y anuales.
+- Actividades cumplidas.
+- Actividades pendientes.
+- Actividades atrasadas.
+- Alertas.
+- Semaforización.
+- Comparación entre resultados y metas.
+- Comportamiento de los indicadores.
+
+El tablero debe actualizarse cuando se registre o valide nueva información.
+
+## E. Verificación de los riesgos
+
+Relacionar esta fase con la matriz de identificación de peligros y valoración de riesgos.
+
+Permitir revisar:
+
+- Qué riesgos se encuentran identificados.
+- Qué medidas de prevención y control se han establecido.
+- Qué actividades se han realizado.
+- Qué evidencias existen.
+- Qué medidas están pendientes.
+- Qué riesgos necesitan mayor atención.
+
+Permitir identificar cuándo una medida no se ha realizado o no está dando el resultado esperado.
+
+## F. Verificación de los siete estándares mínimos
+
+Permitir revisar los registros y evidencias relacionados con cada uno de los siete estándares mínimos.
+
+Mostrar qué información está disponible, qué falta y qué necesita revisión.
+
+No marcar automáticamente un estándar como cumplido solamente porque exista un registro.
+
+---
+
+# 4. TERCERA PESTAÑA: ACTUAR
+
+Esta fase debe permitir atender las situaciones encontradas y organizar las mejoras necesarias para Frikaz S.A.S.
+
+## A. Recomendaciones y prioridades de intervención
+
+Permitir registrar y consultar las recomendaciones que se deriven de:
+
+- Evaluaciones médicas.
+- Diagnóstico de las condiciones de salud.
+- Identificación de peligros y riesgos.
+- Resultados de los indicadores.
+- Verificación de actividades.
+- Revisión de los estándares mínimos.
+
+Las recomendaciones médicas deben manejarse respetando la confidencialidad de la información de cada trabajador.
+
+## B. Acciones de mejora
+
+Crear un espacio para registrar:
+
+- Acciones correctivas.
+- Acciones preventivas.
+- Acciones de mejora.
+
+Cada acción debe contener:
+
+- Situación encontrada.
+- Qué se necesita corregir o mejorar.
+- Actividad que se realizará.
+- Responsable.
+- Fecha de inicio.
+- Fecha límite.
+- Evidencia necesaria.
+- Estado de cumplimiento.
+- Resultado del seguimiento.
+
+## C. Relación con la matriz de riesgos
+
+Cuando se identifique que un riesgo no está controlado o que una medida de prevención no está funcionando, permitir generar una acción de mejora relacionada directamente con ese riesgo.
+
+La acción debe conservar la relación con:
+
+- El peligro identificado.
+- El riesgo correspondiente.
+- El cargo o actividad relacionada.
+- La medida de control.
+- El responsable.
+- La evidencia.
+- El resultado del seguimiento.
+
+No duplicar la información del riesgo. Utilizar el registro que ya existe en la matriz.
+
+## D. Seguimiento de acciones
+
+Permitir consultar las acciones:
+
+- Pendientes.
+- En proceso.
+- Cumplidas.
+- Atrasadas.
+- Devueltas para corrección.
+
+Cuando una acción no se cumpla, permitir registrar la novedad y continuar su seguimiento.
+
+Las acciones deben conservar su historial para poder consultar qué se hizo y cuándo se realizó.
+
+---
+
+# 5. CUARTA PESTAÑA: PLANEAR
+
+Esta fase debe permitir organizar todo el trabajo que Frikaz S.A.S. realizará durante cada año.
+
+## A. Priorización de riesgos
+
+Utilizar la matriz de identificación de peligros y valoración de riesgos que ya existe en la herramienta.
+
+Permitir filtrar los riesgos que hayan quedado clasificados como niveles I y II, de acuerdo con la clasificación utilizada en la matriz.
+
+Relacionar estos riesgos con las actividades del Plan Anual.
+
+Mostrar:
+
+- Peligro identificado.
+- Riesgo asociado.
+- Cargo o actividad relacionada.
+- Nivel de riesgo.
+- Medidas de prevención y control.
+- Actividades necesarias.
+- Responsable.
+- Evidencia esperada.
+
+Los riesgos priorizados deben servir para definir qué actividades deben programarse durante el año.
+
+No confundir los niveles I y II de la matriz con la clasificación de riesgo laboral de la empresa.
+
+## B. Obligaciones de las normas
+
+Identificar las actividades que Frikaz S.A.S. debe realizar de acuerdo con las normas que le sean aplicables.
+
+Tomar en cuenta la Resolución 0312 de 2019 y las demás disposiciones correspondientes a las condiciones reales de la empresa.
+
+Relacionar cada obligación con:
+
+- Nombre de la norma.
+- Actividad que se debe realizar.
+- Qué exige la norma.
+- Frecuencia o periodicidad.
+- Responsable.
+- Evidencia necesaria.
+- Estándar mínimo relacionado.
+
+Las obligaciones que correspondan deben pasar al Plan Anual como actividades.
+
+No inventar normas, obligaciones, artículos ni frecuencias.
+
+Si la información no está verificada, mostrar "Pendiente de verificación".
+
+## C. Objetivos del Plan Anual
+
+Crear un espacio editable que permita registrar:
+
+**Objetivo general:**
+
+Establecer qué se quiere alcanzar durante la vigencia del Plan Anual.
+
+**Objetivos específicos:**
+
+Permitir registrar varios objetivos con sus respectivas metas.
+
+Cada objetivo debe poder relacionarse con:
+
+- Riesgos identificados.
+- Obligaciones normativas.
+- Estándares mínimos.
+- Actividades.
+- Indicadores.
+- Responsables.
+
+Permitir guardar los planes de cada año de manera independiente.
+
+Conservar los planes de años anteriores para consulta y seguimiento.
+
+## D. Indicadores relacionados con los objetivos
+
+Cada objetivo debe poder relacionarse con uno o varios indicadores.
+
+Permitir consultar la hoja de vida de cada indicador desde el objetivo correspondiente.
+
+No crear indicadores duplicados.
+
+Los indicadores deben tener:
+
+- Nombre.
+- Tipo.
+- Fórmula.
+- Meta.
+- Regla de conteo.
+- Unidad de medida.
+- Fuente de información.
+- Periodicidad.
+- Responsable.
+
+## E. Cronograma de actividades
+
+Crear un cronograma completamente editable.
+
+Cada actividad debe tener:
+
+- Nombre de la actividad.
+- Descripción de lo que se debe realizar.
+- Criterio de aceptación: qué se debe cumplir para considerar terminada la actividad.
+- Frecuencia: una sola vez o recurrente.
+- Fecha de inicio.
+- Fecha límite.
+- Responsable de realizarla.
+- Responsable de revisar o aprobar la evidencia.
+- Presupuesto estimado.
+- Gasto ejecutado.
+- Estado de cumplimiento.
+- Evidencias.
+
+Permitir visualizar el cronograma en:
+
+- Calendario.
+- Lista.
+- Formato Gantt.
+
+Permitir crear, editar y consultar actividades sin tener que eliminarlas y volverlas a crear.
+
+Cuando una actividad esté relacionada con un riesgo, un estándar mínimo o una obligación normativa, conservar esa relación.
+
+## F. Alertas y notificaciones
+
+Crear recordatorios para:
+
+- Actividades próximas a vencer.
+- Actividades pendientes.
+- Actividades atrasadas.
+- Evidencias faltantes.
+- Actividades que necesitan revisión.
+- Acciones de mejora pendientes.
+
+Los recordatorios deben ayudar a los responsables a conocer qué deben realizar y en qué fecha.
+
+## G. Generación de reportes
+
+Permitir generar reportes por mes, trimestre y año.
+
+Los reportes deben mostrar:
+
+- Actividades programadas.
+- Actividades realizadas.
+- Actividades pendientes.
+- Actividades atrasadas.
+- Responsables.
+- Evidencias.
+- Presupuesto estimado.
+- Gasto ejecutado.
+- Cumplimiento de objetivos.
+- Resultados de indicadores.
+- Seguimiento de riesgos.
+- Estado de las acciones de mejora.
+
+---
+
+# 6. RELACIÓN DE LA MATRIZ DE IDENTIFICACIÓN DE PELIGROS Y VALORACIÓN DE RIESGOS CON TODA LA HERRAMIENTA
+
+ESTA ES UNA DE LAS INSTRUCCIONES MÁS IMPORTANTES.
+
+La matriz de identificación de peligros y valoración de riesgos debe estar conectada con todas las partes del SG-SST de Frikaz S.A.S.
+
+No quiero que funcione como un documento aislado.
+
+Tampoco quiero que se cree una segunda matriz que duplique la información de la que ya existe.
+
+Se debe utilizar la matriz actual y relacionarla con los registros de los trabajadores, las actividades, los indicadores, los objetivos, los estándares mínimos y las acciones de mejora.
+
+### A. Relación con los trabajadores
+
+- Relacionar cada trabajador con su cargo y las actividades que realiza.
+- Identificar los peligros a los que puede estar expuesto según sus funciones.
+- Relacionar los riesgos correspondientes con cada cargo y actividad.
+- Mostrar las medidas de prevención y control establecidas.
+- Permitir consultar qué trabajadores, cargos y actividades están relacionados con cada riesgo.
+
+### B. Relación con PLANEAR
+
+- Utilizar la matriz existente para identificar los riesgos que necesitan atención.
+- Filtrar los riesgos clasificados como niveles I y II según la clasificación de la matriz.
+- Relacionar esos riesgos con los objetivos y metas del Plan Anual.
+- Identificar qué medidas de prevención y control deben programarse.
+- Crear actividades para atender los riesgos priorizados.
+- Asignar responsables, fechas, presupuesto y evidencias.
+
+### C. Relación con HACER
+
+- Registrar las actividades realizadas para prevenir o controlar los riesgos.
+- Adjuntar evidencias de las medidas implementadas.
+- Registrar novedades cuando una medida no se haya realizado.
+- Mantener la relación entre cada actividad, el riesgo y el cargo correspondiente.
+
+### D. Relación con VERIFICAR
+
+- Revisar si las medidas de prevención y control se están cumpliendo.
+- Consultar las evidencias de cada medida.
+- Identificar los riesgos que todavía necesitan atención.
+- Mostrar las actividades relacionadas con cada riesgo y su estado.
+- Permitir revisar si las medidas están dando los resultados esperados.
+
+### E. Relación con ACTUAR
+
+- Cuando se identifique que un riesgo no está controlado o que una medida no está funcionando, permitir generar una acción de mejora.
+- Relacionar la acción con el riesgo correspondiente.
+- Asignar un responsable y una fecha.
+- Registrar las medidas que se van a tomar y sus evidencias.
+- Permitir hacer seguimiento hasta comprobar que la situación fue atendida.
+
+### F. Actualización de la matriz
+
+- Permitir consultar y editar la matriz existente.
+- Conservar sus registros e historial de cambios.
+- Cuando se modifique un riesgo, actualizar sus relaciones con los cargos, actividades y medidas correspondientes.
+- Identificar si los cambios requieren revisar el Plan Anual.
+- No modificar automáticamente planes o actividades que ya hayan sido aprobados.
+- No inventar peligros, riesgos ni niveles de clasificación.
+
+**La finalidad es que, al consultar cualquier riesgo, podamos saber a qué trabajador, cargo o actividad está relacionado, qué medidas se han establecido, qué actividades se han programado, qué evidencias existen y qué falta por hacer.**
+
+---
+
+# 7. RELACIÓN CON LOS SIETE ESTÁNDARES MÍNIMOS
+
+Los siete estándares mínimos deben estar relacionados con toda la información del PLAN ANUAL.
+
+No deben convertirse en fases adicionales ni en módulos principales independientes.
+
+Crear una opción de consulta que permita revisar el cumplimiento de cada estándar y encontrar los registros y evidencias que lo respaldan.
+
+Los siete estándares que se deben contemplar son:
+
+1. Asignación de la persona que diseña el SG-SST.
+2. Afiliación al Sistema de Seguridad Social Integral.
+3. Capacitación en SST.
+4. Plan Anual de Trabajo.
+5. Evaluaciones médicas ocupacionales.
+6. Identificación de peligros y evaluación de riesgos.
+7. Medidas de prevención y control.
+
+Relacionar cada estándar con la información que corresponda.
+
+Por ejemplo:
+
+- El registro de trabajadores debe aportar la información necesaria para revisar las afiliaciones.
+- Los registros de capacitación deben permitir comprobar las actividades realizadas.
+- El Plan Anual debe permitir consultar objetivos, actividades, responsables y evidencias.
+- Los registros de evaluaciones médicas deben permitir verificar su realización, protegiendo la información médica.
+- La matriz debe aportar la información de los peligros y riesgos identificados.
+- Las actividades y evidencias deben permitir comprobar las medidas de prevención y control.
+
+La herramienta debe permitir consultar:
+
+- Qué información necesita cada estándar.
+- Qué registros existen.
+- Qué evidencias están disponibles.
+- Qué información falta.
+- Qué aspectos necesitan revisión.
+- Qué acciones de mejora están relacionadas.
+
+No marcar automáticamente un estándar como cumplido solo porque se haya diligenciado un formulario.
+
+El cumplimiento debe depender de la revisión de los registros y soportes correspondientes.
+
+La aplicabilidad de estos siete estándares debe estar sujeta a la confirmación de las condiciones de la empresa y de su clasificación de riesgo.
+
+---
+
+# 8. CONEXIÓN ENTRE TODAS LAS PARTES
+
+Quiero que toda la información de la herramienta esté relacionada.
+
+La información debe registrarse una sola vez y reutilizarse en los apartados correspondientes.
+
+La conexión debe funcionar de la siguiente manera:
+
+1. Los trabajadores se registran individualmente.
+2. Sus datos laborales se relacionan con sus cargos y actividades.
+3. Los cargos y actividades se relacionan con los peligros y riesgos de la matriz.
+4. Los riesgos priorizados alimentan los objetivos y las actividades del Plan Anual.
+5. Las obligaciones normativas se relacionan con las actividades correspondientes.
+6. Los objetivos se relacionan con las metas y los indicadores.
+7. Las actividades programadas pasan a HACER para registrar su realización.
+8. Las evidencias quedan relacionadas con cada actividad.
+9. Los datos registrados alimentan los indicadores.
+10. VERIFICAR permite revisar los resultados y el cumplimiento.
+11. Los incumplimientos y resultados desfavorables pueden generar acciones en ACTUAR.
+12. Las acciones de mejora deben relacionarse con los riesgos, actividades o estándares correspondientes.
+13. Los resultados de las mejoras deben servir para revisar y actualizar la planeación.
+
+No crear registros duplicados.
+
+No solicitar nuevamente información que ya esté guardada.
+
+Cuando cambie información importante, permitir actualizarla y revisar qué otras partes pueden verse afectadas, sin modificar automáticamente registros o planes aprobados.
+
+---
+
+# 9. LENGUAJE SENCILLO Y FÁCIL DE ENTENDER EN TODA LA HERRAMIENTA
+
+Quiero que absolutamente toda la herramienta utilice un lenguaje normal, claro y fácil de comprender.
+
+Esta aplicación será consultada y utilizada por diferentes personas de Frikaz S.A.S. No solamente por personas que conozcan de Seguridad y Salud en el Trabajo.
+
+Por eso, no quiero que parezca una herramienta dirigida únicamente a especialistas.
+
+Instrucciones:
+
+- Evitar palabras demasiado técnicas.
+- Utilizar expresiones comunes y fáciles de comprender.
+- Explicar las actividades con palabras sencillas.
+- Utilizar nombres claros en los botones.
+- Explicar qué información debe ingresar una persona en cada formulario.
+- Agregar pequeñas indicaciones cuando una persona pueda tener dudas.
+- Los mensajes de error deben explicar qué falta y cómo solucionarlo.
+- Los resultados deben presentarse de manera comprensible.
+- Evitar abreviaturas sin explicación.
+- No utilizar palabras complicadas cuando exista una forma más sencilla de decir lo mismo.
+- Mantener los nombres oficiales de las normas y los indicadores cuando sea necesario, pero explicar su significado con palabras normales.
+
+Por ejemplo:
+
+En lugar de mostrar únicamente "Fuente de información", explicar qué documento o registro debe consultarse para obtener el dato.
+
+En lugar de mostrar únicamente "Criterio de aceptación", explicar qué debe cumplirse para considerar terminada una actividad.
+
+En lugar de mostrar únicamente "Semaforización", explicar qué significa cada color y qué situación representa.
+
+El lenguaje debe ser respetuoso, profesional, cercano y comprensible para cualquier persona que consulte la herramienta.
+
+---
+
+# 10. MEJORAR LA VELOCIDAD Y FLUIDEZ DE LA HERRAMIENTA
+
+Actualmente la aplicación presenta lentitud. Necesito que mejores su funcionamiento para que sea más rápida, fluida y cómoda de utilizar.
+
+Debes realizar estas mejoras sin cambiar el diseño ni eliminar funciones.
+
+- Las pantallas deben abrir rápidamente.
+- Los botones deben responder sin demoras innecesarias.
+- Los formularios deben guardar la información de manera eficiente.
+- No volver a cargar toda la aplicación cuando el usuario cambie de pestaña.
+- Consultar la información únicamente cuando sea necesaria.
+- Evitar cargar repetidamente los mismos datos.
+- Evitar procesos innecesarios que hagan lenta la aplicación.
+- Optimizar las tablas para consultar información sin demoras.
+- Optimizar la carga de imágenes y documentos.
+- Evitar animaciones innecesarias.
+- Mantener los registros organizados.
+- Evitar que una operación en un apartado bloquee el uso de los demás.
+- Mostrar claramente cuándo la información se está guardando y cuándo terminó de guardarse.
+- Informar cuando ocurra un error y permitir continuar sin perder la información.
+
+La velocidad no debe conseguirse eliminando información, reduciendo funciones o debilitando la seguridad.
+
+Quiero que la aplicación sea fluida incluso cuando tenga muchos registros de trabajadores, actividades, evidencias e indicadores.
+
+---
+
+# 11. SEGURIDAD Y PROTECCIÓN DE LA INFORMACIÓN
+
+Como la herramienta manejará información personal y datos relacionados con la salud de los trabajadores, es indispensable:
+
+- Proteger la información personal.
+- Restringir el acceso a los registros médicos individuales.
+- Permitir que cada persona consulte únicamente la información que le corresponde según sus permisos.
+- Evitar mostrar diagnósticos individuales en tableros generales.
+- Utilizar información agrupada para reportes generales cuando corresponda.
+- Conservar los registros y evidencias.
+- Evitar que se pierda información al actualizar la herramienta.
+- Mantener un historial de los cambios importantes.
+
+---
+
+# 12. PRUEBAS ANTES DE FINALIZAR
+
+Antes de dar por terminada la actualización, comprueba que todo funcione correctamente.
+
+Realiza las siguientes pruebas:
+
+1. El apartado principal sigue llamándose PLAN ANUAL.
+2. Las cuatro pestañas aparecen en el orden solicitado: HACER, VERIFICAR, ACTUAR y PLANEAR.
+3. Se puede cambiar entre las cuatro fases sin salir del apartado.
+4. Se pueden registrar y editar trabajadores.
+5. Cada trabajador tiene su propia ficha.
+6. Se puede registrar la información sociodemográfica y laboral.
+7. Se pueden registrar los hábitos y estilos de vida.
+8. Se puede organizar la información de salud y las pruebas complementarias.
+9. La matriz de riesgos existente conserva su información.
+10. La matriz está relacionada con los trabajadores, cargos y actividades.
+11. Los riesgos priorizados pueden relacionarse con el Plan Anual.
+12. Las medidas de prevención y control pueden registrarse y consultarse.
+13. Los seis indicadores de la referencia están disponibles.
+14. Las fórmulas y periodicidades están correctamente configuradas.
+15. Se pueden registrar y validar los datos necesarios para calcular los indicadores.
+16. El tablero muestra resultados reales.
+17. Se pueden crear y modificar actividades del cronograma.
+18. Se pueden adjuntar y consultar evidencias.
+19. Las acciones de mejora permiten seguimiento.
+20. Los siete estándares pueden consultar sus registros y soportes.
+21. La información se reutiliza sin duplicar registros.
+22. Los reportes muestran la información correspondiente.
+23. Los datos existentes no se han perdido.
+24. Los demás apartados de la herramienta siguen funcionando.
+25. La aplicación responde más rápido y de manera fluida.
+26. Todo el contenido utiliza un lenguaje sencillo y fácil de entender.
+27. La información personal y médica tiene la protección correspondiente.
+
+No basta con que los botones aparezcan en pantalla. Debes comprobar que las funciones realmente permitan registrar, guardar, consultar, editar y relacionar la información.
+
+---
+
+# INSTRUCCIÓN FINAL
+
+Quiero una actualización completa, funcional y organizada del apartado PLAN ANUAL de Frikaz S.A.S.
+
+No quiero solamente un cambio visual.
+
+Quiero que las cuatro fases funcionen correctamente, que los trabajadores puedan registrarse individualmente con toda la información solicitada, que la matriz de riesgos esté conectada con toda la herramienta, que los siete estándares mínimos puedan verificarse con sus respectivas evidencias y que los indicadores se calculen con información real.
+
+Todo debe estar relacionado para evitar registros duplicados y facilitar el trabajo de las personas que utilizarán la aplicación.
+
+Conserva la estructura general de la herramienta, no elimines información y no modifiques los apartados que no te he solicitado cambiar.
+
+El resultado debe ser una herramienta rápida, fluida, organizada, segura y fácil de entender para cualquier persona de Frikaz S.A.S.
+
+**PRIORIDAD: FUNCIONAMIENTO REAL, INFORMACIÓN CONECTADA, MATRIZ DE RIESGOS RELACIONADA, LENGUAJE SENCILLO Y BUEN RENDIMIENTO.**

@@ -58,6 +58,9 @@ export interface ObjetivoEspecificoPlan {
   responsable: string;
   metas: MetaObjetivoPlan[];
   indicadoresIds: string[];
+  riesgosRelacionadosIds?: string[];
+  normasRelacionadas?: string[];
+  estandaresRelacionadosIds?: number[];
 }
 
 export interface MedicionIndicador {
@@ -161,6 +164,7 @@ export interface ActividadPlanAnual {
   normaOficial?: string;
   normaArticulos?: string;
   requisitoObligatorioId?: string;
+  estandarMinimoNumero?: number;
 
   objetivoEspecificoId?: string;
 
@@ -307,3 +311,254 @@ export interface RequisitoObligatorioIdentificado {
   yaProgramadaEnPlan: boolean;
   actividadVinculadaId?: string;
 }
+
+// ============================================================================
+// NUEVOS TIPOS CONECTADOS DEL PLAN ANUAL SG-SST (HACER - VERIFICAR - ACTUAR - PLANEAR)
+// ============================================================================
+
+export interface PruebaComplementariaTrabajador {
+  estado: 'REALIZADA' | 'PENDIENTE' | 'NO_APLICA';
+  fecha?: string;
+  resultado?: string;
+  observaciones?: string;
+}
+
+export interface TrabajadorFichaSST {
+  id: string;
+  estadoLaboral: 'ACTIVO' | 'INACTIVO';
+  // 1. Datos demográficos y laborales
+  nombreCompleto: string;
+  tipoDocumento: 'CC' | 'CE' | 'TI' | 'PPT';
+  numeroDocumento: string;
+  fechaNacimiento: string;
+  sexo: 'Femenino' | 'Masculino' | 'Otro';
+  estadoCivil: 'Soltero(a)' | 'Casado(a)' | 'Unión Libre' | 'Separado(a)' | 'Viudo(a)';
+  escolaridad: 'Primaria' | 'Bachiller' | 'Técnico / Tecnólogo' | 'Profesional' | 'Posgrado';
+  localidadResidencia: string;
+  telefono: string;
+  correo: string;
+  cargoId: string;
+  cargoNombre: string;
+  areaProceso: string;
+  actividadPrincipal: string;
+  tipoContrato: 'Indefinido' | 'Fijo' | 'Obra o Labor' | 'Aprendizaje' | 'Prestación de Servicios';
+  fechaIngreso: string;
+  turnoHorario: string;
+  eps: string;
+  arl: string;
+  afp: string;
+
+  // 2. Hábitos y estilos de vida (Información de salud confidencial)
+  consumoTabaco: 'No fuma' | 'Ocasional' | 'Frecuente' | 'Exfumador' | 'Pendiente';
+  consumoAlcohol: 'No consume' | 'Ocasional' | 'Frecuente' | 'Pendiente';
+  otrasSustancias: string;
+  actividadFisica: 'Sí, regular (3+ días/sem)' | 'Moderada (1-2 días/sem)' | 'Sedentario / No realiza' | 'Pendiente';
+  nutricionHabitos: string;
+
+  // 3. Morbilidad sentida y diagnosticada (Confidencial)
+  morbilidadSentida: string;
+  enfermedadesDiagnosticadas: string;
+  tieneEnfermedadLaboralCalificada: boolean;
+  fechaUltimaIncapacidad?: string;
+
+  // 4. Evaluaciones médicas y pruebas complementarias (Confidencial)
+  tipoUltimoExamen: 'Ingreso' | 'Periódico' | 'Egreso' | 'Post-incapacidad' | 'Pendiente';
+  fechaUltimoExamen: string;
+  conceptoAptitud: 'Apto sin restricciones' | 'Apto con recomendaciones' | 'Aplazado' | 'Pendiente';
+  audiometria: PruebaComplementariaTrabajador;
+  visiometria: PruebaComplementariaTrabajador;
+  optometria: PruebaComplementariaTrabajador;
+  espirometria: PruebaComplementariaTrabajador;
+  laboratorio: PruebaComplementariaTrabajador;
+
+  // 5. Recomendaciones y prioridades de intervención (Confidencial)
+  recomendacionesSaludOcupacional: string;
+  prioridadIntervencion: 'ALTA' | 'MEDIA' | 'BAJA' | 'NINGUNA';
+  necesidadIntervencion: string;
+  seguimientoMedico: string;
+
+  fechaActualizacion: string;
+}
+
+export interface DiagnosticoSaludEmpresa {
+  anio: number;
+  bateriaPsicosocial: {
+    fechaAplicacion: string;
+    estado: 'REALIZADA' | 'PROGRAMADA' | 'PENDIENTE';
+    nivelRiesgoIntralaboral: 'Sin riesgo / Despreciable' | 'Bajo' | 'Medio' | 'Alto' | 'Muy Alto' | 'Pendiente';
+    nivelRiesgoExtralaboral: 'Sin riesgo / Despreciable' | 'Bajo' | 'Medio' | 'Alto' | 'Muy Alto' | 'Pendiente';
+    nivelEstres: 'Muy bajo' | 'Bajo' | 'Medio' | 'Alto' | 'Muy alto' | 'Pendiente';
+    observacionesGenerales: string;
+  };
+  analisisFactibilidad: {
+    actividadEconomicaCIIU: string;
+    gruposPoblacionalesAnalizados: string;
+    conclusionesFactibilidad: string;
+    fechaActualizacion: string;
+  };
+}
+
+export type CodigoIndicadorMinimo0312 =
+  | 'IND-SST-01' // Frecuencia de accidentalidad
+  | 'IND-SST-02' // Severidad de accidentalidad
+  | 'IND-SST-03' // Proporción de accidentes de trabajo mortales
+  | 'IND-SST-04' // Prevalencia de la enfermedad laboral
+  | 'IND-SST-05' // Incidencia de la enfermedad laboral
+  | 'IND-SST-06'; // Ausentismo por causa médica
+
+export interface HojaVidaIndicadorSST {
+  id: string;
+  codigo: string;
+  esNormativo0312: boolean;
+  codigoNormativo0312?: CodigoIndicadorMinimo0312;
+  nombre: string;
+  tipo: TipoIndicadorPlan;
+  definicion: string;
+  formula: string;
+  variablesRequeridas: string[];
+  metaValor: number;
+  metaOperador: '<=' | '>=' | '=';
+  metaTexto: string;
+  reglaConteo: string;
+  unidadMedida: string;
+  fuenteInformacion: string;
+  periodicidad: 'MENSUAL' | 'ANUAL' | 'TRIMESTRAL' | 'SEMESTRAL';
+  responsable: string;
+  interpretacionBase: string;
+  objetivoEspecificoId?: string;
+}
+
+export interface RegistroPeriodoIndicador {
+  id: string;
+  anio: number;
+  mes: number; // 1..12 para mensual; 0 para consolidado anual
+  periodoLabel: string; // "Enero 2026", "Consolidado Anual 2026"
+  // Variables de captura (null = información pendiente de registro)
+  numeroTrabajadores: number | null; // Auto-alimentado de trabajadores activos / empresa
+  accidentesTrabajo: number | null;
+  accidentesMortales: number | null;
+  diasIncapacidadAT: number | null;
+  diasCargadosAT: number | null;
+  casosNuevosEL: number | null;
+  casosAntiguosEL: number | null;
+  diasAusenciaIncapacidadMedica: number | null;
+  diasTrabajoProgramados: number | null;
+  // Valores manuales por indicador personalizado si aplica
+  valoresPersonalizados?: Record<string, number | null>;
+  validado: boolean;
+  validadoPor?: string;
+  fechaActualizacion: string;
+  observaciones?: string;
+}
+
+export interface ResultadoIndicadorPeriodo {
+  periodoLabel: string;
+  anio: number;
+  mes: number;
+  estadoCalculo:
+    | 'CALCULADO'
+    | 'PENDIENTE_REGISTRO'
+    | 'PENDIENTE_VALIDACION'
+    | 'NO_DISPONIBLE_DENOMINADOR_CERO';
+  valor: number | null;
+  interpretacionAutomatica: string;
+  estadoSemaforo: 'VERDE' | 'AMARILLO' | 'ROJO' | 'GRIS';
+  textoSemaforo: string;
+  faltantes: string[];
+  variablesUsadas: Array<{ etiqueta: string; valor: string; origen: string }>;
+  fechaActualizacion: string;
+}
+
+export interface EvaluacionEstandarMinimo {
+  numero: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  titulo: string;
+  descripcionSencilla: string;
+  normaReferencia: string;
+  informacionNecesaria: string[];
+  estadoRevision: 'PENDIENTE_REVISION' | 'EN_REVISION' | 'FALTA_SOPORTE' | 'CUMPLE_VERIFICADO' | 'REQUIERE_MEJORA';
+  revisadoPor?: string;
+  fechaRevision?: string;
+  observacionesRevision: string;
+  aplicaSegunEmpresa: boolean;
+  motivoAplicabilidad: string;
+}
+
+export interface RecomendacionIntervencion {
+  id: string;
+  fecha: string;
+  origen:
+    | 'EVALUACIONES_MEDICAS'
+    | 'CONDICIONES_SALUD'
+    | 'MATRIZ_RIESGOS'
+    | 'INDICADORES'
+    | 'VERIFICACION_ACTIVIDADES'
+    | 'ESTANDARES_MINIMOS';
+  titulo: string;
+  descripcion: string;
+  prioridad: 'ALTA' | 'MEDIA' | 'BAJA';
+  esConfidencialMedica: boolean;
+  trabajadorId?: string;
+  riesgoId?: string;
+  estandarNumero?: number;
+  responsable: string;
+  estado: 'ABIERTA' | 'CONVERTIDA_EN_ACCION' | 'CERRADA';
+  accionMejoraId?: string;
+}
+
+export interface HistorialAccionMejora {
+  id: string;
+  fecha: string;
+  usuario: string;
+  accion: string;
+  detalle: string;
+}
+
+export interface AccionMejoraPlan {
+  id: string;
+  codigo: string;
+  tipo: 'CORRECTIVA' | 'PREVENTIVA' | 'MEJORA';
+  origen:
+    | 'MATRIZ_RIESGOS'
+    | 'INDICADORES'
+    | 'ESTANDARES_MINIMOS'
+    | 'CONDICIONES_SALUD'
+    | 'ACTIVIDAD_PLAN'
+    | 'MANUAL';
+  situacionEncontrada: string;
+  queSeNecesitaCorregir: string;
+  actividadARealizar: string;
+  responsable: string;
+  fechaInicio: string;
+  fechaLimite: string;
+  evidenciaNecesaria: string;
+  evidenciasAdjuntas: EvidenciaActividad[];
+  estado: 'PENDIENTE' | 'EN_PROCESO' | 'CUMPLIDA' | 'ATRASADA' | 'DEVUELTA_CORRECCION';
+  resultadoSeguimiento: string;
+  // Conexiones sin duplicación
+  riesgoId?: string;
+  actividadPlanId?: string;
+  estandarNumero?: number;
+  recomendacionId?: string;
+  historial: HistorialAccionMejora[];
+}
+
+export interface RegistroAuditoriaPlanAnual {
+  id: string;
+  fechaHora: string;
+  usuario: string;
+  modulo: 'HACER' | 'VERIFICAR' | 'ACTUAR' | 'PLANEAR' | 'SEGURIDAD_MEDICA';
+  accion: string;
+  detalle: string;
+}
+
+export interface PlanAnualSgsstData {
+  trabajadores: TrabajadorFichaSST[];
+  diagnosticosSalud: Record<number, DiagnosticoSaludEmpresa>;
+  hojasVidaIndicadores: HojaVidaIndicadorSST[];
+  registrosPeriodosIndicadores: RegistroPeriodoIndicador[];
+  estandaresMinimos: Record<number, EvaluacionEstandarMinimo[]>;
+  recomendaciones: RecomendacionIntervencion[];
+  accionesMejora: AccionMejoraPlan[];
+  auditoriaCambios: RegistroAuditoriaPlanAnual[];
+}
+

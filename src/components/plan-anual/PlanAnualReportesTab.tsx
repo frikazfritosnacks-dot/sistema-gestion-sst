@@ -1,11 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import {
+  AccionMejoraPlan,
   AreaPlanAnual,
+  EvaluacionEstandarMinimo,
+  HojaVidaIndicadorSST,
   IndicadorCalculado,
   PlanAnualVigencia,
+  RegistroPeriodoIndicador,
   ResponsablePlanOption,
+  TrabajadorFichaSST,
 } from '../../types/planAnual';
+import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
+import { CaracterizacionEmpresaDinamica } from '../../types/dynamicConfig';
 import { exportarPlanAnualExcel } from '../../services/planAnualService';
+import { calcularResultadoIndicadorPeriodo } from '../../services/planAnualSgsstService';
 import {
   FileSpreadsheet,
   Printer,
@@ -14,6 +22,9 @@ import {
   Filter,
   CheckCircle2,
   TrendingUp,
+  ShieldAlert,
+  Award,
+  Wrench,
 } from 'lucide-react';
 
 interface PlanAnualReportesTabProps {
@@ -21,6 +32,13 @@ interface PlanAnualReportesTabProps {
   indicadoresCalculados: IndicadorCalculado[];
   todasLasVigencias: Record<number, PlanAnualVigencia>;
   responsables: ResponsablePlanOption[];
+  hojasVidaIndicadores?: HojaVidaIndicadorSST[];
+  registrosPeriodosIndicadores?: RegistroPeriodoIndicador[];
+  trabajadores?: TrabajadorFichaSST[];
+  config?: CaracterizacionEmpresaDinamica;
+  riesgos?: RiesgoGTC45Item[];
+  estandares?: EvaluacionEstandarMinimo[];
+  accionesMejora?: AccionMejoraPlan[];
   onSeleccionarVigencia: (anio: number) => void;
 }
 
@@ -34,6 +52,13 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
   indicadoresCalculados,
   todasLasVigencias,
   responsables,
+  hojasVidaIndicadores = [],
+  registrosPeriodosIndicadores = [],
+  trabajadores = [],
+  config,
+  riesgos = [],
+  estandares = [],
+  accionesMejora = [],
   onSeleccionarVigencia,
 }) => {
   const [filtroMes, setFiltroMes] = useState<string>('TODOS');
@@ -427,60 +452,186 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
         </div>
       </div>
 
-      {/* Resultado consolidado de Indicadores KPI */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-        <h4 className="font-black text-slate-900 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-indigo-600" />
-          <span>Resultados de las cuentas de control (Indicadores KPI) — Año {plan.vigencia}</span>
-        </h4>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-[11px]">
-            <thead>
-              <tr className="bg-slate-100 text-slate-700 uppercase text-[10px]">
-                <th className="p-2.5">Código</th>
-                <th className="p-2.5">Qué se mide</th>
-                <th className="p-2.5">Tipo</th>
-                <th className="p-2.5">Meta esperada</th>
-                <th className="p-2.5 text-right">Resultado hoy</th>
-                <th className="p-2.5">Cómo va</th>
-                <th className="p-2.5">De dónde sale el dato</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {indicadoresCalculados.map((ind) => (
-                <tr key={ind.id}>
-                  <td className="p-2.5 font-mono font-black text-[#0f172a]">{ind.codigo}</td>
-                  <td className="p-2.5 font-bold text-slate-900">{ind.nombre}</td>
-                  <td className="p-2.5">{ind.tipo}</td>
-                  <td className="p-2.5 font-mono">{ind.metaTexto}</td>
-                  <td className="p-2.5 text-right font-mono font-black text-sm">
-                    {ind.resultadoActual}
-                    {ind.unidadMedida}
-                  </td>
-                  <td className="p-2.5">
-                    <span
-                      className={`px-2 py-0.5 rounded font-black text-[10px] ${
-                        ind.estadoCalculado === 'CUMPLE_META'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : ind.estadoCalculado === 'EN_SEGUIMIENTO'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {ind.estadoCalculado === 'CUMPLE_META'
-                        ? 'Va bien (Cumple)'
-                        : ind.estadoCalculado === 'EN_SEGUIMIENTO'
-                        ? 'En revisión'
-                        : 'Falta mejorar'}
-                    </span>
-                  </td>
-                  <td className="p-2.5 text-slate-600">{ind.detalleCalculo}</td>
+      {/* Resultado consolidado de los 6 Indicadores Mínimos Res. 0312 de 2019 */}
+      {hojasVidaIndicadores.length > 0 && config && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+          <h4 className="font-black text-slate-900 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-indigo-600" />
+            <span>Resultados de los Indicadores de SST (Res. 0312 Art. 30) — Año {plan.vigencia}</span>
+          </h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-[11px]">
+              <thead>
+                <tr className="bg-slate-100 text-slate-700 uppercase text-[10px]">
+                  <th className="p-2.5">Código</th>
+                  <th className="p-2.5">Indicador</th>
+                  <th className="p-2.5">Periodicidad</th>
+                  <th className="p-2.5">Último periodo</th>
+                  <th className="p-2.5 text-right">Resultado</th>
+                  <th className="p-2.5">Estado / Semáforo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {hojasVidaIndicadores.map((hv) => {
+                  const regs = registrosPeriodosIndicadores
+                    .filter((r) => r.anio === plan.vigencia)
+                    .sort((a, b) => a.mes - b.mes);
+                  const regRef =
+                    hv.periodicidad === 'ANUAL'
+                      ? regs.find((r) => r.mes === 0)
+                      : [...regs]
+                          .filter((r) => r.mes >= 1)
+                          .reverse()
+                          .find((r) => r.validado) || regs[regs.length - 1];
+                  const res = regRef
+                    ? calcularResultadoIndicadorPeriodo(hv, regRef, trabajadores, config)
+                    : null;
+                  return (
+                    <tr key={hv.id}>
+                      <td className="p-2.5 font-mono font-black text-[#0f172a]">{hv.codigo}</td>
+                      <td className="p-2.5 font-bold text-slate-900">{hv.nombre}</td>
+                      <td className="p-2.5">{hv.periodicidad}</td>
+                      <td className="p-2.5">{res ? res.periodoLabel : 'Sin datos'}</td>
+                      <td className="p-2.5 text-right font-mono font-black">
+                        {res && res.valor !== null
+                          ? `${res.valor} ${hv.unidadMedida}`
+                          : 'Pendiente'}
+                      </td>
+                      <td className="p-2.5 text-slate-700">
+                        {res ? res.textoSemaforo : 'Información pendiente de registro'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Seguimiento de Riesgos GTC 45 + 7 Estándares Mínimos + Acciones de Mejora (ACTUAR) */}
+      {(riesgos.length > 0 || estandares.length > 0 || accionesMejora.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
+            <h5 className="font-black text-slate-900 flex items-center gap-1.5">
+              <ShieldAlert className="h-4 w-4 text-rose-600" />
+              <span>Seguimiento de Riesgos GTC 45</span>
+            </h5>
+            <p className="text-[11px] text-slate-600">
+              Total peligros en matriz: <strong>{riesgos.length}</strong> · Prioritarios Nivel I y II:{' '}
+              <strong>
+                {riesgos.filter((r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II').length}
+              </strong>
+            </p>
+            <p className="text-[11px] text-slate-600">
+              Atendidos en actividades del Plan {plan.vigencia}:{' '}
+              <strong>
+                {
+                  riesgos.filter(
+                    (r) =>
+                      (r.interpretacionNR === 'I' || r.interpretacionNR === 'II') &&
+                      plan.actividades.some((a) => a.riesgoId === r.id)
+                  ).length
+                }
+              </strong>
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
+            <h5 className="font-black text-slate-900 flex items-center gap-1.5">
+              <Award className="h-4 w-4 text-emerald-600" />
+              <span>Siete Estándares Mínimos ({plan.vigencia})</span>
+            </h5>
+            <p className="text-[11px] text-slate-600">
+              Verificados como cumplidos:{' '}
+              <strong className="text-emerald-700">
+                {estandares.filter((e) => e.estadoRevision === 'CUMPLE_VERIFICADO').length} de{' '}
+                {estandares.length}
+              </strong>
+            </p>
+            <p className="text-[11px] text-slate-600">
+              Con soporte pendiente o mejora:{' '}
+              <strong className="text-amber-700">
+                {estandares.filter((e) => e.estadoRevision !== 'CUMPLE_VERIFICADO').length}
+              </strong>
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
+            <h5 className="font-black text-slate-900 flex items-center gap-1.5">
+              <Wrench className="h-4 w-4 text-[#f97316]" />
+              <span>Acciones de Mejora (ACTUAR)</span>
+            </h5>
+            <p className="text-[11px] text-slate-600">
+              Total registradas: <strong>{accionesMejora.length}</strong> · Cumplidas:{' '}
+              <strong className="text-emerald-700">
+                {accionesMejora.filter((a) => a.estado === 'CUMPLIDA').length}
+              </strong>{' '}
+              · Pendientes/En proceso:{' '}
+              <strong className="text-amber-700">
+                {accionesMejora.filter((a) => a.estado !== 'CUMPLIDA').length}
+              </strong>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Resultado consolidado de Indicadores de Gestión anteriores si existen */}
+      {indicadoresCalculados.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+          <h4 className="font-black text-slate-900 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-slate-500" />
+            <span>Indicadores Históricos de Gestión del Plan — Año {plan.vigencia}</span>
+          </h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-[11px]">
+              <thead>
+                <tr className="bg-slate-100 text-slate-700 uppercase text-[10px]">
+                  <th className="p-2.5">Código</th>
+                  <th className="p-2.5">Qué se mide</th>
+                  <th className="p-2.5">Tipo</th>
+                  <th className="p-2.5">Meta esperada</th>
+                  <th className="p-2.5 text-right">Resultado hoy</th>
+                  <th className="p-2.5">Cómo va</th>
+                  <th className="p-2.5">De dónde sale el dato</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {indicadoresCalculados.map((ind) => (
+                  <tr key={ind.id}>
+                    <td className="p-2.5 font-mono font-black text-[#0f172a]">{ind.codigo}</td>
+                    <td className="p-2.5 font-bold text-slate-900">{ind.nombre}</td>
+                    <td className="p-2.5">{ind.tipo}</td>
+                    <td className="p-2.5 font-mono">{ind.metaTexto}</td>
+                    <td className="p-2.5 text-right font-mono font-black text-sm">
+                      {ind.resultadoActual}
+                      {ind.unidadMedida}
+                    </td>
+                    <td className="p-2.5">
+                      <span
+                        className={`px-2 py-0.5 rounded font-black text-[10px] ${
+                          ind.estadoCalculado === 'CUMPLE_META'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : ind.estadoCalculado === 'EN_SEGUIMIENTO'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {ind.estadoCalculado === 'CUMPLE_META'
+                          ? 'Va bien (Cumple)'
+                          : ind.estadoCalculado === 'EN_SEGUIMIENTO'
+                          ? 'En revisión'
+                          : 'Falta mejorar'}
+                      </span>
+                    </td>
+                    <td className="p-2.5 text-slate-600">{ind.detalleCalculo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Comparativo Histórico Multianual entre Vigencias */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
