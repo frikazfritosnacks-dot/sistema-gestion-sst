@@ -25,8 +25,108 @@ import { getPhvaNorms } from './phvaService';
 import { NOMBRE_GERENTE_OFICIAL, normalizarEstadoEstandar } from './gerenteControlService';
 
 const STORAGE_KEY_PLANES = 'frikaz_plan_anual_vigencias_v1';
+const STORAGE_KEY_PLANES_HISTORICO_BACKUP = 'frikaz_plan_anual_historico_backup_v1';
 const PLAIN_LANG_FLAG_PLAN = 'frikaz_plan_anual_plain_lang_v1';
 const GERENTE_GATE_FLAG_PLAN = 'frikaz_plan_gerente_gate_v1';
+const REORG_2027_FLAG_PLAN = 'frikaz_plan_anual_2027_reorg_v1';
+const ONLY_2027_FLAG_PLAN = 'frikaz_plan_anual_only_2027_v1';
+
+// ============================================================================
+// UTILIDADES DE PRESUPUESTO DIFERENCIADO
+// ============================================================================
+
+export function formatPresupuestoProgramadoLabel(act: ActividadPlanAnual): string {
+  const est = act.presupuestoEstimado || 0;
+  if (est > 0) {
+    return `$${est.toLocaleString('es-CO')}`;
+  }
+  if (act.tipoRecurso === 'RECURSOS_EXISTENTES') {
+    return 'Recursos existentes (por confirmar)';
+  }
+  return 'Pendiente de valoración';
+}
+
+export interface ResumenPresupuestoPlan {
+  presupuestoGeneral: number;
+  programado: number;
+  aprobado: number;
+  ejecutado: number;
+  saldoDisponible: number;
+  saldoDisponibleGeneral: number;
+  saldoPorDistribuir: number;
+  porcentajeEjecucion: number;
+  superaPresupuestoGeneral: boolean;
+  ejecucionSuperaGeneral: boolean;
+  pendientesValoracionCount: number;
+  recursosExistentesCount: number;
+  conValorProgramadoCount: number;
+}
+
+export function calcularResumenPresupuestoPlan(
+  actividades: ActividadPlanAnual[],
+  presupuestoGeneralAprobado: number = 0
+): ResumenPresupuestoPlan {
+  let programado = 0;
+  let aprobado = 0;
+  let ejecutado = 0;
+  let pendientesValoracionCount = 0;
+  let recursosExistentesCount = 0;
+  let conValorProgramadoCount = 0;
+
+  // Deduplicación estricta por ID para evitar doble conteo entre actividades conectadas
+  const idsContados = new Set<string>();
+  actividades.forEach((a) => {
+    if (idsContados.has(a.id)) return;
+    idsContados.add(a.id);
+
+    const est = a.presupuestoEstimado || 0;
+    const apr = a.presupuestoAprobado || 0;
+    const eje = a.gastoEjecutado || 0;
+    programado += est;
+    aprobado += apr;
+    ejecutado += eje;
+
+    if (est > 0) {
+      conValorProgramadoCount += 1;
+    } else if (a.tipoRecurso === 'RECURSOS_EXISTENTES') {
+      recursosExistentesCount += 1;
+    } else {
+      pendientesValoracionCount += 1;
+    }
+  });
+
+  const presupuestoGeneral = Math.max(0, presupuestoGeneralAprobado || 0);
+  const saldoDisponibleGeneral = presupuestoGeneral - ejecutado;
+  const saldoDisponible =
+    presupuestoGeneral > 0
+      ? Math.max(0, presupuestoGeneral - ejecutado)
+      : Math.max(0, aprobado - ejecutado);
+  const saldoPorDistribuir = presupuestoGeneral - aprobado;
+
+  const baseCalculo =
+    presupuestoGeneral > 0 ? presupuestoGeneral : aprobado > 0 ? aprobado : programado;
+  const porcentajeEjecucion =
+    baseCalculo > 0 ? Math.round((ejecutado / baseCalculo) * 1000) / 10 : 0;
+
+  const superaPresupuestoGeneral = presupuestoGeneral > 0 && aprobado > presupuestoGeneral;
+  const ejecucionSuperaGeneral = presupuestoGeneral > 0 && ejecutado > presupuestoGeneral;
+
+  return {
+    presupuestoGeneral,
+    programado,
+    aprobado,
+    ejecutado,
+    saldoDisponible,
+    saldoDisponibleGeneral,
+    saldoPorDistribuir,
+    porcentajeEjecucion,
+    superaPresupuestoGeneral,
+    ejecucionSuperaGeneral,
+    pendientesValoracionCount,
+    recursosExistentesCount,
+    conValorProgramadoCount,
+  };
+}
 
 // ============================================================================
 // UTILIDADES DE RESPONSABLES Y EMPRESA
@@ -648,16 +748,23 @@ export function calcularIndicadoresPlan(
       resultadoActual = totalBase > 0 ? Math.round((totalLogrado / totalBase) * 1000) / 10 : 0;
       detalleCalculo = `${totalLogrado} de ${totalBase} tareas ya tienen su foto, acta o certificado aprobado por Gerencia.`;
     } else if (ind.tipoCalculo === 'AUTOMATICO_PRESUPUESTO') {
-      const presAsignado = actividadesFiltradas.reduce(
-        (acc, a) => acc + (a.presupuestoEstimado || 0),
-        0
+      const resumenPres = calcularResumenPresupuestoPlan(
+        actividadesFiltradas,
+        plan.presupuestoGeneralAprobado || 0
       );
-      const gastoReal = actividadesFiltradas.reduce((acc, a) => acc + (a.gastoEjecutado || 0), 0);
-      totalBase = presAsignado;
+      const presGeneral = resumenPres.presupuestoGeneral;
+      const presProgramado = resumenPres.programado;
+      const presAprobado = resumenPres.aprobado;
+      const gastoReal = resumenPres.ejecutado;
+      const baseCalculo =
+        presGeneral > 0 ? presGeneral : presAprobado > 0 ? presAprobado : presProgramado;
+      totalBase = baseCalculo;
       totalLogrado = gastoReal;
       resultadoActual =
-        presAsignado > 0 ? Math.round((gastoReal / presAsignado) * 1000) / 10 : 0;
-      detalleCalculo = `Se han usado $${gastoReal.toLocaleString('es-CO')} de $${presAsignado.toLocaleString('es-CO')} separados.`;
+        baseCalculo > 0 ? Math.round((gastoReal / baseCalculo) * 1000) / 10 : 0;
+      detalleCalculo = `General ${plan.vigencia}: $${presGeneral.toLocaleString('es-CO')} | Asignado en actividades: $${presAprobado.toLocaleString('es-CO')} | Ejecutado: $${gastoReal.toLocaleString('es-CO')} | Programado: ${
+        presProgramado > 0 ? `$${presProgramado.toLocaleString('es-CO')}` : 'Pendiente de valoración'
+      }.`;
     } else if (ind.tipoCalculo === 'AUTOMATICO_RIESGOS_CRITICOS') {
       const riesgosCriticos = riesgos.filter(
         (r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II'
@@ -683,8 +790,13 @@ export function calcularIndicadoresPlan(
     else if (ind.metaOperador === '<=') cumple = resultadoActual <= ind.metaValor;
     else cumple = resultadoActual === ind.metaValor;
 
+    const esInicioPresupuestoCero =
+      ind.tipoCalculo === 'AUTOMATICO_PRESUPUESTO' && totalBase === 0 && totalLogrado === 0;
+
     const estadoCalculado: IndicadorCalculado['estadoCalculado'] = cumple
       ? 'CUMPLE_META'
+      : esInicioPresupuestoCero
+      ? 'EN_SEGUIMIENTO'
       : ind.metaOperador === '>=' && resultadoActual >= ind.metaValor * 0.6
       ? 'EN_SEGUIMIENTO'
       : ind.metaOperador === '<=' && resultadoActual <= ind.metaValor * 1.25
@@ -741,7 +853,12 @@ export function generarAlertasPlan(
       });
     }
 
-    if (act.estado === 'CUMPLIDA') return;
+    if (act.estado === 'CUMPLIDA' || act.estado === 'APROBADA') return;
+
+    // Las actividades históricas de un año anterior formalmente reprogramadas al siguiente año no deben disparar alertas rojas de vencimiento
+    if (act.reprogramadaParaAnio && act.reprogramadaParaAnio > plan.vigencia) {
+      return;
+    }
 
     const limiteMs = new Date(`${act.fechaLimite}T00:00:00`).getTime();
     const diasRestantes = Math.ceil((limiteMs - hoyMs) / 86400000);
@@ -1063,12 +1180,16 @@ export function crearSiguienteOcurrencia(
     ),
     serieRecurrenteId: serieId,
     numeroOcurrencia: nextNum,
+    presupuestoEstimado: actividadCerrada.presupuestoEstimado || 0,
+    presupuestoAprobado: 0,
     gastoEjecutado: 0,
+    tipoRecurso: actividadCerrada.tipoRecurso || 'PENDIENTE_VALORACION',
     estado: 'PENDIENTE',
     evidencias: [],
     resultadoActividad: undefined,
     fechaCierre: undefined,
     cerradoPor: undefined,
+    revisionGerente: undefined,
     observaciones: `Siguiente fecha (#${nextNum}) creada automáticamente al cerrar la del periodo anterior (${actividadCerrada.fechaLimite}).`,
     historialRevisiones: [
       {
@@ -1454,15 +1575,10 @@ function buildPlan2026Seed(
   const rRuido = riesgosCriticos.find((r) => r.id === 'RSK-PROD-03') || riesgosCriticos[2];
   const rBiomec = riesgosCriticos.find((r) => r.id === 'RSK-PROD-04') || riesgosCriticos[3];
 
-  const hoy = new Date();
-  const addDaysIso = (days: number) => {
-    const d = new Date(hoy.getTime() + days * 86400000);
-    return d.toISOString().split('T')[0];
-  };
-  const mesHoy = hoy.getMonth() + 1;
+  const notaReprog2026 =
+    'Registro histórico 2026: sin ejecución confirmada a noviembre de 2026; reprogramada al Plan Anual 2027 para ejecución realista desde enero.';
 
   const actividades: ActividadPlanAnual[] = [
-    // 1. Pendiente de revisión: Política y Matriz GTC 45
     {
       id: 'act-2026-01',
       codigo: 'PA-2026-01',
@@ -1483,6 +1599,7 @@ function buildPlan2026Seed(
       fechaInicio: '2026-01-12',
       fechaLimite: '2026-02-15',
       programacionMensual: [1, 2],
+      reprogramadaParaAnio: 2027,
       responsableId: 'cargo-coordinador-vigia-sst',
       responsableNombre: 'Coordinador / Vigía de SST',
       responsableCargo: 'Coordinador / Vigía de SST',
@@ -1490,43 +1607,33 @@ function buildPlan2026Seed(
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
       aprobadorCargo: 'Gerente',
-      presupuestoEstimado: 500000,
+      recursosNecesarios: 'Tiempo del equipo SST y Gerencia (pendiente por confirmar).',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
-      estado: 'REQUIERE_REVISION',
+      estado: 'PENDIENTE',
       evidenciaRequerida: 'Política SST firmada, planillas de charla al personal y Matriz GTC 45 actualizada.',
-      evidencias: [
-        {
-          id: 'ev-2026-01',
-          nombreArchivo: 'Politica_SST_Borrrador_y_Matriz_GTC45_2026.pdf',
-          tipoSoporte: 'PDF',
-          descripcionSoporte: 'Documento preparado por el encargado SST para revisión y firma del Gerente.',
-          fechaCarga: '2026-02-10',
-          cargadoPor: 'Coordinador / Vigía de SST',
-          estadoRevision: 'PENDIENTE_REVISION',
-        },
-      ],
-      resultadoActividad: 'Borrador cargado; pendiente de revisión y aprobación por parte del Gerente.',
-      observaciones: 'Esperando validación oficial del Gerente General.',
+      evidencias: [],
+      observaciones: notaReprog2026,
       historialRevisiones: [
         {
           id: 'hr-2026-01',
-          fecha: '2026-02-10T10:30:00',
-          usuario: 'Coordinador / Vigía de SST',
-          rol: 'Responsable',
-          accion: 'EVIDENCIA_ADJUNTADA',
-          detalle: 'Borrador subido; pendiente revisión de Gerencia.',
+          fecha: '2026-11-23T09:00:00',
+          usuario: 'Reorganización 2027',
+          rol: 'Sistema',
+          accion: 'ACTUALIZADA',
+          detalle: 'Marcada como pendiente / reprogramada al Plan Anual 2027 (sin ejecución confirmada en 2026).',
         },
       ],
     },
-
-    // 2. En proceso: Riesgo Nivel I Calor Freidoras
     ...(rCalor
       ? [
           {
             id: 'act-2026-02',
             codigo: 'PA-2026-02',
             nombre: `Protección contra quemaduras en freidoras: pantallas, caretas y guantes para 250°C (${rCalor.codigo})`,
-            descripcion: `Cuidar al trabajador frente al peligro "${rCalor.peligroDescripcion}". Poner pantallas transparentes contra salpicaduras, alarma de temperatura (máximo 180 °C) y entregar guantes y careta certificados al ${rCalor.cargo}.`,
+            descripcion: `Cuidar al trabajador frente al peligro "${rCalor.peligroDescripcion}".`,
             criterioAceptacion:
               'Pantallas puestas en freidoras #1 y #2, alarma funcionando y planilla firmada de entrega de guantes y caretas.',
             area: 'SST' as const,
@@ -1542,8 +1649,9 @@ function buildPlan2026Seed(
             esRecurrente: false,
             periodicidad: 'ANUAL' as const,
             fechaInicio: '2026-03-01',
-            fechaLimite: addDaysIso(14),
+            fechaLimite: '2026-04-30',
             programacionMensual: [3, 4],
+            reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-frito',
             responsableNombre: 'Operario de Frito',
             responsableCargo: 'Operario de Frito',
@@ -1551,46 +1659,36 @@ function buildPlan2026Seed(
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
             aprobadorCargo: 'Gerente',
-            presupuestoEstimado: 2100000,
+            recursosNecesarios: 'Guantes térmicos, caretas y validación de pantallas protectoras.',
+            tipoRecurso: 'PENDIENTE_VALORACION' as const,
+            presupuestoEstimado: 0,
+            presupuestoAprobado: 0,
             gastoEjecutado: 0,
-            estado: 'EN_PROCESO' as const,
+            estado: 'PENDIENTE' as const,
             evidenciaRequerida:
               'Fotos de las pantallas protectoras y planilla firmada de entrega de guantes 250°C y careta ANSI Z87.1.',
-            evidencias: [
-              {
-                id: 'ev-2026-02',
-                nombreArchivo: 'Entrega_EPP_Termico_y_Barreras_Freidoras.pdf',
-                tipoSoporte: 'CERTIFICADO' as const,
-                descripcionSoporte: 'Soporte inicial cargado; pendiente revisión y visto bueno del Gerente.',
-                fechaCarga: '2026-04-24',
-                cargadoPor: 'Operario de Frito',
-                estadoRevision: 'PENDIENTE_REVISION' as const,
-              },
-            ],
-            resultadoActividad: 'Soportes cargados por el área; esperando revisión de Gerencia.',
-            observaciones: 'En revisión para confirmar cumplimiento en freidoras.',
+            evidencias: [],
+            observaciones: notaReprog2026,
             historialRevisiones: [
               {
                 id: 'hr-2026-02',
-                fecha: '2026-04-24T14:00:00',
-                usuario: 'Operario de Frito',
-                rol: 'Responsable',
-                accion: 'EVIDENCIA_ADJUNTADA' as const,
-                detalle: 'Soportes subidos para revisión de Gerencia.',
+                fecha: '2026-11-23T09:00:00',
+                usuario: 'Reorganización 2027',
+                rol: 'Sistema',
+                accion: 'ACTUALIZADA' as const,
+                detalle: 'Reprogramada a mayo–junio de 2027 sin ejecución previa confirmada.',
               },
             ],
           },
         ]
       : []),
-
-    // 3. Pendiente de revisión: Riesgo Nivel II Químico SGA
     ...(rQuimico
       ? [
           {
             id: 'act-2026-03',
             codigo: 'PA-2026-03',
             nombre: `Etiquetas claras en químicos (SGA), hojas de seguridad y punto lavaojos (${rQuimico.codigo})`,
-            descripcion: `Atender riesgo Nivel ${rQuimico.interpretacionNR}: ${rQuimico.peligroDescripcion}. Poner etiquetas claras (SGA - Res. 773/2021) en todos los frascos de desengrasante e hipoclorito y dejar listo el lavaojos en la zona de aseo y producción.`,
+            descripcion: `Atender riesgo Nivel ${rQuimico.interpretacionNR}: ${rQuimico.peligroDescripcion}.`,
             criterioAceptacion:
               'Todos los envases con su etiqueta clara, carpeta con hojas de seguridad a la mano y lavaojos funcionando.',
             area: 'SST' as const,
@@ -1606,8 +1704,9 @@ function buildPlan2026Seed(
             esRecurrente: false,
             periodicidad: 'ANUAL' as const,
             fechaInicio: '2026-06-01',
-            fechaLimite: addDaysIso(10),
-            programacionMensual: [6, 7, mesHoy],
+            fechaLimite: '2026-07-31',
+            programacionMensual: [6, 7],
+            reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-seleccion',
             responsableNombre: 'Operario de Selección',
             responsableCargo: 'Operario de Selección',
@@ -1615,48 +1714,36 @@ function buildPlan2026Seed(
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
             aprobadorCargo: 'Gerente',
-            presupuestoEstimado: 950000,
+            recursosNecesarios: 'Etiquetas SGA, carpeta de hojas de seguridad y guantes de nitrilo.',
+            tipoRecurso: 'PENDIENTE_VALORACION' as const,
+            presupuestoEstimado: 0,
+            presupuestoAprobado: 0,
             gastoEjecutado: 0,
-            estado: 'REQUIERE_REVISION' as const,
+            estado: 'PENDIENTE' as const,
             evidenciaRequerida:
               'Fotos de los envases etiquetados, carpeta de hojas de seguridad y planilla de charla.',
-            evidencias: [
-              {
-                id: 'ev-2026-03',
-                nombreArchivo: 'Evidencia_Rotulado_SGA_y_Lavaojos.pdf',
-                tipoSoporte: 'IMAGEN' as const,
-                descripcionSoporte:
-                  'Fotos de etiquetas en los envases de desengrasante e hipoclorito y prueba del lavaojos.',
-                fechaCarga: addDaysIso(-1),
-                cargadoPor: 'Operario de Selección',
-                estadoRevision: 'PENDIENTE_REVISION' as const,
-              },
-            ],
-            resultadoActividad:
-              'Se etiquetaron los envases de limpieza y se instaló el punto lavaojos.',
-            observaciones: 'Falta que la Gerencia revise las fotos y apruebe el cumplimiento.',
+            evidencias: [],
+            observaciones: notaReprog2026,
             historialRevisiones: [
               {
                 id: 'hr-2026-03',
-                fecha: new Date().toISOString(),
-                usuario: 'Operario de Selección',
-                rol: 'Responsable',
-                accion: 'EVIDENCIA_ADJUNTADA' as const,
-                detalle: 'Subió fotos de las etiquetas y el lavaojos para revisión.',
+                fecha: '2026-11-23T09:00:00',
+                usuario: 'Reorganización 2027',
+                rol: 'Sistema',
+                accion: 'ACTUALIZADA' as const,
+                detalle: 'Reprogramada a marzo de 2027 sin ejecución previa confirmada.',
               },
             ],
           },
         ]
       : []),
-
-    // 4. En proceso: Riesgo Nivel I Ruido
     ...(rRuido
       ? [
           {
             id: 'act-2026-04',
             codigo: 'PA-2026-04',
             nombre: `Medición anual de ruido (sonometría) y revisión de extractora (${rRuido.codigo})`,
-            descripcion: `Medir el nivel de ruido en la planta (límite legal Res. 1792/1990: 85 dBA) cerca de peladora, rebanadora y campana, y entregar protectores de oído (tapa oídos NRR >=25 dB).`,
+            descripcion: `Medir el nivel de ruido en la planta y verificar protectores auditivos.`,
             criterioAceptacion:
               'Informe de medición de ruido entregado por especialista y gomas antivibración revisadas en máquinas.',
             area: 'SST' as const,
@@ -1672,8 +1759,9 @@ function buildPlan2026Seed(
             esRecurrente: false,
             periodicidad: 'ANUAL' as const,
             fechaInicio: '2026-09-01',
-            fechaLimite: addDaysIso(7),
-            programacionMensual: [9, 10, mesHoy],
+            fechaLimite: '2026-10-30',
+            programacionMensual: [9, 10],
+            reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-pelado',
             responsableNombre: 'Operario de Pelado',
             responsableCargo: 'Operario de Pelado',
@@ -1681,35 +1769,27 @@ function buildPlan2026Seed(
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
             aprobadorCargo: 'Gerente',
-            presupuestoEstimado: 1400000,
+            recursosNecesarios: 'Gestión con ARL y protectores auditivos.',
+            tipoRecurso: 'PENDIENTE_VALORACION' as const,
+            presupuestoEstimado: 0,
+            presupuestoAprobado: 0,
             gastoEjecutado: 0,
-            estado: 'EN_PROCESO' as const,
+            estado: 'PENDIENTE' as const,
             evidenciaRequerida:
               'Informe de medición de ruido y planilla firmada de entrega de tapa oídos.',
             evidencias: [],
-            observaciones: 'Visita en coordinación con la ARL; falta subir el informe final.',
-            historialRevisiones: [
-              {
-                id: 'hr-2026-04',
-                fecha: '2026-09-01T08:00:00',
-                usuario: 'Coordinador / Vigía de SST',
-                rol: 'Planificador',
-                accion: 'CREADA' as const,
-                detalle: 'Creada automáticamente desde riesgo Nivel I GTC45-PR-03.',
-              },
-            ],
+            observaciones: notaReprog2026,
+            historialRevisiones: [],
           },
         ]
       : []),
-
-    // 5. Por hacer: Riesgo Nivel II Biomecánico / Pausas activas y tapetes antifatiga
     ...(rBiomec
       ? [
           {
             id: 'act-2026-05',
             codigo: 'PA-2026-05',
             nombre: `Poner tapetes blandos (antifatiga) y hacer pausas activas en selección y empaque (${rBiomec.codigo})`,
-            descripcion: `Mejorar la comodidad en mesa de selección y sellado para evitar dolores de espalda, manos y muñecas en el puesto de ${rBiomec.cargo}.`,
+            descripcion: `Mejorar la comodidad en mesa de selección y sellado para evitar dolores musculares en el puesto de ${rBiomec.cargo}.`,
             criterioAceptacion:
               'Tapetes puestos donde se trabaja de pie y planilla de pausas activas hechas durante el turno.',
             area: 'SST' as const,
@@ -1725,8 +1805,9 @@ function buildPlan2026Seed(
             esRecurrente: false,
             periodicidad: 'ANUAL' as const,
             fechaInicio: '2026-08-01',
-            fechaLimite: addDaysIso(15),
-            programacionMensual: [8, 9, mesHoy],
+            fechaLimite: '2026-09-30',
+            programacionMensual: [8, 9],
+            reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-empaque',
             responsableNombre: 'Operario de Empaque',
             responsableCargo: 'Operario de Empaque',
@@ -1734,33 +1815,25 @@ function buildPlan2026Seed(
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
             aprobadorCargo: 'Gerente',
-            presupuestoEstimado: 780000,
+            recursosNecesarios: 'Tapetes antifatiga y tiempo de pausas activas.',
+            tipoRecurso: 'PENDIENTE_VALORACION' as const,
+            presupuestoEstimado: 0,
+            presupuestoAprobado: 0,
             gastoEjecutado: 0,
             estado: 'PENDIENTE' as const,
             evidenciaRequerida: 'Factura o foto de los tapetes instalados y lista de pausas activas.',
             evidencias: [],
-            observaciones: 'Actividad por hacer en mesa de selección y empaque.',
-            historialRevisiones: [
-              {
-                id: 'hr-2026-05',
-                fecha: '2026-08-01T09:00:00',
-                usuario: 'Coordinador / Vigía de SST',
-                rol: 'Planificador',
-                accion: 'CREADA' as const,
-                detalle: 'Programada desde la Matriz de Peligros GTC 45.',
-              },
-            ],
+            observaciones: notaReprog2026,
+            historialRevisiones: [],
           },
         ]
       : []),
-
-    // 6. Por hacer: Comité de Convivencia Laboral (Q4)
     {
       id: 'act-2026-06',
       codigo: 'PA-2026-06',
       nombre: 'Reunión del Comité de Convivencia Laboral (4to trimestre)',
       descripcion:
-        'Reunión cada 3 meses del Comité de Convivencia (Res. 652/2012 y 1356/2012) para cuidar el respeto, buen trato y bienestar emocional en la planta.',
+        'Reunión del Comité de Convivencia (Res. 652/2012 y 1356/2012) para cuidar el respeto, buen trato y bienestar emocional en la planta.',
       criterioAceptacion: 'Acta firmada por quienes integran el comité guardada de forma confidencial.',
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
@@ -1768,13 +1841,12 @@ function buildPlan2026Seed(
       normaArticulos: 'Art. 9 Res. 652/2012 (mod. Art. 3 Res. 1356/2012)',
       requisitoObligatorioId: 'REQ-652-CONVIVENCIA',
       objetivoEspecificoId: 'obj-2026-02',
-      esRecurrente: true,
+      esRecurrente: false,
       periodicidad: 'TRIMESTRAL',
       fechaInicio: '2026-11-01',
-      fechaLimite: addDaysIso(22),
+      fechaLimite: '2026-12-15',
       programacionMensual: [3, 6, 9, 12],
-      serieRecurrenteId: 'serie-convivencia-2026',
-      numeroOcurrencia: 4,
+      reprogramadaParaAnio: 2027,
       responsableId: 'cargo-coordinador-vigia-sst',
       responsableNombre: 'Coordinador / Vigía de SST',
       responsableCargo: 'Coordinador / Vigía de SST',
@@ -1782,31 +1854,23 @@ function buildPlan2026Seed(
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
       aprobadorCargo: 'Gerente',
-      presupuestoEstimado: 200000,
+      recursosNecesarios: 'Reunión interna de seguimiento.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
       estado: 'PENDIENTE',
       evidenciaRequerida: 'Acta firmada de la reunión del Comité de Convivencia.',
       evidencias: [],
-      observaciones: 'Pendiente convocar la reunión trimestral y subir el acta.',
-      historialRevisiones: [
-        {
-          id: 'hr-2026-06',
-          fecha: '2026-10-01T08:00:00',
-          usuario: 'Calendario Automático',
-          rol: 'Sistema',
-          accion: 'RECURRENCIA_GENERADA',
-          detalle: 'Programada para fin de año según Res. 1356/2012.',
-        },
-      ],
+      observaciones: notaReprog2026,
+      historialRevisiones: [],
     },
-
-    // 7. En proceso Ambiental: Entrega ACU Res. 316/2018
     {
       id: 'act-2026-07',
       codigo: 'PA-2026-07',
       nombre: 'Entrega de Aceite de Cocina Usado (ACU) a recolector autorizado',
       descripcion:
-        'Dejar enfriar el aceite (< 40 °C), envasarlo bien tapado, pesarlo y entregar de 180 a 250 litros/mes al gestor autorizado por la Secretaría de Ambiente (Res. 316/2018).',
+        'Dejar enfriar el aceite (< 40 °C), envasarlo bien tapado y entregarlo al gestor autorizado por la Secretaría de Ambiente (Res. 316/2018).',
       criterioAceptacion: 'Recibo firmado con los litros o kilos entregados y certificado del gestor SDA.',
       area: 'AMBIENTAL',
       origen: 'NORMA_OBLIGATORIA',
@@ -1814,13 +1878,12 @@ function buildPlan2026Seed(
       normaArticulos: 'Artículos 6, 7 y 8',
       requisitoObligatorioId: 'REQ-316-ACU-MENSUAL',
       objetivoEspecificoId: 'obj-2026-03',
-      esRecurrente: true,
+      esRecurrente: false,
       periodicidad: 'MENSUAL',
       fechaInicio: '2026-10-01',
-      fechaLimite: addDaysIso(18),
+      fechaLimite: '2026-12-20',
       programacionMensual: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      serieRecurrenteId: 'serie-acu-2026',
-      numeroOcurrencia: 10,
+      reprogramadaParaAnio: 2027,
       responsableId: 'rol-lider-ambiental',
       responsableNombre: 'Líder de Gestión Ambiental',
       responsableCargo: 'Encargado Ambiental / Jefe de Planta',
@@ -1828,36 +1891,17 @@ function buildPlan2026Seed(
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
       aprobadorCargo: 'Gerente',
-      presupuestoEstimado: 1200000,
+      recursosNecesarios: 'Canecas selladas y recibos del gestor autorizado.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
-      estado: 'REQUIERE_REVISION',
+      estado: 'PENDIENTE',
       evidenciaRequerida: 'Certificado mensual de recolección de aceite entregado por el gestor autorizado.',
-      evidencias: [
-        {
-          id: 'ev-2026-07',
-          nombreArchivo: 'Manifiesto_ACU_Recoleccion_2026_SDA.pdf',
-          tipoSoporte: 'CERTIFICADO',
-          descripcionSoporte: 'Recibo del gestor autorizado subido; pendiente revisión y aprobación por Gerencia.',
-          fechaCarga: '2026-10-28',
-          cargadoPor: 'Líder de Gestión Ambiental',
-          estadoRevision: 'PENDIENTE_REVISION',
-        },
-      ],
-      resultadoActividad: 'Recibo cargado en el sistema; falta revisión y aprobación del Gerente.',
-      observaciones: 'Pendiente revisión de Gerencia sobre los soportes ambientales.',
-      historialRevisiones: [
-        {
-          id: 'hr-2026-07',
-          fecha: '2026-10-28T11:00:00',
-          usuario: 'Líder de Gestión Ambiental',
-          rol: 'Responsable',
-          accion: 'EVIDENCIA_ADJUNTADA',
-          detalle: 'Recibo de aceite cargado para revisión de Gerencia.',
-        },
-      ],
+      evidencias: [],
+      observaciones: notaReprog2026,
+      historialRevisiones: [],
     },
-
-    // 8. En proceso Ambiental: Trampa de Grasas
     {
       id: 'act-2026-08',
       codigo: 'PA-2026-08',
@@ -1871,13 +1915,12 @@ function buildPlan2026Seed(
       normaArticulos: 'Capítulo VI (Parámetros Grasas y Aceites)',
       requisitoObligatorioId: 'REQ-0631-TRAMPA-GRASAS',
       objetivoEspecificoId: 'obj-2026-03',
-      esRecurrente: true,
+      esRecurrente: false,
       periodicidad: 'MENSUAL',
       fechaInicio: '2026-11-01',
-      fechaLimite: addDaysIso(12),
+      fechaLimite: '2026-12-20',
       programacionMensual: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      serieRecurrenteId: 'serie-trampa-2026',
-      numeroOcurrencia: 11,
+      reprogramadaParaAnio: 2027,
       responsableId: 'rol-lider-ambiental',
       responsableNombre: 'Líder de Gestión Ambiental',
       responsableCargo: 'Encargado Ambiental / Jefe de Planta',
@@ -1885,16 +1928,17 @@ function buildPlan2026Seed(
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
       aprobadorCargo: 'Gerente',
-      presupuestoEstimado: 900000,
+      recursosNecesarios: 'Implementos de limpieza y bolsas selladas.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
-      estado: 'EN_PROCESO',
+      estado: 'PENDIENTE',
       evidenciaRequerida: 'Planilla de limpieza de trampa de grasas firmada y foto.',
       evidencias: [],
-      observaciones: 'Limpieza en marcha.',
+      observaciones: notaReprog2026,
       historialRevisiones: [],
     },
-
-    // 9. Por hacer Diciembre: Autoevaluación Res. 0312 de 2019
     {
       id: 'act-2026-09',
       codigo: 'PA-2026-09',
@@ -1912,6 +1956,7 @@ function buildPlan2026Seed(
       fechaInicio: '2026-12-01',
       fechaLimite: '2026-12-22',
       programacionMensual: [12],
+      reprogramadaParaAnio: 2027,
       responsableId: 'cargo-coordinador-vigia-sst',
       responsableNombre: 'Coordinador / Vigía de SST',
       responsableCargo: 'Coordinador / Vigía de SST',
@@ -1919,12 +1964,15 @@ function buildPlan2026Seed(
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
       aprobadorCargo: 'Gerente',
-      presupuestoEstimado: 650000,
+      recursosNecesarios: 'Revisión interna del cierre anual y radicación en ARL.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
       estado: 'PENDIENTE',
       evidenciaRequerida: `Calificación de ${cantidadEstandares} estándares firmada y comprobante de envío a la ARL.`,
       evidencias: [],
-      observaciones: `Cierre obligatorio del año para ${config.numeroTrabajadores} trabajadores.`,
+      observaciones: `${notaReprog2026} Cierre base para ${config.numeroTrabajadores} trabajadores.`,
       historialRevisiones: [],
     },
   ];
@@ -1932,9 +1980,9 @@ function buildPlan2026Seed(
   return {
     id: 'plan-vigencia-2026',
     vigencia: 2026,
-    titulo: 'Plan Anual de Seguridad, Salud y Ambiente 2026',
+    titulo: 'Plan Anual de Seguridad, Salud y Ambiente 2026 (Histórico / Reprogramado a 2027)',
     objetivoGeneral:
-      'Evitar quemaduras, cortes, pérdida de oído y dolores musculares en el equipo de Frikaz S.A.S., cumpliendo los Estándares Mínimos de la Resolución 0312 de 2019, el Decreto 1072 de 2015 y el cuidado ambiental en la planta de Bosa.',
+      'Registro histórico del periodo 2026 de Frikaz S.A.S. Las actividades sin ejecución confirmada a noviembre de 2026 se mantienen como pendientes / reprogramadas al Plan Anual 2027 con $0 de presupuesto ejecutado.',
     fechaElaboracion: '2026-01-12',
     responsableId: 'cargo-coordinador-vigia-sst',
     responsableNombre: 'Coordinador / Vigía de SST',
@@ -1951,16 +1999,1236 @@ function buildPlan2026Seed(
         id: 'h-2026-01',
         fechaHora: '2026-01-16T10:00:00',
         usuario: 'Coordinador / Vigía de SST',
-        accion: 'Enviado a revisión de Gerencia',
-        detalle: `Plan Anual 2026 (${config.numeroTrabajadores} trabajadores, ${grupo}) listo para revisión y aprobación del Gerente General.`,
+        accion: 'Registro inicial 2026',
+        detalle: `Plan Anual 2026 (${config.numeroTrabajadores} trabajadores, ${grupo}) registrado.`,
+      },
+      {
+        id: 'h-2026-reorg-2027',
+        fechaHora: '2026-11-23T09:00:00',
+        usuario: 'Coordinador / Vigía de SST',
+        accion: 'Reorganización y trazabilidad hacia 2027',
+        detalle:
+          'A noviembre de 2026 no hay ejecución confirmada; las actividades no ejecutadas se conservan en el histórico 2026 como pendientes / reprogramadas al Plan Anual 2027 con $0 ejecutado.',
       },
     ],
   };
 }
 
 // ============================================================================
-// PERSISTENCIA MULTIANUAL INDEPENDIENTE
+// PLAN ANUAL 2027 — PROGRAMACIÓN REALISTA ENERO A DICIEMBRE DE 2027 (34 TAREAS)
 // ============================================================================
+
+export function buildPlan2027Seed(
+  config: CaracterizacionEmpresaDinamica,
+  riesgos: RiesgoGTC45Item[]
+): PlanAnualVigencia {
+  const { objetivos, indicadores } = generarObjetivosYIndicadoresIniciales(2027);
+  const { grupo, cantidadEstandares } = determinarGrupoEstandares0312(config);
+
+  const findRisk = (id: string, fallbackIdx = 0) =>
+    riesgos.find((r) => r.id === id) || riesgos[fallbackIdx];
+
+  const rCalor = findRisk('RSK-PROD-01', 0);
+  const rQuimico = findRisk('RSK-PROD-02', 1);
+  const rRuido = findRisk('RSK-PROD-03', 2);
+  const rBiomec = findRisk('RSK-PROD-04', 3);
+  const rMaq = findRisk('RSK-CIRC-02', 4) || findRisk('RSK-PROD-05', 0);
+  const rElect = findRisk('RSK-INST-01', 0);
+  const rGas = findRisk('RSK-INST-02', 0);
+  const rOrden = findRisk('RSK-ALM-ASEO-02', 0);
+  const rEmerg = findRisk('RSK-EMERG-02', 0);
+
+  interface Spec2027 {
+    num: number;
+    mes: number;
+    nombre: string;
+    descripcion: string;
+    criterioAceptacion: string;
+    fechaInicio: string;
+    fechaLimite: string;
+    area?: 'SST' | 'AMBIENTAL' | 'INTEGRAL';
+    origen?: 'RIESGO_GTC45' | 'NORMA_OBLIGATORIA' | 'MANUAL';
+    objetivoId: string;
+    responsableId?: string;
+    responsableNombre?: string;
+    responsableCargo?: string;
+    recursosNecesarios: string;
+    tipoRecurso: 'PENDIENTE_VALORACION' | 'RECURSOS_EXISTENTES';
+    confirmacionRecursos: string;
+    evidenciaRequerida: string;
+    observaciones: string;
+    riesgo?: RiesgoGTC45Item;
+    normaOficial?: string;
+    normaArticulos?: string;
+    requisitoObligatorioId?: string;
+    planMejoraRiesgoId?: string;
+    esPlanEmergencias?: boolean;
+    capacitacionNombre?: string;
+    formatoId?: string;
+    formatoNombre?: string;
+    reprogramacionOrigen?: {
+      anioOrigen: number;
+      codigoOriginal: string;
+      fechaInicioOriginal: string;
+      fechaLimiteOriginal: string;
+      motivo: string;
+    };
+  }
+
+  const specs: Spec2027[] = [
+    // ENERO (1–3)
+    {
+      num: 1,
+      mes: 1,
+      nombre: 'Revisión y actualización de la matriz de riesgos',
+      descripcion:
+        'Revisar con el equipo cada puesto de trabajo (selección, pelado, fritura, empaque, bodega y ruta) para confirmar qué peligros siguen presentes y actualizar la Matriz de Riesgos GTC 45.',
+      criterioAceptacion:
+        'Matriz GTC 45 revisada y actualizada para los 10 trabajadores, con registro de participación y visto bueno de Andrea Orjuela – Gerente.',
+      fechaInicio: '2027-01-11',
+      fechaLimite: '2027-01-22',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Tiempo del responsable SST, equipo de planta y plataforma digital actual.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes; disponibilidad horaria por confirmar en enero 2027.',
+      evidenciaRequerida: 'Matriz GTC 45 actualizada y lista de asistencia de revisión con trabajadores.',
+      observaciones:
+        'Reprogramada desde la vigencia 2026 (sin ejecución confirmada a noviembre de 2026). Punto de partida del año 2027.',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.15',
+      requisitoObligatorioId: 'REQ-1072-MATRIZ-RIESGOS',
+      formatoId: 'fmt-reporte-incidentes-condiciones',
+      formatoNombre: 'Reporte de condiciones inseguras e incidentes',
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-01',
+        fechaInicioOriginal: '2026-01-12',
+        fechaLimiteOriginal: '2026-02-15',
+        motivo: 'Sin ejecución confirmada a noviembre de 2026; reprogramada al inicio de 2027.',
+      },
+    },
+    {
+      num: 2,
+      mes: 1,
+      nombre: 'Identificación de necesidades',
+      descripcion:
+        'Hacer un recorrido sencillo con Gerencia y planta para anotar qué elementos de protección, señalización, arreglos de máquinas o compras se necesitan realmente en 2027 y pedir cotizaciones.',
+      criterioAceptacion:
+        'Lista clara de necesidades prioritarias de la planta valorada y entregada a Andrea Orjuela – Gerente.',
+      fechaInicio: '2027-01-18',
+      fechaLimite: '2027-01-27',
+      area: 'INTEGRAL',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Tiempo de revisión en planta y cotizaciones de proveedores locales.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Con este levantamiento se valorará el presupuesto 2027 para aprobación de Gerencia.',
+      evidenciaRequerida: 'Listado firmado de necesidades priorizadas y cotizaciones de respaldo.',
+      observaciones: 'Permite definir presupuestos reales antes de iniciar compras en planta.',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.8 y 2.2.4.6.17',
+      requisitoObligatorioId: 'REQ-1072-POLITICA',
+    },
+    {
+      num: 3,
+      mes: 1,
+      nombre: 'Organización de documentos y formatos',
+      descripcion:
+        'Organizar en carpeta física y digital los formatos en Word y registros que usarán los trabajadores en 2027 (inspecciones, entrega de EPP, capacitaciones, químicos y emergencias).',
+      criterioAceptacion:
+        'Carpeta ordenada de formatos vigentes en planta y copia digital lista para usar durante el año.',
+      fechaInicio: '2027-01-22',
+      fechaLimite: '2027-01-30',
+      area: 'INTEGRAL',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Carpetas, impresiones básicas de formatos y archivo digital actual.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Costo de papelería e impresión pendiente de valoración en enero 2027.',
+      evidenciaRequerida: 'Foto o listado de formatos impresos y carpeta de soportes organizada.',
+      observaciones: 'Conecta directamente con los formatos editables de Planes de Mejora y Emergencias.',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.12 (Documentación)',
+      formatoId: 'fmt-registro-capacitacion-riesgos',
+      formatoNombre: 'Formatos de inspección y capacitación SST',
+    },
+
+    // FEBRERO (4–7)
+    {
+      num: 4,
+      mes: 2,
+      nombre: 'Inspección de maquinaria',
+      descripcion:
+        'Revisar una por una la peladora, rebanadora, freidoras y selladora para comprobar que sus tapas protectoras estén fijas, tornillos completos y botones de parada funcionando.',
+      criterioAceptacion:
+        'Formato de inspección de maquinaria diligenciado por completo y reporte de ajustes necesarios.',
+      fechaInicio: '2027-02-01',
+      fechaLimite: '2027-02-12',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-pelado',
+      responsableNombre: 'Operario de Pelado',
+      responsableCargo: 'Operario de Pelado',
+      recursosNecesarios: 'Tiempo de inspección visual y tornillería o ajuste mecánico si se detecta falla.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Inspección con tiempo interno; posibles repuestos pendientes de valoración.',
+      evidenciaRequerida: 'Formato de inspección de maquinaria y atrapamiento diligenciado con fotos.',
+      observaciones: 'Enlazada al Plan de Mejora contra atrapamientos.',
+      riesgo: rMaq,
+      planMejoraRiesgoId: 'plan-mejora-atrapamiento',
+      formatoId: 'fmt-inspeccion-maquinaria-atrapamiento',
+      formatoNombre: 'Lista de chequeo de seguridad en máquinas',
+    },
+    {
+      num: 5,
+      mes: 2,
+      nombre: 'Revisión de riesgos eléctricos',
+      descripcion:
+        'Revisar visualmente cables, clavijas, tomas y frente de tableros eléctricos en zonas húmedas (sin abrir cajas de tacos) y programar electricista certificado si falta alguna tapa o arreglo.',
+      criterioAceptacion:
+        'Lista de chequeo eléctrica diligenciada, tableros despejados y solicitud de arreglo técnico si aplica.',
+      fechaInicio: '2027-02-08',
+      fechaLimite: '2027-02-18',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Señalización de tablero eléctrico y servicio de electricista certificado si hay hallazgos.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Valor del electricista pendiente de cotización si la inspección encuentra fallas.',
+      evidenciaRequerida: 'Formato de revisión eléctrica diligenciado y fotos de tableros libres.',
+      observaciones: 'Ningún trabajador sin formación eléctrica debe abrir tableros ni empalmar cables.',
+      riesgo: rElect,
+      planMejoraRiesgoId: 'plan-mejora-riesgo_electrico',
+      formatoId: 'fmt-inspeccion-electrica',
+      formatoNombre: 'Lista de chequeo visual eléctrica',
+    },
+    {
+      num: 6,
+      mes: 2,
+      nombre: 'Inspección de conexiones de gas',
+      descripcion:
+        'Revisar visualmente válvulas, mangueras y llave principal de corte de gas en freidoras, despejar accesos y verificar mantenimiento con técnico autorizado en gas si se requiere.',
+      criterioAceptacion:
+        'Formato de chequeo de gas diligenciado, llave general señalizada y confirmación técnica vigente.',
+      fechaInicio: '2027-02-12',
+      fechaLimite: '2027-02-22',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de Frito',
+      responsableCargo: 'Operario de Frito',
+      recursosNecesarios: 'Señalización de llave de corte rápido y revisión de técnico de gas si se requiere.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Costo de revisión técnica de gas pendiente de valoración según proveedor.',
+      evidenciaRequerida: 'Formato de inspección de gas firmado y foto de la llave principal libre y señalizada.',
+      observaciones: 'Enlazada al Plan de Mejora de fuga de gas.',
+      riesgo: rGas,
+      planMejoraRiesgoId: 'plan-mejora-fuga_gas',
+      formatoId: 'fmt-inspeccion-gas',
+      formatoNombre: 'Lista de chequeo de conexiones de gas',
+    },
+    {
+      num: 7,
+      mes: 2,
+      nombre: 'Identificación de condiciones inseguras',
+      descripcion:
+        'Recorrido participativo por toda la planta y bodega para que los trabajadores reporten pisos lisos, cables sueltos, obstáculos o fallas antes de que causen un accidente.',
+      criterioAceptacion:
+        'Registro de condiciones inseguras diligenciado con responsables y fechas de solución.',
+      fechaInicio: '2027-02-18',
+      fechaLimite: '2027-02-27',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Tiempo del Vigía/COPASST y formato de reporte de condiciones inseguras.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes del equipo en planta (por confirmar horario).',
+      evidenciaRequerida: 'Formato de reporte de incidentes y condiciones inseguras firmado con fotos.',
+      observaciones: 'Cumple con la participación mensual de trabajadores y Vigía/COPASST.',
+      normaOficial: 'Resolución 2013 de 1986 / Decreto 1072 de 2015',
+      normaArticulos: 'Art. 7 Res. 2013/1986',
+      requisitoObligatorioId: 'REQ-2013-COPASST',
+      formatoId: 'fmt-reporte-incidentes-condiciones',
+      formatoNombre: 'Formato de reporte de condiciones inseguras',
+    },
+
+    // MARZO (8–10)
+    {
+      num: 8,
+      mes: 3,
+      nombre: 'Organización y aseo',
+      descripcion:
+        'Jornada de orden y limpieza en áreas de selección, pelado, fritura, empaque y trampa de grasas, asegurando pasillos libres y uso del aviso de piso húmedo.',
+      criterioAceptacion:
+        'Lista de chequeo de orden y aseo al día, pasillos despejados y limpieza ambiental registrada.',
+      fechaInicio: '2027-03-01',
+      fechaLimite: '2027-03-12',
+      area: 'INTEGRAL',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-03',
+      responsableId: 'rol-lider-ambiental',
+      responsableNombre: 'Líder de Gestión Ambiental',
+      responsableCargo: 'Encargado Ambiental / Jefe de Planta',
+      recursosNecesarios: 'Implementos de aseo, aviso de piso húmedo y entrega segura de ACU/grasas.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Insumos de aseo y señalización de piso húmedo pendientes de confirmar.',
+      evidenciaRequerida: 'Lista de chequeo de orden y aseo firmada y fotos de zonas despejadas.',
+      observaciones: 'Conecta con el Plan de Mejora de orden y aseo y cuidado ambiental de planta.',
+      riesgo: rOrden,
+      normaOficial: 'Resolución 0631 de 2015 / Resolución 316 de 2018',
+      requisitoObligatorioId: 'REQ-0631-TRAMPA-GRASAS',
+      planMejoraRiesgoId: 'plan-mejora-orden_aseo',
+      capacitacionNombre: 'Orden, limpieza inmediata y prevención de caídas en planta',
+      formatoId: 'fmt-inspeccion-orden-aseo',
+      formatoNombre: 'Lista de chequeo de orden y aseo',
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-08',
+        fechaInicioOriginal: '2026-11-01',
+        fechaLimiteOriginal: '2026-12-20',
+        motivo: 'Sin ejecución confirmada a noviembre de 2026; reorganizada en marzo 2027.',
+      },
+    },
+    {
+      num: 9,
+      mes: 3,
+      nombre: 'Identificación de productos químicos',
+      descripcion:
+        'Hacer la lista real de todos los desengrasantes, jabones y desinfectantes usados en planta, pedir sus Fichas de Seguridad (FDS) al proveedor y etiquetar bien cada envase.',
+      criterioAceptacion:
+        'Inventario real de químicos lleno, 100% de envases con etiqueta clara (cero botellas de bebidas) y FDS en carpeta.',
+      fechaInicio: '2027-03-08',
+      fechaLimite: '2027-03-20',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de Selección',
+      responsableCargo: 'Operario de Selección',
+      recursosNecesarios: 'Impresión de etiquetas resistentes al agua, carpeta para FDS y guantes largos de nitrilo.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Costo de etiquetas e implementos pendiente de valoración con Gerencia.',
+      evidenciaRequerida: 'Inventario real de químicos diligenciado, carpeta FDS y fotos de envases etiquetados.',
+      observaciones: 'Reprogramada de 2026 a marzo 2027. Enlazada al Plan de Mejora de productos químicos.',
+      riesgo: rQuimico,
+      planMejoraRiesgoId: 'plan-mejora-productos_quimicos',
+      capacitacionNombre: 'Uso seguro y etiquetado de productos de limpieza y desinfección',
+      formatoId: 'fmt-inventario-quimicos',
+      formatoNombre: 'Inventario real y rotulado de productos químicos',
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-03',
+        fechaInicioOriginal: '2026-06-01',
+        fechaLimiteOriginal: '2026-07-31',
+        motivo: 'Sin ejecución confirmada a noviembre de 2026; reprogramada a marzo 2027.',
+      },
+    },
+    {
+      num: 10,
+      mes: 3,
+      nombre: 'Revisión de almacenamiento',
+      descripcion:
+        'Verificar estanterías, altura segura de cajas y canastillas (máximo 1.50 m), almacenamiento separado de químicos vs. alimentos y ubicación segura del aceite usado (ACU).',
+      criterioAceptacion:
+        'Bodega y zona de almacenamiento ordenadas sin riesgo de caída de objetos ni mezcla de químicos con insumos.',
+      fechaInicio: '2027-03-18',
+      fechaLimite: '2027-03-30',
+      area: 'INTEGRAL',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-03',
+      responsableId: 'rol-lider-ambiental',
+      responsableNombre: 'Líder de Gestión Ambiental',
+      responsableCargo: 'Encargado Ambiental / Jefe de Planta',
+      recursosNecesarios: 'Tiempo de revisión del equipo y rótulos de separación bodega/químicos/ACU.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Pendiente confirmar si se requieren estibas o señalización adicional.',
+      evidenciaRequerida: 'Fotos del almacenamiento organizado y lista de verificación firmada.',
+      observaciones: 'Asegura almacenamiento separado de alimentos, químicos de limpieza y aceite usado.',
+      normaOficial: 'Resolución 316 de 2018 / Resolución 2674 de 2013',
+      requisitoObligatorioId: 'REQ-316-ACU-MENSUAL',
+      formatoId: 'fmt-inspeccion-orden-aseo',
+      formatoNombre: 'Verificación de orden y almacenamiento seguro',
+    },
+
+    // ABRIL (11–12)
+    {
+      num: 11,
+      mes: 4,
+      nombre: 'Capacitación sobre riesgo biomecánico',
+      descripcion:
+        'Charla práctica de 20 minutos para todo el personal sobre cómo evitar dolores en espalda, hombros y muñecas durante el pelado, selección, empaque y cargue en ruta.',
+      criterioAceptacion:
+        '10 trabajadores asistentes con lista de asistencia y evaluación corta de comprensión.',
+      fechaInicio: '2027-04-05',
+      fechaLimite: '2027-04-16',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Guía de capacitación del sistema y 20 minutos de jornada (o apoyo gratuito ARL).',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa material propio de la herramienta; horario por confirmar con producción.',
+      evidenciaRequerida: 'Lista de asistencia firmada y evaluación corta resuelta por el equipo.',
+      observaciones: 'Enlazada al Plan de Mejora de riesgo biomecánico.',
+      riesgo: rBiomec,
+      planMejoraRiesgoId: 'plan-mejora-biomecanico',
+      capacitacionNombre: 'Cuidado de la espalda, muñecas y pausas activas en planta y reparto',
+      formatoId: 'fmt-registro-capacitacion-riesgos',
+      formatoNombre: 'Registro de capacitación y evaluación sencilla',
+    },
+    {
+      num: 12,
+      mes: 4,
+      nombre: 'Orientación sobre posturas y manipulación de cargas',
+      descripcion:
+        'Práctica en puesto de trabajo: levantar cajas doblando rodillas, respetar pesos máximos (25 kg hombres / 12.5 kg mujeres), usar carretilla y revisar pausas activas y tapetes.',
+      criterioAceptacion:
+        'Lista de chequeo ergonómica aplicada en planta y rutina diaria de pausas activas acordada.',
+      fechaInicio: '2027-04-19',
+      fechaLimite: '2027-04-29',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-empaque',
+      responsableNombre: 'Operario de Empaque',
+      responsableCargo: 'Operario de Empaque',
+      recursosNecesarios: 'Carretilla existente y valoración de tapetes antifatiga si Gerencia los aprueba.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Práctica con equipo actual; compra de tapetes pendiente de valoración y aprobación.',
+      evidenciaRequerida: 'Formato de revisión ergonómica y pausas activas diligenciado con fotos.',
+      observaciones: 'Reprogramada desde 2026 para ejecución realista en abril 2027.',
+      riesgo: rBiomec,
+      planMejoraRiesgoId: 'plan-mejora-biomecanico',
+      formatoId: 'fmt-ergonomia-pausas',
+      formatoNombre: 'Chequeo de posturas, cargas y pausas activas',
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-05',
+        fechaInicioOriginal: '2026-08-01',
+        fechaLimiteOriginal: '2026-09-30',
+        motivo: 'Sin ejecución confirmada a noviembre de 2026; reprogramada a abril 2027.',
+      },
+    },
+
+    // MAYO (13–15)
+    {
+      num: 13,
+      mes: 5,
+      nombre: 'Capacitación sobre calor',
+      descripcion:
+        'Explicación sencilla a operarios de fritura y apoyo sobre riesgos de aceite a 180 °C, hidratación cada hora, escurrido previo de producto y uso obligatorio de careta, delantal y guantes térmicos.',
+      criterioAceptacion:
+        'Personal de fritura y planta capacitado con lista de asistencia y chequeo de zona de freidoras.',
+      fechaInicio: '2027-05-03',
+      fechaLimite: '2027-05-12',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de Frito',
+      responsableCargo: 'Operario de Frito',
+      recursosNecesarios: 'Guía de capacitación de calor, punto de agua potable y chequeo de extractores.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Charla interna con recursos existentes; reposición de EPP térmico se revisa en junio.',
+      evidenciaRequerida: 'Lista de asistencia firmada y lista de chequeo de calor en freidoras.',
+      observaciones: 'Reprogramada desde 2026 y conectada con el Plan de Mejora de calor extremo.',
+      riesgo: rCalor,
+      planMejoraRiesgoId: 'plan-mejora-calor_extremo',
+      capacitacionNombre: 'Trabajo seguro frente al calor y prevención de quemaduras en freidoras',
+      formatoId: 'fmt-inspeccion-calor-freidoras',
+      formatoNombre: 'Inspección de calor y freidoras',
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-02',
+        fechaInicioOriginal: '2026-03-01',
+        fechaLimiteOriginal: '2026-04-30',
+        motivo: 'Sin ejecución confirmada a noviembre de 2026; reprogramada a mayo 2027.',
+      },
+    },
+    {
+      num: 14,
+      mes: 5,
+      nombre: 'Capacitación sobre ruido',
+      descripcion:
+        'Charla práctica sobre cuidado del oído en zona de peladora, rebanadora y extractora: cómo limpiar y ponerse bien los tapaoídos y gestionar apoyo de la ARL para confirmar decibeles.',
+      criterioAceptacion:
+        'Asistencia firmada, lista de chequeo auditiva y solicitud o resultado de sonometría con ARL.',
+      fechaInicio: '2027-05-12',
+      fechaLimite: '2027-05-21',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-pelado',
+      responsableNombre: 'Operario de Pelado',
+      responsableCargo: 'Operario de Pelado',
+      recursosNecesarios: 'Material de capacitación, tapaoídos limpios y gestión sin costo ante ARL.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Pendiente confirmar cobertura de sonometría con ARL o costo de proveedor.',
+      evidenciaRequerida: 'Registro de asistencia, chequeo auditivo y soporte de gestión con ARL.',
+      observaciones: 'Reprogramada desde 2026. Enlazada al Plan de Mejora de ruido constante.',
+      riesgo: rRuido,
+      normaOficial: 'Resolución 909 de 2008 / Resolución 0627 de 2006 / Ley 2450 de 2025',
+      requisitoObligatorioId: 'REQ-909-EXTRACCION-RUIDO',
+      planMejoraRiesgoId: 'plan-mejora-ruido_constante',
+      capacitacionNombre: 'Cuidado del oído y uso correcto de tapaoídos en zona de máquinas',
+      formatoId: 'fmt-inspeccion-ruido-auditiva',
+      formatoNombre: 'Chequeo de ruido y protección auditiva',
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-04',
+        fechaInicioOriginal: '2026-09-01',
+        fechaLimiteOriginal: '2026-10-30',
+        motivo: 'Sin ejecución confirmada a noviembre de 2026; reprogramada a mayo 2027.',
+      },
+    },
+    {
+      num: 15,
+      mes: 5,
+      nombre: 'Prevención de atrapamientos',
+      descripcion:
+        'Capacitación práctica sobre la regla de oro en máquinas: apagar, desconectar y esperar que paren por completo antes de limpiar o destrabar, uso de empujador y prohibición de anillos/ropa suelta.',
+      criterioAceptacion:
+        'Todo el equipo capacitado con demostración en máquina desconectada y resguardos verificados.',
+      fechaInicio: '2027-05-20',
+      fechaLimite: '2027-05-29',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-operario-pelado',
+      responsableNombre: 'Operario de Pelado',
+      responsableCargo: 'Operario de Pelado',
+      recursosNecesarios: 'Guía práctica en planta y tarjetas de aviso "No encender - En limpieza".',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes en planta; tarjetas de aviso por confirmar.',
+      evidenciaRequerida: 'Lista de asistencia firmada y chequeo de resguardos de máquinas.',
+      observaciones: 'Complementa la inspección de febrero reforzando hábitos seguros diarios.',
+      riesgo: rMaq,
+      planMejoraRiesgoId: 'plan-mejora-atrapamiento',
+      capacitacionNombre: 'Reglas de oro para trabajar y limpiar máquinas sin atrapamientos ni cortes',
+      formatoId: 'fmt-inspeccion-maquinaria-atrapamiento',
+      formatoNombre: 'Chequeo de atrapamientos y resguardos',
+    },
+
+    // JUNIO (16–17)
+    {
+      num: 16,
+      mes: 6,
+      nombre: 'Revisión de elementos de protección personal',
+      descripcion:
+        'Revisar puesto por puesto qué elementos de protección personal (guantes térmicos, caretas, tapaoídos, guantes de nitrilo, gafas, calzado antideslizante) están desgastados o faltan por reponer.',
+      criterioAceptacion:
+        'Inventario completo de estado de EPP de los 10 trabajadores con solicitud clara de reposición.',
+      fechaInicio: '2027-06-02',
+      fechaLimite: '2027-06-14',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Revisión física de EPP actuales y cotización de reposiciones faltantes.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Valor de compra de reposiciones pendiente de valoración y aprobación de Gerencia.',
+      evidenciaRequerida: 'Listado de revisión de estado de EPP y requerimiento presentado a Gerencia.',
+      observaciones: 'Permite comprar únicamente lo que hace falta según desgaste real.',
+      riesgo: rCalor,
+      normaOficial: 'Resolución 0312 de 2019 / Decreto 1072 Art. 2.2.4.6.24',
+      formatoId: 'fmt-entrega-epp',
+      formatoNombre: 'Control y entrega de EPP',
+    },
+    {
+      num: 17,
+      mes: 6,
+      nombre: 'Registro de entrega y seguimiento',
+      descripcion:
+        'Entregar los elementos de protección aprobados a cada trabajador, explicar cómo cuidarlos y dejar firmada la planilla individual de entrega y seguimiento de uso en planta.',
+      criterioAceptacion:
+        'Planilla de entrega de EPP firmada por cada trabajador que recibió dotación y verificación de uso.',
+      fechaInicio: '2027-06-15',
+      fechaLimite: '2027-06-28',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Formato de entrega de EPP y reposiciones aprobadas por Andrea Orjuela – Gerente.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Sujeto a compra aprobada según la revisión de inicios de junio.',
+      evidenciaRequerida: 'Planilla de entrega de EPP firmada con fecha y verificación de uso.',
+      observaciones: 'Soporte directo del Estándar 7 de la Resolución 0312 de 2019.',
+      normaOficial: 'Decreto 1072 de 2015 / Resolución 0312 de 2019',
+      formatoId: 'fmt-entrega-epp',
+      formatoNombre: 'Registro de entrega y seguimiento de EPP',
+    },
+
+    // JULIO (18–20)
+    {
+      num: 18,
+      mes: 7,
+      nombre: 'Elaboración y revisión del Plan de Emergencias',
+      descripcion:
+        'Completar y verificar en sitio los datos pendientes del Plan de Emergencias de Frikaz S.A.S. (dirección verificada, teléfonos, inventario real de equipos, salidas y punto de encuentro) y someterlo a revisión de Gerencia.',
+      criterioAceptacion:
+        'Plan de Emergencias completado con datos verificados en planta y revisado por Andrea Orjuela – Gerente.',
+      fechaInicio: '2027-07-02',
+      fechaLimite: '2027-07-14',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Tiempo de verificación en planta y módulo Plan de Emergencias de la herramienta.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa la plantilla ya creada en PLAN ANUAL; actualización en planta por confirmar.',
+      evidenciaRequerida: 'Documento de Plan de Emergencias actualizado en Word/PDF con datos reales.',
+      observaciones: 'Conectado directamente con la sección PLAN DE EMERGENCIAS.',
+      riesgo: rEmerg,
+      normaOficial: 'Decreto 1072 de 2015 / NTC 2885',
+      normaArticulos: 'Art. 2.2.4.6.25',
+      requisitoObligatorioId: 'REQ-NTC2885-EMERGENCIAS',
+      planMejoraRiesgoId: 'plan-mejora-situaciones_emergencia',
+      esPlanEmergencias: true,
+      formatoId: 'fmt-emg-amenazas-vulnerabilidad',
+      formatoNombre: 'Identificación de amenazas y vulnerabilidad',
+    },
+    {
+      num: 19,
+      mes: 7,
+      nombre: 'Organización de responsabilidades',
+      descripcion:
+        'Asignar con nombre propio y suplente los 5 roles sencillos de emergencia entre los 10 trabajadores (coordinar, activar alarma, guiar salida, pasar lista afuera y llamar al 123/ARL).',
+      criterioAceptacion:
+        'Tabla de roles de emergencia diligenciada con titular y suplente aceptados por el equipo.',
+      fechaInicio: '2027-07-12',
+      fechaLimite: '2027-07-21',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Reunión corta con los 10 trabajadores y cartelera de roles en planta.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes; impresión de cartelera pendiente por confirmar.',
+      evidenciaRequerida: 'Cuadro de roles con nombres y suplentes firmado y publicado en planta.',
+      observaciones: 'Pensado para un equipo real de 10 personas sin brigadas irrealizables.',
+      esPlanEmergencias: true,
+      normaOficial: 'Decreto 1072 de 2015 Art. 2.2.4.6.25',
+    },
+    {
+      num: 20,
+      mes: 7,
+      nombre: 'Socialización inicial',
+      descripcion:
+        'Explicar en palabras sencillas a todo el personal qué hacer y qué NO hacer ante una emergencia en planta, mostrar la alarma, las salidas y caminar juntos hasta el punto de encuentro.',
+      criterioAceptacion:
+        'Los 10 trabajadores informados con lista de asistencia firmada y recorrido hecho.',
+      fechaInicio: '2027-07-22',
+      fechaLimite: '2027-07-30',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: '30 minutos de jornada con el equipo y guía de socialización.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes de la empresa.',
+      evidenciaRequerida: 'Formato de asistencia a socialización del Plan de Emergencias firmado.',
+      observaciones: 'Base previa obligatoria antes de las capacitaciones específicas de agosto.',
+      esPlanEmergencias: true,
+      capacitacionNombre: 'Socialización del Plan de Emergencias y roles de los 10 trabajadores',
+      formatoId: 'fmt-emg-asistencia-capacitacion',
+      formatoNombre: 'Asistencia a capacitación de emergencias',
+    },
+
+    // AGOSTO (21–23)
+    {
+      num: 21,
+      mes: 8,
+      nombre: 'Capacitación sobre incendios',
+      descripcion:
+        'Capacitación práctica sobre prevención de incendios en freidoras y empaque: por qué jamás echar agua al aceite en llamas, uso de extintor Clase K solo si es conato inicial y cuándo evacuar.',
+      criterioAceptacion:
+        'Equipo capacitado con asistencia firmada, evaluación corta y ubicación clara de cada extintor.',
+      fechaInicio: '2027-08-02',
+      fechaLimite: '2027-08-12',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Guía del Plan de Emergencias y apoyo ARL / Bomberos si está disponible.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Capacitación interna sin costo; práctica con recarga o apoyo externo por confirmar.',
+      evidenciaRequerida: 'Lista de asistencia y evaluación corta de comprensión firmadas.',
+      observaciones: 'Enlazada al programa de emergencias.',
+      riesgo: rEmerg,
+      normaOficial: 'NTC 2885 / Decreto 1072 de 2015',
+      esPlanEmergencias: true,
+      capacitacionNombre: 'Actuación segura ante incendios en freidoras y uso básico de extintores',
+      formatoId: 'fmt-emg-asistencia-capacitacion',
+      formatoNombre: 'Registro de capacitación ante incendios',
+    },
+    {
+      num: 22,
+      mes: 8,
+      nombre: 'Capacitación sobre fugas de gas',
+      descripcion:
+        'Qué hacer si huele a gas (ventilar, cerrar llave general si es seguro, evacuar) y qué NO hacer jamás (no prender luces, celulares, extractores ni buscar fugas con fuego).',
+      criterioAceptacion:
+        'Todo el equipo conoce la ubicación de la llave de gas y los pasos seguros sin chispas.',
+      fechaInicio: '2027-08-12',
+      fechaLimite: '2027-08-21',
+      area: 'SST',
+      origen: 'RIESGO_GTC45',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Guía práctica de 20 minutos en planta.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes (tiempo interno en planta).',
+      evidenciaRequerida: 'Registro de asistencia y preguntas de verificación diligenciadas.',
+      observaciones: 'Conecta con el Plan de Mejora de fuga de gas y el Plan de Emergencias.',
+      riesgo: rGas,
+      planMejoraRiesgoId: 'plan-mejora-fuga_gas',
+      esPlanEmergencias: true,
+      capacitacionNombre: 'Actuación ante fugas de gas y emergencias eléctricas',
+      formatoId: 'fmt-emg-asistencia-capacitacion',
+      formatoNombre: 'Asistencia a capacitación sobre fugas de gas',
+    },
+    {
+      num: 23,
+      mes: 8,
+      nombre: 'Orientación sobre evacuación y actuación ante emergencias',
+      descripcion:
+        'Repaso práctico de salida ordenada (sin correr ni devolverse), primeros auxilios básicos en quemaduras/cortes y no confrontación ante robos o sismos.',
+      criterioAceptacion:
+        'Personal orientado en ruta de salida, conteo en punto de encuentro y números de ayuda externa.',
+      fechaInicio: '2027-08-21',
+      fechaLimite: '2027-08-31',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: '20 minutos de práctica guiada y cartelera de teléfonos de emergencia.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes; cartelera pendiente de actualización si cambia algún teléfono.',
+      evidenciaRequerida: 'Lista de asistencia firmada y registro fotográfico del recorrido.',
+      observaciones: 'Prepara directamente al equipo antes de la inspección de septiembre y simulacro de octubre.',
+      esPlanEmergencias: true,
+      capacitacionNombre: 'Evacuación ordenada en planta y punto de encuentro',
+      formatoId: 'fmt-emg-asistencia-capacitacion',
+      formatoNombre: 'Asistencia a orientación de evacuación',
+    },
+
+    // SEPTIEMBRE (24–26)
+    {
+      num: 24,
+      mes: 9,
+      nombre: 'Inspección de equipos de emergencia',
+      descripcion:
+        'Revisar físicamente en planta extintores (Clase K y ABC, presión y fecha de recarga), botiquín de primeros auxilios, camilla, pito/alarma y kit básico de derrames.',
+      criterioAceptacion:
+        'Formato de inspección de equipos de emergencia diligenciado con estado real y recargas programadas.',
+      fechaInicio: '2027-09-01',
+      fechaLimite: '2027-09-10',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Inspección en planta; recarga de extintores o reposición de botiquín si se detecta faltante.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Costo de recarga de extintores o insumos de botiquín pendiente de valoración.',
+      evidenciaRequerida: 'Formato de inspección de equipos de emergencia firmado y fotos de etiquetas.',
+      observaciones: 'Indispensable antes de confirmar condiciones para el simulacro de octubre.',
+      normaOficial: 'NTC 2885 / NFPA 10 / Decreto 1072 de 2015',
+      esPlanEmergencias: true,
+      formatoId: 'fmt-emg-inspeccion-recursos',
+      formatoNombre: 'Inspección de equipos de emergencia',
+    },
+    {
+      num: 25,
+      mes: 9,
+      nombre: 'Revisión de rutas de evacuación',
+      descripcion:
+        'Comprobar que los pasillos de salida estén libres de cajas y bultos, puertas abran fácil sin candados durante el turno, flechas visibles y punto de encuentro seguro.',
+      criterioAceptacion:
+        'Formato de rutas y salidas diligenciado y corrección de cualquier obstáculo encontrado.',
+      fechaInicio: '2027-09-10',
+      fechaLimite: '2027-09-20',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Verificación en planta y señalización de salida si falta algún aviso.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Posibles letreros de salida o punto de encuentro pendientes de confirmar.',
+      evidenciaRequerida: 'Formato de verificación de rutas y salidas firmado con fotos.',
+      observaciones: 'Asegura rutas seguras antes de programar el simulacro.',
+      esPlanEmergencias: true,
+      formatoId: 'fmt-emg-rutas-evacuacion',
+      formatoNombre: 'Verificación de rutas, salidas y punto de encuentro',
+    },
+    {
+      num: 26,
+      mes: 9,
+      nombre: 'Verificación de recursos disponibles',
+      descripcion:
+        'Confirmar con Andrea Orjuela – Gerente que la planta ya cuenta con los recursos mínimos reales (equipos completos, salidas despejadas, teléfonos verificados y roles asignados) para poder hacer el simulacro.',
+      criterioAceptacion:
+        'Acta o visto bueno de verificación de condiciones y recursos antes del simulacro de octubre.',
+      fechaInicio: '2027-09-20',
+      fechaLimite: '2027-09-29',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Revisión conjunta entre Gerencia y Coordinador / Vigía SST.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Verificación administrativa previa con recursos existentes.',
+      evidenciaRequerida: 'Acta corta de confirmación de condiciones o registro de pendientes por resolver.',
+      observaciones: 'Define si están dadas las condiciones necesarias para realizar el simulacro en octubre.',
+      esPlanEmergencias: true,
+      formatoId: 'fmt-emg-inspeccion-recursos',
+      formatoNombre: 'Lista de verificación de recursos disponibles',
+    },
+
+    // OCTUBRE (27–28)
+    {
+      num: 27,
+      mes: 10,
+      nombre: 'Preparación y realización del simulacro, siempre que existan las condiciones necesarias',
+      descripcion:
+        'Preparar el guion sencillo (aviso, apagado seguro, salida al punto de encuentro y conteo de los 10 trabajadores) y realizar el simulacro en planta solo si ya existen las condiciones seguras verificadas en septiembre.',
+      criterioAceptacion:
+        'Simulacro realizado de manera segura con participación del equipo, o reprogramación justificada si falta alguna condición crítica.',
+      fechaInicio: '2027-10-04',
+      fechaLimite: '2027-10-18',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Alarma o pito operativo, rutas despejadas, guion sencillo y 30 minutos de jornada.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Condicionado a verificación previa de septiembre; sin gasto adicional confirmado.',
+      evidenciaRequerida: 'Registro del simulacro, lista de participantes y fotos o evidencia autorizada.',
+      observaciones:
+        'Solo se ejecuta cuando existan las condiciones necesarias de seguridad, rutas y equipos verificados.',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.25 Num. 10',
+      requisitoObligatorioId: 'REQ-NTC2885-EMERGENCIAS',
+      planMejoraRiesgoId: 'plan-mejora-situaciones_emergencia',
+      esPlanEmergencias: true,
+      formatoId: 'fmt-emg-registro-simulacro',
+      formatoNombre: 'Registro y evaluación de simulacro',
+    },
+    {
+      num: 28,
+      mes: 10,
+      nombre: 'Registro y evaluación de resultados',
+      descripcion:
+        'Anotar cuánto tardó la evacuación, qué funcionó bien (alarma, salida, conteo de los 10 trabajadores) y qué fallas deben corregirse en el plan post-simulacro.',
+      criterioAceptacion:
+        'Formato de evaluación del simulacro y mejoras post-simulacro diligenciados y enviados a Gerencia.',
+      fechaInicio: '2027-10-19',
+      fechaLimite: '2027-10-29',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Formatos de evaluación y mejora post-simulacro y tiempo de análisis del equipo.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes y formatos editables de la herramienta.',
+      evidenciaRequerida: 'Evaluación del simulacro y acta de oportunidades de mejora firmadas.',
+      observaciones: 'Insumo directo para los hallazgos y acciones de mejora de noviembre.',
+      esPlanEmergencias: true,
+      formatoId: 'fmt-emg-mejora-post-simulacro',
+      formatoNombre: 'Plan de mejora post-simulacro',
+    },
+
+    // NOVIEMBRE (29–31)
+    {
+      num: 29,
+      mes: 11,
+      nombre: 'Revisión de resultados',
+      descripcion:
+        'Revisar con Andrea Orjuela – Gerente el avance real de las actividades ejecutadas en 2027, los registros de aceite usado (ACU), trampa de grasas, capacitaciones y presupuesto realmente aprobado/usado.',
+      criterioAceptacion:
+        'Acta de revisión anual de resultados firmada por Gerencia y Vigía/COPASST.',
+      fechaInicio: '2027-11-02',
+      fechaLimite: '2027-11-12',
+      area: 'INTEGRAL',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Reunión de revisión por Gerencia con soportes acumulados de enero a octubre.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes de dirección y SST.',
+      evidenciaRequerida: 'Informe de revisión de resultados y acta firmada por Gerencia.',
+      observaciones: 'Cumple la revisión por la Alta Dirección (Decreto 1072 Art. 2.2.4.6.31).',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.29 al 2.2.4.6.31',
+      requisitoObligatorioId: 'REQ-1072-AUDITORIA-DIRECCION',
+    },
+    {
+      num: 30,
+      mes: 11,
+      nombre: 'Evaluación de hallazgos',
+      descripcion:
+        'Analizar los problemas, accidentes, casi-accidentes, condiciones inseguras o actividades atrasadas detectadas durante el año (incluyendo resultados de auditoría interna y simulacro).',
+      criterioAceptacion:
+        'Listado claro de hallazgos priorizados según riesgo y urgencia para la planta.',
+      fechaInicio: '2027-11-12',
+      fechaLimite: '2027-11-22',
+      area: 'INTEGRAL',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Tiempo de análisis de registros del año 2027.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes del área SST.',
+      evidenciaRequerida: 'Informe sencillo de hallazgos y brechas detectadas en 2027.',
+      observaciones: 'Se conecta con las fases VERIFICAR y ACTUAR del SG-SST.',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.29 y 2.2.4.6.33',
+    },
+    {
+      num: 31,
+      mes: 11,
+      nombre: 'Organización de acciones correctivas y de mejora',
+      descripcion:
+        'Convertir los hallazgos evaluados en acciones correctivas, preventivas y de mejora concretas con responsable, fecha y prueba esperada.',
+      criterioAceptacion:
+        'Acciones correctivas y de mejora registradas en la herramienta y revisadas por Gerencia.',
+      fechaInicio: '2027-11-22',
+      fechaLimite: '2027-11-30',
+      area: 'INTEGRAL',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-01',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Revisión con responsables de área y aprobación de Andrea Orjuela – Gerente.',
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      confirmacionRecursos: 'Los costos de nuevas acciones correctivas se valorarán según cada hallazgo.',
+      evidenciaRequerida: 'Plan de acciones correctivas y de mejora registrado con responsables y fechas.',
+      observaciones: 'Conecta directamente con el apartado ACTUAR y Planes de Mejora por Riesgo.',
+      normaOficial: 'Decreto 1072 de 2015',
+      normaArticulos: 'Art. 2.2.4.6.33 (Acciones preventivas y correctivas)',
+    },
+
+    // DICIEMBRE (32–34)
+    {
+      num: 32,
+      mes: 12,
+      nombre: 'Evaluación del Plan Anual',
+      descripcion:
+        `Evaluar el cumplimiento real de las 34 actividades del Plan Anual 2027 y calificar los ${cantidadEstandares} Estándares Mínimos de la Resolución 0312 de 2019 (${grupo}).`,
+      criterioAceptacion:
+        `Evaluación del Plan Anual y tabla de ${cantidadEstandares} Estándares Mínimos firmadas por Andrea Orjuela – Gerente.`,
+      fechaInicio: '2027-12-01',
+      fechaLimite: '2027-12-14',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Soportes acumulados 2027 y revisión conjunta entre SST y Gerencia.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes; envío a ARL sin costo adicional.',
+      evidenciaRequerida: `Informe de evaluación del Plan Anual 2027 y autoevaluación Res. 0312 firmada.`,
+      observaciones: 'Reprogramada desde cierre 2026 para evaluar la vigencia completa de 2027.',
+      normaOficial: 'Resolución 0312 de 2019',
+      normaArticulos: 'Art. 3, 27 y 28',
+      requisitoObligatorioId: `REQ-0312-${cantidadEstandares}`,
+      reprogramacionOrigen: {
+        anioOrigen: 2026,
+        codigoOriginal: 'PA-2026-09',
+        fechaInicioOriginal: '2026-12-01',
+        fechaLimiteOriginal: '2026-12-22',
+        motivo: 'Cierre de vigencia trasladado para evaluar el Plan Anual 2027 completo.',
+      },
+    },
+    {
+      num: 33,
+      mes: 12,
+      nombre: 'Actualización de indicadores',
+      descripcion:
+        'Cerrar y validar los seis indicadores mínimos de SST (Resolución 0312 Art. 30: accidentalidad, severidad, mortalidad, prevalencia, incidencia y ausentismo) junto con los indicadores del Plan Anual.',
+      criterioAceptacion:
+        'Consolidado anual 2027 de los 6 indicadores mínimos diligenciado y validado por Gerencia.',
+      fechaInicio: '2027-12-10',
+      fechaLimite: '2027-12-20',
+      area: 'SST',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Registros mensuales de nómina, incapacidades y reportes ARL de 2027.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa registros internos y módulo Indicadores de la herramienta.',
+      evidenciaRequerida: 'Consolidado anual 2027 de indicadores validado y exportado.',
+      observaciones: 'Asegura medición real únicamente con datos confirmados del año.',
+      normaOficial: 'Resolución 0312 de 2019',
+      normaArticulos: 'Artículo 30',
+    },
+    {
+      num: 34,
+      mes: 12,
+      nombre: 'Preparación de la programación del año 2028',
+      descripcion:
+        'Definir las metas, fechas, responsables y presupuesto preliminar del Plan Anual 2028 teniendo en cuenta las lecciones aprendidas y actividades pendientes de 2027.',
+      criterioAceptacion:
+        'Borrador organizado del Plan Anual 2028 presentado a Andrea Orjuela – Gerente.',
+      fechaInicio: '2027-12-18',
+      fechaLimite: '2027-12-29',
+      area: 'INTEGRAL',
+      origen: 'NORMA_OBLIGATORIA',
+      objetivoId: 'obj-2027-02',
+      responsableId: 'cargo-coordinador-vigia-sst',
+      responsableNombre: 'Coordinador / Vigía de SST',
+      responsableCargo: 'Coordinador / Vigía de SST',
+      recursosNecesarios: 'Evaluación de cierre 2027 y reunión de planeación con Gerencia.',
+      tipoRecurso: 'RECURSOS_EXISTENTES',
+      confirmacionRecursos: 'Usa recursos existentes de cierre anual.',
+      evidenciaRequerida: 'Borrador del cronograma 2028 con objetivos y necesidades presentadas.',
+      observaciones: 'Deja lista la continuidad ordenada para enero de 2028.',
+      normaOficial: 'Decreto 1072 de 2015 / Resolución 0312 de 2019',
+      normaArticulos: 'Art. 2.2.4.6.17',
+    },
+  ];
+
+  const actividades: ActividadPlanAnual[] = specs.map((s) => {
+    const code = `PA-2027-${String(s.num).padStart(2, '0')}`;
+    const historialCambiosFechas = s.reprogramacionOrigen
+      ? [
+          {
+            id: `hcf-2027-${s.num}`,
+            fechaRegistro: '2026-11-23',
+            usuario: 'Coordinador / Vigía de SST',
+            fechaInicioAnterior: s.reprogramacionOrigen.fechaInicioOriginal,
+            fechaLimiteAnterior: s.reprogramacionOrigen.fechaLimiteOriginal,
+            fechaInicioNueva: s.fechaInicio,
+            fechaLimiteNueva: s.fechaLimite,
+            mesesNuevos: [s.mes],
+            motivo: s.reprogramacionOrigen.motivo,
+          },
+        ]
+      : [];
+
+    return {
+      id: `act-2027-${String(s.num).padStart(2, '0')}`,
+      codigo: code,
+      nombre: s.nombre,
+      descripcion: s.descripcion,
+      criterioAceptacion: s.criterioAceptacion,
+      area: s.area || 'SST',
+      origen: s.origen || (s.riesgo ? 'RIESGO_GTC45' : 'NORMA_OBLIGATORIA'),
+      riesgoId: s.riesgo?.id,
+      riesgoCodigo: s.riesgo?.codigo || s.riesgo?.id,
+      riesgoNivelNR: s.riesgo?.interpretacionNR,
+      riesgoCargo: s.riesgo?.cargo || s.riesgo?.cargosExpuestos,
+      riesgoProceso: s.riesgo?.proceso,
+      riesgoMedidasControl: s.riesgo ? extraerMedidasRiesgo(s.riesgo) : undefined,
+      riesgoSnapshot: s.riesgo ? crearRiesgoSnapshot(s.riesgo) : undefined,
+      planMejoraRiesgoId: s.planMejoraRiesgoId,
+      esPlanEmergencias: s.esPlanEmergencias,
+      capacitacionNombre: s.capacitacionNombre,
+      formatoId: s.formatoId,
+      formatoNombre: s.formatoNombre,
+      normaOficial: s.normaOficial,
+      normaArticulos: s.normaArticulos,
+      requisitoObligatorioId: s.requisitoObligatorioId,
+      objetivoEspecificoId: s.objetivoId,
+      esRecurrente: false,
+      periodicidad: 'UNICA',
+      fechaInicio: s.fechaInicio,
+      fechaLimite: s.fechaLimite,
+      programacionMensual: [s.mes],
+      reprogramacionOrigen: s.reprogramacionOrigen
+        ? {
+            ...s.reprogramacionOrigen,
+            fechaRegistro: '2026-11-23',
+          }
+        : undefined,
+      historialCambiosFechas,
+      responsableId: s.responsableId || 'cargo-coordinador-vigia-sst',
+      responsableNombre: s.responsableNombre || 'Coordinador / Vigía de SST',
+      responsableCargo: s.responsableCargo || 'Coordinador / Vigía de SST',
+      responsableCorreo: 'frikaz.fritosnacks@gmail.com',
+      aprobadorId: 'cargo-gerente-general',
+      aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: 'Gerente',
+      recursosNecesarios: s.recursosNecesarios,
+      tipoRecurso: s.tipoRecurso,
+      confirmacionRecursos: s.confirmacionRecursos,
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
+      gastoEjecutado: 0,
+      estado: 'PENDIENTE',
+      evidenciaRequerida: s.evidenciaRequerida,
+      evidencias: [],
+      observaciones: s.observaciones,
+      historialRevisiones: [
+        {
+          id: `hr-2027-${s.num}`,
+          fecha: '2026-11-23T09:00:00',
+          usuario: 'Coordinador / Vigía de SST',
+          rol: 'Planificador',
+          accion: 'CREADA',
+          detalle: s.reprogramacionOrigen
+            ? `Programada en el Plan Anual 2027 (reprogramada desde ${s.reprogramacionOrigen.codigoOriginal} de 2026). Presupuesto ejecutado inicial: $0.`
+            : `Programada en el Plan Anual 2027 (enero–diciembre) en estado Por hacer. Presupuesto ejecutado inicial: $0.`,
+        },
+      ],
+    };
+  });
+
+  return {
+    id: 'plan-vigencia-2027',
+    vigencia: 2027,
+    titulo: 'Plan Anual de Seguridad, Salud y Ambiente 2027 (Enero – Diciembre)',
+    objetivoGeneral:
+      'Ejecutar de manera realista y progresiva entre enero y diciembre de 2027 las 34 actividades de prevención, control de riesgos, capacitación, preparación ante emergencias y cierre SG-SST para los trabajadores de Frikaz S.A.S., con presupuesto ejecutado inicial en $0 y seguimiento verificado por Gerencia.',
+    fechaElaboracion: '2026-11-23',
+    responsableId: 'cargo-coordinador-vigia-sst',
+    responsableNombre: 'Coordinador / Vigía de SST',
+    aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
+    estadoAprobacion: 'BORRADOR',
+    presupuestoGeneralAprobado: 0,
+    empresaSnapshot: construirEmpresaSnapshot(config),
+    objetivosEspecificos: objetivos,
+    indicadores,
+    actividades,
+    solicitudesRevision: [],
+    notificacionesEnviadas: [],
+    historialCambios: [
+      {
+        id: 'h-2027-01',
+        fechaHora: '2026-11-23T09:00:00',
+        usuario: 'Coordinador / Vigía de SST',
+        accion: 'Reorganización Plan Anual 2027',
+        detalle: `Se creó la programación realista de enero a diciembre de 2027 con 34 actividades distribuidas por mes, presupuesto ejecutado inicial de $0 y trazabilidad de actividades reprogramadas desde 2026 (${config.numeroTrabajadores} trabajadores, ${grupo}).`,
+      },
+    ],
+  };
+}
+
+// ============================================================================
+// PERSISTENCIA 2027 ÚNICA + COPIA DE SEGURIDAD HISTÓRICA (< 2027)
+// ============================================================================
+
+function deduplicarActividadesPlan(actividades: ActividadPlanAnual[]): ActividadPlanAnual[] {
+  const vistosIds = new Set<string>();
+  const vistosCodigos = new Set<string>();
+  const resultado: ActividadPlanAnual[] = [];
+  actividades.forEach((act) => {
+    const idKey = act.id;
+    const codKey = (act.codigo || '').trim().toUpperCase();
+    if (vistosIds.has(idKey)) return;
+    if (codKey && vistosCodigos.has(codKey)) return;
+    vistosIds.add(idKey);
+    if (codKey) vistosCodigos.add(codKey);
+    resultado.push(act);
+  });
+  return resultado;
+}
+
+export function getBackupHistoricoPlanAnual(): Record<number, PlanAnualVigencia> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PLANES_HISTORICO_BACKUP);
+    if (raw) {
+      return JSON.parse(raw) as Record<number, PlanAnualVigencia>;
+    }
+  } catch (err) {
+    console.error('Error leyendo copia de seguridad histórica del Plan Anual:', err);
+  }
+  return {};
+}
+
+function guardarBackupHistoricoPlanes(historicos: Record<number, PlanAnualVigencia>): void {
+  try {
+    const existente = getBackupHistoricoPlanAnual();
+    const combinado: Record<number, PlanAnualVigencia> = { ...existente };
+    Object.entries(historicos).forEach(([anioKey, plan]) => {
+      const anio = Number(anioKey);
+      if (anio !== 2027 && plan) {
+        combinado[anio] = plan;
+      }
+    });
+    if (Object.keys(combinado).length > 0) {
+      localStorage.setItem(STORAGE_KEY_PLANES_HISTORICO_BACKUP, JSON.stringify(combinado));
+    }
+  } catch (err) {
+    console.error('Error guardando copia de seguridad histórica del Plan Anual:', err);
+  }
+}
+
+function normalizarPlan2027Unico(plan2027: PlanAnualVigencia): PlanAnualVigencia {
+  return {
+    ...plan2027,
+    vigencia: 2027,
+    presupuestoGeneralAprobado: plan2027.presupuestoGeneralAprobado ?? 0,
+    aprobadorNombre:
+      plan2027.aprobadorNombre === 'Gerente General (Representante Legal)' ||
+      plan2027.aprobadorNombre === 'Gerente General'
+        ? NOMBRE_GERENTE_OFICIAL
+        : plan2027.aprobadorNombre || NOMBRE_GERENTE_OFICIAL,
+    actividades: deduplicarActividadesPlan(plan2027.actividades || []).map((a) => ({
+      ...a,
+      aprobadorNombre:
+        a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
+        a.aprobadorNombre === 'Gerente General'
+          ? NOMBRE_GERENTE_OFICIAL
+          : a.aprobadorNombre || NOMBRE_GERENTE_OFICIAL,
+      aprobadorCargo: a.aprobadorCargo === 'Gerente General' ? 'Gerente' : a.aprobadorCargo,
+    })),
+  };
+}
 
 export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
   const config = getCaracterizacionActual();
@@ -1972,255 +3240,144 @@ export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
     if (raw) {
       const parsed = JSON.parse(raw) as Record<number, PlanAnualVigencia>;
       if (parsed && Object.keys(parsed).length > 0) {
-        let updated: Record<number, PlanAnualVigencia> = { ...parsed };
-        let dirty = false;
+        const historicosDetectados: Record<number, PlanAnualVigencia> = {};
+        Object.entries(parsed).forEach(([anioKey, planVal]) => {
+          const anio = Number(anioKey);
+          if (anio !== 2027 && planVal) {
+            historicosDetectados[anio] = planVal;
+          }
+        });
 
-        if (!localStorage.getItem(PLAIN_LANG_FLAG_PLAN)) {
-          const freshSeed2025 = buildPlan2025Seed(config, riesgos);
-          const freshSeed2026 = buildPlan2026Seed(config, riesgos);
+        // Asegurar copia de seguridad de años anteriores antes de dejar únicamente 2027 activo
+        if (Object.keys(historicosDetectados).length > 0) {
+          guardarBackupHistoricoPlanes(historicosDetectados);
+        } else if (Object.keys(getBackupHistoricoPlanAnual()).length === 0) {
+          guardarBackupHistoricoPlanes({
+            2025: buildPlan2025Seed(config, riesgos),
+            2026: buildPlan2026Seed(config, riesgos),
+          });
+        }
 
-          const mergeSeedPlan = (
-            existing: PlanAnualVigencia | undefined,
-            fresh: PlanAnualVigencia
-          ): PlanAnualVigencia | undefined => {
-            if (!existing) return undefined;
-            const freshActsById = new Map(fresh.actividades.map((a) => [a.id, a]));
-            const freshObjsById = new Map(fresh.objetivosEspecificos.map((o) => [o.id, o]));
-            const freshIndsById = new Map(fresh.indicadores.map((i) => [i.id, i]));
+        let plan2027 = parsed[2027];
+        let dirty = Object.keys(parsed).some((k) => Number(k) !== 2027);
 
-            return {
-              ...existing,
-              titulo: fresh.titulo,
-              objetivoGeneral: fresh.objetivoGeneral,
-              objetivosEspecificos: existing.objetivosEspecificos.map((o) => {
-                const f = freshObjsById.get(o.id);
-                return f
-                  ? { ...o, titulo: f.titulo, descripcion: f.descripcion, metas: f.metas }
-                  : o;
-              }),
-              indicadores: existing.indicadores.map((ind) => {
-                const f = freshIndsById.get(ind.id);
-                return f
-                  ? {
-                      ...ind,
-                      nombre: f.nombre,
-                      formula: f.formula,
-                      metaTexto: f.metaTexto,
-                      reglaConteo: f.reglaConteo,
-                      fuenteInformacion: f.fuenteInformacion,
-                    }
-                  : ind;
-              }),
-              actividades: existing.actividades.map((act) => {
-                const f = freshActsById.get(act.id);
-                return f
-                  ? {
-                      ...act,
-                      nombre: f.nombre,
-                      descripcion: f.descripcion,
-                      criterioAceptacion: f.criterioAceptacion,
-                      evidenciaRequerida: f.evidenciaRequerida,
-                    }
-                  : act;
-              }),
-            };
-          };
-
-          const m2025 = mergeSeedPlan(updated[2025], freshSeed2025);
-          const m2026 = mergeSeedPlan(updated[2026], freshSeed2026);
-          if (m2025) updated[2025] = m2025;
-          if (m2026) updated[2026] = m2026;
-          localStorage.setItem(PLAIN_LANG_FLAG_PLAN, '1');
+        if (!plan2027) {
+          plan2027 = buildPlan2027Seed(config, riesgos);
+          plan2027.solicitudesRevision = detectarImpactosEnPlan(plan2027, riesgos, config, normas);
           dirty = true;
         }
 
         if (!localStorage.getItem(GERENTE_GATE_FLAG_PLAN)) {
-          const resetPlanWithoutGerente = (p: PlanAnualVigencia): PlanAnualVigencia => {
-            const planHasRealGerenteReview = Boolean(p.revisionGerente);
-            const normPlanEst = normalizarEstadoEstandar(p.estadoAprobacion);
-            const resetEstadoPlan =
-              !planHasRealGerenteReview &&
-              (normPlanEst === 'Aprobado' || normPlanEst === 'Cumplido')
-                ? 'EN_REVISION'
-                : p.estadoAprobacion;
-
-            return {
-              ...p,
-              estadoAprobacion: resetEstadoPlan,
-              fechaAprobacion: planHasRealGerenteReview ? p.fechaAprobacion : undefined,
-              indicadores: p.indicadores.map((ind) => ({
-                ...ind,
-                historicoMediciones:
-                  ind.id.startsWith('ind-2025-') || ind.id.startsWith('ind-2026-')
-                    ? []
-                    : ind.historicoMediciones,
-              })),
-              actividades: p.actividades.map((act) => {
-                const tieneRevGerente = Boolean(act.revisionGerente);
-                const evidenciasLimpias = act.evidencias.map((ev) => {
-                  const evRevGerente = Boolean(ev.revisionGerente);
-                  if (!evRevGerente && (ev.estadoRevision === 'APROBADA' || ev.estadoRevision === 'CUMPLIDA' || ev.estadoRevision === 'DEVUELTA')) {
-                    return {
-                      ...ev,
-                      estadoRevision: 'PENDIENTE_REVISION' as const,
-                      revisadoPor: undefined,
-                      fechaRevision: undefined,
-                      comentarioRevisor: 'Pendiente de revisión y aprobación por el Gerente General.',
-                    };
-                  }
-                  return ev;
-                });
-
-                const normActEst = normalizarEstadoEstandar(act.estado);
-                const esEstadoGerenteSinFirma =
-                  !tieneRevGerente &&
-                  (normActEst === 'Cumplido' ||
-                    normActEst === 'Aprobado' ||
-                    normActEst === 'Devuelto para ajustes');
-
-                const nuevoEstado = esEstadoGerenteSinFirma
-                  ? evidenciasLimpias.length > 0
-                    ? ('REQUIERE_REVISION' as const)
-                    : ('EN_PROCESO' as const)
-                  : act.estado === 'VENCIDA'
-                  ? ('PENDIENTE' as const)
-                  : act.estado;
-
-                return {
-                  ...act,
-                  estado: nuevoEstado,
-                  fechaCierre: tieneRevGerente ? act.fechaCierre : undefined,
-                  cerradoPor: tieneRevGerente ? act.cerradoPor : undefined,
-                  evidencias: evidenciasLimpias,
-                };
-              }),
-            };
+          const planHasRealGerenteReview = Boolean(plan2027.revisionGerente);
+          const normPlanEst = normalizarEstadoEstandar(plan2027.estadoAprobacion);
+          const resetEstadoPlan =
+            !planHasRealGerenteReview &&
+            (normPlanEst === 'Aprobado' || normPlanEst === 'Cumplido')
+              ? 'EN_REVISION'
+              : plan2027.estadoAprobacion;
+          plan2027 = {
+            ...plan2027,
+            estadoAprobacion: resetEstadoPlan,
+            fechaAprobacion: planHasRealGerenteReview ? plan2027.fechaAprobacion : undefined,
           };
-
-          const migratedPlanes: Record<number, PlanAnualVigencia> = {};
-          Object.entries(updated).forEach(([anioKey, planVal]) => {
-            migratedPlanes[Number(anioKey)] = resetPlanWithoutGerente(planVal);
-          });
-          updated = migratedPlanes;
           localStorage.setItem(GERENTE_GATE_FLAG_PLAN, '1');
           dirty = true;
         }
 
-        Object.keys(updated).forEach((anioKey) => {
-          const plan = updated[Number(anioKey)];
-          if (!plan) return;
-          const needsPlanName =
-            plan.aprobadorNombre === 'Gerente General (Representante Legal)' ||
-            plan.aprobadorNombre === 'Gerente General';
-          const needsActName = plan.actividades.some(
-            (a) =>
-              a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
-              a.aprobadorNombre === 'Gerente General' ||
-              a.aprobadorCargo === 'Gerente General'
+        if (!localStorage.getItem(ONLY_2027_FLAG_PLAN)) {
+          const yaTieneNota = (plan2027.historialCambios || []).some((h) =>
+            h.accion.includes('Vigencia única 2027')
           );
-          if (needsPlanName || needsActName) {
-            updated[Number(anioKey)] = {
-              ...plan,
-              aprobadorNombre: needsPlanName ? NOMBRE_GERENTE_OFICIAL : plan.aprobadorNombre,
-              actividades: plan.actividades.map((a) => ({
-                ...a,
-                aprobadorNombre:
-                  a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
-                  a.aprobadorNombre === 'Gerente General'
-                    ? NOMBRE_GERENTE_OFICIAL
-                    : a.aprobadorNombre,
-                aprobadorCargo: a.aprobadorCargo === 'Gerente General' ? 'Gerente' : a.aprobadorCargo,
-              })),
+          if (!yaTieneNota) {
+            plan2027 = {
+              ...plan2027,
+              historialCambios: [
+                {
+                  id: `h-only2027-${Date.now()}`,
+                  fechaHora: new Date().toISOString(),
+                  usuario: 'Sistema SG-SST Frikaz',
+                  accion: 'Vigencia única 2027 y copia de seguridad histórica',
+                  detalle:
+                    'Se guardó copia de seguridad de registros históricos anteriores (2025-2026) y quedó únicamente el Plan Anual 2027 (enero–diciembre) como vigencia activa.',
+                },
+                ...(plan2027.historialCambios || []),
+              ],
             };
-            dirty = true;
           }
-        });
-
-        if (dirty) {
-          saveAllVigencias(updated);
+          localStorage.setItem(PLAIN_LANG_FLAG_PLAN, '1');
+          localStorage.setItem(REORG_2027_FLAG_PLAN, '1');
+          localStorage.setItem(ONLY_2027_FLAG_PLAN, '1');
+          dirty = true;
         }
-        return updated;
+
+        const normalizado = normalizarPlan2027Unico(plan2027);
+        const solo2027: Record<number, PlanAnualVigencia> = { 2027: normalizado };
+        if (dirty) {
+          saveAllVigencias(solo2027);
+        }
+        return solo2027;
       }
     }
   } catch (err) {
     console.error('Error reading plan anual vigencias:', err);
   }
 
-  const seed: Record<number, PlanAnualVigencia> = {
+  // Respaldo inicial de años anteriores para auditoría y únicamente 2027 como vigencia activa
+  guardarBackupHistoricoPlanes({
     2025: buildPlan2025Seed(config, riesgos),
     2026: buildPlan2026Seed(config, riesgos),
-  };
+  });
 
-  // Detectar de entrada si hay riesgos Nivel I/II o normas sin actividad en 2026
-  seed[2026].solicitudesRevision = detectarImpactosEnPlan(seed[2026], riesgos, config, normas);
+  const seed2027 = normalizarPlan2027Unico(buildPlan2027Seed(config, riesgos));
+  seed2027.solicitudesRevision = detectarImpactosEnPlan(seed2027, riesgos, config, normas);
 
-  saveAllVigencias(seed);
+  const solo2027: Record<number, PlanAnualVigencia> = { 2027: seed2027 };
+  saveAllVigencias(solo2027);
   localStorage.setItem(PLAIN_LANG_FLAG_PLAN, '1');
   localStorage.setItem(GERENTE_GATE_FLAG_PLAN, '1');
-  return seed;
+  localStorage.setItem(REORG_2027_FLAG_PLAN, '1');
+  localStorage.setItem(ONLY_2027_FLAG_PLAN, '1');
+  return solo2027;
 }
 
 export function saveAllVigencias(planes: Record<number, PlanAnualVigencia>): void {
   try {
-    localStorage.setItem(STORAGE_KEY_PLANES, JSON.stringify(planes));
+    const historicos: Record<number, PlanAnualVigencia> = {};
+    Object.entries(planes).forEach(([k, v]) => {
+      const anio = Number(k);
+      if (anio !== 2027 && v) historicos[anio] = v;
+    });
+    if (Object.keys(historicos).length > 0) {
+      guardarBackupHistoricoPlanes(historicos);
+    }
+    const solo2027: Record<number, PlanAnualVigencia> = planes[2027]
+      ? { 2027: normalizarPlan2027Unico(planes[2027]) }
+      : {};
+    localStorage.setItem(STORAGE_KEY_PLANES, JSON.stringify(solo2027));
   } catch (err) {
     console.error('Error saving plan anual vigencias:', err);
   }
 }
 
 export function saveVigencia(plan: PlanAnualVigencia): Record<number, PlanAnualVigencia> {
-  const all = loadAllVigencias();
-  const updated = { ...all, [plan.vigencia]: plan };
+  if (plan.vigencia !== 2027) {
+    guardarBackupHistoricoPlanes({ [plan.vigencia]: plan });
+    return loadAllVigencias();
+  }
+  const normalizado = normalizarPlan2027Unico(plan);
+  const updated: Record<number, PlanAnualVigencia> = { 2027: normalizado };
   saveAllVigencias(updated);
   return updated;
 }
 
 export function crearNuevaVigencia(
   nuevoAnio: number,
-  copiarObjetivosDeAnio?: number
+  _copiarObjetivosDeAnio?: number
 ): Record<number, PlanAnualVigencia> {
+  // En la herramienta actual la vigencia activa es exclusivamente 2027 (no se duplican planes)
   const all = loadAllVigencias();
-  if (all[nuevoAnio]) return all; // Nunca sobrescribe una vigencia existente
-
-  const config = getCaracterizacionActual();
-  const riesgos = loadStoredRisks();
-  const normas = getPhvaNorms();
-  const { objetivos, indicadores } = generarObjetivosYIndicadoresIniciales(nuevoAnio);
-
-  const origen = copiarObjetivosDeAnio ? all[copiarObjetivosDeAnio] : undefined;
-
-  const nuevoPlan: PlanAnualVigencia = {
-    id: `plan-vigencia-${nuevoAnio}`,
-    vigencia: nuevoAnio,
-    titulo: `Plan Anual de Seguridad, Salud y Ambiente ${nuevoAnio}`,
-    objetivoGeneral:
-      origen?.objetivoGeneral ||
-      `Cuidar la salud y evitar accidentes de los trabajadores de Frikaz S.A.S. en el año ${nuevoAnio}, controlando los peligros más fuertes en la planta y cumpliendo las normas de seguridad y ambiente.`,
-    fechaElaboracion: new Date().toISOString().split('T')[0],
-    responsableId: 'cargo-coordinador-vigia-sst',
-    responsableNombre: 'Coordinador / Vigía de SST',
-    aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
-    estadoAprobacion: 'BORRADOR',
-    empresaSnapshot: construirEmpresaSnapshot(config),
-    objetivosEspecificos: objetivos,
-    indicadores,
-    actividades: [],
-    solicitudesRevision: [],
-    notificacionesEnviadas: [],
-    historialCambios: [
-      {
-        id: `h-crea-${Date.now()}`,
-        fechaHora: new Date().toISOString(),
-        usuario: 'Coordinador / Vigía de SST',
-        accion: 'Año Nuevo Creado',
-        detalle: `Plan del año ${nuevoAnio} creado aparte sin borrar ni cambiar la información de años anteriores.`,
-      },
-    ],
-  };
-
-  nuevoPlan.solicitudesRevision = detectarImpactosEnPlan(nuevoPlan, riesgos, config, normas);
-
-  return saveVigencia(nuevoPlan);
+  if (nuevoAnio === 2027 || all[2027]) return all;
+  return all;
 }
 
 // ============================================================================
@@ -2235,6 +3392,11 @@ export async function exportarPlanAnualExcel(
   wb.creator = 'Frikaz S.A.S. - Plan Anual SG-SST y Ambiental';
   wb.created = new Date();
 
+  const resumenPres = calcularResumenPresupuestoPlan(
+    plan.actividades,
+    plan.presupuestoGeneralAprobado || 0
+  );
+
   // HOJA 1: RESUMEN Y OBJETIVOS
   const ws1 = wb.addWorksheet(`Plan Anual ${plan.vigencia}`);
   ws1.mergeCells('A1:H1');
@@ -2248,7 +3410,7 @@ export async function exportarPlanAnualExcel(
   ws1.getCell('A3').value = 'Año:';
   ws1.getCell('B3').value = plan.vigencia;
   ws1.getCell('C3').value = 'Estado:';
-  ws1.getCell('D3').value = plan.estadoAprobacion;
+  ws1.getCell('D3').value = normalizarEstadoEstandar(plan.estadoAprobacion);
   ws1.getCell('E3').value = 'Estándares Res. 0312:';
   ws1.getCell('F3').value = plan.empresaSnapshot.grupoEstandares0312;
   ws1.getCell('A4').value = 'Objetivo General:';
@@ -2260,6 +3422,20 @@ export async function exportarPlanAnualExcel(
   ws1.getCell('D5').value = plan.aprobadorNombre;
   ws1.getCell('E5').value = 'Trabajadores:';
   ws1.getCell('F5').value = plan.empresaSnapshot.numeroTrabajadores;
+
+  ws1.getCell('A7').value = `Presupuesto General ${plan.vigencia}:`;
+  ws1.getCell('B7').value = resumenPres.presupuestoGeneral;
+  ws1.getCell('C7').value = 'Distribuido en actividades:';
+  ws1.getCell('D7').value = resumenPres.aprobado;
+  ws1.getCell('E7').value = 'Presupuesto Programado (Estimado):';
+  ws1.getCell('F7').value =
+    resumenPres.programado > 0 ? resumenPres.programado : 'Pendiente de valoración';
+  ws1.getCell('G7').value = 'Presupuesto Ejecutado:';
+  ws1.getCell('H7').value = resumenPres.ejecutado;
+  ws1.getCell('A8').value = 'Saldo Disponible:';
+  ws1.getCell('B8').value = resumenPres.saldoDisponible;
+  ws1.getCell('C8').value = '% Ejecución Presupuestal:';
+  ws1.getCell('D8').value = `${resumenPres.porcentajeEjecucion}%`;
 
   // Cronograma en Hoja 2
   const ws2 = wb.addWorksheet('Calendario y Presupuesto');
@@ -2274,12 +3450,14 @@ export async function exportarPlanAnualExcel(
     'Fecha Límite',
     'Encargado',
     'Quien Aprueba',
-    'Presupuesto',
-    'Gastado',
-    'Disponible',
+    'Recursos Necesarios',
+    'Presupuesto Programado',
+    'Presupuesto Aprobado',
+    'Presupuesto Ejecutado',
+    'Saldo Disponible',
     'Estado',
     'Pruebas (Evidencias) Subidas',
-    'Fecha de Cierre',
+    'Revisión Gerencia / Cambios de Fechas',
   ];
   const hRow = ws2.getRow(1);
   headers.forEach((h, idx) => {
@@ -2293,7 +3471,22 @@ export async function exportarPlanAnualExcel(
 
   plan.actividades.forEach((a, i) => {
     const row = ws2.getRow(2 + i);
-    const disp = (a.presupuestoEstimado || 0) - (a.gastoEjecutado || 0);
+    const aprobado = a.presupuestoAprobado || 0;
+    const ejecutado = a.gastoEjecutado || 0;
+    const disp = Math.max(0, aprobado - ejecutado);
+    const progValor =
+      (a.presupuestoEstimado || 0) > 0
+        ? a.presupuestoEstimado
+        : formatPresupuestoProgramadoLabel(a);
+
+    const revTexto = a.revisionGerente
+      ? `${a.revisionGerente.resultadoRevision} (${a.revisionGerente.fechaRevision})`
+      : 'Pendiente revisión de Gerencia';
+    const cambiosTexto =
+      a.historialCambiosFechas && a.historialCambiosFechas.length > 0
+        ? ` | Cambios de fecha: ${a.historialCambiosFechas.length}`
+        : '';
+
     row.values = [
       a.codigo,
       a.nombre,
@@ -2305,14 +3498,19 @@ export async function exportarPlanAnualExcel(
       a.fechaLimite,
       a.responsableNombre,
       a.aprobadorNombre,
-      a.presupuestoEstimado,
-      a.gastoEjecutado,
+      a.recursosNecesarios || a.confirmacionRecursos || 'Por definir',
+      progValor,
+      aprobado,
+      ejecutado,
       disp,
       normalizarEstadoEstandar(a.estado),
       a.evidencias.map((e) => `${e.nombreArchivo} (${normalizarEstadoEstandar(e.estadoRevision)})`).join(' | ') || 'Sin archivos',
-      a.fechaCierre || '-',
+      `${revTexto}${cambiosTexto}`,
     ];
-    [11, 12, 13].forEach((col) => {
+    if (typeof progValor === 'number') {
+      row.getCell(12).numFmt = '$#,##0';
+    }
+    [13, 14, 15].forEach((col) => {
       row.getCell(col).numFmt = '$#,##0';
     });
   });
@@ -2320,6 +3518,7 @@ export async function exportarPlanAnualExcel(
     c.width = 20;
   });
   ws2.getColumn(2).width = 38;
+  ws2.getColumn(11).width = 30;
 
   // Hoja 3: Indicadores KPI
   const ws3 = wb.addWorksheet('Indicadores (KPI)');

@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   AccionMejoraPlan,
-  ActividadPlanAnual,
   EvidenciaActividad,
   PlanAnualVigencia,
   RecomendacionIntervencion,
@@ -13,7 +12,6 @@ import {
   Wrench,
   Lightbulb,
   ShieldAlert,
-  ListChecks,
   Plus,
   Lock,
   Unlock,
@@ -23,7 +21,6 @@ import {
   History,
   ArrowRight,
   Save,
-  AlertTriangle,
   Mail,
 } from 'lucide-react';
 import {
@@ -75,6 +72,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
 }) => {
   const [subTab, setSubTab] = useState<SubTabActuar>('acciones');
   const [filtroEstado, setFiltroEstado] = useState<'TODAS' | EstadoEstandarFrikaz>('TODAS');
+  const [filtroTipo, setFiltroTipo] = useState<'TODOS' | AccionMejoraPlan['tipo']>('TODOS');
   const [filtroOrigenAccion, setFiltroOrigenAccion] = useState<'TODOS' | AccionMejoraPlan['origen']>('TODOS');
   const [filtroOrigenRec, setFiltroOrigenRec] = useState<'TODOS' | RecomendacionIntervencion['origen']>('TODOS');
   const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
@@ -153,10 +151,11 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
     return accionesMejora.filter((a) => {
       const mEstado =
         filtroEstado === 'TODAS' || normalizarEstadoEstandar(a.estado) === filtroEstado;
+      const mTipo = filtroTipo === 'TODOS' || a.tipo === filtroTipo;
       const mOrigen = filtroOrigenAccion === 'TODOS' || a.origen === filtroOrigenAccion;
-      return mEstado && mOrigen;
+      return mEstado && mTipo && mOrigen;
     });
-  }, [accionesMejora, filtroEstado, filtroOrigenAccion]);
+  }, [accionesMejora, filtroEstado, filtroTipo, filtroOrigenAccion]);
 
   const recomendacionesFiltradas = useMemo(
     () =>
@@ -267,16 +266,16 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
   };
 
   return (
-    <div className="space-y-5 text-xs">
+    <div className="space-y-4 text-xs">
       {/* Encabezado y pestañas de ACTUAR */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-              4. ACTUAR — Recomendaciones, Acciones de Mejora y Correcciones
+              Acciones de Mejora, Preventivas y Correctivas
             </h3>
             <p className="text-[11px] text-slate-500">
-              Convierta lo encontrado en evaluaciones médicas (respetando confidencialidad), riesgos, indicadores y estándares en acciones concretas con seguimiento hasta resolverlas.
+              Registre situaciones que necesitan corrección, defina acciones preventivas, correctivas y de mejora, y haga seguimiento a responsables y fechas.
             </p>
           </div>
           <button
@@ -305,7 +304,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white font-black cursor-pointer shrink-0"
           >
             <Plus className="h-4 w-4" />
-            <span>Nueva Acción de Mejora</span>
+            <span>Nueva acción de mejora</span>
           </button>
         </div>
 
@@ -321,9 +320,9 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
           >
             <span className="inline-flex items-center gap-1.5">
               <Wrench className="h-3.5 w-3.5 text-[#f97316]" />
-              <span>B–D. Acciones de Mejora, Vínculo con Riesgos y Seguimiento</span>
+              <span>Acciones preventivas, correctivas y de mejora</span>
             </span>
-            <span className="px-2 py-0.5 rounded bg-white/90 text-slate-900 font-mono text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-white/90 text-slate-900 font-mono tabular-nums text-[10px]">
               {accionesMejora.length}
             </span>
           </button>
@@ -339,9 +338,9 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
           >
             <span className="inline-flex items-center gap-1.5">
               <Lightbulb className="h-3.5 w-3.5 text-[#f97316]" />
-              <span>A. Recomendaciones y Prioridades de Intervención</span>
+              <span>Situaciones que necesitan corrección</span>
             </span>
-            <span className="px-2 py-0.5 rounded bg-white/90 text-slate-900 font-mono text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-white/90 text-slate-900 font-mono tabular-nums text-[10px]">
               {recomendaciones.length}
             </span>
           </button>
@@ -840,18 +839,30 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                 </button>
               ))}
             </div>
-            <select
-              value={filtroOrigenAccion}
-              onChange={(e) => setFiltroOrigenAccion(e.target.value as any)}
-              className="rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
-            >
-              <option value="TODOS">Todos los orígenes</option>
-              <option value="MATRIZ_RIESGOS">Matriz de riesgos</option>
-              <option value="INDICADORES">Indicadores</option>
-              <option value="ESTANDARES_MINIMOS">Estándares mínimos</option>
-              <option value="ACTIVIDAD_PLAN">Actividad Plan</option>
-              <option value="CONDICIONES_SALUD">Condiciones de salud</option>
-            </select>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value as any)}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+              >
+                <option value="TODOS">Todos los tipos</option>
+                <option value="CORRECTIVA">Correctivas</option>
+                <option value="PREVENTIVA">Preventivas</option>
+                <option value="MEJORA">Oportunidades de mejora</option>
+              </select>
+              <select
+                value={filtroOrigenAccion}
+                onChange={(e) => setFiltroOrigenAccion(e.target.value as any)}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+              >
+                <option value="TODOS">Todos los orígenes</option>
+                <option value="MATRIZ_RIESGOS">Matriz de riesgos</option>
+                <option value="INDICADORES">Indicadores</option>
+                <option value="ESTANDARES_MINIMOS">Estándares mínimos</option>
+                <option value="ACTIVIDAD_PLAN">Actividad Plan</option>
+                <option value="CONDICIONES_SALUD">Condiciones de salud</option>
+              </select>
+            </div>
           </div>
 
           {/* Listado de Acciones de Mejora */}

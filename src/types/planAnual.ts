@@ -155,6 +155,24 @@ export interface RiesgoSnapshotVinculado {
   proceso: string;
 }
 
+export type TipoRecursoActividad =
+  | 'PENDIENTE_VALORACION'
+  | 'RECURSOS_EXISTENTES'
+  | 'CON_PRESUPUESTO';
+
+export interface CambioFechaActividad {
+  id: string;
+  fechaRegistro: string;
+  usuario: string;
+  fechaInicioAnterior: string;
+  fechaLimiteAnterior: string;
+  fechaInicioNueva: string;
+  fechaLimiteNueva: string;
+  mesesAnteriores?: number[];
+  mesesNuevos?: number[];
+  motivo: string;
+}
+
 export interface ActividadPlanAnual {
   id: string;
   codigo: string;
@@ -164,7 +182,7 @@ export interface ActividadPlanAnual {
   area: AreaPlanAnual;
   origen: OrigenActividadPlan;
 
-  // Trazabilidad automática
+  // Trazabilidad automática con Matriz de Riesgos, Normas, Planes de Mejora, Emergencias, Capacitaciones y Formatos
   riesgoId?: string;
   riesgoCodigo?: string;
   riesgoNivelNR?: 'I' | 'II' | 'III' | 'IV';
@@ -172,6 +190,11 @@ export interface ActividadPlanAnual {
   riesgoProceso?: string;
   riesgoMedidasControl?: string;
   riesgoSnapshot?: RiesgoSnapshotVinculado;
+  planMejoraRiesgoId?: string;
+  esPlanEmergencias?: boolean;
+  capacitacionNombre?: string;
+  formatoId?: string;
+  formatoNombre?: string;
 
   normaId?: string;
   normaOficial?: string;
@@ -181,7 +204,7 @@ export interface ActividadPlanAnual {
 
   objetivoEspecificoId?: string;
 
-  // Frecuencia y fechas
+  // Frecuencia, fechas y trazabilidad de reprogramación
   esRecurrente: boolean;
   periodicidad: PeriodicidadActividad;
   fechaInicio: string; // YYYY-MM-DD
@@ -189,6 +212,16 @@ export interface ActividadPlanAnual {
   programacionMensual: number[]; // [1..12]
   serieRecurrenteId?: string;
   numeroOcurrencia?: number;
+  reprogramadaParaAnio?: number;
+  reprogramacionOrigen?: {
+    anioOrigen: number;
+    codigoOriginal?: string;
+    fechaInicioOriginal: string;
+    fechaLimiteOriginal: string;
+    motivo: string;
+    fechaRegistro: string;
+  };
+  historialCambiosFechas?: CambioFechaActividad[];
 
   // Responsable y aprobador
   responsableId: string;
@@ -199,9 +232,13 @@ export interface ActividadPlanAnual {
   aprobadorNombre: string;
   aprobadorCargo: string;
 
-  // Presupuesto
-  presupuestoEstimado: number;
-  gastoEjecutado: number;
+  // Recursos y presupuesto diferenciado
+  recursosNecesarios?: string;
+  tipoRecurso?: TipoRecursoActividad;
+  confirmacionRecursos?: string;
+  presupuestoEstimado: number; // Presupuesto programado (0 si está pendiente de valoración o usa recursos existentes)
+  presupuestoAprobado?: number; // Presupuesto aprobado por Gerencia (0 inicial)
+  gastoEjecutado: number; // Presupuesto ejecutado ($0 inicial sin ejecución confirmada)
 
   // Estado y cierre con evidencia
   estado: EstadoActividadPlan;
@@ -271,6 +308,9 @@ export interface PlanAnualVigencia {
   aprobadorNombre: string;
   estadoAprobacion: EstadoAprobacionPlan;
   fechaAprobacion?: string;
+  presupuestoGeneralAprobado?: number;
+  presupuestoGeneralActualizadoPor?: string;
+  fechaPresupuestoGeneral?: string;
   revisionGerente?: RegistroRevisionGerente;
   empresaSnapshot: EmpresaSnapshotPlan;
   objetivosEspecificos: ObjetivoEspecificoPlan[];

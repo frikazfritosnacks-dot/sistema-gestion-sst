@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import type { AssistantNavigationTarget } from '../types/assistantNavigation';
 import {
   CaracterizacionEmpresaDinamica,
   ModalidadContrato,
@@ -74,6 +75,7 @@ interface ConfiguracionDinamicaEmpresaViewProps {
   onActualizarNormas: (normasActualizadas: NormaPhvaItem[]) => void;
   onOpenNormaModal: (norma: NormaPhvaItem) => void;
   onOpenMatrizExcel: () => void;
+  navigationRequest?: AssistantNavigationTarget | null;
 }
 
 export const ConfiguracionDinamicaEmpresaView: React.FC<
@@ -84,9 +86,17 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
   onActualizarNormas,
   onOpenNormaModal,
   onOpenMatrizExcel,
+  navigationRequest,
 }) => {
   // Subcategoría activa dentro de Configuración Dinámica (Organigrama, Políticas, Caracterización)
   const [subcategoriaActiva, setSubcategoriaActiva] = useState<SubcategoriaConfiguracionDinamica>('organigrama');
+
+  useEffect(() => {
+    if (!navigationRequest || navigationRequest.tab !== 'ficha_empresa') return;
+    if (navigationRequest.empresaSubcategoria) {
+      setSubcategoriaActiva(navigationRequest.empresaSubcategoria);
+    }
+  }, [navigationRequest]);
 
   // Estado de la caracterización empresarial viva
   const [config, setConfig] = useState<CaracterizacionEmpresaDinamica>(() =>

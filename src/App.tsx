@@ -28,6 +28,7 @@ import { PresentacionEditorModal } from './components/PresentacionEditorModal';
 import { MatrizExcelView } from './components/MatrizExcelView';
 import { ConfiguracionDinamicaEmpresaView } from './components/ConfiguracionDinamicaEmpresaView';
 import { MatrizRiesgosView } from './components/MatrizRiesgosView';
+import { PlanAnualView } from './components/plan-anual/PlanAnualView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GoogleWorkspaceAuthButton } from './components/GoogleWorkspaceAuthButton';
 import {
@@ -54,14 +55,16 @@ import {
   Users,
   Bot,
   Mail,
+  CalendarCheck,
 } from 'lucide-react';
 import {
   getBadgeClassesEstadoFrikaz,
   useGerenteAutorizado,
 } from './services/gerenteControlService';
 import { ModalAccesoGerente } from './components/ModalAccesoGerente';
-import { RiskAssistantModal } from './components/matriz-gtc45/RiskAssistantModal';
-import { loadStoredRisks } from './services/riskMatrixStorage';
+import { FloatingVirtualAssistant } from './components/FloatingVirtualAssistant';
+import { FrikacitoAvatar } from './components/FrikacitoAvatar';
+import type { AssistantNavigationTarget } from './types/assistantNavigation';
 import {
   TrabajadorFrikaz,
   PoliticaMisionFrikaz,
@@ -84,7 +87,13 @@ import { WorkerSelectorModal } from './components/misionFrikaz/WorkerSelectorMod
 import { GameAvatar } from './components/misionFrikaz/GameAvatar';
 import { precargarRecursosCriticos } from './services/gameAssets';
 
-type TabView = 'phva_slides' | 'matriz_tabla' | 'matriz_excel' | 'ficha_empresa' | 'matriz_riesgos';
+type TabView =
+  | 'phva_slides'
+  | 'plan_anual'
+  | 'matriz_tabla'
+  | 'matriz_excel'
+  | 'ficha_empresa'
+  | 'matriz_riesgos';
 
 export default function App() {
   const [items, setItems] = useState<NormaPhvaItem[]>([]);
@@ -113,7 +122,7 @@ export default function App() {
   );
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [normaToDelete, setNormaToDelete] = useState<NormaPhvaItem | null>(null);
-  const [isGlobalAssistantOpen, setIsGlobalAssistantOpen] = useState(false);
+  const [assistantNavTarget, setAssistantNavTarget] = useState<AssistantNavigationTarget | null>(null);
 
   const { esGerente, nombreGerente, avatarGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
@@ -441,7 +450,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased flex flex-col">
+    <div
+      className={`min-h-screen text-slate-900 font-sans antialiased flex flex-col transition-colors ${
+        activeTab === 'plan_anual'
+          ? 'bg-linear-to-br from-[#e4f2ee] via-[#eef7f4] to-[#e0efea]'
+          : 'bg-slate-100'
+      }`}
+    >
       {/* BARRA SUPERIOR DE SESIÓN Y MISIÓN FRIKAZ */}
       <div className="bg-slate-950 text-slate-300 border-b border-slate-800 px-4 py-2 text-xs">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
@@ -473,7 +488,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Botón de Lanzamiento de Misión Frikaz */}
             <button
               onClick={() => {
@@ -495,14 +510,14 @@ export default function App() {
               <span>Mi Pasaporte ({pasaporte.porcentajeAvance}%)</span>
             </button>
 
-            {/* Botón de Asistente SST en lenguaje claro */}
+            {/* Botón de Frikacito en lenguaje claro */}
             <button
-              onClick={() => setIsGlobalAssistantOpen(true)}
+              onClick={() => window.dispatchEvent(new CustomEvent('frikaz:open-assistant'))}
               className="px-2.5 py-1 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Abrir guía y asistente virtual en lenguaje sencillo"
+              title="Abrir a Frikacito, tu asistente virtual de Frikaz S.A.S."
             >
-              <Bot className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Asistente SST</span>
+              <FrikacitoAvatar size="xs" />
+              <span className="hidden sm:inline font-bold">Frikacito</span>
             </button>
 
             {/* Botón de Acceso / Perfil de Gerencia por Correo */}
@@ -551,97 +566,35 @@ export default function App() {
       {/* HEADER PRINCIPAL */}
       <header className="sticky top-0 z-30 bg-[#0f172a] text-white border-b border-slate-800 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Fila 1: Identidad de Frikaz S.A.S. y Acciones Rápidas */}
+          <div className="flex items-center justify-between gap-4 py-2.5 sm:py-3">
             {/* Logo y Nombre de la Empresa */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <img
                 src="/frikaz_logo.jpg"
                 alt="Frikaz S.A.S. Logo"
-                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-cover border border-orange-500/30 bg-white p-0.5 shadow-sm"
+                className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl object-cover border border-orange-500/30 bg-white p-0.5 shadow-sm"
               />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                  <h1 className="text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap leading-tight">
                     Frikaz S.A.S.
                   </h1>
-                  <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#f97316] text-white">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#f97316] text-white whitespace-nowrap shrink-0 leading-tight">
                     Planta de Fritos
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 hidden sm:block">
+                <p className="text-[11px] sm:text-xs text-slate-300/90 leading-snug mt-0.5">
                   Seguridad en el Trabajo (SST) y Cuidado Ambiental • Bosa, Bogotá D.C.
                 </p>
               </div>
             </div>
 
-            {/* Navegación por pestañas (Desktop) */}
-            <nav className="hidden md:flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-              <button
-                onClick={() => setActiveTab('phva_slides')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'phva_slides'
-                    ? 'bg-[#f97316] text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                }`}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span>Ciclo PHVA</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('matriz_tabla')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'matriz_tabla'
-                    ? 'bg-[#f97316] text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                }`}
-              >
-                <TableProperties className="h-3.5 w-3.5" />
-                <span>Normas y Reglas</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('matriz_excel')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'matriz_excel'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                }`}
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-300" />
-                <span>Tabla de Normas</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('ficha_empresa')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'ficha_empresa'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                }`}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5 text-purple-300" />
-                <span>Mi Empresa</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('matriz_riesgos')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeTab === 'matriz_riesgos'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                }`}
-              >
-                <ShieldAlert className="h-3.5 w-3.5 text-rose-300" />
-                <span>Riesgos del Trabajo</span>
-              </button>
-            </nav>
-
             {/* Acciones y KPIs Rápidos */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 shrink-0">
               <GoogleWorkspaceAuthButton compact={true} />
 
-              <div className="hidden lg:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs">
+              <div className="hidden lg:flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs whitespace-nowrap">
                 <span className="text-slate-400">Avance:</span>
                 <span
                   className={`font-black ${
@@ -663,11 +616,107 @@ export default function App() {
               {/* Botón de Menú Móvil */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
+                className="md:hidden p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
                 aria-label="Abrir menú"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
+            </div>
+          </div>
+
+          {/* Fila 2: Navegación por pestañas (Desktop / Tablet) */}
+          <div className="hidden md:flex items-center justify-between gap-3 py-2 border-t border-slate-800/80">
+            <nav className="flex flex-wrap items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+              <button
+                onClick={() => setActiveTab('phva_slides')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeTab === 'phva_slides'
+                    ? 'bg-[#f97316] text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Ciclo PHVA</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('plan_anual')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeTab === 'plan_anual'
+                    ? 'bg-[#0f6b61] text-white shadow-xs ring-1 ring-teal-300/40'
+                    : 'text-teal-200 hover:text-white hover:bg-teal-900/50'
+                }`}
+              >
+                <CalendarCheck className="h-3.5 w-3.5" />
+                <span>PLAN ANUAL</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('matriz_tabla')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeTab === 'matriz_tabla'
+                    ? 'bg-[#f97316] text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                <TableProperties className="h-3.5 w-3.5" />
+                <span>Normas y Reglas</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('matriz_excel')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeTab === 'matriz_excel'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-300" />
+                <span>Tabla de Normas</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('ficha_empresa')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeTab === 'ficha_empresa'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5 text-purple-300" />
+                <span>Mi Empresa</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('matriz_riesgos')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeTab === 'matriz_riesgos'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+                }`}
+              >
+                <ShieldAlert className="h-3.5 w-3.5 text-rose-300" />
+                <span>Riesgos del Trabajo</span>
+              </button>
+            </nav>
+
+            <div className="flex md:flex lg:hidden items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs whitespace-nowrap shrink-0">
+              <span className="text-slate-400">Avance:</span>
+              <span
+                className={`font-black ${
+                  indicadores.generalPorcentaje >= 70
+                    ? 'text-emerald-400'
+                    : indicadores.generalPorcentaje >= 40
+                    ? 'text-orange-400'
+                    : 'text-red-400'
+                }`}
+              >
+                {indicadores.generalPorcentaje}%
+              </span>
+              <span className="text-slate-500">•</span>
+              <span className="text-slate-300 font-medium">
+                {indicadores.totalNormas} reglas
+              </span>
             </div>
           </div>
         </div>
@@ -686,6 +735,18 @@ export default function App() {
             >
               <RefreshCw className="h-4 w-4" />
               <span>Ciclo PHVA</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('plan_anual');
+                setMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold ${
+                activeTab === 'plan_anual' ? 'bg-[#0f6b61] text-white' : 'text-teal-200'
+              }`}
+            >
+              <CalendarCheck className="h-4 w-4" />
+              <span>PLAN ANUAL</span>
             </button>
             <button
               onClick={() => {
@@ -755,7 +816,15 @@ export default function App() {
             onReset={handleReset}
             onAddNewNorma={handleAddNewNorma}
             onOpenMatrizExcel={() => setActiveTab('matriz_excel')}
+            navigationRequest={assistantNavTarget}
           />
+        )}
+
+        {/* VIEW 1B: PLAN ANUAL INDEPENDIENTE */}
+        {activeTab === 'plan_anual' && (
+          <ErrorBoundary fallbackTitle="PLAN ANUAL — Frikaz S.A.S.">
+            <PlanAnualView normas={items} navigationRequest={assistantNavTarget} />
+          </ErrorBoundary>
         )}
 
         {/* VIEW 2: MATRIZ TABULAR NORMATIVA COMPLETA */}
@@ -940,6 +1009,7 @@ export default function App() {
               }}
               onOpenNormaModal={(norma) => handleOpenNorma(norma, false)}
               onOpenMatrizExcel={() => setActiveTab('matriz_excel')}
+              navigationRequest={assistantNavTarget}
             />
           </ErrorBoundary>
         )}
@@ -949,11 +1019,14 @@ export default function App() {
           <MatrizExcelView
             items={items}
             onSelectNorma={(norma) => handleOpenNorma(norma, false)}
+            navigationRequest={assistantNavTarget}
           />
         )}
 
         {/* VIEW 5: MATRIZ DE RIESGOS SST (GTC 45 - IDENTIFICACIÓN, EVALUACIÓN Y MEDIDAS) */}
-        {activeTab === 'matriz_riesgos' && <MatrizRiesgosView />}
+        {activeTab === 'matriz_riesgos' && (
+          <MatrizRiesgosView navigationRequest={assistantNavTarget} />
+        )}
       </main>
 
       {/* MODAL WITH THE 6 MANDATORY CIRCLES */}
@@ -1087,13 +1160,53 @@ export default function App() {
       {/* MODAL GLOBAL DE ACCESO DE GERENCIA */}
       <ModalAccesoGerente />
 
-      {/* ASISTENTE VIRTUAL GLOBAL DE LA HERRAMIENTA */}
-      <RiskAssistantModal
-        isOpen={isGlobalAssistantOpen}
-        onClose={() => setIsGlobalAssistantOpen(false)}
-        dataset={isGlobalAssistantOpen ? loadStoredRisks() : []}
-        onSelectRisk={() => {
-          setActiveTab('matriz_riesgos');
+      {/* ASISTENTE VIRTUAL FLOTANTE GLOBAL: FRIKACITO */}
+      <FloatingVirtualAssistant
+        userContext={{
+          esGerente,
+          workerNombre: currentWorker.nombre,
+          workerCargo: currentWorker.cargoNombre,
+        }}
+        onNavigate={(target) => {
+          setMobileMenuOpen(false);
+
+          if (target.specialAction === 'open_gerente_login') {
+            solicitarAccesoGerente();
+            return;
+          }
+          if (target.specialAction === 'open_admin_sst') {
+            if (!esGerente) {
+              solicitarAccesoGerente();
+              return;
+            }
+            setIsAdminPanelOpen(true);
+            return;
+          }
+          if (target.specialAction === 'open_passport') {
+            setIsPassportModalOpen(true);
+            return;
+          }
+          if (target.specialAction === 'open_mission') {
+            const primeraObligatoria =
+              politicasMision.find((p) => p.esObligatoria) || politicasMision[0];
+            if (primeraObligatoria) setActiveMissionPolicyId(primeraObligatoria.id);
+            return;
+          }
+          if (target.specialAction === 'open_worker_selector') {
+            setIsWorkerSelectorOpen(true);
+            return;
+          }
+
+          setActiveTab(target.tab);
+          if (target.tab === 'matriz_tabla' && target.searchQuery !== undefined) {
+            setSearchTermMatriz(target.searchQuery);
+            setAreaFilterMatriz('TODAS');
+          }
+          if (target.normaId) {
+            const matchedNorma = items.find((n) => n.id === target.normaId);
+            if (matchedNorma) handleOpenNorma(matchedNorma, false);
+          }
+          setAssistantNavTarget({ ...target, nonce: target.nonce || Date.now() });
         }}
       />
     </div>

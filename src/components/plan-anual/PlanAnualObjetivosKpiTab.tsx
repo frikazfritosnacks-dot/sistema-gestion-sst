@@ -323,7 +323,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
             </div>
             <div>
               <h3 className="text-sm font-black text-[#0f172a]">
-                A. Propósito Principal del Plan Anual (Año {plan.vigencia})
+                Objetivo general del plan (Año {plan.vigencia})
               </h3>
               <p className="text-[11px] text-slate-500">
                 La información de cada año se guarda aparte para que pueda consultarla y compararla cuando quiera.
@@ -505,7 +505,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <h3 className="text-sm font-black text-[#0f172a]">
-              B. Objetivos Específicos y Metas del Año
+              Objetivos específicos y metas ({plan.vigencia})
             </h3>
             <p className="text-[11px] text-slate-500">
               Conectados directamente con las tareas y cuentas del Plan Anual {plan.vigencia}.
@@ -673,7 +673,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                     </strong>
                   </div>
 
-                  {/* Riesgos, Estándares e Indicadores (desde 3. VERIFICAR sin duplicar) */}
+                  {/* Riesgos, Estándares e Indicadores conectados */}
                   {(obj.riesgosRelacionadosIds?.length || 0) > 0 && (
                     <div className="text-[10px] text-rose-900">
                       <strong>Riesgos asociados:</strong>{' '}
@@ -751,7 +751,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
                     <div className="mt-2 p-2.5 rounded-xl bg-white border border-orange-200 space-y-2 text-[10px]">
                       <div>
                         <span className="font-bold text-slate-700 block mb-1">
-                          Indicadores (sin duplicar, desde 3. VERIFICAR):
+                          Indicadores relacionados (sin duplicar datos):
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {hojasVidaIndicadores.map((hv) => {
@@ -927,7 +927,7 @@ export const PlanAnualObjetivosKpiTab: React.FC<PlanAnualObjetivosKpiTabProps> =
             </div>
             <div>
               <h3 className="text-sm font-black text-[#0f172a]">
-                C. Indicadores de Avance (KPI — números que muestran cómo vamos)
+                Indicadores de avance y cumplimiento
               </h3>
               <p className="text-[11px] text-slate-500">
                 Se calculan solos mirando las tareas terminadas, las pruebas aprobadas, el dinero usado y los riesgos atendidos.

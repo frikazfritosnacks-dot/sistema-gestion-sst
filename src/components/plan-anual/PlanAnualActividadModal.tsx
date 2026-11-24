@@ -7,7 +7,9 @@ import {
   ObjetivoEspecificoPlan,
   PeriodicidadActividad,
   ResponsablePlanOption,
+  TipoRecursoActividad,
 } from '../../types/planAnual';
+import { formatPresupuestoProgramadoLabel } from '../../services/planAnualService';
 import {
   X,
   Save,
@@ -37,8 +39,10 @@ interface PlanAnualActividadModalProps {
   responsables: ResponsablePlanOption[];
   objetivos: ObjetivoEspecificoPlan[];
   initialTab?: 'datos' | 'evidencias' | 'historial';
+  presupuestoGeneralAprobado?: number;
+  planActividades?: ActividadPlanAnual[];
   onClose: () => void;
-  onSave: (act: ActividadPlanAnual) => void;
+  onSave: (act: ActividadPlanAnual, motivoCambioFecha?: string) => void;
   onAprobarYCerrar: (
     act: ActividadPlanAnual,
     resultadoActividad: string,
@@ -63,6 +67,8 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
   responsables,
   objetivos,
   initialTab = 'datos',
+  presupuestoGeneralAprobado = 0,
+  planActividades = [],
   onClose,
   onSave,
   onAprobarYCerrar,
@@ -79,6 +85,7 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
   const [nuevaUrlReferencia, setNuevaUrlReferencia] = useState('');
   const [nuevoArchivoDataUrl, setNuevoArchivoDataUrl] = useState<string | undefined>(undefined);
   const [comentarioRevisor, setComentarioRevisor] = useState('');
+  const [motivoCambioFecha, setMotivoCambioFecha] = useState('');
   const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
   useEffect(() => {
@@ -87,6 +94,7 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
       setTab(initialTab);
       setErrorMsg(null);
       setComentarioRevisor('');
+      setMotivoCambioFecha('');
       setNuevoNombreArchivo('');
       setNuevaDescripcionSoporte('');
       setNuevaUrlReferencia('');
@@ -96,7 +104,16 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
 
   if (!isOpen || !form) return null;
 
-  const disponible = (form.presupuestoEstimado || 0) - (form.gastoEjecutado || 0);
+  const presupuestoAprobado = form.presupuestoAprobado || 0;
+  const gastoEjecutado = form.gastoEjecutado || 0;
+  const saldoDisponible = Math.max(0, presupuestoAprobado - gastoEjecutado);
+  const fechasCambiadas = Boolean(
+    actividad &&
+      (actividad.fechaInicio !== form.fechaInicio ||
+        actividad.fechaLimite !== form.fechaLimite ||
+        JSON.stringify([...(actividad.programacionMensual || [])].sort((a, b) => a - b)) !==
+          JSON.stringify([...(form.programacionMensual || [])].sort((a, b) => a - b)))
+  );
   const tieneEvidencias = form.evidencias.length > 0;
   const tieneEvidenciaAprobada = form.evidencias.some((e) => e.estadoRevision === 'APROBADA');
 
@@ -240,20 +257,27 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
       }
     }
 
-    onSave({
-      ...form,
-      historialRevisiones: [
-        {
-          id: `hrev-${Date.now()}`,
-          fecha: new Date().toISOString(),
-          usuario: form.responsableNombre,
-          rol: 'Planificador',
-          accion: 'ACTUALIZADA',
-          detalle: `Tarea actualizada (Estado: ${form.estado}, Presupuesto: $${form.presupuestoEstimado.toLocaleString('es-CO')}).`,
-        },
-        ...form.historialRevisiones,
-      ],
-    });
+    onSave(
+      {
+        ...form,
+        historialRevisiones: [
+          {
+            id: `hrev-${Date.now()}`,
+            fecha: new Date().toISOString(),
+            usuario: form.responsableNombre,
+            rol: 'Planificador',
+            accion: 'ACTUALIZADA',
+            detalle: `Tarea actualizada (Estado: ${form.estado}, Programado: ${formatPresupuestoProgramadoLabel(
+              form
+            )}, Aprobado: $${(form.presupuestoAprobado || 0).toLocaleString(
+              'es-CO'
+            )}, Ejecutado: $${(form.gastoEjecutado || 0).toLocaleString('es-CO')}).`,
+          },
+          ...form.historialRevisiones,
+        ],
+      },
+      fechasCambiadas ? motivoCambioFecha : undefined
+    );
     onClose();
   };
 
@@ -354,7 +378,9 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
             }`}
           >
             <History className="h-3.5 w-3.5" />
-            <span>3. Movimientos Guardados ({form.historialRevisiones.length})</span>
+            <span>
+              3. Historial y Cambios ({form.historialRevisiones.length + (form.historialCambiosFechas?.length || 0)})
+            </span>
           </button>
         </div>
 
@@ -369,31 +395,69 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
 
           {tab === 'datos' && (
             <form id="actividad-plan-form" onSubmit={handleSubmitForm} className="space-y-4">
-              {/* Trazabilidad automática si aplica */}
-              {(form.riesgoId || form.normaOficial) && (
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1.5">
-                  <span className="font-black text-indigo-950 uppercase text-[10px] tracking-wider block">
-                    Conectada automáticamente con Peligros y Normas
+              {/* Trazabilidad automática y conexiones dentro del SG-SST */}
+              {(form.riesgoId ||
+                form.normaOficial ||
+                form.capacitacionNombre ||
+                form.formatoNombre ||
+                form.planMejoraRiesgoId ||
+                form.esPlanEmergencias ||
+                form.reprogramacionOrigen ||
+                form.reprogramadaParaAnio) && (
+                <div className="rounded-xl border border-[#b9dad3] bg-[#f4faf8] p-3.5 space-y-1.5 text-[#0d3b36]">
+                  <span className="font-black text-[#0f6b61] uppercase text-[10px] tracking-wider block">
+                    Conexiones y Trazabilidad de la Actividad
                   </span>
                   {form.riesgoId && (
-                    <div className="text-indigo-900 space-y-0.5">
+                    <div className="space-y-0.5">
                       <p>
                         <strong>Peligro GTC 45:</strong> {form.riesgoCodigo} (Nivel{' '}
                         {form.riesgoNivelNR}) · <strong>Puesto:</strong> {form.riesgoCargo} ·{' '}
                         <strong>Área:</strong> {form.riesgoProceso}
                       </p>
                       {form.riesgoMedidasControl && (
-                        <p className="text-[11px] text-indigo-800">
-                          <strong>Qué hacer para proteger al trabajador:</strong>{' '}
-                          {form.riesgoMedidasControl}
+                        <p className="text-[11px] text-[#355b56]">
+                          <strong>Medidas de cuidado:</strong> {form.riesgoMedidasControl}
                         </p>
                       )}
                     </div>
                   )}
                   {form.normaOficial && (
-                    <p className="text-indigo-900">
-                      <strong>Norma que la exige:</strong> {form.normaOficial}{' '}
+                    <p>
+                      <strong>Norma relacionada:</strong> {form.normaOficial}{' '}
                       {form.normaArticulos ? `(${form.normaArticulos})` : ''}
+                    </p>
+                  )}
+                  {form.capacitacionNombre && (
+                    <p>
+                      <strong>Capacitación vinculada:</strong> {form.capacitacionNombre}
+                    </p>
+                  )}
+                  {form.formatoNombre && (
+                    <p>
+                      <strong>Formato / Registro asociado:</strong> {form.formatoNombre}
+                    </p>
+                  )}
+                  {(form.planMejoraRiesgoId || form.esPlanEmergencias) && (
+                    <p>
+                      <strong>Módulo conectado:</strong>{' '}
+                      {form.esPlanEmergencias
+                        ? 'Plan de Prevención, Preparación y Respuesta ante Emergencias'
+                        : `Plan de Mejora por Riesgo (${form.planMejoraRiesgoId})`}
+                    </p>
+                  )}
+                  {form.reprogramacionOrigen && (
+                    <p className="text-[11px] bg-white/80 rounded-lg p-2 border border-[#cce3dd]">
+                      <strong>Reprogramada desde {form.reprogramacionOrigen.anioOrigen}:</strong>{' '}
+                      Fechas originales {form.reprogramacionOrigen.fechaInicioOriginal} →{' '}
+                      {form.reprogramacionOrigen.fechaLimiteOriginal}.{' '}
+                      {form.reprogramacionOrigen.motivo}
+                    </p>
+                  )}
+                  {form.reprogramadaParaAnio && (
+                    <p className="text-[11px] bg-amber-50 text-amber-950 rounded-lg p-2 border border-amber-200">
+                      <strong>Estado de vigencia:</strong> Actividad sin ejecución confirmada en{' '}
+                      {vigencia}; reprogramada para el Plan Anual {form.reprogramadaParaAnio}.
                     </p>
                   )}
                 </div>
@@ -567,6 +631,21 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                     })}
                   </div>
                 </div>
+
+                {fechasCambiadas && (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-1">
+                    <label className="font-bold text-amber-950 block">
+                      Motivo del cambio de fecha (se guardará en el historial de fechas)
+                    </label>
+                    <input
+                      type="text"
+                      value={motivoCambioFecha}
+                      onChange={(e) => setMotivoCambioFecha(e.target.value)}
+                      placeholder="Ej. Reprogramación acordada con Gerencia por disponibilidad de planta..."
+                      className="w-full rounded-lg border border-amber-300 p-2 text-xs bg-white"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 4. Responsable y Aprobador */}
@@ -605,31 +684,120 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                 </div>
               </div>
 
-              {/* 5, 6 y 7. Presupuesto, Gasto Ejecutado y Estado */}
+              {/* 5, 6 y 7. Recursos, Presupuesto Diferenciado y Estado */}
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                <div className="flex items-center gap-2 font-bold text-slate-800">
-                  <DollarSign className="h-4 w-4 text-emerald-600" />
-                  <span>5 y 6. Dinero Planeado, Gastado y Estado (7)</span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-800">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                    <span>5 y 6. Recursos, Presupuesto Diferenciado y Estado (7)</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-500">
+                    Valoración: {formatPresupuestoProgramadoLabel(form)}
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="font-semibold text-slate-600 block mb-1">
-                      Presupuesto Separado ($)
+                      Tipo de recurso / valoración
+                    </label>
+                    <select
+                      value={
+                        form.tipoRecurso ||
+                        ((form.presupuestoEstimado || 0) > 0
+                          ? 'CON_PRESUPUESTO'
+                          : 'PENDIENTE_VALORACION')
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value as TipoRecursoActividad;
+                        setForm({
+                          ...form,
+                          tipoRecurso: val,
+                          presupuestoEstimado: val === 'CON_PRESUPUESTO' ? form.presupuestoEstimado : 0,
+                        });
+                      }}
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                    >
+                      <option value="PENDIENTE_VALORACION">Pendiente de valoración</option>
+                      <option value="RECURSOS_EXISTENTES">Recursos existentes (por confirmar)</option>
+                      <option value="CON_PRESUPUESTO">Con valor económico programado ($)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-600 block mb-1">
+                      Recursos necesarios
+                    </label>
+                    <input
+                      type="text"
+                      value={form.recursosNecesarios || ''}
+                      onChange={(e) => setForm({ ...form, recursosNecesarios: e.target.value })}
+                      placeholder="Ej. Señalización, extintores, tiempo de personal..."
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-600 block mb-1">
+                      Confirmación de recursos
+                    </label>
+                    <input
+                      type="text"
+                      value={form.confirmacionRecursos || ''}
+                      onChange={(e) => setForm({ ...form, confirmacionRecursos: e.target.value })}
+                      placeholder="Ej. Por confirmar disponibilidad en planta..."
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                  <div>
+                    <label className="font-semibold text-slate-600 block mb-1">
+                      Programado ($)
                     </label>
                     <input
                       type="number"
                       min={0}
                       step={10000}
                       value={form.presupuestoEstimado}
-                      onChange={(e) =>
-                        setForm({ ...form, presupuestoEstimado: Number(e.target.value) || 0 })
+                      disabled={
+                        (form.tipoRecurso || 'PENDIENTE_VALORACION') !== 'CON_PRESUPUESTO' &&
+                        (form.presupuestoEstimado || 0) === 0
                       }
-                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white font-mono"
+                      onChange={(e) => {
+                        const monto = Number(e.target.value) || 0;
+                        setForm({
+                          ...form,
+                          presupuestoEstimado: monto,
+                          tipoRecurso: monto > 0 ? 'CON_PRESUPUESTO' : form.tipoRecurso,
+                        });
+                      }}
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white font-mono disabled:bg-slate-100"
                     />
                   </div>
                   <div>
                     <label className="font-semibold text-slate-600 block mb-1">
-                      Dinero Gastado ($)
+                      Aprobado Gerencia ($)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={10000}
+                      value={presupuestoAprobado}
+                      disabled={!esGerente}
+                      title={
+                        esGerente
+                          ? 'Monto autorizado por Andrea Orjuela – Gerente'
+                          : 'Solo Andrea Orjuela – Gerente puede aprobar presupuesto'
+                      }
+                      onChange={(e) =>
+                        setForm({ ...form, presupuestoAprobado: Number(e.target.value) || 0 })
+                      }
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white font-mono disabled:bg-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-600 block mb-1">
+                      Ejecutado ($)
                     </label>
                     <input
                       type="number"
@@ -639,19 +807,14 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                       onChange={(e) =>
                         setForm({ ...form, gastoEjecutado: Number(e.target.value) || 0 })
                       }
+                      title="Solo registre un monto cuando exista un gasto real ejecutado con soporte. Completar la actividad no descuenta presupuesto automáticamente."
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white font-mono"
                     />
                   </div>
                   <div>
-                    <span className="font-semibold text-slate-600 block mb-1">Queda Disponible</span>
-                    <div
-                      className={`rounded-lg border p-2 text-xs font-mono font-black ${
-                        disponible < 0
-                          ? 'bg-rose-50 border-rose-300 text-rose-800'
-                          : 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                      }`}
-                    >
-                      ${disponible.toLocaleString('es-CO')}
+                    <span className="font-semibold text-slate-600 block mb-1">Saldo Disponible</span>
+                    <div className="rounded-lg border p-2 text-xs font-mono font-black bg-emerald-50 border-emerald-300 text-emerald-800">
+                      ${saldoDisponible.toLocaleString('es-CO')}
                     </div>
                   </div>
                   <div>
@@ -683,6 +846,56 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                     </select>
                   </div>
                 </div>
+
+                {(() => {
+                  const otrasActividades = planActividades.filter((a) => a.id !== form.id);
+                  const distribuidoOtras = otrasActividades.reduce(
+                    (sum, a) => sum + (a.presupuestoAprobado || 0),
+                    0
+                  );
+                  const ejecutadoOtras = otrasActividades.reduce(
+                    (sum, a) => sum + (a.gastoEjecutado || 0),
+                    0
+                  );
+                  const totalDistribuido = distribuidoOtras + presupuestoAprobado;
+                  const totalEjecutado = ejecutadoOtras + gastoEjecutado;
+                  const superaGeneral =
+                    presupuestoGeneralAprobado > 0 &&
+                    totalDistribuido > presupuestoGeneralAprobado;
+                  const ejecSupera =
+                    presupuestoGeneralAprobado > 0 &&
+                    totalEjecutado > presupuestoGeneralAprobado;
+
+                  return (
+                    <div className="space-y-1.5 pt-1 text-[11px]">
+                      <p className="text-slate-600">
+                        Presupuesto General {vigencia}:{' '}
+                        <strong className="font-mono text-[#0d3b36]">
+                          ${presupuestoGeneralAprobado.toLocaleString('es-CO')}
+                        </strong>{' '}
+                        · Total distribuido (incluyendo esta actividad):{' '}
+                        <strong
+                          className={`font-mono ${
+                            superaGeneral ? 'text-rose-700' : 'text-[#0f6b61]'
+                          }`}
+                        >
+                          ${totalDistribuido.toLocaleString('es-CO')}
+                        </strong>{' '}
+                        · El gasto ejecutado solo cambia si ingresa un pago real con soporte.
+                      </p>
+                      {(superaGeneral || ejecSupera) && (
+                        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-amber-950 font-semibold flex items-center gap-2">
+                          <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                          <span>
+                            {ejecSupera
+                              ? `Atención: el ejecutado acumulado ($${totalEjecutado.toLocaleString('es-CO')}) supera el Presupuesto General ${vigencia}.`
+                              : `Atención: el total distribuido en actividades ($${totalDistribuido.toLocaleString('es-CO')}) supera el Presupuesto General ${vigencia} ($${presupuestoGeneralAprobado.toLocaleString('es-CO')}).`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* 8 y 9. Evidencia requerida y Observaciones */}
@@ -992,37 +1205,90 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
           )}
 
           {tab === 'historial' && (
-            <div className="space-y-3">
-              <p className="text-slate-600">
-                Aquí queda anotado todo lo que ha pasado con esta tarea: cuándo se creó, quién subió pruebas, revisiones y aprobaciones:
-              </p>
-              {form.historialRevisiones.length === 0 ? (
-                <p className="text-slate-400 italic p-4 text-center bg-slate-50 rounded-xl">
-                  Todavía no hay movimientos anotados.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {form.historialRevisiones.map((h) => (
-                    <div
-                      key={h.id}
-                      className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-start justify-between gap-3"
-                    >
-                      <div>
-                        <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold text-[10px]">
-                          {h.accion}
+            <div className="space-y-4">
+              {/* Trazabilidad de cambios de fechas y reprogramaciones */}
+              <div className="rounded-xl border border-[#b9dad3] bg-[#f4faf8] p-4 space-y-2.5">
+                <h4 className="font-black text-[#0d3b36] flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4 text-[#0f6b61]" />
+                  <span>Trazabilidad de cambios de fechas (Reprogramaciones)</span>
+                </h4>
+                {form.reprogramacionOrigen && (
+                  <div className="rounded-lg bg-white border border-[#cce3dd] p-2.5 text-[11px] text-[#0d3b36]">
+                    <p className="font-bold">
+                      Reprogramada desde el Plan {form.reprogramacionOrigen.anioOrigen}{' '}
+                      {form.reprogramacionOrigen.codigoOriginal
+                        ? `(${form.reprogramacionOrigen.codigoOriginal})`
+                        : ''}
+                    </p>
+                    <p className="text-[#355b56]">
+                      Fechas iniciales: {form.reprogramacionOrigen.fechaInicioOriginal} →{' '}
+                      {form.reprogramacionOrigen.fechaLimiteOriginal} · Motivo:{' '}
+                      {form.reprogramacionOrigen.motivo}
+                    </p>
+                  </div>
+                )}
+                {!form.historialCambiosFechas || form.historialCambiosFechas.length === 0 ? (
+                  <p className="text-[11px] text-slate-500 italic">
+                    No se han registrado modificaciones adicionales de fechas en esta vigencia.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {form.historialCambiosFechas.map((cf) => (
+                      <div
+                        key={cf.id}
+                        className="rounded-lg bg-white border border-slate-200 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]"
+                      >
+                        <div>
+                          <p className="font-bold text-slate-900">
+                            {cf.fechaInicioAnterior}→{cf.fechaLimiteAnterior} cambiada a{' '}
+                            <span className="text-[#0f6b61]">
+                              {cf.fechaInicioNueva}→{cf.fechaLimiteNueva}
+                            </span>
+                          </p>
+                          <p className="text-slate-600">{cf.motivo}</p>
+                          <p className="text-[10px] text-slate-400">Registrado por: {cf.usuario}</p>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                          {cf.fechaRegistro.slice(0, 16).replace('T', ' ')}
                         </span>
-                        <p className="font-semibold text-slate-900 mt-1">{h.detalle}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
-                          {h.usuario} ({h.rol})
-                        </p>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-500 shrink-0">
-                        {h.fecha.slice(0, 16).replace('T', ' ')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-slate-600">
+                  Movimientos generales de la actividad (creación, carga de pruebas, revisiones y aprobaciones):
+                </p>
+                {form.historialRevisiones.length === 0 ? (
+                  <p className="text-slate-400 italic p-4 text-center bg-slate-50 rounded-xl">
+                    Todavía no hay movimientos anotados.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {form.historialRevisiones.map((h) => (
+                      <div
+                        key={h.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-start justify-between gap-3"
+                      >
+                        <div>
+                          <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold text-[10px]">
+                            {h.accion}
+                          </span>
+                          <p className="font-semibold text-slate-900 mt-1">{h.detalle}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">
+                            {h.usuario} ({h.rol})
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                          {h.fecha.slice(0, 16).replace('T', ' ')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

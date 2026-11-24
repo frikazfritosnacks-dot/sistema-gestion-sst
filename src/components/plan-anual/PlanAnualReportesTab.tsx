@@ -12,7 +12,10 @@ import {
 } from '../../types/planAnual';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import { CaracterizacionEmpresaDinamica } from '../../types/dynamicConfig';
-import { exportarPlanAnualExcel } from '../../services/planAnualService';
+import {
+  calcularResumenPresupuestoPlan,
+  exportarPlanAnualExcel,
+} from '../../services/planAnualService';
 import { calcularResultadoIndicadorPeriodo } from '../../services/planAnualSgsstService';
 import {
   getBadgeClassesEstadoFrikaz,
@@ -108,15 +111,10 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
     const recurrentes = actividadesFiltradas.filter((a) => a.esRecurrente).length;
     const pctCumplimiento = total > 0 ? Math.round((cumplidas / total) * 1000) / 10 : 0;
 
-    const presupAsignado = actividadesFiltradas.reduce(
-      (acc, a) => acc + (a.presupuestoEstimado || 0),
-      0
+    const resumenPresup = calcularResumenPresupuestoPlan(
+      actividadesFiltradas,
+      plan.presupuestoGeneralAprobado || 0
     );
-    const presupEjecutado = actividadesFiltradas.reduce(
-      (acc, a) => acc + (a.gastoEjecutado || 0),
-      0
-    );
-    const diferencia = presupAsignado - presupEjecutado;
 
     const evidenciasAdjuntas = actividadesFiltradas.reduce(
       (acc, a) => acc + a.evidencias.length,
@@ -147,14 +145,18 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
       pendientes,
       recurrentes,
       pctCumplimiento,
-      presupAsignado,
-      presupEjecutado,
-      diferencia,
+      presupGeneral: resumenPresup.presupuestoGeneral,
+      presupProgramado: resumenPresup.programado,
+      presupAprobado: resumenPresup.aprobado,
+      presupEjecutado: resumenPresup.ejecutado,
+      saldoDisponible: resumenPresup.saldoDisponible,
+      porcentajeEjecucion: resumenPresup.porcentajeEjecucion,
+      pendientesValoracionCount: resumenPresup.pendientesValoracionCount,
       evidenciasAdjuntas,
       evidenciasPendientes,
       evidenciasAprobadas,
     };
-  }, [actividadesFiltradas]);
+  }, [actividadesFiltradas, plan.presupuestoGeneralAprobado]);
 
   const porResponsable = useMemo(() => {
     const map = new Map<
@@ -165,7 +167,8 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
         cumplidas: number;
         pendientes: number;
         vencidas: number;
-        presup: number;
+        prog: number;
+        aprob: number;
         ejec: number;
       }
     >();
@@ -176,7 +179,8 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
         cumplidas: 0,
         pendientes: 0,
         vencidas: 0,
-        presup: 0,
+        prog: 0,
+        aprob: 0,
         ejec: 0,
       };
       cur.programadas += 1;
@@ -184,7 +188,8 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
       if (est === 'Cumplido' || est === 'Aprobado') cur.cumplidas += 1;
       else if (est === 'Devuelto para ajustes') cur.vencidas += 1;
       else cur.pendientes += 1;
-      cur.presup += a.presupuestoEstimado || 0;
+      cur.prog += a.presupuestoEstimado || 0;
+      cur.aprob += a.presupuestoAprobado || 0;
       cur.ejec += a.gastoEjecutado || 0;
       map.set(a.responsableNombre, cur);
     });
@@ -368,13 +373,13 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
         </div>
         <div className="p-3.5 rounded-2xl bg-[#0f172a] text-white shadow-xs">
           <span className="text-[10px] font-bold uppercase text-[#fed7aa] block">
-            Plata Disponible
+            Saldo Disponible 2027
           </span>
-          <span className="text-lg font-black font-mono">
-            ${resumen.diferencia.toLocaleString('es-CO')}
+          <span className="text-lg font-black font-mono tabular-nums">
+            ${resumen.saldoDisponible.toLocaleString('es-CO')}
           </span>
-          <span className="text-[10px] text-slate-300 block">
-            Gastado: ${resumen.presupEjecutado.toLocaleString('es-CO')}
+          <span className="text-[10px] text-slate-300 block tabular-nums">
+            Gral: ${resumen.presupGeneral.toLocaleString('es-CO')} · Ejec: ${resumen.presupEjecutado.toLocaleString('es-CO')} ({resumen.porcentajeEjecucion}%)
           </span>
         </div>
       </div>
@@ -421,8 +426,9 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
                   <th className="py-2 text-center">Plan.</th>
                   <th className="py-2 text-center">Cumpl.</th>
                   <th className="py-2 text-center">Ajustes</th>
-                  <th className="py-2 text-right">Separado</th>
-                  <th className="py-2 text-right">Gastado</th>
+                  <th className="py-2 text-right">Programado</th>
+                  <th className="py-2 text-right">Aprobado</th>
+                  <th className="py-2 text-right">Ejecutado</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -437,7 +443,10 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
                       {r.vencidas}
                     </td>
                     <td className="py-2 text-right font-mono">
-                      ${r.presup.toLocaleString('es-CO')}
+                      ${r.prog.toLocaleString('es-CO')}
+                    </td>
+                    <td className="py-2 text-right font-mono text-[#0f6b61]">
+                      ${r.aprob.toLocaleString('es-CO')}
                     </td>
                     <td className="py-2 text-right font-mono text-slate-700">
                       ${r.ejec.toLocaleString('es-CO')}
@@ -562,7 +571,7 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
             <h5 className="font-black text-slate-900 flex items-center gap-1.5">
               <Award className="h-4 w-4 text-emerald-600" />
-              <span>Siete Estándares Mínimos (3. VERIFICAR · {plan.vigencia})</span>
+              <span>Siete Estándares Mínimos (Plan Anual · {plan.vigencia})</span>
             </h5>
             <p className="text-[11px] text-slate-600">
               Aprobados / Cumplidos por Gerencia:{' '}
@@ -592,7 +601,7 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-2">
             <h5 className="font-black text-slate-900 flex items-center gap-1.5">
               <Wrench className="h-4 w-4 text-[#f97316]" />
-              <span>Acciones de Mejora (4. ACTUAR)</span>
+              <span>Acciones de Mejora</span>
             </h5>
             <p className="text-[11px] text-slate-600">
               Total registradas: <strong>{accionesMejora.length}</strong> · Cumplidas:{' '}
@@ -675,89 +684,151 @@ export const PlanAnualReportesTab: React.FC<PlanAnualReportesTabProps> = ({
         </div>
       )}
 
-      {/* Comparativo Histórico Multianual entre Vigencias */}
+      {/* Resumen Oficial de Vigencia 2027 */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 className="font-black text-slate-900 flex items-center gap-2">
               <Layers className="h-4 w-4 text-[#f97316]" />
-              <span>Comparación entre años (Cada año guardado por separado)</span>
+              <span>Resumen Oficial de Vigencia {plan.vigencia} (Enero – Diciembre {plan.vigencia})</span>
             </h4>
             <p className="text-[11px] text-slate-500">
-              Aquí puede revisar y comparar cómo nos fue cada año sin borrar nada de los planes anteriores.
+              Periodo único activo del Plan Anual. Los registros históricos anteriores se conservan resguardados en copia de seguridad de auditoría.
             </p>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-[11px]">
-            <thead>
-              <tr className="bg-[#0f172a] text-white uppercase text-[10px]">
-                <th className="p-3">Año</th>
-                <th className="p-3">Estado</th>
-                <th className="p-3">Grupo Res. 0312</th>
-                <th className="p-3 text-center">Tareas</th>
-                <th className="p-3 text-center">Listas</th>
-                <th className="p-3 text-center">% Cumplido</th>
-                <th className="p-3 text-right">Separado</th>
-                <th className="p-3 text-right">Gastado</th>
-                <th className="p-3 text-right">Abrir año</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {vigenciasOrdenadas.map((v) => {
-                const tot = v.actividades.length;
-                const cump = v.actividades.filter((a) => {
-                  const est = normalizarEstadoEstandar(a.estado);
-                  return est === 'Cumplido' || est === 'Aprobado';
-                }).length;
-                const pct = tot > 0 ? Math.round((cump / tot) * 1000) / 10 : 0;
-                const pres = v.actividades.reduce((s, a) => s + (a.presupuestoEstimado || 0), 0);
-                const ej = v.actividades.reduce((s, a) => s + (a.gastoEjecutado || 0), 0);
-                const esActual = v.vigencia === plan.vigencia;
-                const badgeVig = getBadgeClassesEstadoFrikaz(v.estadoAprobacion);
+              <thead>
+                <tr className="bg-[#0f172a] text-white uppercase text-[10px]">
+                  <th className="p-3">Año</th>
+                  <th className="p-3">Estado</th>
+                  <th className="p-3">Grupo Res. 0312</th>
+                  <th className="p-3 text-center">Tareas</th>
+                  <th className="p-3 text-center">Listas</th>
+                  <th className="p-3 text-center">% Cumplido</th>
+                  <th className="p-3 text-right">Pres. General</th>
+                  <th className="p-3 text-right">Distribuido</th>
+                  <th className="p-3 text-right">Ejecutado</th>
+                  <th className="p-3 text-right">Vigencia</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {vigenciasOrdenadas.map((v) => {
+                  const tot = v.actividades.length;
+                  const cump = v.actividades.filter((a) => {
+                    const est = normalizarEstadoEstandar(a.estado);
+                    return est === 'Cumplido' || est === 'Aprobado';
+                  }).length;
+                  const pct = tot > 0 ? Math.round((cump / tot) * 1000) / 10 : 0;
+                  const rVig = calcularResumenPresupuestoPlan(
+                    v.actividades,
+                    v.presupuestoGeneralAprobado || 0
+                  );
+                  const esActual = v.vigencia === plan.vigencia;
+                  const badgeVig = getBadgeClassesEstadoFrikaz(v.estadoAprobacion);
 
-                return (
-                  <tr
-                    key={v.id}
-                    className={esActual ? 'bg-orange-50/70 font-semibold' : 'hover:bg-slate-50'}
-                  >
-                    <td className="p-3 font-mono font-black text-sm text-[#0f172a]">
-                      {v.vigencia}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 rounded border font-bold text-[10px] ${badgeVig.light}`}
-                      >
-                        {badgeVig.label}
-                      </span>
-                    </td>
-                    <td className="p-3">{v.empresaSnapshot.grupoEstandares0312}</td>
-                    <td className="p-3 text-center font-mono">{tot}</td>
-                    <td className="p-3 text-center font-mono text-emerald-700 font-bold">{cump}</td>
-                    <td className="p-3 text-center font-mono font-black">{pct}%</td>
-                    <td className="p-3 text-right font-mono">${pres.toLocaleString('es-CO')}</td>
-                    <td className="p-3 text-right font-mono">${ej.toLocaleString('es-CO')}</td>
-                    <td className="p-3 text-right">
-                      {esActual ? (
-                        <span className="text-[10px] font-black text-[#f97316]">EN USO</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => onSeleccionarVigencia(v.vigencia)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-[10px] hover:bg-slate-800 cursor-pointer"
+                  return (
+                    <tr
+                      key={v.id}
+                      className={esActual ? 'bg-orange-50/70 font-semibold' : 'hover:bg-slate-50'}
+                    >
+                      <td className="p-3 font-mono font-black text-sm text-[#0f172a]">
+                        {v.vigencia}
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`px-2 py-0.5 rounded border font-bold text-[10px] ${badgeVig.light}`}
                         >
-                          Ver {v.vigencia}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          {badgeVig.label}
+                        </span>
+                      </td>
+                      <td className="p-3">{v.empresaSnapshot.grupoEstandares0312}</td>
+                      <td className="p-3 text-center font-mono">{tot}</td>
+                      <td className="p-3 text-center font-mono text-emerald-700 font-bold">{cump}</td>
+                      <td className="p-3 text-center font-mono font-black">{pct}%</td>
+                      <td className="p-3 text-right font-mono">${rVig.presupuestoGeneral.toLocaleString('es-CO')}</td>
+                      <td className="p-3 text-right font-mono text-[#0f6b61]">${rVig.aprobado.toLocaleString('es-CO')}</td>
+                      <td className="p-3 text-right font-mono">${rVig.ejecutado.toLocaleString('es-CO')}</td>
+                      <td className="p-3 text-right">
+                        {esActual ? (
+                          <span className="text-[10px] font-black text-[#0f6b61]">ACTIVA 2027</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onSeleccionarVigencia(v.vigencia)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold text-[10px] hover:bg-slate-800 cursor-pointer"
+                          >
+                            Ver {v.vigencia}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+
+        {/* Trazabilidad de Reprogramaciones y Cambios de Fechas */}
+        {actividadesFiltradas.some(
+          (a) =>
+            a.reprogramacionOrigen ||
+            a.reprogramadaParaAnio ||
+            (a.historialCambiosFechas && a.historialCambiosFechas.length > 0)
+        ) && (
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-5 shadow-xs space-y-3">
+            <h4 className="font-black text-[#0d3b36]">
+              Trazabilidad de Reprogramaciones y Cambios de Fechas ({plan.vigencia})
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="bg-[#f4faf8] text-[#0d3b36] uppercase text-[10px] border-b border-[#cce3dd]">
+                    <th className="p-2.5">Código</th>
+                    <th className="p-2.5">Actividad</th>
+                    <th className="p-2.5">Fechas Actuales</th>
+                    <th className="p-2.5">Origen / Reprogramación / Motivo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {actividadesFiltradas
+                    .filter(
+                      (a) =>
+                        a.reprogramacionOrigen ||
+                        a.reprogramadaParaAnio ||
+                        (a.historialCambiosFechas && a.historialCambiosFechas.length > 0)
+                    )
+                    .map((a) => {
+                      const ultimoCambio = a.historialCambiosFechas?.[0];
+                      return (
+                        <tr key={a.id}>
+                          <td className="p-2.5 font-mono font-bold text-[#0f6b61] whitespace-nowrap">
+                            {a.codigo}
+                          </td>
+                          <td className="p-2.5 font-semibold text-slate-900">{a.nombre}</td>
+                          <td className="p-2.5 font-mono text-slate-700 whitespace-nowrap">
+                            {a.fechaInicio} → {a.fechaLimite}
+                          </td>
+                          <td className="p-2.5 text-slate-600">
+                            {a.reprogramacionOrigen
+                              ? `Viene de ${a.reprogramacionOrigen.anioOrigen} (${a.reprogramacionOrigen.fechaInicioOriginal}→${a.reprogramacionOrigen.fechaLimiteOriginal}). ${a.reprogramacionOrigen.motivo}`
+                              : a.reprogramadaParaAnio
+                              ? `Sin ejecución confirmada en ${plan.vigencia}; reprogramada para ${a.reprogramadaParaAnio}.`
+                              : ultimoCambio
+                              ? `Cambio: ${ultimoCambio.fechaInicioAnterior}→${ultimoCambio.fechaLimiteAnterior} a ${ultimoCambio.fechaInicioNueva}→${ultimoCambio.fechaLimiteNueva}. ${ultimoCambio.motivo}`
+                              : ''}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

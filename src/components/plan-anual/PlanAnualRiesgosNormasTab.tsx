@@ -133,7 +133,7 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
   return (
     <div className="space-y-5 text-xs">
       {/* Navegación interna de Fuentes Automáticas */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {mode !== 'normativa' && (
             <button
@@ -146,7 +146,7 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
               }`}
             >
               <ShieldAlert className="h-4 w-4 text-[#f97316]" />
-              <span>Peligros Altos de la Matriz GTC 45 (Niveles I y II: {riesgosCriticos.length})</span>
+              <span>Riesgos prioritarios (I y II · {riesgosCriticos.length})</span>
             </button>
           )}
 
@@ -162,7 +162,7 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
             >
               <Scale className="h-4 w-4 text-emerald-400" />
               <span>
-                Lo que Pide la Ley (Res. 0312 / Normas: {requisitosPendientes.length} por agregar)
+                Obligaciones de ley ({requisitosPendientes.length} por agregar)
               </span>
             </button>
           )}
@@ -180,7 +180,7 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
               }`}
             >
               <GitPullRequest className="h-4 w-4" />
-              <span>Cambios por Revisar ({solicitudesPendientes.length} pendientes)</span>
+              <span>Cambios por revisar ({solicitudesPendientes.length})</span>
             </button>
           )}
         </div>
@@ -189,10 +189,10 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
           type="button"
           onClick={onReescanearFuentes}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold cursor-pointer"
-          title="Volver a revisar si cambiaron los peligros, las normas o el número de trabajadores"
+          title="Volver a revisar si cambiaron los riesgos, las normas o el número de trabajadores"
         >
           <RefreshCw className="h-3.5 w-3.5 text-[#f97316]" />
-          <span>Revisar Cambios Ahora</span>
+          <span>Revisar cambios</span>
         </button>
       </div>
 
@@ -207,13 +207,10 @@ export const PlanAnualRiesgosNormasTab: React.FC<PlanAnualRiesgosNormasTabProps>
               <div>
                 <h3 className="text-sm font-black text-[#0f172a] flex items-center gap-2">
                   <ShieldAlert className="h-4 w-4 text-rose-600" />
-                  <span>Peligros Más Graves Conectados con el Plan Anual (Niveles I y II)</span>
+                  <span>Riesgos que requieren atención (Niveles I y II)</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Estos peligros vienen directo de la Matriz GTC 45 sin tener que volver a escribirlos. Puede filtrar por nivel, ver el puesto de trabajo y agregarlos como tarea al Plan {plan.vigencia}.
-                </p>
-                <p className="text-[10px] text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 mt-1.5 inline-block">
-                  <strong>Aclaración importante:</strong> Los Niveles I y II de esta matriz indican qué tan urgente es controlar cada peligro en el puesto; son diferentes a la clasificación general de riesgo laboral ante la ARL de Frikaz S.A.S. ({config.claseRiesgoSST}).
+                  Conectados directamente desde la Matriz de Riesgos GTC 45. Filtre por nivel, consulte el puesto afectado y prográmelos en el Plan {plan.vigencia}.
                 </p>
               </div>
 

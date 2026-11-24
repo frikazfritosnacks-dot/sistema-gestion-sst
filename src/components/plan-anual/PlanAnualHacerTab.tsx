@@ -46,6 +46,8 @@ interface PlanAnualHacerTabProps {
   cargos: CargoSST[];
   accionesMejora: AccionMejoraPlan[];
   accesoMedicoAutorizado: boolean;
+  subTabInicial?: SubTabHacer;
+  hideHeaderAndTabs?: boolean;
   onSolicitarDesbloqueoMedico: () => void;
   onSaveTrabajador: (trabajador: TrabajadorFichaSST) => void;
   onSaveDiagnosticoSalud: (diag: DiagnosticoSaludEmpresa) => void;
@@ -57,7 +59,7 @@ interface PlanAnualHacerTabProps {
   onEnviarRecomendacionAActuar: (trab: TrabajadorFichaSST) => void;
 }
 
-type SubTabHacer = 'trabajadores' | 'salud' | 'matriz' | 'ejecucion' | 'evidencias';
+export type SubTabHacer = 'ejecucion' | 'evidencias' | 'trabajadores' | 'matriz';
 
 export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   plan,
@@ -67,6 +69,8 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   cargos,
   accionesMejora,
   accesoMedicoAutorizado,
+  subTabInicial = 'ejecucion',
+  hideHeaderAndTabs = false,
   onSolicitarDesbloqueoMedico,
   onSaveTrabajador,
   onSaveDiagnosticoSalud,
@@ -74,7 +78,14 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   onAbrirActividad,
   onEnviarRecomendacionAActuar,
 }) => {
-  const [subTab, setSubTab] = useState<SubTabHacer>('trabajadores');
+  const [subTab, setSubTab] = useState<SubTabHacer>(subTabInicial);
+  const [vistaTrabajadores, setVistaTrabajadores] = useState<'fichas' | 'salud'>('fichas');
+  const [filtroRespEjec, setFiltroRespEjec] = useState<string>('TODOS');
+  const [filtroEstadoEjec, setFiltroEstadoEjec] = useState<string>('TODOS');
+
+  React.useEffect(() => {
+    setSubTab(subTabInicial);
+  }, [subTabInicial]);
   const [busquedaTrab, setBusquedaTrab] = useState('');
   const [filtroCargo, setFiltroCargo] = useState('TODOS');
   const [filtroEstadoFicha, setFiltroEstadoFicha] = useState<'TODOS' | 'COMPLETA' | 'PENDIENTE'>('TODOS');
@@ -213,16 +224,17 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   };
 
   return (
-    <div className="space-y-5 text-xs">
-      {/* Navegación interna de HACER */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+    <div className="space-y-4 text-xs">
+      {/* Navegación interna de Ejecución y Personal (oculta cuando PlanAnualView controla las secciones) */}
+      {!hideHeaderAndTabs && (
+      <div className="rounded-2xl border border-[#c3dfd8] bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-              2. HACER — Personas, Condiciones de Salud, Riesgos y Tareas Realizadas
+            <h3 className="text-sm sm:text-base font-black text-[#0d3b36]">
+              Actividades, Evidencias y Personal
             </h3>
             <p className="text-[11px] text-slate-500">
-              Registre a cada trabajador una sola vez, consulte su perfil grupal de salud, conecte los peligros de su puesto y guarde las pruebas de lo que ya se hizo.
+              Registre avances y soportes de las tareas programadas, consulte la información de los trabajadores y verifique controles por puesto.
             </p>
           </div>
           <button
@@ -236,20 +248,17 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
           >
             {accesoMedicoAutorizado ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
             <span>
-              {accesoMedicoAutorizado
-                ? 'Salud Ocupacional Activa (clic para proteger)'
-                : 'Datos Médicos Protegidos (clic para autorizar)'}
+              {accesoMedicoAutorizado ? 'Salud Desbloqueada' : 'Privacidad Médica'}
             </span>
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { id: 'trabajadores', label: 'A. Trabajadores', badge: trabajadores.length, icon: Users },
-            { id: 'salud', label: 'B. Condiciones de Salud', badge: `${resumenSociodemo.totalActivos} act.`, icon: HeartPulse },
-            { id: 'matriz', label: 'C. Matriz de Riesgos', badge: riesgos.length, icon: ShieldAlert },
-            { id: 'ejecucion', label: 'D. Ejecución de Tareas', badge: plan.actividades.length, icon: ClipboardCheck },
-            { id: 'evidencias', label: 'E. Soportes y Fotos', badge: todasEvidencias.length, icon: FileCheck2 },
+            { id: 'ejecucion', label: 'Actividades y avances', badge: plan.actividades.length, icon: ClipboardCheck },
+            { id: 'evidencias', label: 'Evidencias subidas', badge: todasEvidencias.length, icon: FileCheck2 },
+            { id: 'trabajadores', label: 'Trabajadores y salud', badge: trabajadores.length, icon: Users },
+            { id: 'matriz', label: 'Riesgos del puesto', badge: riesgos.length, icon: ShieldAlert },
           ].map((item) => {
             const Icon = item.icon;
             const active = subTab === item.id;
@@ -260,15 +269,15 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                 onClick={() => setSubTab(item.id as SubTabHacer)}
                 className={`px-3 py-2 rounded-xl font-bold flex items-center justify-between gap-1.5 border cursor-pointer transition-colors ${
                   active
-                    ? 'bg-[#0f172a] text-white border-[#0f172a]'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-orange-50'
+                    ? 'bg-[#0f5b53] text-white border-[#0f5b53]'
+                    : 'bg-[#f4faf8] text-slate-700 border-[#d6ebe5] hover:bg-[#e5f3ef]'
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5 truncate">
                   <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-[#fed7aa]' : 'text-[#f97316]'}`} />
                   <span className="truncate">{item.label}</span>
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-white/90 text-slate-900 font-mono text-[10px]">
+                <span className="px-1.5 py-0.5 rounded bg-white/90 text-slate-900 font-mono tabular-nums text-[10px]">
                   {item.badge}
                 </span>
               </button>
@@ -276,12 +285,42 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
           })}
         </div>
       </div>
+      )}
 
       {/* =================================================================== */}
-      {/* A. REGISTRO INDIVIDUAL DE TRABAJADORES                              */}
+      {/* TRABAJADORES Y SALUD AGRUPADA                                       */}
       {/* =================================================================== */}
       {subTab === 'trabajadores' && (
         <div className="space-y-4">
+          <div className="inline-flex rounded-xl bg-white border border-slate-200 p-1 gap-1 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setVistaTrabajadores('fichas')}
+              className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                vistaTrabajadores === 'fichas'
+                  ? 'bg-[#0f172a] text-white'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>Listado de trabajadores ({trabajadores.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVistaTrabajadores('salud')}
+              className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                vistaTrabajadores === 'salud'
+                  ? 'bg-[#0f172a] text-white'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <HeartPulse className="h-3.5 w-3.5" />
+              <span>Condiciones de salud y encuesta ({resumenSociodemo.totalActivos} activos)</span>
+            </button>
+          </div>
+
+          {vistaTrabajadores === 'fichas' && (
+          <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 flex-1">
               <div className="relative w-full sm:w-64">
@@ -404,7 +443,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                           onClick={() => onEnviarRecomendacionAActuar(t)}
                           className="text-[#f97316] font-black hover:underline shrink-0 cursor-pointer"
                         >
-                          Enviar a ACTUAR →
+                          Registrar acción de mejora →
                         </button>
                       )}
                     </div>
@@ -418,13 +457,10 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
               );
             })}
           </div>
-        </div>
-      )}
+          </div>
+          )}
 
-      {/* =================================================================== */}
-      {/* B. DESCRIPCIÓN SOCIODEMOGRÁFICA Y CONDICIONES DE SALUD AGRUPADAS     */}
-      {/* =================================================================== */}
-      {subTab === 'salud' && (
+          {vistaTrabajadores === 'salud' && (
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -645,6 +681,8 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
             </div>
           </form>
         </div>
+          )}
+        </div>
       )}
 
       {/* =================================================================== */}
@@ -863,7 +901,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                       ))}
                       {conexionesRiesgoActivo.actividadesPlan.length === 0 && (
                         <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg">
-                          Este riesgo aún no tiene tarea en el Plan Anual. Puede programarla desde la pestaña 1. PLANEAR.
+                          Este riesgo aún no tiene tarea en el Plan Anual. Puede programarla desde Riesgos y normas o Actividades.
                         </p>
                       )}
                     </div>
@@ -890,7 +928,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
 
                   <div className="p-3.5 rounded-xl border border-slate-200 space-y-1.5">
                     <h5 className="font-black text-slate-900">
-                      Acciones de mejora en 4. ACTUAR ({conexionesRiesgoActivo.acciones.length})
+                      Acciones de mejora vinculadas ({conexionesRiesgoActivo.acciones.length})
                     </h5>
                     {conexionesRiesgoActivo.acciones.map((acm) => (
                       <div key={acm.id} className="text-[11px] bg-orange-50/70 p-2 rounded-lg border border-orange-200">
@@ -912,20 +950,57 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
       )}
 
       {/* =================================================================== */}
-      {/* D. EJECUCIÓN DE ACTIVIDADES PROGRAMADAS                             */}
+      {/* EJECUCIÓN DE ACTIVIDADES PROGRAMADAS                                */}
       {/* =================================================================== */}
       {subTab === 'ejecucion' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-          <div>
-            <h4 className="text-sm font-black text-[#0f172a]">
-              Ejecución Real de las Actividades del Plan Anual {plan.vigencia}
-            </h4>
-            <p className="text-[11px] text-slate-500">
-              Abra cualquier tarea para registrar fecha de realización, resultado obtenido, observaciones, gasto ejecutado y documentos de soporte.
-            </p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <h4 className="text-sm font-black text-[#0f172a]">
+                Actividades programadas y avances — {plan.vigencia}
+              </h4>
+              <p className="text-[11px] text-slate-500">
+                Consulte el responsable de cada actividad, registre avances realizados y suba evidencias de cumplimiento.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={filtroRespEjec}
+                onChange={(e) => setFiltroRespEjec(e.target.value)}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white font-bold"
+              >
+                <option value="TODOS">Todos los responsables</option>
+                {Array.from(new Set(plan.actividades.map((a) => a.responsableNombre))).map((resp) => (
+                  <option key={resp} value={resp}>
+                    {resp}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filtroEstadoEjec}
+                onChange={(e) => setFiltroEstadoEjec(e.target.value)}
+                className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white font-bold"
+              >
+                <option value="TODOS">Todos los estados</option>
+                <option value="Por hacer">Por hacer</option>
+                <option value="En proceso">En proceso</option>
+                <option value="Pendiente de revisión">Pendiente de revisión</option>
+                <option value="Devuelto para ajustes">Devuelto para ajustes</option>
+                <option value="Cumplido">Cumplido</option>
+                <option value="Aprobado">Aprobado</option>
+              </select>
+            </div>
           </div>
           <div className="space-y-2.5">
-            {plan.actividades.map((act) => (
+            {plan.actividades
+              .filter((act) => {
+                const mResp = filtroRespEjec === 'TODOS' || act.responsableNombre === filtroRespEjec;
+                const mEst =
+                  filtroEstadoEjec === 'TODOS' ||
+                  normalizarEstadoEstandar(act.estado) === filtroEstadoEjec;
+                return mResp && mEst;
+              })
+              .map((act) => (
               <div
                 key={act.id}
                 className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -948,11 +1023,11 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                   </div>
                   <p className="font-bold text-slate-900">{act.nombre}</p>
                   <p className="text-[11px] text-slate-600">
-                    Responsable: <strong>{act.responsableNombre}</strong> · Fecha límite: {act.fechaLimite} · Soportes: {act.evidencias.length}
+                    Responsable: <strong>{act.responsableNombre}</strong> · Fecha límite: {act.fechaLimite} · Evidencias: {act.evidencias.length}
                   </p>
                   {act.resultadoActividad && (
                     <p className="text-[11px] text-emerald-800">
-                      <strong>Resultado registrado:</strong> {act.resultadoActividad}
+                      <strong>Avance registrado:</strong> {act.resultadoActividad}
                     </p>
                   )}
                 </div>
@@ -962,14 +1037,14 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                     onClick={() => onAbrirActividad(act, 'datos')}
                     className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-800 font-bold hover:bg-slate-100 cursor-pointer"
                   >
-                    Registrar Avance
+                    Registrar avance
                   </button>
                   <button
                     type="button"
                     onClick={() => onAbrirActividad(act, 'evidencias')}
                     className="px-3 py-1.5 rounded-lg bg-[#f97316] text-white font-bold hover:bg-[#ea580c] cursor-pointer"
                   >
-                    Subir Soporte
+                    Subir evidencia
                   </button>
                 </div>
               </div>

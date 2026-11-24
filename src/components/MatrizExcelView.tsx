@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import type { AssistantNavigationTarget } from '../types/assistantNavigation';
 import { NormaPhvaItem } from '../types/phvaEvidence';
 import { generateFrikazExcelWorkbook } from '../services/excelMatrixService';
 import {
@@ -30,11 +31,16 @@ import {
 interface MatrizExcelViewProps {
   items: NormaPhvaItem[];
   onSelectNorma?: (norma: NormaPhvaItem) => void;
+  navigationRequest?: AssistantNavigationTarget | null;
 }
 
 type ExcelSheetTab = 'inicio' | 'phva_unificada' | 'gestion_sst' | 'gestion_ambiental' | 'plan_accion';
 
-export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelectNorma }) => {
+export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({
+  items,
+  onSelectNorma,
+  navigationRequest,
+}) => {
   const [activeSheet, setActiveSheet] = useState<ExcelSheetTab>('inicio');
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
@@ -42,6 +48,19 @@ export const MatrizExcelView: React.FC<MatrizExcelViewProps> = ({ items, onSelec
   const [searchTerm, setSearchTerm] = useState('');
   const [filterArea, setFilterArea] = useState<'TODAS' | 'SST' | 'AMBIENTAL'>('TODAS');
   const [filterEstado, setFilterEstado] = useState<'TODOS' | EstadoEstandarFrikaz>('TODOS');
+
+  useEffect(() => {
+    if (!navigationRequest || navigationRequest.tab !== 'matriz_excel') return;
+    if (navigationRequest.excelSheet) {
+      setActiveSheet(navigationRequest.excelSheet);
+    }
+    if (navigationRequest.searchQuery !== undefined) {
+      setSearchTerm(navigationRequest.searchQuery);
+      if (!navigationRequest.excelSheet) {
+        setActiveSheet('phva_unificada');
+      }
+    }
+  }, [navigationRequest]);
 
   // Cálculos dinámicos estandarizados con los 6 estados oficiales
   const totalNormas = items.length;

@@ -124,7 +124,7 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
       `- Quién la revisa y aprueba: ${alerta.aprobadorNombre}`,
       `- Qué hacer ahora: ${alerta.accionRecomendada}`,
       '',
-      'Cuando la termines, por favor entra al módulo PLAN ANUAL (1. PLANEAR / 2. HACER) y sube la foto, acta o certificado de respaldo.',
+      'Cuando la termines, por favor entra al módulo independiente PLAN ANUAL y sube la foto, acta o certificado de respaldo.',
       '¡Muchas gracias por cuidarte y cuidar a tus compañeros!',
     ].join('\n');
 
@@ -231,10 +231,10 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
           <div>
             <h3 className="text-sm font-black text-[#0f172a] flex items-center gap-2">
               <Bell className="h-4 w-4 text-[#f97316]" />
-              <span>Avisos y Recordatorios según Fecha y Encargado</span>
+              <span>Seguimiento a tareas con alerta</span>
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Solo aparecen avisos reales cuando una tarea está por vencer, se venció o tiene una prueba esperando aprobación.
+              Avisos reales cuando una tarea está por vencer, se venció o espera revisión de Andrea Orjuela – Gerente.
             </p>
           </div>
 
@@ -362,10 +362,10 @@ export const PlanAnualAlertasEvidenciasTab: React.FC<PlanAnualAlertasEvidenciasT
               <div>
                 <h3 className="text-sm font-black text-[#0f172a] flex items-center gap-2">
                   <FileCheck2 className="h-4 w-4 text-emerald-600" />
-                  <span>Fotos, Actas y Certificados Subidos (Aprobaciones)</span>
+                  <span>Revisión y aprobación de evidencias (Gerencia)</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Revise todas las pruebas subidas durante el año {plan.vigencia} y vea si ya fueron aprobadas.
+                  Verifique las pruebas subidas durante el año {plan.vigencia} y su estado de aprobación por Gerencia.
                 </p>
               </div>
               <select

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ActividadPlanAnual,
   AreaPlanAnual,
@@ -12,13 +12,13 @@ import {
   getBadgeClassesEstadoFrikaz,
   normalizarEstadoEstandar,
 } from '../../services/gerenteControlService';
+import { formatPresupuestoProgramadoLabel } from '../../services/planAnualService';
 import {
   Calendar,
   List,
   GanttChart,
   Plus,
   Search,
-  DollarSign,
   FileCheck2,
   Edit3,
   Trash2,
@@ -37,6 +37,9 @@ interface PlanAnualCronogramaTabProps {
     initialTab?: 'datos' | 'evidencias' | 'historial'
   ) => void;
   onEliminarActividad: (actividadId: string) => void;
+  externalSearch?: string;
+  externalEstadoFiltro?: string;
+  navNonce?: number;
 }
 
 const MESES_CORTOS = [
@@ -55,17 +58,40 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
   onNuevaActividad,
   onAbrirActividad,
   onEliminarActividad,
+  externalSearch,
+  externalEstadoFiltro,
+  navNonce,
 }) => {
   const [vista, setVista] = useState<'gantt' | 'calendario' | 'lista'>('gantt');
-  const [busqueda, setBusqueda] = useState('');
+  const [busqueda, setBusqueda] = useState(externalSearch || '');
   const [filtroMes, setFiltroMes] = useState<string>('TODOS');
   const [filtroTrimestre, setFiltroTrimestre] = useState<'TODOS' | 'Q1' | 'Q2' | 'Q3' | 'Q4'>('TODOS');
   const [filtroArea, setFiltroArea] = useState<AreaPlanAnual | 'TODAS'>('TODAS');
   const [filtroOrigen, setFiltroOrigen] = useState<OrigenActividadPlan | 'TODOS'>('TODOS');
   const [filtroRecurrencia, setFiltroRecurrencia] = useState<'TODAS' | 'RECURRENTES' | 'UNICAS'>('TODAS');
-  const [filtroEstado, setFiltroEstado] = useState<EstadoEstandarFrikaz | 'TODOS'>('TODOS');
+  const [filtroEstado, setFiltroEstado] = useState<EstadoEstandarFrikaz | 'TODOS'>(() =>
+    externalEstadoFiltro && ESTADOS_ESTANDAR_FRIKAZ.includes(externalEstadoFiltro as EstadoEstandarFrikaz)
+      ? (externalEstadoFiltro as EstadoEstandarFrikaz)
+      : 'TODOS'
+  );
   const [filtroResponsable, setFiltroResponsable] = useState<string>('TODOS');
-  const [mesCalendario, setMesCalendario] = useState<number>(new Date().getMonth() + 1);
+  const [mesCalendario, setMesCalendario] = useState<number>(() =>
+    plan.vigencia >= 2027 ? 1 : new Date().getMonth() + 1
+  );
+
+  useEffect(() => {
+    if (navNonce === undefined) return;
+    if (externalSearch !== undefined) setBusqueda(externalSearch);
+    if (
+      externalEstadoFiltro &&
+      ESTADOS_ESTANDAR_FRIKAZ.includes(externalEstadoFiltro as EstadoEstandarFrikaz)
+    ) {
+      setFiltroEstado(externalEstadoFiltro as EstadoEstandarFrikaz);
+      setVista('lista');
+    } else if (externalEstadoFiltro === 'TODOS') {
+      setFiltroEstado('TODOS');
+    }
+  }, [navNonce, externalSearch, externalEstadoFiltro]);
 
   const mesesPorTrimestre: Record<'Q1' | 'Q2' | 'Q3' | 'Q4', number[]> = {
     Q1: [1, 2, 3],
@@ -124,17 +150,6 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
     filtroResponsable,
   ]);
 
-  const totalesPresupuesto = useMemo(() => {
-    const estimado = actividadesFiltradas.reduce(
-      (acc, a) => acc + (a.presupuestoEstimado || 0),
-      0
-    );
-    const ejecutado = actividadesFiltradas.reduce((acc, a) => acc + (a.gastoEjecutado || 0), 0);
-    const disponible = estimado - ejecutado;
-    const pct = estimado > 0 ? Math.round((ejecutado / estimado) * 1000) / 10 : 0;
-    return { estimado, ejecutado, disponible, pct };
-  }, [actividadesFiltradas]);
-
   const getEstadoBadge = (estado: string) => {
     return getBadgeClassesEstadoFrikaz(estado).light;
   };
@@ -156,62 +171,7 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
   }, [plan.vigencia, mesCalendario]);
 
   return (
-    <div className="space-y-5 text-xs">
-      {/* Barra de Presupuesto en Vivo */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-          <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1">
-            <DollarSign className="h-3 w-3 text-[#0f172a]" />
-            Presupuesto Separado
-          </span>
-          <span className="text-lg font-black font-mono text-[#0f172a]">
-            ${totalesPresupuesto.estimado.toLocaleString('es-CO')}
-          </span>
-        </div>
-        <div className="p-3 rounded-xl bg-orange-50 border border-orange-200">
-          <span className="text-[10px] font-bold uppercase text-orange-700 block">
-            Dinero Ya Gastado
-          </span>
-          <span className="text-lg font-black font-mono text-orange-950">
-            ${totalesPresupuesto.ejecutado.toLocaleString('es-CO')}
-          </span>
-        </div>
-        <div
-          className={`p-3 rounded-xl border ${
-            totalesPresupuesto.disponible < 0
-              ? 'bg-rose-50 border-rose-200'
-              : 'bg-emerald-50 border-emerald-200'
-          }`}
-        >
-          <span className="text-[10px] font-bold uppercase text-slate-600 block">
-            Queda Disponible
-          </span>
-          <span
-            className={`text-lg font-black font-mono ${
-              totalesPresupuesto.disponible < 0 ? 'text-rose-800' : 'text-emerald-900'
-            }`}
-          >
-            ${totalesPresupuesto.disponible.toLocaleString('es-CO')}
-          </span>
-        </div>
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase text-slate-500">
-              Porcentaje Gastado
-            </span>
-            <span className="font-mono font-black text-slate-900">
-              {totalesPresupuesto.pct}%
-            </span>
-          </div>
-          <div className="w-full bg-slate-200 rounded-full h-2 mt-2 overflow-hidden">
-            <div
-              className="bg-[#f97316] h-2 rounded-full transition-all"
-              style={{ width: `${Math.min(100, totalesPresupuesto.pct)}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
+    <div className="space-y-4 text-xs">
       {/* Barra de Filtros, Selector de Vista y Botón Nueva Actividad */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -411,6 +371,31 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                               Norma
                             </span>
                           )}
+                          {act.esPlanEmergencias && (
+                            <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-800 font-bold text-[10px]">
+                              Emergencias
+                            </span>
+                          )}
+                          {act.planMejoraRiesgoId && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
+                              Plan mejora
+                            </span>
+                          )}
+                          {act.reprogramacionOrigen && (
+                            <span className="px-1.5 py-0.5 rounded bg-[#e7f4f1] text-[#0f6b61] font-bold text-[10px]">
+                              Reprog. de {act.reprogramacionOrigen.anioOrigen}
+                            </span>
+                          )}
+                          {act.reprogramadaParaAnio && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 font-bold text-[10px]">
+                              Reprog. a {act.reprogramadaParaAnio}
+                            </span>
+                          )}
+                          {act.historialCambiosFechas && act.historialCambiosFechas.length > 0 && (
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px]">
+                              {act.historialCambiosFechas.length} cambio(s) fecha
+                            </span>
+                          )}
                           {act.esRecurrente && (
                             <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold text-[10px] inline-flex items-center gap-0.5">
                               <Repeat className="h-2.5 w-2.5" />
@@ -445,11 +430,12 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                         </p>
                       </td>
                       <td className="p-3 whitespace-nowrap text-right font-mono">
-                        <p className="font-bold text-slate-900">
-                          ${(act.presupuestoEstimado || 0).toLocaleString('es-CO')}
+                        <p className="font-bold text-slate-900 text-[10px]">
+                          Prog: {formatPresupuestoProgramadoLabel(act)}
                         </p>
-                        <p className="text-[10px] text-emerald-700">
-                          Ejec: ${(act.gastoEjecutado || 0).toLocaleString('es-CO')}
+                        <p className="text-[10px] text-[#0f6b61]">
+                          Aprob: ${(act.presupuestoAprobado || 0).toLocaleString('es-CO')} · Ejec: $
+                          {(act.gastoEjecutado || 0).toLocaleString('es-CO')}
                         </p>
                       </td>
                       {MESES_CORTOS.map((_, idx) => {
@@ -589,7 +575,9 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
       {vista === 'lista' && (
         <div className="space-y-3">
           {actividadesFiltradas.map((act) => {
-            const disponible = (act.presupuestoEstimado || 0) - (act.gastoEjecutado || 0);
+            const aprobado = act.presupuestoAprobado || 0;
+            const ejecutado = act.gastoEjecutado || 0;
+            const saldo = Math.max(0, aprobado - ejecutado);
             return (
               <div
                 key={act.id}
@@ -609,16 +597,33 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                           act.estado
                         )}`}
                       >
-                        7. {getBadgeClassesEstadoFrikaz(act.estado).label}
+                        {getBadgeClassesEstadoFrikaz(act.estado).label}
                       </span>
+                      {act.reprogramacionOrigen && (
+                        <span className="px-2 py-0.5 rounded bg-[#e7f4f1] text-[#0f6b61] font-bold text-[10px]">
+                          Reprogramada de {act.reprogramacionOrigen.anioOrigen}
+                        </span>
+                      )}
+                      {act.reprogramadaParaAnio && (
+                        <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 font-bold text-[10px]">
+                          Reprogramada a {act.reprogramadaParaAnio}
+                        </span>
+                      )}
                       {act.esRecurrente && (
                         <span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold text-[10px]">
-                          3. Recurrente ({act.periodicidad})
+                          Recurrente ({act.periodicidad})
                         </span>
                       )}
                     </div>
-                    <h4 className="text-sm font-extrabold text-slate-900">1. {act.nombre}</h4>
+                    <h4 className="text-sm font-extrabold text-slate-900">{act.nombre}</h4>
                     <p className="text-[11px] text-slate-600">{act.descripcion}</p>
+                    {(act.capacitacionNombre || act.formatoNombre || act.recursosNecesarios) && (
+                      <p className="text-[10px] text-[#0f6b61] font-semibold">
+                        {act.recursosNecesarios ? `Recursos: ${act.recursosNecesarios}` : ''}
+                        {act.capacitacionNombre ? ` · Capacitación: ${act.capacitacionNombre}` : ''}
+                        {act.formatoNombre ? ` · Formato: ${act.formatoNombre}` : ''}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -628,7 +633,7 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 cursor-pointer"
                     >
                       <FileCheck2 className="h-3.5 w-3.5" />
-                      <span>8. Evidencias ({act.evidencias.length})</span>
+                      <span>Evidencias ({act.evidencias.length})</span>
                     </button>
                     <button
                       type="button"
@@ -655,39 +660,37 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-[11px]">
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                      2. Cómo sabemos que quedó bien
+                      Criterio de aceptación
                     </span>
                     <span className="text-slate-800">{act.criterioAceptacion}</span>
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
-                      4. Encargado y Quien Aprueba
+                      Responsable y revisión
                     </span>
                     <span className="text-slate-800 block font-semibold">
-                      Hace la tarea: {act.responsableNombre}
+                      Ejecuta: {act.responsableNombre}
                     </span>
                     <span className="text-slate-500 block">Revisa: {act.aprobadorNombre}</span>
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                      5 y 6. Presupuesto / Gastado / Libre
+                      Presupuesto diferenciado
                     </span>
                     <span className="font-mono font-bold text-slate-900 block">
-                      Planeado: ${(act.presupuestoEstimado || 0).toLocaleString('es-CO')} · Gastado: $
-                      {(act.gastoEjecutado || 0).toLocaleString('es-CO')}
+                      Prog: {formatPresupuestoProgramadoLabel(act)}
                     </span>
-                    <span
-                      className={`font-mono font-black ${
-                        disponible < 0 ? 'text-rose-700' : 'text-emerald-700'
-                      }`}
-                    >
-                      Disponible: ${disponible.toLocaleString('es-CO')}
+                    <span className="font-mono text-[#0f6b61] block">
+                      Aprob: ${aprobado.toLocaleString('es-CO')} · Ejec: ${ejecutado.toLocaleString('es-CO')}
+                    </span>
+                    <span className="font-mono font-black text-emerald-700">
+                      Saldo disp.: ${saldo.toLocaleString('es-CO')}
                     </span>
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                      3 y 9. Fechas y Notas
+                      Fechas y trazabilidad
                     </span>
                     <span className="font-mono text-slate-800 block">
                       {act.fechaInicio} → {act.fechaLimite}

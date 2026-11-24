@@ -219,9 +219,26 @@ export const PlanAnualResponsablesTab: React.FC<PlanAnualResponsablesTabProps> =
               {actividadesFiltradas.map((a) => (
                 <tr key={a.id} className="hover:bg-orange-50/40">
                   <td className="p-3">
-                    <span className="font-mono font-black text-[10px] bg-slate-100 px-1.5 py-0.5 rounded mr-1.5">
-                      {a.codigo}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1 mb-0.5">
+                      <span className="font-mono font-black text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">
+                        {a.codigo}
+                      </span>
+                      {a.reprogramacionOrigen && (
+                        <span className="px-1.5 py-0.5 rounded bg-[#e7f4f1] text-[#0f6b61] font-bold text-[10px]">
+                          Reprog. de {a.reprogramacionOrigen.anioOrigen}
+                        </span>
+                      )}
+                      {a.reprogramadaParaAnio && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-900 font-bold text-[10px]">
+                          Reprog. a {a.reprogramadaParaAnio}
+                        </span>
+                      )}
+                      {a.historialCambiosFechas && a.historialCambiosFechas.length > 0 && (
+                        <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[10px]">
+                          {a.historialCambiosFechas.length} cambio(s) fecha
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => onAbrirActividad(a, 'datos')}

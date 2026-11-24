@@ -19,17 +19,13 @@ import {
   obtenerSoportesRealesEstandar,
 } from '../../services/planAnualSgsstService';
 import { extraerMedidasRiesgo } from '../../services/planAnualService';
+import { PlanAnualAlertasEvidenciasTab } from './PlanAnualAlertasEvidenciasTab';
 import {
-  Activity,
-  AlertTriangle,
   Award,
-  BarChart3,
-  CheckCircle2,
-  ClipboardCheck,
   Database,
   Download,
   ExternalLink,
-  FileText,
+  FileCheck2,
   Filter,
   Info,
   Layers,
@@ -60,6 +56,9 @@ interface PlanAnualVerificarTabProps {
   accionesMejora: AccionMejoraPlan[];
   alertas: AlertaPlanAnual[];
   responsables: ResponsablePlanOption[];
+  subTabInicial?: SubTabVerificar;
+  hideSeguimientoTab?: boolean;
+  onUpdatePlan: (updated: PlanAnualVigencia, logAction?: string) => void;
   onSaveRegistroPeriodo: (registro: RegistroPeriodoIndicador) => void;
   onSyncTrabajadoresPeriodos: (anio: number) => void;
   onAddIndicadorCustom: (nuevo: HojaVidaIndicadorSST) => void;
@@ -80,7 +79,7 @@ interface PlanAnualVerificarTabProps {
   }) => void;
 }
 
-type SubTabVerificar = 'tablero' | 'captura' | 'riesgos' | 'estandares';
+export type SubTabVerificar = 'tablero' | 'captura' | 'seguimiento' | 'riesgos' | 'estandares';
 
 const COLOR_SEMAFORO: Record<
   'VERDE' | 'AMARILLO' | 'ROJO' | 'GRIS',
@@ -121,6 +120,9 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   accionesMejora,
   alertas,
   responsables,
+  subTabInicial = 'tablero',
+  hideSeguimientoTab = false,
+  onUpdatePlan,
   onSaveRegistroPeriodo,
   onSyncTrabajadoresPeriodos,
   onAddIndicadorCustom,
@@ -128,12 +130,16 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   onAbrirActividad,
   onCrearAccionDesdeVerificar,
 }) => {
-  const [subTab, setSubTab] = useState<SubTabVerificar>('tablero');
+  const [subTab, setSubTab] = useState<SubTabVerificar>(subTabInicial);
   const [filtroTrimestre, setFiltroTrimestre] = useState<'TODOS' | 'Q1' | 'Q2' | 'Q3' | 'Q4'>('TODOS');
   const [filtroMes, setFiltroMes] = useState<number>(0); // 0 = Último periodo validado / Consolidado
   const [hojaAbiertaId, setHojaAbiertaId] = useState<string | null>(null);
   const [mostrarArchivoAnteriores, setMostrarArchivoAnteriores] = useState(false);
   const [exportando, setExportando] = useState(false);
+
+  React.useEffect(() => {
+    setSubTab(subTabInicial);
+  }, [subTabInicial]);
 
   // Nuevo indicador propio de Frikaz S.A.S. (sin tocar los 6 obligatorios)
   const [showNuevoInd, setShowNuevoInd] = useState(false);
@@ -214,17 +220,17 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
     [registrosAnio, anioActivo, activosCount, config.numeroTrabajadores]
   );
 
-  const resumenActividades = useMemo(() => {
-    const total = plan.actividades.length;
-    const cumplidas = plan.actividades.filter((a) => {
-      const est = normalizarEstadoEstandar(a.estado);
-      return est === 'Cumplido' || est === 'Aprobado';
-    }).length;
-    const vencidas = plan.actividades.filter((a) => a.estado === 'VENCIDA').length;
-    const pendientes = total - cumplidas - vencidas;
-    const pct = total > 0 ? Math.round((cumplidas / total) * 100) : 0;
-    return { total, cumplidas, vencidas, pendientes, pct };
-  }, [plan.actividades]);
+  const pendientesRevisionCount = useMemo(
+    () =>
+      plan.actividades.filter((a) => {
+        const est = normalizarEstadoEstandar(a.estado);
+        return (
+          est === 'Pendiente de revisión' ||
+          a.evidencias.some((e) => normalizarEstadoEstandar(e.estadoRevision) === 'Pendiente de revisión')
+        );
+      }).length,
+    [plan.actividades]
+  );
 
   const resumenEstandares = useMemo(() => {
     const verificados = estandares.filter((e) => {
@@ -330,52 +336,62 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   }, [riesgos, plan.actividades, accionesMejora, filtroVerifRiesgo]);
 
   return (
-    <div className="space-y-5 text-xs">
-      {/* Navegación interna de VERIFICAR */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+    <div className="space-y-4 text-xs">
+      {/* Navegación de Indicadores y Cumplimiento */}
+      <div className="rounded-2xl border border-[#c3dfd8] bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm sm:text-base font-black text-[#0f172a]">
-              3. VERIFICAR — Indicadores Reales (Res. 0312), Riesgos y 7 Estándares Mínimos
+            <h3 className="text-sm sm:text-base font-black text-[#0d3b36]">
+              Indicadores del Plan Anual, Resultados y Estándares Mínimos
             </h3>
             <p className="text-[11px] text-slate-500">
-              Revise cómo van las cuentas de accidentalidad, incapacidad y enfermedades laborales con datos reales (nunca inventados en cero), los controles de riesgos y los 7 estándares de ley.
+              Consulte los indicadores del SG-SST con cifras reales, registre resultados disponibles y verifique el cumplimiento de controles y estándares mínimos.
             </p>
           </div>
           <button
             type="button"
             onClick={handleExportExcel}
             disabled={exportando}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black cursor-pointer disabled:opacity-50 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0f6b61] hover:bg-[#0d5850] text-white font-black cursor-pointer disabled:opacity-50 shrink-0"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>{exportando ? 'Generando...' : `Descargar Excel Indicadores ${anioActivo}`}</span>
+            <span>{exportando ? 'Generando...' : `Excel Indicadores ${anioActivo}`}</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className={`grid grid-cols-2 ${hideSeguimientoTab ? 'sm:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-5'} gap-2`}>
           {[
             {
               id: 'tablero',
-              label: 'A–D. Tablero e Indicadores',
+              label: 'Indicadores SG-SST',
               badge: hojasVidaIndicadores.length,
               icon: TrendingUp,
             },
             {
               id: 'captura',
-              label: 'C. Datos Mensuales y Validación',
+              label: 'Resultados disponibles',
               badge: `${registrosAnio.filter((r) => r.validado && r.mes >= 1).length}/12`,
               icon: Database,
             },
+            ...(!hideSeguimientoTab
+              ? [
+                  {
+                    id: 'seguimiento',
+                    label: 'Seguimiento y evidencias',
+                    badge: pendientesRevisionCount + alertas.length,
+                    icon: FileCheck2,
+                  },
+                ]
+              : []),
             {
               id: 'riesgos',
-              label: 'E. Verificación de Riesgos',
+              label: 'Riesgos y controles',
               badge: riesgosEvaluados.length,
               icon: ShieldAlert,
             },
             {
               id: 'estandares',
-              label: 'F. Siete Estándares Mínimos',
+              label: 'Estándares mínimos',
               badge: `${resumenEstandares.verificados}/${resumenEstandares.total}`,
               icon: Award,
             },
@@ -389,15 +405,15 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                 onClick={() => setSubTab(item.id as SubTabVerificar)}
                 className={`px-3 py-2 rounded-xl font-bold flex items-center justify-between gap-1.5 border cursor-pointer transition-colors ${
                   active
-                    ? 'bg-[#0f172a] text-white border-[#0f172a]'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-orange-50'
+                    ? 'bg-[#0f5b53] text-white border-[#0f5b53]'
+                    : 'bg-[#f4faf8] text-slate-700 border-[#d6ebe5] hover:bg-[#e5f3ef]'
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5 truncate">
                   <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? 'text-[#fed7aa]' : 'text-[#f97316]'}`} />
                   <span className="truncate">{item.label}</span>
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-white/90 text-slate-900 font-mono text-[10px]">
+                <span className="px-1.5 py-0.5 rounded bg-white/90 text-slate-900 font-mono tabular-nums text-[10px]">
                   {item.badge}
                 </span>
               </button>
@@ -407,52 +423,10 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
       </div>
 
       {/* =================================================================== */}
-      {/* A, B, D. TABLERO DE CONTROL Y HOJAS DE VIDA (6 INDICADORES RES 0312) */}
+      {/* TABLERO E INDICADORES (6 INDICADORES RES 0312 + PROPIOS)            */}
       {/* =================================================================== */}
       {subTab === 'tablero' && (
-        <div className="space-y-5">
-          {/* Resumen general del cumplimiento + alertas + semaforización explicada */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block">
-                Actividades Cumplidas
-              </span>
-              <span className="text-2xl font-black font-mono text-emerald-700">
-                {resumenActividades.cumplidas}/{resumenActividades.total}
-              </span>
-              <span className="text-[10px] text-slate-500 block">{resumenActividades.pct}% de avance</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 shadow-xs">
-              <span className="text-[10px] font-bold uppercase text-amber-800 block">
-                Pendientes / En proceso
-              </span>
-              <span className="text-2xl font-black font-mono text-amber-950">
-                {resumenActividades.pendientes}
-              </span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 shadow-xs">
-              <span className="text-[10px] font-bold uppercase text-rose-700 block">
-                Actividades Atrasadas
-              </span>
-              <span className="text-2xl font-black font-mono text-rose-950">
-                {resumenActividades.vencidas}
-              </span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-[10px] font-bold uppercase text-slate-500 block">
-                Alertas Activas
-              </span>
-              <span className="text-2xl font-black font-mono text-[#f97316]">{alertas.length}</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-[#0f172a] text-white shadow-xs">
-              <span className="text-[10px] font-bold uppercase text-[#fed7aa] block">
-                Estándares Verificados
-              </span>
-              <span className="text-2xl font-black font-mono">
-                {resumenEstandares.verificados} / {resumenEstandares.total}
-              </span>
-            </div>
-          </div>
+        <div className="space-y-4">
 
           {/* Filtros de periodo y explicación de Semaforización */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
@@ -1303,6 +1277,20 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
       )}
 
       {/* =================================================================== */}
+      {/* SEGUIMIENTO A ACTIVIDADES Y REVISIÓN DE EVIDENCIAS (GERENCIA)       */}
+      {/* =================================================================== */}
+      {subTab === 'seguimiento' && (
+        <PlanAnualAlertasEvidenciasTab
+          plan={plan}
+          alertas={alertas}
+          responsables={responsables}
+          mode="ambos"
+          onAbrirActividad={onAbrirActividad}
+          onUpdatePlan={onUpdatePlan}
+        />
+      )}
+
+      {/* =================================================================== */}
       {/* E. VERIFICACIÓN DE LOS RIESGOS CONECTADOS AL PLAN ANUAL             */}
       {/* =================================================================== */}
       {subTab === 'riesgos' && (
@@ -1409,14 +1397,14 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                       }
                       className="px-3 py-1.5 rounded-lg bg-[#f97316] hover:bg-[#ea580c] text-white font-black cursor-pointer"
                     >
-                      Medida no efectiva / Crear Acción en ACTUAR →
+                      Medida no efectiva / Crear Acción de Mejora →
                     </button>
                   </div>
                 </div>
 
                 {acciones.length > 0 && (
                   <div className="pt-2 border-t border-slate-100 text-[11px] text-indigo-900">
-                    <strong>Acciones de mejora ya abiertas en 4. ACTUAR:</strong>{' '}
+                    <strong>Acciones de mejora abiertas:</strong>{' '}
                     {acciones.map((a) => `${a.codigo} (${normalizarEstadoEstandar(a.estado)})`).join(' · ')}
                   </div>
                 )}

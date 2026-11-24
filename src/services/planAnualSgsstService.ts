@@ -20,7 +20,10 @@ import { determinarGrupoEstandares0312 } from './planAnualService';
 import { normalizarEstadoEstandar } from './gerenteControlService';
 
 const STORAGE_KEY_SGSST = 'frikaz_plan_anual_sgsst_v1';
+const STORAGE_KEY_SGSST_HISTORICO_BACKUP = 'frikaz_sgsst_historico_backup_v1';
 const GERENTE_GATE_FLAG_SGSST = 'frikaz_sgsst_gerente_gate_v1';
+const REORG_2027_FLAG_SGSST = 'frikaz_sgsst_2027_reorg_v1';
+const ONLY_2027_FLAG_SGSST = 'frikaz_sgsst_only_2027_v1';
 
 export const MESES_NOMBRES = [
   'Enero',
@@ -799,6 +802,46 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
     observaciones: 'Se consolidará cuando la Gerencia valide los meses del año.',
   });
 
+  // Año 2027: todos los meses y consolidado anual inician vacíos (sin datos inventados)
+  for (let m = 1; m <= 12; m++) {
+    registros.push({
+      id: `per-2027-${String(m).padStart(2, '0')}`,
+      anio: 2027,
+      mes: m,
+      periodoLabel: `${MESES_NOMBRES[m - 1]} 2027`,
+      numeroTrabajadores: null,
+      accidentesTrabajo: null,
+      accidentesMortales: null,
+      diasIncapacidadAT: null,
+      diasCargadosAT: null,
+      casosNuevosEL: null,
+      casosAntiguosEL: null,
+      diasAusenciaIncapacidadMedica: null,
+      diasTrabajoProgramados: null,
+      validado: false,
+      fechaActualizacion: '2026-11-23',
+      observaciones: 'Vigencia 2027 programada desde enero; información pendiente de registro mensual.',
+    });
+  }
+  registros.push({
+    id: 'per-2027-00',
+    anio: 2027,
+    mes: 0,
+    periodoLabel: 'Consolidado Anual 2027',
+    numeroTrabajadores: null,
+    accidentesTrabajo: null,
+    accidentesMortales: null,
+    diasIncapacidadAT: null,
+    diasCargadosAT: null,
+    casosNuevosEL: null,
+    casosAntiguosEL: null,
+    diasAusenciaIncapacidadMedica: null,
+    diasTrabajoProgramados: null,
+    validado: false,
+    fechaActualizacion: '2026-11-23',
+    observaciones: 'Consolidado anual 2027 en espera de registros reales y validación de Gerencia.',
+  });
+
   return registros;
 }
 
@@ -807,9 +850,10 @@ function crearPeriodosIniciales(): RegistroPeriodoIndicador[] {
 // ============================================================================
 
 export function construirEstandaresBaseAnio(
-  _anio: number,
+  anio: number,
   config: CaracterizacionEmpresaDinamica
 ): EvaluacionEstandarMinimo[] {
+  const esAnioFuturo = anio >= 2027;
   const { cantidadEstandares } = determinarGrupoEstandares0312(config);
   const esGrupo7 = cantidadEstandares === 7;
   const motivo = esGrupo7
@@ -827,8 +871,10 @@ export function construirEstandaresBaseAnio(
         'Carta de asignación firmada por el Gerente General en el Organigrama.',
         'Certificado vigente del curso de 50 horas (o actualización de 20 horas) en SST.',
       ],
-      estadoRevision: 'EN_REVISION',
-      observacionesRevision: 'Pendiente revisión de soportes y visto bueno del Gerente General.',
+      estadoRevision: esAnioFuturo ? 'PENDIENTE' : 'EN_REVISION',
+      observacionesRevision: esAnioFuturo
+        ? `Por hacer en ${anio} — pendiente soportes y revisión de Andrea Orjuela – Gerente.`
+        : 'Pendiente revisión de soportes y visto bueno del Gerente General.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -842,8 +888,10 @@ export function construirEstandaresBaseAnio(
         'Registro individual de cada trabajador con EPS, ARL y AFP diligenciados.',
         'Planillas de pago PILA del último mes sin retrasos.',
       ],
-      estadoRevision: 'EN_REVISION',
-      observacionesRevision: 'En proceso de revisión de planillas PILA y afiliaciones.',
+      estadoRevision: esAnioFuturo ? 'PENDIENTE' : 'EN_REVISION',
+      observacionesRevision: esAnioFuturo
+        ? `Por hacer en ${anio} — verificación mensual de planillas PILA por iniciar.`
+        : 'En proceso de revisión de planillas PILA y afiliaciones.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -858,7 +906,9 @@ export function construirEstandaresBaseAnio(
         'Listas de asistencia firmadas o sellos aprobados de Misión Frikaz.',
       ],
       estadoRevision: 'PENDIENTE',
-      observacionesRevision: 'Por hacer o subir listas de asistencia para revisión de Gerencia.',
+      observacionesRevision: esAnioFuturo
+        ? `Por hacer según el calendario de capacitaciones ${anio} (abril, mayo y agosto).`
+        : 'Por hacer o subir listas de asistencia para revisión de Gerencia.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -872,8 +922,10 @@ export function construirEstandaresBaseAnio(
         'Objetivos generales y específicos aprobados por Gerencia.',
         'Cronograma con fechas, responsables, presupuesto y evidencias aprobadas.',
       ],
-      estadoRevision: 'EN_REVISION',
-      observacionesRevision: 'Plan anual en revisión y ejecución; pendiente aprobación de Gerencia.',
+      estadoRevision: esAnioFuturo ? 'PENDIENTE' : 'EN_REVISION',
+      observacionesRevision: esAnioFuturo
+        ? `Programado enero–diciembre ${anio} con $0 ejecutado; pendiente aprobación y seguimiento de Gerencia.`
+        : 'Plan anual en revisión y ejecución; pendiente aprobación de Gerencia.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -902,8 +954,10 @@ export function construirEstandaresBaseAnio(
         'Matriz GTC 45 actualizada para todos los cargos y procesos de la planta.',
         'Evidencia de revisión anual y vinculación de los riesgos Nivel I y II al Plan Anual.',
       ],
-      estadoRevision: 'EN_REVISION',
-      observacionesRevision: 'Matriz GTC 45 conectada con los cargos; pendiente revisión final del Gerente.',
+      estadoRevision: esAnioFuturo ? 'PENDIENTE' : 'EN_REVISION',
+      observacionesRevision: esAnioFuturo
+        ? `Revisión de Matriz GTC 45 programada en enero ${anio} (PA-2027-01).`
+        : 'Matriz GTC 45 conectada con los cargos; pendiente revisión final del Gerente.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -918,7 +972,9 @@ export function construirEstandaresBaseAnio(
         'Acciones de mejora abiertas cuando una medida falle o esté atrasada.',
       ],
       estadoRevision: 'PENDIENTE',
-      observacionesRevision: 'Medidas de control en desarrollo; pendiente verificación y cierre de Gerencia.',
+      observacionesRevision: esAnioFuturo
+        ? `Medidas programadas a lo largo de ${anio} según los Planes de Mejora por Riesgo.`
+        : 'Medidas de control en desarrollo; pendiente verificación y cierre de Gerencia.',
       aplicaSegunEmpresa: true,
       motivoAplicabilidad: motivo,
     },
@@ -990,20 +1046,21 @@ function crearSeedInicialSgsst(
       tipo: 'CORRECTIVA',
       origen: 'ACTIVIDAD_PLAN',
       situacionEncontrada:
-        'La tarea PA-2026-05 (tapetes antifatiga y pausas activas en selección y empaque) está vencida sin fotografía ni factura de soporte.',
+        'La actividad de posturas, pausas activas y tapetes antifatiga en selección y empaque no cuenta con ejecución confirmada en 2026.',
       queSeNecesitaCorregir:
-        'Comprar e instalar 3 tapetes antifatiga en la mesa de empaque e implementar planilla diaria de pausas de manos y piernas.',
+        'Valorar con Gerencia la compra de tapetes antifatiga e implementar las orientaciones y pausas activas programadas para abril de 2027 (PA-2027-12).',
       actividadARealizar:
-        'Adquirir tapetes antifatiga de caucho lavable apto para alimentos, ubicarlos en puestos de sellado y verificar uso durante 2 semanas.',
+        'Presentar cotización de tapetes antifatiga para aprobación de Gerencia e iniciar pausas activas en planta en 2027.',
       responsable: 'Operario de Empaque',
-      fechaInicio: '2026-10-15',
-      fechaLimite: '2026-11-30',
-      evidenciaNecesaria: 'Factura de compra, fotos de los tapetes puestos y planilla de pausas activas.',
+      fechaInicio: '2027-04-01',
+      fechaLimite: '2027-04-29',
+      evidenciaNecesaria: 'Cotización aprobada / factura de compra, fotos de los tapetes puestos y planilla de pausas activas.',
       evidenciasAdjuntas: [],
-      estado: 'EN_PROCESO',
-      resultadoSeguimiento: 'Cotización aprobada por Gerencia; pendiente entrega e instalación en mesa de sellado.',
+      estado: 'PENDIENTE',
+      resultadoSeguimiento:
+        'Reprogramada desde 2026 sin presupuesto ejecutado ($0) ni compra confirmada; pendiente valoración de Gerencia.',
       riesgoId: rBiomec?.id,
-      actividadPlanId: 'act-2026-05',
+      actividadPlanId: 'act-2027-12',
       estandarNumero: 7,
       recomendacionId: 'rec-01',
       historial: [
@@ -1012,14 +1069,14 @@ function crearSeedInicialSgsst(
           fecha: '2026-10-15',
           usuario: 'Coordinador / Vigía de SST',
           accion: 'CREADA',
-          detalle: 'Acción abierta por vencimiento de PA-2026-05 y recomendación ergonómica en empaque.',
+          detalle: 'Acción abierta por recomendación ergonómica en selección y empaque.',
         },
         {
           id: 'hm-02',
-          fecha: '2026-11-05',
-          usuario: 'Gerente General (Representante Legal)',
-          accion: 'SEGUIMIENTO',
-          detalle: 'Presupuesto aprobado para compra de 3 tapetes antifatiga lavables.',
+          fecha: '2026-11-23',
+          usuario: 'Coordinador / Vigía de SST',
+          accion: 'REPROGRAMADA_2027',
+          detalle: 'Reprogramada a abril de 2027 sin ejecución previa confirmada (gasto ejecutado $0).',
         },
       ],
     },
@@ -1029,30 +1086,21 @@ function crearSeedInicialSgsst(
       tipo: 'PREVENTIVA',
       origen: 'MATRIZ_RIESGOS',
       situacionEncontrada:
-        'Revisión trimestral de termostatos de seguridad (>180 °C) y guantes térmicos en freidoras #1 y #2.',
+        'Revisión de seguridad térmica (>180 °C) y guantes térmicos en freidoras #1 y #2 sin ejecución confirmada en 2026.',
       queSeNecesitaCorregir:
-        'Asegurar que ningún termostato sobrepase 180 °C y reemplazar guantes térmicos con desgaste.',
+        'Asegurar que ningún termostato sobrepase 180 °C y revisar/reponer guantes térmicos en el calendario 2027.',
       actividadARealizar:
-        'Inspección mensual de calibración de freidoras y verificación visual de costuras de guantes térmicos.',
+        'Inspección de freidoras y capacitación de calor (mayo 2027) más revisión y entrega de EPP (junio 2027).',
       responsable: 'Operario de Frito',
-      fechaInicio: '2026-04-28',
-      fechaLimite: '2026-05-15',
-      evidenciaNecesaria: 'Lista de chequeo de freidoras y recibo de reposición de EPP.',
-      evidenciasAdjuntas: [
-        {
-          id: 'ev-acm-02',
-          nombreArchivo: 'Chequeo_Termostatos_Freidoras_2026.pdf',
-          tipoSoporte: 'ACTA',
-          descripcionSoporte: 'Revisión de corte térmico a 180 °C y guantes cargada para revisión.',
-          fechaCarga: '2026-05-10',
-          cargadoPor: 'Operario de Frito',
-          estadoRevision: 'PENDIENTE_REVISION',
-        },
-      ],
-      estado: 'PENDIENTE_REVISION',
-      resultadoSeguimiento: 'Soporte cargado; pendiente revisión y aprobación por el Gerente.',
+      fechaInicio: '2027-05-03',
+      fechaLimite: '2027-06-28',
+      evidenciaNecesaria: 'Lista de chequeo de freidoras y planilla firmada de entrega de EPP.',
+      evidenciasAdjuntas: [],
+      estado: 'PENDIENTE',
+      resultadoSeguimiento:
+        'Reprogramada al Plan Anual 2027 (PA-2027-13 y PA-2027-16/17); pendiente ejecución y soportes.',
       riesgoId: rCalor?.id,
-      actividadPlanId: 'act-2026-02',
+      actividadPlanId: 'act-2027-13',
       estandarNumero: 7,
       historial: [
         {
@@ -1064,10 +1112,10 @@ function crearSeedInicialSgsst(
         },
         {
           id: 'hm-04',
-          fecha: '2026-05-10',
-          usuario: 'Operario de Frito',
-          accion: 'EVIDENCIA_ADJUNTADA',
-          detalle: 'Lista de chequeo subida para revisión y aprobación del Gerente.',
+          fecha: '2026-11-23',
+          usuario: 'Coordinador / Vigía de SST',
+          accion: 'REPROGRAMADA_2027',
+          detalle: 'Reprogramada a mayo–junio de 2027 sin ejecución previa confirmada.',
         },
       ],
     },
@@ -1095,17 +1143,34 @@ function crearSeedInicialSgsst(
       anio: 2026,
       bateriaPsicosocial: {
         fechaAplicacion: '2026-09-25',
-        estado: 'REALIZADA',
-        nivelRiesgoIntralaboral: 'Medio',
-        nivelRiesgoExtralaboral: 'Bajo',
-        nivelEstres: 'Bajo',
-        observacionesGenerales: 'Se recomienda mantener pausas claras en horas pico de producción y reuniones trimestrales del Comité de Convivencia.',
+        estado: 'PENDIENTE',
+        nivelRiesgoIntralaboral: 'Pendiente',
+        nivelRiesgoExtralaboral: 'Pendiente',
+        nivelEstres: 'Pendiente',
+        observacionesGenerales: 'Pendiente confirmar aplicación y validación de soportes en 2026 o reprogramar en 2027.',
       },
       analisisFactibilidad: {
         actividadEconomicaCIIU: config.ciiuPrincipal,
         gruposPoblacionalesAnalizados: 'Equipo completo de 10 trabajadores en planta de Bosa y ruta de distribución.',
-        conclusionesFactibilidad: 'Priorizar control de temperatura en cocción, protección auditiva en pelado, tapetes antifatiga en empaque y exámenes periódicos al 100%.',
-        fechaActualizacion: '2026-10-10',
+        conclusionesFactibilidad: 'Priorizar control de temperatura en cocción, protección auditiva en pelado, tapetes antifatiga en empaque y exámenes periódicos.',
+        fechaActualizacion: '2026-11-23',
+      },
+    },
+    2027: {
+      anio: 2027,
+      bateriaPsicosocial: {
+        fechaAplicacion: '',
+        estado: 'PENDIENTE',
+        nivelRiesgoIntralaboral: 'Pendiente',
+        nivelRiesgoExtralaboral: 'Pendiente',
+        nivelEstres: 'Pendiente',
+        observacionesGenerales: 'Programación 2027 por definir tras identificación de necesidades en enero de 2027.',
+      },
+      analisisFactibilidad: {
+        actividadEconomicaCIIU: config.ciiuPrincipal,
+        gruposPoblacionalesAnalizados: '10 trabajadores de Frikaz S.A.S. (vigencia 2027).',
+        conclusionesFactibilidad: 'Pendiente evaluación y valoración de presupuesto 2027 con Andrea Orjuela – Gerente.',
+        fechaActualizacion: '2026-11-23',
       },
     },
   };
@@ -1118,17 +1183,18 @@ function crearSeedInicialSgsst(
     estandaresMinimos: {
       2025: construirEstandaresBaseAnio(2025, config),
       2026: construirEstandaresBaseAnio(2026, config),
+      2027: construirEstandaresBaseAnio(2027, config),
     },
     recomendaciones,
     accionesMejora,
     auditoriaCambios: [
       {
         id: 'aud-init-01',
-        fechaHora: '2026-01-16T10:00:00',
+        fechaHora: '2026-11-23T09:00:00',
         usuario: 'Coordinador / Vigía de SST',
         modulo: 'PLANEAR',
-        accion: 'Inicialización SG-SST integrado',
-        detalle: 'Conectados trabajadores, matriz GTC 45, 6 indicadores Res. 0312/2019 y 7 estándares mínimos.',
+        accion: 'Reorganización Plan Anual 2027',
+        detalle: 'Conectados trabajadores, matriz GTC 45, 6 indicadores Res. 0312/2019 (2027 vacío) y 7 estándares mínimos 2027 en estado Por hacer.',
       },
     ],
   };
@@ -1218,6 +1284,156 @@ export function loadSgsstData(
           localStorage.setItem(GERENTE_GATE_FLAG_SGSST, '1');
         }
 
+        if (!localStorage.getItem(REORG_2027_FLAG_SGSST)) {
+          const periodos2027 = crearPeriodosIniciales().filter((p) => p.anio === 2027);
+          const existentesIds = new Set(result.registrosPeriodosIndicadores.map((r) => r.id));
+          const faltantes2027 = periodos2027.filter((p) => !existentesIds.has(p.id));
+
+          const nextEstandares = { ...(result.estandaresMinimos || {}) };
+          if (!nextEstandares[2027]) {
+            nextEstandares[2027] = construirEstandaresBaseAnio(2027, config);
+          }
+
+          const nextDiagnosticos = { ...(result.diagnosticosSalud || {}) };
+          if (!nextDiagnosticos[2027]) {
+            nextDiagnosticos[2027] = {
+              anio: 2027,
+              bateriaPsicosocial: {
+                fechaAplicacion: '',
+                estado: 'PENDIENTE',
+                nivelRiesgoIntralaboral: 'Pendiente',
+                nivelRiesgoExtralaboral: 'Pendiente',
+                nivelEstres: 'Pendiente',
+                observacionesGenerales:
+                  'Programación 2027 por definir tras identificación de necesidades en enero de 2027.',
+              },
+              analisisFactibilidad: {
+                actividadEconomicaCIIU: config.ciiuPrincipal,
+                gruposPoblacionalesAnalizados: '10 trabajadores de Frikaz S.A.S. (vigencia 2027).',
+                conclusionesFactibilidad:
+                  'Pendiente evaluación y valoración de presupuesto 2027 con Andrea Orjuela – Gerente.',
+                fechaActualizacion: '2026-11-23',
+              },
+            };
+          }
+
+          // Reprogramar acciones de mejora 2026 sin revisión de Gerente para que no muestren presupuesto aprobado falso
+          const accionesReorg = (result.accionesMejora || []).map((acm) => {
+            if (acm.revisionGerente || acm.estado === 'CUMPLIDA' || acm.estado === 'APROBADA') {
+              return acm;
+            }
+            if (acm.id === 'acm-01') {
+              return {
+                ...acm,
+                fechaInicio: '2027-04-01',
+                fechaLimite: '2027-04-29',
+                actividadPlanId: 'act-2027-12',
+                estado: 'PENDIENTE' as const,
+                resultadoSeguimiento:
+                  'Reprogramada desde 2026 sin presupuesto ejecutado ($0); pendiente valoración de Gerencia.',
+              };
+            }
+            if (acm.id === 'acm-02' && acm.evidenciasAdjuntas.length === 0) {
+              return {
+                ...acm,
+                fechaInicio: '2027-05-03',
+                fechaLimite: '2027-06-28',
+                actividadPlanId: 'act-2027-13',
+                estado: 'PENDIENTE' as const,
+              };
+            }
+            return acm;
+          });
+
+          result = {
+            ...result,
+            registrosPeriodosIndicadores: [
+              ...result.registrosPeriodosIndicadores,
+              ...faltantes2027,
+            ],
+            estandaresMinimos: nextEstandares,
+            diagnosticosSalud: nextDiagnosticos,
+            accionesMejora: accionesReorg,
+          };
+
+          localStorage.setItem(REORG_2027_FLAG_SGSST, '1');
+          needsSave = true;
+        }
+
+        // Respaldo de históricos < 2027 (indicadores, estándares y diagnósticos) y filtro activo a 2027
+        const periodosHistoricos = (result.registrosPeriodosIndicadores || []).filter(
+          (r) => r.anio !== 2027
+        );
+        const estandaresHistoricos: Record<number, EvaluacionEstandarMinimo[]> = {};
+        Object.entries(result.estandaresMinimos || {}).forEach(([k, val]) => {
+          if (Number(k) !== 2027) estandaresHistoricos[Number(k)] = val;
+        });
+        const diagnosticosHistoricos: Record<number, DiagnosticoSaludEmpresa> = {};
+        Object.entries(result.diagnosticosSalud || {}).forEach(([k, val]) => {
+          if (Number(k) !== 2027) diagnosticosHistoricos[Number(k)] = val;
+        });
+
+        if (
+          periodosHistoricos.length > 0 ||
+          Object.keys(estandaresHistoricos).length > 0 ||
+          Object.keys(diagnosticosHistoricos).length > 0
+        ) {
+          try {
+            localStorage.setItem(
+              STORAGE_KEY_SGSST_HISTORICO_BACKUP,
+              JSON.stringify({
+                fechaRespaldo: new Date().toISOString(),
+                registrosPeriodosIndicadores: periodosHistoricos,
+                estandaresMinimos: estandaresHistoricos,
+                diagnosticosSalud: diagnosticosHistoricos,
+              })
+            );
+          } catch (backupErr) {
+            console.error('Error guardando respaldo histórico SG-SST:', backupErr);
+          }
+          needsSave = true;
+        }
+
+        if (!localStorage.getItem(ONLY_2027_FLAG_SGSST) || periodosHistoricos.length > 0) {
+          const periodos2027 = (result.registrosPeriodosIndicadores || []).filter(
+            (r) => r.anio === 2027
+          );
+          const seed2027Periodos = crearPeriodosIniciales().filter((p) => p.anio === 2027);
+          const finalPeriodos2027 =
+            periodos2027.length >= 13 ? periodos2027 : seed2027Periodos;
+
+          const est2027 =
+            result.estandaresMinimos?.[2027] || construirEstandaresBaseAnio(2027, config);
+          const diag2027 = result.diagnosticosSalud?.[2027] || {
+            anio: 2027,
+            bateriaPsicosocial: {
+              fechaAplicacion: '',
+              estado: 'PENDIENTE' as const,
+              nivelRiesgoIntralaboral: 'Pendiente' as const,
+              nivelRiesgoExtralaboral: 'Pendiente' as const,
+              nivelEstres: 'Pendiente' as const,
+              observacionesGenerales:
+                'Programación 2027 por definir tras identificación de necesidades en enero de 2027.',
+            },
+            analisisFactibilidad: {
+              actividadEconomicaCIIU: config.ciiuPrincipal,
+              gruposPoblacionalesAnalizados: '10 trabajadores de Frikaz S.A.S. (vigencia 2027).',
+              conclusionesFactibilidad:
+                'Pendiente evaluación y valoración de presupuesto 2027 con Andrea Orjuela – Gerente.',
+              fechaActualizacion: '2026-11-23',
+            },
+          };
+
+          result = {
+            ...result,
+            registrosPeriodosIndicadores: finalPeriodos2027,
+            estandaresMinimos: { 2027: est2027 },
+            diagnosticosSalud: { 2027: diag2027 },
+          };
+          localStorage.setItem(ONLY_2027_FLAG_SGSST, '1');
+          needsSave = true;
+        }
+
         if (needsSave) {
           saveSgsstData(result);
         }
@@ -1229,9 +1445,40 @@ export function loadSgsstData(
     console.error('Error cargando datos SG-SST del Plan Anual:', err);
   }
   const seed = crearSeedInicialSgsst(config, riesgos);
-  saveSgsstData(seed);
+  // Respaldar 2025/2026 en almacenamiento histórico y dejar únicamente 2027 activo
+  try {
+    localStorage.setItem(
+      STORAGE_KEY_SGSST_HISTORICO_BACKUP,
+      JSON.stringify({
+        fechaRespaldo: new Date().toISOString(),
+        registrosPeriodosIndicadores: seed.registrosPeriodosIndicadores.filter(
+          (r) => r.anio !== 2027
+        ),
+        estandaresMinimos: {
+          2025: seed.estandaresMinimos[2025],
+          2026: seed.estandaresMinimos[2026],
+        },
+        diagnosticosSalud: {
+          2025: seed.diagnosticosSalud[2025],
+          2026: seed.diagnosticosSalud[2026],
+        },
+      })
+    );
+  } catch (backupErr) {
+    console.error('Error guardando respaldo inicial SG-SST:', backupErr);
+  }
+
+  const seedSolo2027: PlanAnualSgsstData = {
+    ...seed,
+    registrosPeriodosIndicadores: seed.registrosPeriodosIndicadores.filter((r) => r.anio === 2027),
+    estandaresMinimos: { 2027: seed.estandaresMinimos[2027] },
+    diagnosticosSalud: { 2027: seed.diagnosticosSalud[2027] },
+  };
+  saveSgsstData(seedSolo2027);
   localStorage.setItem(GERENTE_GATE_FLAG_SGSST, '1');
-  return seed;
+  localStorage.setItem(REORG_2027_FLAG_SGSST, '1');
+  localStorage.setItem(ONLY_2027_FLAG_SGSST, '1');
+  return seedSolo2027;
 }
 
 export function saveSgsstData(data: PlanAnualSgsstData): boolean {

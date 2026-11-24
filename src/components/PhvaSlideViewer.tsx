@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import type { AssistantNavigationTarget } from '../types/assistantNavigation';
 import {
   NormaPhvaItem,
   FasePhva,
@@ -24,10 +25,7 @@ import {
   Plus,
   SlidersHorizontal,
   FileSpreadsheet,
-  CalendarCheck,
-  ArrowRight,
 } from 'lucide-react';
-import { PlanAnualView } from './plan-anual/PlanAnualView';
 import {
   ESTADOS_TRABAJADOR_FRIKAZ,
   esEstadoExclusivoGerente,
@@ -47,6 +45,7 @@ interface PhvaSlideViewerProps {
   onReset: () => void;
   onAddNewNorma?: (fase?: FasePhva) => void;
   onOpenMatrizExcel?: () => void;
+  navigationRequest?: AssistantNavigationTarget | null;
 }
 
 export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
@@ -61,11 +60,24 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
   onReset,
   onAddNewNorma,
   onOpenMatrizExcel,
+  navigationRequest,
 }) => {
   const [activeFase, setActiveFase] = useState<FasePhva>('PLANEAR');
-  const [showPlanAnual, setShowPlanAnual] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [areaFilter, setAreaFilter] = useState<'TODAS' | 'SST' | 'AMBIENTAL'>('TODAS');
+
+  useEffect(() => {
+    if (!navigationRequest || navigationRequest.tab !== 'phva_slides') return;
+    if (navigationRequest.phvaFase) {
+      setActiveFase(navigationRequest.phvaFase);
+    }
+    if (navigationRequest.phvaAreaFilter) {
+      setAreaFilter(navigationRequest.phvaAreaFilter);
+    }
+    if (navigationRequest.searchQuery !== undefined) {
+      setSearchTerm(navigationRequest.searchQuery);
+    }
+  }, [navigationRequest]);
 
   const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
@@ -269,10 +281,10 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
         </div>
       </div>
 
-      {/* PHASE SELECTOR TABS INSIDE CICLO PHVA + INTEGRATED «PLAN ANUAL» OPTION */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      {/* PHASE SELECTOR TABS INSIDE CICLO PHVA */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {(['PLANEAR', 'HACER', 'VERIFICAR', 'ACTUAR'] as FasePhva[]).map((fase) => {
-          const isActive = !showPlanAnual && activeFase === fase;
+          const isActive = activeFase === fase;
           const stats = indicadores.porFase[fase];
 
           return (
@@ -280,7 +292,6 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
               key={fase}
               onClick={() => {
                 setActiveFase(fase);
-                setShowPlanAnual(false);
               }}
               className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden cursor-pointer ${
                 isActive
@@ -320,51 +331,9 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
             </button>
           );
         })}
-
-        {/* Opción dedicada «PLAN ANUAL» dentro de Ciclo PHVA */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveFase('PLANEAR');
-            setShowPlanAnual(true);
-          }}
-          className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden cursor-pointer col-span-2 sm:col-span-1 ${
-            showPlanAnual
-              ? 'border-[#f97316] bg-[#0f172a] text-white shadow-lg'
-              : 'border-orange-300 bg-linear-to-br from-orange-50 to-amber-50 text-[#0f172a] hover:border-[#f97316]'
-          }`}
-        >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#f97316]" />
-          <div className="flex items-center justify-between">
-            <span
-              className={`text-[10px] font-black uppercase tracking-wider ${
-                showPlanAnual ? 'text-[#fed7aa]' : 'text-[#f97316]'
-              }`}
-            >
-              FASE PLANEAR
-            </span>
-            <CalendarCheck
-              className={`h-4 w-4 ${showPlanAnual ? 'text-[#fed7aa]' : 'text-[#f97316]'}`}
-            />
-          </div>
-          <h3 className="text-base sm:text-lg font-black tracking-tight mt-1">
-            PLAN ANUAL
-          </h3>
-          <p
-            className={`text-[11px] mt-1 ${
-              showPlanAnual ? 'text-slate-300' : 'text-slate-600'
-            }`}
-          >
-            Riesgos, metas, calendario y soportes
-          </p>
-        </button>
       </div>
 
-      {showPlanAnual ? (
-        <PlanAnualView normas={items} />
-      ) : (
-        <>
-          {/* SEARCH AND FILTERS BAR */}
+      {/* SEARCH AND FILTERS BAR */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs print:hidden">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -531,30 +500,14 @@ export const PhvaSlideViewer: React.FC<PhvaSlideViewerProps> = ({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between gap-2">
-                  {activeFase === 'PLANEAR' && (sub.subtema === 'MATRIZ LEGAL Y PLAN ANUAL' || sub.subtema === 'MATRIZ_LEGAL') ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowPlanAnual(true)}
-                      className="w-full py-1.5 px-2.5 rounded-lg bg-[#0f172a] text-[#fed7aa] font-black text-[11px] hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                    >
-                      <CalendarCheck className="h-3.5 w-3.5" />
-                      <span>Abrir PLAN ANUAL</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
-                  ) : (
-                    <>
-                      <span>Norma vigente hoy</span>
-                      <span className="text-emerald-700 font-bold">Revisada</span>
-                    </>
-                  )}
+                  <span>Norma vigente hoy</span>
+                  <span className="text-emerald-700 font-bold">Revisada</span>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
-        </>
-      )}
 
       {/* TEACHER SLIDE 5 PROMPT REMINDER INLINE */}
       <div className="rounded-xl border border-orange-200 bg-[#fff7ed] p-5 shadow-xs text-slate-800 text-xs">

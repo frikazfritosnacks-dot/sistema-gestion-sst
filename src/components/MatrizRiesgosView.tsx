@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   RiesgoGTC45Item,
   TABLA_TECNICA_NC,
   TipoClasificacionPeligro,
   InterpretacionNR,
 } from '../types/gtc45RiskMatrix';
+import type { AssistantNavigationTarget } from '../types/assistantNavigation';
+import { FrikacitoAvatar } from './FrikacitoAvatar';
 import {
   RIESGOS_GTC45_DATASET,
   obtenerAreasUnicas,
@@ -20,7 +22,6 @@ import {
 } from '../services/riskMatrixStorage';
 import { RiskFormModal } from './matriz-gtc45/RiskFormModal';
 import { RiskDeleteConfirmModal } from './matriz-gtc45/RiskDeleteConfirmModal';
-import { RiskAssistantModal } from './matriz-gtc45/RiskAssistantModal';
 import {
   AlertTriangle,
   Shield,
@@ -62,7 +63,11 @@ import {
 
 export type ModoVistaMatriz = 'ficha' | 'por_cargos' | 'tabla';
 
-export function MatrizRiesgosView() {
+interface MatrizRiesgosViewProps {
+  navigationRequest?: AssistantNavigationTarget | null;
+}
+
+export function MatrizRiesgosView({ navigationRequest }: MatrizRiesgosViewProps = {}) {
   const { esGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   // Primary State initialized from persistent storage
   const [dataset, setDataset] = useState<RiesgoGTC45Item[]>(() => loadStoredRisks());
@@ -83,10 +88,27 @@ export function MatrizRiesgosView() {
   const [editingRisk, setEditingRisk] = useState<RiesgoGTC45Item | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [deletingRisk, setDeletingRisk] = useState<RiesgoGTC45Item | null>(null);
-  const [isAssistantOpen, setIsAssistantOpen] = useState<boolean>(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
   const [saveNotification, setSaveNotification] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!navigationRequest || navigationRequest.tab !== 'matriz_riesgos') return;
+    setSelectedCargo('Todos los cargos');
+    setSelectedArea('Todas las áreas');
+    setSelectedProceso('Todos los procesos');
+    setSelectedClasificacion('Todas');
+    setSelectedNivelRiesgo('Todos');
+    if (navigationRequest.searchQuery !== undefined) {
+      setSearchTerm(navigationRequest.searchQuery);
+    }
+    if (navigationRequest.riskId) {
+      setSelectedRiskId(navigationRequest.riskId);
+      setViewMode(navigationRequest.riskViewMode || 'ficha');
+    } else if (navigationRequest.riskViewMode) {
+      setViewMode(navigationRequest.riskViewMode);
+    }
+  }, [navigationRequest]);
 
   // Sync dataset to persistent storage whenever modified
   const updateDatasetAndPersist = (newDataset: RiesgoGTC45Item[]) => {
@@ -443,12 +465,12 @@ export function MatrizRiesgosView() {
               </button>
 
               <button
-                onClick={() => setIsAssistantOpen(true)}
+                onClick={() => window.dispatchEvent(new CustomEvent('frikaz:open-assistant'))}
                 className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
-                title="Abrir guía de consulta rápida sobre peligros y cuidados"
+                title="Abrir a Frikacito, tu asistente virtual de Frikaz S.A.S."
               >
-                <Bot className="h-4 w-4 text-emerald-400" />
-                <span>Guía de Consulta</span>
+                <FrikacitoAvatar size="xs" />
+                <span>Preguntar a Frikacito</span>
               </button>
             </div>
           </div>
@@ -1896,17 +1918,6 @@ export function MatrizRiesgosView() {
         }}
         onConfirm={handleConfirmDelete}
         riskItem={deletingRisk}
-      />
-
-      {/* MODAL: CONTEXTUAL SMART ASSISTANT */}
-      <RiskAssistantModal
-        isOpen={isAssistantOpen}
-        onClose={() => setIsAssistantOpen(false)}
-        dataset={dataset}
-        onSelectRisk={(id) => {
-          setSelectedRiskId(id);
-          setViewMode('ficha');
-        }}
       />
 
       {/* MODAL: CONFIRMAR RESTABLECER MATRIZ */}

@@ -4,6 +4,7 @@ import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import {
   AccionMejoraPlan,
   ActividadPlanAnual,
+  CambioFechaActividad,
   DiagnosticoSaludEmpresa,
   EvaluacionEstandarMinimo,
   HojaVidaIndicadorSST,
@@ -17,8 +18,8 @@ import {
 } from '../../types/planAnual';
 import {
   calcularIndicadoresPlan,
+  calcularResumenPresupuestoPlan,
   construirEmpresaSnapshot,
-  crearNuevaVigencia,
   crearRiesgoSnapshot,
   crearSiguienteOcurrencia,
   detectarImpactosEnPlan,
@@ -31,7 +32,6 @@ import {
   saveVigencia,
 } from '../../services/planAnualService';
 import {
-  MESES_NOMBRES,
   agregarRegistroAuditoria,
   construirEstandaresBaseAnio,
   loadSgsstData,
@@ -41,16 +41,47 @@ import { loadStoredRisks, saveStoredRisks } from '../../services/riskMatrixStora
 import { getStoredCargosSST } from '../../services/organigramaService';
 import { getCaracterizacionActual } from '../../services/dynamicRulesEngine';
 import { PlanAnualActividadModal } from './PlanAnualActividadModal';
+import {
+  PlanAnualPanelPrincipal,
+  SeccionPlanAnual,
+  NavegacionPlanAnualOpciones,
+} from './PlanAnualPanelPrincipal';
 import { PlanAnualHacerTab } from './PlanAnualHacerTab';
-import { PlanAnualVerificarTab } from './PlanAnualVerificarTab';
+import { PlanAnualVerificarTab, SubTabVerificar } from './PlanAnualVerificarTab';
 import { PlanAnualActuarTab } from './PlanAnualActuarTab';
-import { PlanAnualPlanearTab, SubTabPlanear } from './PlanAnualPlanearTab';
+import { PlanAnualObjetivosKpiTab } from './PlanAnualObjetivosKpiTab';
+import { PlanAnualCronogramaTab } from './PlanAnualCronogramaTab';
+import { PlanAnualResponsablesTab } from './PlanAnualResponsablesTab';
+import { PlanAnualPresupuestoTab } from './PlanAnualPresupuestoTab';
+import { PlanAnualReportesTab } from './PlanAnualReportesTab';
+import { PlanAnualRiesgosNormasTab } from './PlanAnualRiesgosNormasTab';
+import { PlanAnualAlertasEvidenciasTab } from './PlanAnualAlertasEvidenciasTab';
+import { PlanAnualPlanesMejoraRiesgoTab } from './PlanAnualPlanesMejoraRiesgoTab';
+import {
+  PlanAnualEmergenciasTab,
+  type SubVistaEmergencias,
+} from './PlanAnualEmergenciasTab';
+import {
+  FormatoDocumentoModal,
+  MaterialCapacitacionModal,
+} from './PlanAnualCajaCalidadEditor';
+import {
+  loadPlanesMejoraEmergenciasStore,
+  savePlanesMejoraEmergenciasStore,
+} from '../../services/planMejoraEmergenciasService';
+import type {
+  FormatoEditableDocumento,
+  MaterialCapacitacionPlan,
+  PlanEmergenciasFrikaz,
+  PlanMejoraPorRiesgo,
+  PlanesMejoraYEmergenciasStore,
+} from '../../types/planAnualMejoraEmergencias';
+import type { AssistantNavigationTarget } from '../../types/assistantNavigation';
 import {
   ClipboardCheck,
   TrendingUp,
   Wrench,
   CalendarRange,
-  Plus,
   CheckCircle2,
   GitPullRequest,
   Building2,
@@ -61,6 +92,16 @@ import {
   X,
   History,
   Mail,
+  LayoutDashboard,
+  Target,
+  FileCheck2,
+  DollarSign,
+  BarChart3,
+  GanttChart,
+  UserCheck,
+  Users,
+  ShieldAlert,
+  Flame,
 } from 'lucide-react';
 import {
   crearRegistroRevisionGerente,
@@ -73,20 +114,17 @@ import {
 
 interface PlanAnualViewProps {
   normas: NormaPhvaItem[];
+  navigationRequest?: AssistantNavigationTarget | null;
 }
 
-type FasePhvaPlanAnual = 'planear' | 'hacer' | 'verificar' | 'actuar';
-
-export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
+export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
+  normas,
+  navigationRequest,
+}) => {
   const [vigencias, setVigencias] = useState<Record<number, PlanAnualVigencia>>(() =>
     loadAllVigencias()
   );
-  const [anioActivo, setAnioActivo] = useState<number>(() => {
-    const keys = Object.keys(loadAllVigencias())
-      .map(Number)
-      .sort((a, b) => b - a);
-    return keys.includes(2026) ? 2026 : keys[0] || 2026;
-  });
+  const anioActivo = 2027;
 
   const [riesgos, setRiesgos] = useState<RiesgoGTC45Item[]>(() => loadStoredRisks());
   const [config, setConfig] = useState(() => getCaracterizacionActual());
@@ -94,12 +132,39 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   const [sgsstData, setSgsstData] = useState<PlanAnualSgsstData>(() =>
     loadSgsstData(getCaracterizacionActual(), loadStoredRisks())
   );
+  const [mejoraEmergenciasStore, setMejoraEmergenciasStore] =
+    useState<PlanesMejoraYEmergenciasStore>(() =>
+      loadPlanesMejoraEmergenciasStore(loadStoredRisks())
+    );
+  const [formatoModalId, setFormatoModalId] = useState<string | null>(null);
+  const [capacitacionModalState, setCapacitacionModalState] = useState<{
+    material: MaterialCapacitacionPlan;
+    contexto: string;
+    onSave: (nextMat: MaterialCapacitacionPlan) => void;
+  } | null>(null);
 
-  // Las 4 etapas del ciclo PHVA en su orden oficial: 1. PLANEAR, 2. HACER, 3. VERIFICAR, 4. ACTUAR
-  const [faseActiva, setFaseActiva] = useState<FasePhvaPlanAnual>('planear');
-  const [planearSubTabReset, setPlanearSubTabReset] = useState<SubTabPlanear>('riesgos');
-  const [planearKey, setPlanearKey] = useState(0);
+  // Secciones del apartado independiente PLAN ANUAL (Resumen + secciones operativas)
+  const [seccionActiva, setSeccionActiva] = useState<SeccionPlanAnual>('resumen');
+  const [subActividades, setSubActividades] = useState<'cronograma' | 'avances' | 'responsables'>('cronograma');
+  const [subPresupuesto, setSubPresupuesto] = useState<'recursos' | 'reportes'>('recursos');
+  const [subConexiones, setSubConexiones] = useState<'riesgosNormas' | 'personal' | 'puestos' | 'mejoras'>('riesgosNormas');
+  const [verificarSubTabReset, setVerificarSubTabReset] = useState<SubTabVerificar>('tablero');
+  const [verificarKey, setVerificarKey] = useState(0);
   const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
+  // Estados de navegación directa desde el Asistente Virtual
+  const [navNonce, setNavNonce] = useState<number | undefined>(undefined);
+  const [navCronogramaSearch, setNavCronogramaSearch] = useState<string | undefined>(undefined);
+  const [navCronogramaEstado, setNavCronogramaEstado] = useState<string | undefined>(undefined);
+  const [navPresupuestoSearch, setNavPresupuestoSearch] = useState<string | undefined>(undefined);
+  const [navPlanMejoraSearch, setNavPlanMejoraSearch] = useState<string | undefined>(undefined);
+  const [navPlanMejoraId, setNavPlanMejoraId] = useState<string | undefined>(undefined);
+  const [navEmergenciasSubVista, setNavEmergenciasSubVista] = useState<
+    SubVistaEmergencias | undefined
+  >(undefined);
+  const [navEmergenciasEscenarioId, setNavEmergenciasEscenarioId] = useState<string | undefined>(
+    undefined
+  );
 
   // Control de confidencialidad médica individual
   const [accesoMedicoAutorizado, setAccesoMedicoAutorizado] = useState(false);
@@ -115,9 +180,6 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     'datos'
   );
 
-  // Nueva vigencia independiente
-  const [showNewYearForm, setShowNewYearForm] = useState(false);
-  const [nuevoAnioInput, setNuevoAnioInput] = useState<number>(2027);
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<'idle' | 'saving' | 'saved' | 'error'>('saved');
   const [showAuditModal, setShowAuditModal] = useState(false);
@@ -455,7 +517,8 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         `Implementar controles y seguimiento en el puesto ${trab.cargoNombre}.`,
       estandarNumero: 5,
     });
-    setFaseActiva('actuar');
+    setSubConexiones('mejoras');
+    setSeccionActiva('conexiones');
   };
 
   // =========================================================================
@@ -700,7 +763,11 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       aprobadorNombre: defAprob.nombre,
       aprobadorCargo: defAprob.cargo,
       presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      recursosNecesarios: '',
+      confirmacionRecursos: 'Pendiente de confirmar con Gerencia',
       estado: 'PENDIENTE',
       evidenciaRequerida: 'Acta firmada, foto o certificado de que se realizó.',
       evidencias: [],
@@ -756,8 +823,12 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       aprobadorId: defAprob.id,
       aprobadorNombre: defAprob.nombre,
       aprobadorCargo: defAprob.cargo,
-      presupuestoEstimado: 800000,
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      recursosNecesarios: 'Por valorar según controles de la matriz GTC 45',
+      confirmacionRecursos: 'Pendiente de valoración y aprobación de Gerencia',
       estado: 'PENDIENTE',
       evidenciaRequerida: 'Acta de entrega de la medida, fotos del puesto y firma de revisión.',
       evidencias: [],
@@ -824,8 +895,12 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         aprobadorId: defAprob.id,
         aprobadorNombre: defAprob.nombre,
         aprobadorCargo: defAprob.cargo,
-        presupuestoEstimado: 750000,
+        presupuestoEstimado: 0,
+        presupuestoAprobado: 0,
         gastoEjecutado: 0,
+        tipoRecurso: 'PENDIENTE_VALORACION',
+        recursosNecesarios: 'Por valorar según controles prioritarios',
+        confirmacionRecursos: 'Pendiente de valoración y aprobación de Gerencia',
         estado: 'PENDIENTE',
         evidenciaRequerida: 'Fotos de las protecciones puestas, planilla de entrega de EPP o charla.',
         evidencias: [],
@@ -894,8 +969,12 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       aprobadorId: aprob.id,
       aprobadorNombre: aprob.nombre,
       aprobadorCargo: aprob.cargo,
-      presupuestoEstimado: 450000,
+      presupuestoEstimado: 0,
+      presupuestoAprobado: 0,
       gastoEjecutado: 0,
+      tipoRecurso: 'PENDIENTE_VALORACION',
+      recursosNecesarios: 'Por valorar según requisito normativo',
+      confirmacionRecursos: 'Pendiente de valoración y aprobación de Gerencia',
       estado: 'PENDIENTE',
       evidenciaRequerida: req.evidenciaNecesaria,
       evidencias: [],
@@ -1021,8 +1100,12 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           aprobadorId: defAprob.id,
           aprobadorNombre: defAprob.nombre,
           aprobadorCargo: defAprob.cargo,
-          presupuestoEstimado: 500000,
+          presupuestoEstimado: 0,
+          presupuestoAprobado: 0,
           gastoEjecutado: 0,
+          tipoRecurso: 'PENDIENTE_VALORACION',
+          recursosNecesarios: 'Por valorar tras revisión de novedad',
+          confirmacionRecursos: 'Pendiente de valoración y aprobación de Gerencia',
           estado: 'PENDIENTE',
           evidenciaRequerida:
             sol.datosPropuestos.evidenciaRequerida || 'Soporte digital de cumplimiento.',
@@ -1065,7 +1148,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     );
   };
 
-  const handleSaveActividad = (act: ActividadPlanAnual) => {
+  const handleSaveActividad = (act: ActividadPlanAnual, motivoCambioFecha?: string) => {
     if (!esGerenteAutorizado()) {
       solicitarAccesoGerente();
       setStatusBanner(
@@ -1074,14 +1157,62 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
       return;
     }
     const prevAct = planActivo.actividades.find((a) => a.id === act.id);
-
     const existe = Boolean(prevAct);
+
+    let actFinal = { ...act };
+    let fechaCambiada = false;
+
+    if (prevAct) {
+      const cambioInicio = prevAct.fechaInicio !== act.fechaInicio;
+      const cambioLimite = prevAct.fechaLimite !== act.fechaLimite;
+      const cambioMeses =
+        JSON.stringify([...(prevAct.programacionMensual || [])].sort((a, b) => a - b)) !==
+        JSON.stringify([...(act.programacionMensual || [])].sort((a, b) => a - b));
+
+      if (cambioInicio || cambioLimite || cambioMeses) {
+        fechaCambiada = true;
+        const nuevoCambio: CambioFechaActividad = {
+          id: `cf-${Date.now()}`,
+          fechaRegistro: new Date().toISOString(),
+          usuario: nombreGerente,
+          fechaInicioAnterior: prevAct.fechaInicio,
+          fechaLimiteAnterior: prevAct.fechaLimite,
+          fechaInicioNueva: act.fechaInicio,
+          fechaLimiteNueva: act.fechaLimite,
+          mesesAnteriores: prevAct.programacionMensual,
+          mesesNuevos: act.programacionMensual,
+          motivo:
+            motivoCambioFecha?.trim() ||
+            'Ajuste de programación en el cronograma del Plan Anual',
+        };
+        actFinal = {
+          ...actFinal,
+          historialCambiosFechas: [nuevoCambio, ...(prevAct.historialCambiosFechas || [])],
+          historialRevisiones: [
+            {
+              id: `hrev-cf-${Date.now()}`,
+              fecha: new Date().toISOString(),
+              usuario: nombreGerente,
+              rol: 'Gerente',
+              accion: 'ACTUALIZADA',
+              detalle: `Cambio de fechas (${prevAct.fechaInicio}→${prevAct.fechaLimite} a ${act.fechaInicio}→${act.fechaLimite}). Motivo: ${nuevoCambio.motivo}`,
+            },
+            ...actFinal.historialRevisiones,
+          ],
+        };
+      }
+    }
+
     const updatedActs = existe
-      ? planActivo.actividades.map((a) => (a.id === act.id ? act : a))
-      : [...planActivo.actividades, act];
+      ? planActivo.actividades.map((a) => (a.id === actFinal.id ? actFinal : a))
+      : [...planActivo.actividades, actFinal];
     handleUpdatePlan(
       { ...planActivo, actividades: updatedActs },
-      existe ? `Actividad editada: ${act.codigo}` : `Nueva actividad creada: ${act.codigo}`
+      existe
+        ? fechaCambiada
+          ? `Fechas reprogramadas en ${actFinal.codigo}: ${prevAct?.fechaLimite} → ${actFinal.fechaLimite}`
+          : `Actividad editada: ${actFinal.codigo}`
+        : `Nueva actividad creada: ${actFinal.codigo}`
     );
   };
 
@@ -1233,94 +1364,83 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
     );
   };
 
-  const handleCrearNuevaVigencia = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdatePresupuestoGeneral = (monto: number) => {
     if (!esGerenteAutorizado()) {
       solicitarAccesoGerente();
       return;
     }
-    if (!nuevoAnioInput || nuevoAnioInput < 2020 || nuevoAnioInput > 2050) return;
-    if (vigencias[nuevoAnioInput]) {
-      setAnioActivo(nuevoAnioInput);
-      setShowNewYearForm(false);
-      return;
-    }
-    const all = crearNuevaVigencia(nuevoAnioInput, anioActivo);
-    setVigencias(all);
-
-    // Crear también periodos vacíos reales + estándares para el nuevo año en sgsstData
-    persistSgsst(
-      (prev) => {
-        const yaTienePeriodos = prev.registrosPeriodosIndicadores.some(
-          (r) => r.anio === nuevoAnioInput
-        );
-        const activosCount = prev.trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO').length;
-        const nuevosPeriodos: RegistroPeriodoIndicador[] = yaTienePeriodos
-          ? []
-          : [
-              ...Array.from({ length: 12 }, (_, idx) => ({
-                id: `per-${nuevoAnioInput}-${String(idx + 1).padStart(2, '0')}`,
-                anio: nuevoAnioInput,
-                mes: idx + 1,
-                periodoLabel: `${MESES_NOMBRES[idx]} ${nuevoAnioInput}`,
-                numeroTrabajadores: activosCount || config.numeroTrabajadores,
-                accidentesTrabajo: null,
-                accidentesMortales: null,
-                diasIncapacidadAT: null,
-                diasCargadosAT: null,
-                casosNuevosEL: null,
-                casosAntiguosEL: null,
-                diasAusenciaIncapacidadMedica: null,
-                diasTrabajoProgramados: null,
-                validado: false,
-                fechaActualizacion: new Date().toISOString().split('T')[0],
-              })),
-              {
-                id: `per-${nuevoAnioInput}-00`,
-                anio: nuevoAnioInput,
-                mes: 0,
-                periodoLabel: `Consolidado Anual ${nuevoAnioInput}`,
-                numeroTrabajadores: activosCount || config.numeroTrabajadores,
-                accidentesTrabajo: null,
-                accidentesMortales: null,
-                diasIncapacidadAT: null,
-                diasCargadosAT: null,
-                casosNuevosEL: null,
-                casosAntiguosEL: null,
-                diasAusenciaIncapacidadMedica: null,
-                diasTrabajoProgramados: null,
-                validado: false,
-                fechaActualizacion: new Date().toISOString().split('T')[0],
-              },
-            ];
-
-        return {
-          ...prev,
-          registrosPeriodosIndicadores: [
-            ...prev.registrosPeriodosIndicadores,
-            ...nuevosPeriodos,
-          ],
-          estandaresMinimos: {
-            ...prev.estandaresMinimos,
-            [nuevoAnioInput]:
-              prev.estandaresMinimos[nuevoAnioInput] ||
-              construirEstandaresBaseAnio(nuevoAnioInput, config),
-          },
-        };
-      },
+    const cleanMonto = Math.max(0, Math.round(monto));
+    const hoy = new Date().toISOString().split('T')[0];
+    handleUpdatePlan(
       {
-        modulo: 'PLANEAR',
-        accion: `Año ${nuevoAnioInput} creado`,
-        detalle: `Vigencia independiente ${nuevoAnioInput} creada conservando historial anterior.`,
-      }
+        ...planActivo,
+        presupuestoGeneralAprobado: cleanMonto,
+        presupuestoGeneralActualizadoPor: nombreGerente,
+        fechaPresupuestoGeneral: hoy,
+      },
+      `Presupuesto General 2027 actualizado a $${cleanMonto.toLocaleString('es-CO')}`
     );
-
-    setAnioActivo(nuevoAnioInput);
-    setShowNewYearForm(false);
+    persistSgsst((prev) => prev, {
+      modulo: 'PLANEAR',
+      accion: 'Presupuesto General 2027 actualizado',
+      detalle: `Monto general aprobado definido en $${cleanMonto.toLocaleString('es-CO')} por ${nombreGerente}.`,
+    });
     setStatusBanner(
-      `Se creó el plan del año ${nuevoAnioInput}. Los años anteriores (${Object.keys(vigencias).join(', ')}) siguen guardados sin cambios.`
+      `Presupuesto General 2027 guardado en $${cleanMonto.toLocaleString('es-CO')} y recalculado en el Plan Anual.`
     );
   };
+
+  // Navegación automática desde el Asistente Virtual dentro de PLAN ANUAL 2027
+  useEffect(() => {
+    if (!navigationRequest || navigationRequest.tab !== 'plan_anual') return;
+
+    if (navigationRequest.planSeccion) {
+      setSeccionActiva(navigationRequest.planSeccion);
+    }
+    if (navigationRequest.subActividades) {
+      setSubActividades(navigationRequest.subActividades);
+    }
+    if (navigationRequest.subIndicadores) {
+      setVerificarSubTabReset(navigationRequest.subIndicadores);
+      setVerificarKey((k) => k + 1);
+    }
+    if (navigationRequest.subPresupuesto) {
+      setSubPresupuesto(navigationRequest.subPresupuesto);
+    }
+    if (navigationRequest.subConexiones) {
+      setSubConexiones(navigationRequest.subConexiones);
+    }
+
+    const nonceVal = navigationRequest.nonce || Date.now();
+    setNavNonce(nonceVal);
+
+    if (navigationRequest.planSeccion === 'actividades') {
+      setNavCronogramaSearch(navigationRequest.searchQuery || '');
+      setNavCronogramaEstado(navigationRequest.cronogramaEstadoFiltro || 'TODOS');
+    } else if (navigationRequest.planSeccion === 'presupuesto') {
+      setNavPresupuestoSearch(navigationRequest.searchQuery || '');
+    } else if (navigationRequest.planSeccion === 'planes_riesgo') {
+      setNavPlanMejoraSearch(navigationRequest.searchQuery || '');
+      setNavPlanMejoraId(navigationRequest.planMejoraId || undefined);
+    } else if (navigationRequest.planSeccion === 'plan_emergencias') {
+      setNavEmergenciasSubVista(navigationRequest.subEmergencias);
+      setNavEmergenciasEscenarioId(navigationRequest.escenarioEmergenciaId);
+    }
+
+    if (navigationRequest.formatoId && mejoraEmergenciasStore.formatos[navigationRequest.formatoId]) {
+      setFormatoModalId(navigationRequest.formatoId);
+    } else if (navigationRequest.actividadId) {
+      const actFound = planActivo.actividades.find((a) => a.id === navigationRequest.actividadId);
+      if (actFound) {
+        abrirActividadEnModal(actFound, navigationRequest.actividadModalTab || 'datos');
+      }
+    }
+  }, [
+    navigationRequest,
+    planActivo.actividades,
+    mejoraEmergenciasStore.formatos,
+    abrirActividadEnModal,
+  ]);
 
   const solicitudesPendientesCount = planActivo.solicitudesRevision.filter(
     (s) => s.estado === 'PENDIENTE'
@@ -1341,304 +1461,370 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
   }).length;
 
   const estadoPlanBadge = getBadgeClassesEstadoFrikaz(planActivo.estadoAprobacion);
+  const riesgosCriticosCount = riesgos.filter(
+    (r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II'
+  ).length;
 
-  // Orden oficial del ciclo PHVA dentro de PLAN ANUAL: 1. PLANEAR, 2. HACER, 3. VERIFICAR, 4. ACTUAR
+  const evidenciasCount = planActivo.actividades.reduce(
+    (sum, a) => sum + a.evidencias.length,
+    0
+  );
+  const resumenPresupuesto = useMemo(
+    () =>
+      calcularResumenPresupuestoPlan(
+        planActivo.actividades,
+        planActivo.presupuestoGeneralAprobado || 0
+      ),
+    [planActivo.actividades, planActivo.presupuestoGeneralAprobado]
+  );
+  const pctPresupuesto = resumenPresupuesto.porcentajeEjecucion;
+
+  // Navegación principal del apartado independiente PLAN ANUAL
   const pestanasPrincipales: Array<{
-    id: FasePhvaPlanAnual;
-    numero: number;
+    id: SeccionPlanAnual;
     label: string;
-    subtitulo: string;
-    badge: string | number;
+    badge?: string | number;
     icon: React.ComponentType<{ className?: string }>;
   }> = [
     {
-      id: 'planear',
-      numero: 1,
-      label: '1. PLANEAR',
-      subtitulo: 'Objetivos, metas, riesgos I/II, normas, fechas y recursos',
-      badge: `${totalActividades} tar.`,
+      id: 'resumen',
+      label: 'Resumen',
+      icon: LayoutDashboard,
+    },
+    {
+      id: 'objetivos',
+      label: 'Objetivos',
+      badge: planActivo.objetivosEspecificos.length,
+      icon: Target,
+    },
+    {
+      id: 'actividades',
+      label: 'Actividades',
+      badge: totalActividades,
       icon: CalendarRange,
     },
     {
-      id: 'hacer',
-      numero: 2,
-      label: '2. HACER',
-      subtitulo: 'Trabajadores, salud, matriz de riesgos, avances y soportes',
-      badge: `${trabajadoresActivosCount} trab.`,
-      icon: ClipboardCheck,
+      id: 'evidencias',
+      label: 'Evidencias',
+      badge: evidenciasCount,
+      icon: FileCheck2,
     },
     {
-      id: 'verificar',
-      numero: 3,
-      label: '3. VERIFICAR',
-      subtitulo: '6 Indicadores Res. 0312, riesgos y 7 Estándares Mínimos',
-      badge: `${sgsstData.hojasVidaIndicadores.length} ind.`,
+      id: 'indicadores',
+      label: 'Indicadores',
+      badge: sgsstData.hojasVidaIndicadores.length,
       icon: TrendingUp,
     },
     {
-      id: 'actuar',
-      numero: 4,
-      label: '4. ACTUAR',
-      subtitulo: 'Acciones correctivas, preventivas y de mejora',
-      badge: `${accionesAbiertasCount} ab.`,
-      icon: Wrench,
+      id: 'presupuesto',
+      label: 'Presupuesto',
+      badge:
+        resumenPresupuesto.ejecutado === 0
+          ? '$0 ejec.'
+          : `${pctPresupuesto}%`,
+      icon: DollarSign,
+    },
+    {
+      id: 'conexiones',
+      label: 'Riesgos y personal',
+      badge: accionesAbiertasCount > 0 ? `${accionesAbiertasCount} mej.` : trabajadoresActivosCount,
+      icon: ShieldCheck,
+    },
+    {
+      id: 'planes_riesgo',
+      label: 'Planes mejora riesgo',
+      badge: mejoraEmergenciasStore.planesPorRiesgo.length,
+      icon: ShieldAlert,
+    },
+    {
+      id: 'plan_emergencias',
+      label: 'Plan emergencias',
+      badge: mejoraEmergenciasStore.planEmergencias.escenarios.length,
+      icon: Flame,
     },
   ];
 
+  const handleSavePlanesMejoraRiesgo = (
+    nextPlanes: PlanMejoraPorRiesgo[],
+    auditDetail?: string
+  ) => {
+    setSaveFeedback('saving');
+    setMejoraEmergenciasStore((prev) => {
+      const next: PlanesMejoraYEmergenciasStore = {
+        ...prev,
+        planesPorRiesgo: nextPlanes,
+      };
+      const ok = savePlanesMejoraEmergenciasStore(next);
+      markSaved(ok);
+      return next;
+    });
+    if (auditDetail) {
+      persistSgsst((prev) => prev, {
+        modulo: 'PLANEAR',
+        accion: 'Planes de mejora por riesgo',
+        detalle: auditDetail,
+      });
+    }
+  };
+
+  const handleSavePlanEmergencias = (
+    nextEmergencias: PlanEmergenciasFrikaz,
+    auditDetail?: string
+  ) => {
+    setSaveFeedback('saving');
+    setMejoraEmergenciasStore((prev) => {
+      const next: PlanesMejoraYEmergenciasStore = {
+        ...prev,
+        planEmergencias: nextEmergencias,
+      };
+      const ok = savePlanesMejoraEmergenciasStore(next);
+      markSaved(ok);
+      return next;
+    });
+    if (auditDetail) {
+      persistSgsst((prev) => prev, {
+        modulo: 'PLANEAR',
+        accion: 'Plan de emergencias',
+        detalle: auditDetail,
+      });
+    }
+  };
+
+  const handleSaveFormatoEditable = (nextFormato: FormatoEditableDocumento) => {
+    setSaveFeedback('saving');
+    setMejoraEmergenciasStore((prev) => {
+      const next: PlanesMejoraYEmergenciasStore = {
+        ...prev,
+        formatos: {
+          ...prev.formatos,
+          [nextFormato.id]: nextFormato,
+        },
+      };
+      const ok = savePlanesMejoraEmergenciasStore(next);
+      markSaved(ok);
+      return next;
+    });
+  };
+
+  const navegarDesdePanel = (
+    seccion: SeccionPlanAnual,
+    opciones?: NavegacionPlanAnualOpciones
+  ) => {
+    if (opciones?.subActividades) {
+      setSubActividades(opciones.subActividades);
+    }
+    if (opciones?.subIndicadores) {
+      setVerificarSubTabReset(opciones.subIndicadores);
+      setVerificarKey((k) => k + 1);
+    }
+    if (opciones?.subPresupuesto) {
+      setSubPresupuesto(opciones.subPresupuesto);
+    }
+    if (opciones?.subConexiones) {
+      setSubConexiones(opciones.subConexiones);
+    }
+    setSeccionActiva(seccion);
+  };
+
   return (
     <div className="space-y-5 text-xs">
-      {/* CABECERA PRINCIPAL PLAN ANUAL (SIN CAMBIAR EL NOMBRE DEL APARTADO) */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-md bg-[#0f172a] text-[#fed7aa] font-black text-[10px] uppercase tracking-wider">
-                PLAN ANUAL · CICLO PHVA INTEGRADO
-              </span>
-              <span
-                className={`px-2 py-0.5 rounded-md border font-black text-[10px] inline-flex items-center gap-1 ${estadoPlanBadge.light}`}
-                title={estadoPlanBadge.descripcionCorta}
-              >
-                {(estadoPlanBadge.label === 'Aprobado' || estadoPlanBadge.label === 'Cumplido') && (
-                  <CheckCircle2 className="h-3 w-3" />
+      {/* ZONA SUPERIOR EXCLUSIVA DEL APARTADO PLAN ANUAL (VERDE PETRÓLEO SUAVE + IDENTIDAD FRIKAZ) */}
+      <div className="rounded-2xl border border-[#b9dad3] bg-white/95 shadow-xs overflow-hidden">
+        <div className="bg-linear-to-r from-[#eaf5f2] via-[#f4faf8] to-white px-4 sm:px-6 pt-5 pb-4 border-b border-[#d6ebe5]">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="font-black text-[#0f6b61] uppercase tracking-wider text-[10px]">
+                  Plan Anual de Trabajo · Año {planActivo.vigencia}
+                </span>
+                <span className="text-[#9dc2ba]">·</span>
+                <span
+                  className={`px-2 py-0.5 rounded-md border font-bold text-[10px] inline-flex items-center gap-1 ${estadoPlanBadge.light}`}
+                  title={estadoPlanBadge.descripcionCorta}
+                >
+                  {(estadoPlanBadge.label === 'Aprobado' || estadoPlanBadge.label === 'Cumplido') && (
+                    <CheckCircle2 className="h-3 w-3" />
+                  )}
+                  {estadoPlanBadge.label}
+                </span>
+                <span className="text-[#9dc2ba]">·</span>
+                <span className="font-mono tabular-nums font-bold text-[#0d3b36]">
+                  {pctGeneral}% aprobado ({cumplidasCount}/{totalActividades})
+                </span>
+                {saveFeedback !== 'saved' && (
+                  <>
+                    <span className="text-[#9dc2ba]">·</span>
+                    <span
+                      className={`font-bold ${
+                        saveFeedback === 'saving' ? 'text-amber-700' : 'text-rose-700'
+                      }`}
+                    >
+                      {saveFeedback === 'saving' ? 'Guardando...' : 'Error al guardar'}
+                    </span>
+                  </>
                 )}
-                Estado: {estadoPlanBadge.label}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-900 font-black text-[10px] font-mono">
-                {pctGeneral}% Cumplido ({cumplidasCount}/{totalActividades} tareas)
-              </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-black text-[#0d3b36] tracking-tight">
+                PLAN ANUAL — SG-SST y Gestión Ambiental
+              </h2>
+              <p className="text-[11px] text-[#355b56] flex flex-wrap items-center gap-1.5">
+                <span>
+                  Seguimiento independiente de metas, actividades, responsables, evidencias, indicadores y recursos de{' '}
+                  <strong className="text-[#0d3b36] inline-flex items-center gap-1">
+                    <Building2 className="h-3 w-3 text-[#f97316]" />
+                    Frikaz S.A.S.
+                  </strong>
+                </span>
+                <span>·</span>
+                <span className="tabular-nums">
+                  {trabajadoresActivosCount || config.numeroTrabajadores} trabajadores
+                </span>
+                <span>·</span>
+                <span>{config.claseRiesgoSST}</span>
+              </p>
+            </div>
+
+            {/* Controles derechos: Vigencia única 2027, Gerencia, Privacidad Médica y Bitácora */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 bg-[#0f5b53] text-white px-3.5 py-2 rounded-xl shadow-xs">
+                <span className="font-mono tabular-nums font-black text-xs">2027</span>
+                <span className="text-[10px] font-semibold text-teal-100">
+                  Enero – Diciembre 2027
+                </span>
+              </div>
+
               <button
                 type="button"
                 onClick={solicitarAccesoGerente}
-                className={`px-2 py-0.5 rounded-md font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer border ${
+                className={`px-3 py-2 rounded-xl font-bold text-[11px] inline-flex items-center gap-1.5 cursor-pointer border whitespace-nowrap ${
                   esGerente
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-orange-50'
+                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                    : 'bg-white text-[#0d3b36] border-[#b9dad3] hover:bg-[#f4faf8]'
                 }`}
               >
-                {esGerente ? <ShieldCheck className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
+                {esGerente ? <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" /> : <Mail className="h-3.5 w-3.5 text-[#f97316]" />}
                 <span>{esGerente ? nombreGerente : 'Ingresar como Gerente'}</span>
               </button>
-              <span
-                className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                  saveFeedback === 'saving'
-                    ? 'bg-amber-100 text-amber-900'
-                    : saveFeedback === 'error'
-                    ? 'bg-rose-100 text-rose-800'
-                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+
+              <button
+                type="button"
+                onClick={handleTogglePrivacidadMedica}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold border cursor-pointer whitespace-nowrap ${
+                  accesoMedicoAutorizado
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
                 }`}
+                title="Proteger o habilitar la consulta individual de diagnósticos y exámenes médicos"
               >
-                {saveFeedback === 'saving'
-                  ? 'Guardando cambios...'
-                  : saveFeedback === 'error'
-                  ? 'Error al guardar en el navegador'
-                  : 'Cambios guardados'}
-              </span>
+                {accesoMedicoAutorizado ? (
+                  <Unlock className="h-3.5 w-3.5" />
+                ) : (
+                  <Lock className="h-3.5 w-3.5" />
+                )}
+                <span>{accesoMedicoAutorizado ? 'Salud Desbloqueada' : 'Privacidad Médica'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAuditModal(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-white border border-[#c3dfd8] hover:bg-[#f4faf8] text-[#0d3b36] font-bold cursor-pointer"
+                title="Ver historial de cambios recientes"
+              >
+                <History className="h-3.5 w-3.5" />
+              </button>
             </div>
-
-            <h2 className="text-lg sm:text-xl font-black text-[#0f172a] tracking-tight">
-              PLAN ANUAL — {planActivo.titulo}
-            </h2>
-            <p className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
-                <Building2 className="h-3.5 w-3.5 text-[#f97316]" />
-                Frikaz S.A.S. ({trabajadoresActivosCount || config.numeroTrabajadores} trabajadores ·{' '}
-                {config.claseRiesgoSST})
-              </span>
-              <span>·</span>
-              <span>{planActivo.empresaSnapshot.grupoEstandares0312}</span>
-              <span>·</span>
-              <span>Encargado: {planActivo.responsableNombre}</span>
-            </p>
-          </div>
-
-          {/* Controles derechos: Año, Privacidad Médica y Bitácora */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-              {Object.keys(vigencias)
-                .map(Number)
-                .sort((a, b) => a - b)
-                .map((anio) => (
-                  <button
-                    key={anio}
-                    type="button"
-                    onClick={() => setAnioActivo(anio)}
-                    className={`px-3 py-1.5 rounded-lg font-mono font-black text-xs cursor-pointer transition-colors ${
-                      anioActivo === anio
-                        ? 'bg-[#0f172a] text-[#fed7aa] shadow-xs'
-                        : 'text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {anio}
-                  </button>
-                ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (!esGerenteAutorizado()) {
-                  solicitarAccesoGerente();
-                  return;
-                }
-                const maxYear = Math.max(...Object.keys(vigencias).map(Number), 2026);
-                setNuevoAnioInput(maxYear + 1);
-                setShowNewYearForm(!showNewYearForm);
-              }}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] shadow-xs cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Nuevo Año</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleTogglePrivacidadMedica}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold border cursor-pointer ${
-                accesoMedicoAutorizado
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                  : 'bg-rose-50 border-rose-300 text-rose-900'
-              }`}
-              title="Proteger o habilitar la consulta individual de diagnósticos y exámenes médicos"
-            >
-              {accesoMedicoAutorizado ? (
-                <Unlock className="h-3.5 w-3.5" />
-              ) : (
-                <Lock className="h-3.5 w-3.5" />
-              )}
-              <span>{accesoMedicoAutorizado ? 'Salud Desbloqueada' : 'Privacidad Médica'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowAuditModal(true)}
-              className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
-              title="Ver historial de cambios recientes"
-            >
-              <History className="h-3.5 w-3.5" />
-            </button>
           </div>
         </div>
 
-        {/* Formulario inline para crear nueva vigencia */}
-        {showNewYearForm && (
-          <form
-            onSubmit={handleCrearNuevaVigencia}
-            className="rounded-xl border border-orange-200 bg-orange-50/60 p-3.5 flex flex-wrap items-center justify-between gap-3"
-          >
-            <div className="text-[11px] text-orange-950">
-              <strong>Crear plan de un año nuevo:</strong> Los años anteriores (
-              {Object.keys(vigencias).join(', ')}) siguen guardados completos para poder consultarlos y compararlos.
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={2020}
-                max={2050}
-                value={nuevoAnioInput}
-                onChange={(e) => setNuevoAnioInput(Number(e.target.value))}
-                className="w-24 rounded-lg border border-orange-300 px-2.5 py-1.5 text-xs font-mono font-bold bg-white"
-              />
+        <div className="p-4 sm:px-6 space-y-3 bg-white">
+          <div className="rounded-xl border border-[#cce3dd] bg-[#f4faf8] px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[#0d3b36]">
+            <p className="text-[11px]">
+              <strong>Vigencia única activa 2027 (Enero – Diciembre 2027):</strong> Todas las actividades, presupuestos, metas e indicadores están organizados para 2027 con presupuesto ejecutado inicial de <strong>$0</strong> (copia histórica anterior resguardada).
+            </p>
+            <span className="text-[10px] font-mono tabular-nums font-bold text-[#0f6b61]">
+              General: ${resumenPresupuesto.presupuestoGeneral.toLocaleString('es-CO')} · Ejecutado: ${resumenPresupuesto.ejecutado.toLocaleString('es-CO')} · Saldo: ${resumenPresupuesto.saldoDisponible.toLocaleString('es-CO')}
+            </span>
+          </div>
+
+          {/* Banner de novedades detectadas en Matriz / Normas */}
+          {solicitudesPendientesCount > 0 && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5 text-amber-950">
+                <GitPullRequest className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-black">
+                    Hay {solicitudesPendientesCount} novedad(es) en Riesgos, Normas o Trabajadores
+                  </p>
+                  <p className="text-[11px] text-amber-800">
+                    Ningún plan aprobado cambia sin confirmación. Revíselas en «Riesgos y personal → Riesgos y normas».
+                  </p>
+                </div>
+              </div>
               <button
-                type="submit"
-                className="px-3.5 py-1.5 rounded-lg bg-[#0f172a] text-white font-black hover:bg-slate-800 cursor-pointer"
+                type="button"
+                onClick={() => navegarDesdePanel('conexiones', { subConexiones: 'riesgosNormas' })}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white font-black hover:bg-amber-700 shrink-0 cursor-pointer"
               >
-                Crear Año {nuevoAnioInput}
+                <span>Revisar novedades</span>
+                <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
-          </form>
-        )}
+          )}
 
-        {/* Banner de novedades detectadas en Matriz / Normas */}
-        {solicitudesPendientesCount > 0 && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-2.5 text-amber-950">
-              <GitPullRequest className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-black">
-                  Hay {solicitudesPendientesCount} novedad(es) en Peligros, Normas o Trabajadores
-                </p>
-                <p className="text-[11px] text-amber-800">
-                  Ningún plan ya aprobado cambia solo sin su permiso. Revíselas en «1. PLANEAR → B. Normas» para decidir si las incorpora.
-                </p>
+          {statusBanner && (
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 flex items-center justify-between gap-2 text-emerald-900 font-bold">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>{statusBanner}</span>
               </div>
+              <button
+                type="button"
+                onClick={() => setStatusBanner(null)}
+                className="text-[10px] underline text-emerald-700 cursor-pointer"
+              >
+                Ocultar
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setPlanearSubTabReset('normativa');
-                setPlanearKey((k) => k + 1);
-                setFaseActiva('planear');
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white font-black hover:bg-amber-700 shrink-0 cursor-pointer"
-            >
-              <span>Revisar Novedades</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
+          )}
 
-        {statusBanner && (
-          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-3 flex items-center justify-between gap-2 text-emerald-900 font-bold">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>{statusBanner}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setStatusBanner(null)}
-              className="text-[10px] underline text-emerald-700 cursor-pointer"
-            >
-              Ocultar
-            </button>
-          </div>
-        )}
-
-        {/* LAS CUATRO ETAPAS DEL CICLO PHVA EN ORDEN EXACTO: 1. PLANEAR, 2. HACER, 3. VERIFICAR, 4. ACTUAR */}
-        <div className="pt-2 border-t border-slate-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {/* BARRA DE SECCIONES DEL PLAN ANUAL (INCLUYE PLANES DE MEJORA POR RIESGO Y PLAN DE EMERGENCIAS) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {pestanasPrincipales.map((tab) => {
               const Icon = tab.icon;
-              const active = faseActiva === tab.id;
+              const active = seccionActiva === tab.id;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setFaseActiva(tab.id)}
-                  className={`p-3 rounded-xl border text-left transition-colors cursor-pointer flex items-start justify-between gap-2 ${
+                  onClick={() => setSeccionActiva(tab.id)}
+                  className={`px-3 py-2.5 rounded-xl border text-left transition-colors cursor-pointer flex items-center justify-between gap-1.5 ${
                     active
-                      ? 'bg-[#0f172a] text-white border-[#0f172a] ring-2 ring-[#f97316]'
-                      : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-orange-50/70 hover:border-orange-300'
+                      ? 'bg-[#0f5b53] text-white border-[#0f5b53] shadow-xs'
+                      : 'bg-[#f4faf8] text-[#173f3a] border-[#cfe5df] hover:bg-[#e5f3ef] hover:border-[#8fc0b5]'
                   }`}
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <Icon
-                        className={`h-4 w-4 shrink-0 ${
-                          active ? 'text-[#fed7aa]' : 'text-[#f97316]'
-                        }`}
-                      />
-                      <span className="font-black text-xs sm:text-sm tracking-tight">
-                        {tab.label}
-                      </span>
-                    </div>
-                    <p
-                      className={`text-[10px] mt-0.5 truncate ${
-                        active ? 'text-slate-300' : 'text-slate-500'
+                  <span className="inline-flex items-center gap-1.5 min-w-0">
+                    <Icon
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        active ? 'text-[#fed7aa]' : 'text-[#0f6b61]'
+                      }`}
+                    />
+                    <span className="font-black text-[11px] tracking-tight truncate">
+                      {tab.label}
+                    </span>
+                  </span>
+                  {tab.badge !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.5 rounded font-mono tabular-nums text-[10px] font-black shrink-0 ${
+                        active
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white text-[#0d3b36] border border-[#cfe5df]'
                       }`}
                     >
-                      {tab.subtitulo}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded font-mono text-[10px] font-black shrink-0 ${
-                      active
-                        ? 'bg-[#f97316] text-white'
-                        : 'bg-white text-slate-800 border border-slate-200'
-                    }`}
-                  >
-                    {tab.badge}
-                  </span>
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -1646,59 +1832,150 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         </div>
       </div>
 
-      {/* CONTENIDO DE LA ETAPA ACTIVA EN ORDEN PHVA: 1. PLANEAR -> 2. HACER -> 3. VERIFICAR -> 4. ACTUAR */}
-      {faseActiva === 'planear' && (
-        <PlanAnualPlanearTab
-          key={`planear-${anioActivo}-${planearKey}`}
+      {/* SECCIÓN 1: RESUMEN VISUAL DEL PLAN ANUAL */}
+      {seccionActiva === 'resumen' && (
+        <PlanAnualPanelPrincipal
           plan={planActivo}
-          todasLasVigencias={vigencias}
-          riesgos={riesgos}
-          config={config}
-          requisitosObligatorios={requisitosObligatorios}
+          alertas={alertas}
+          accionesMejora={sgsstData.accionesMejora}
+          estandares={estandaresAnioActivo}
+          hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
+          trabajadoresActivosCount={trabajadoresActivosCount}
+          riesgosCriticosCount={riesgosCriticosCount}
+          solicitudesPendientesCount={solicitudesPendientesCount}
+          planesMejoraCount={mejoraEmergenciasStore.planesPorRiesgo.length}
+          emergenciasEscenariosCount={mejoraEmergenciasStore.planEmergencias.escenarios.length}
+          onIrASeccion={navegarDesdePanel}
+          onAbrirActividad={abrirActividadEnModal}
+        />
+      )}
+
+      {/* SECCIÓN 2: OBJETIVOS Y METAS */}
+      {seccionActiva === 'objetivos' && (
+        <PlanAnualObjetivosKpiTab
+          plan={planActivo}
           indicadoresCalculados={indicadoresCalculados}
           hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
-          registrosPeriodosIndicadores={sgsstData.registrosPeriodosIndicadores}
-          trabajadores={sgsstData.trabajadores}
+          riesgos={riesgos}
           estandares={estandaresAnioActivo}
-          accionesMejora={sgsstData.accionesMejora}
+          responsables={responsables}
+          mode="objetivos"
+          onUpdatePlan={handleUpdatePlan}
+        />
+      )}
+
+      {/* SECCIÓN 3: ACTIVIDADES, AVANCES, RESPONSABLES Y FECHAS */}
+      {seccionActiva === 'actividades' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-[#0d3b36]">
+                Actividades Programadas, Avances y Responsables ({planActivo.vigencia})
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Consulte el cronograma completo, registre avances y evidencias por actividad o revise fechas límite por persona.
+              </p>
+            </div>
+            <div className="inline-flex flex-wrap rounded-xl bg-[#eef6f4] border border-[#cce3dd] p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setSubActividades('cronograma')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subActividades === 'cronograma'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <GanttChart className="h-3.5 w-3.5" />
+                <span>Cronograma ({totalActividades})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubActividades('avances')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subActividades === 'avances'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                <span>Registro de avances</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubActividades('responsables')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subActividades === 'responsables'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <UserCheck className="h-3.5 w-3.5" />
+                <span>Responsables y fechas</span>
+              </button>
+            </div>
+          </div>
+
+          {subActividades === 'cronograma' && (
+            <PlanAnualCronogramaTab
+              plan={planActivo}
+              responsables={responsables}
+              onNuevaActividad={handleAbrirNuevaActividad}
+              onAbrirActividad={abrirActividadEnModal}
+              onEliminarActividad={handleEliminarActividad}
+              externalSearch={navCronogramaSearch}
+              externalEstadoFiltro={navCronogramaEstado}
+              navNonce={navNonce}
+            />
+          )}
+
+          {subActividades === 'avances' && (
+            <PlanAnualHacerTab
+              key={`hacer-ejec-${anioActivo}`}
+              plan={planActivo}
+              trabajadores={sgsstData.trabajadores}
+              diagnosticoSalud={diagnosticoSaludAnioActivo}
+              riesgos={riesgos}
+              cargos={cargos}
+              accionesMejora={sgsstData.accionesMejora}
+              accesoMedicoAutorizado={accesoMedicoAutorizado}
+              subTabInicial="ejecucion"
+              hideHeaderAndTabs={true}
+              onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+              onSaveTrabajador={handleSaveTrabajador}
+              onSaveDiagnosticoSalud={handleSaveDiagnosticoSalud}
+              onUpdateRiesgoControles={handleUpdateRiesgoControles}
+              onAbrirActividad={abrirActividadEnModal}
+              onEnviarRecomendacionAActuar={handleEnviarRecomendacionDesdeTrabajador}
+            />
+          )}
+
+          {subActividades === 'responsables' && (
+            <PlanAnualResponsablesTab
+              plan={planActivo}
+              responsables={responsables}
+              onAbrirActividad={abrirActividadEnModal}
+            />
+          )}
+        </div>
+      )}
+
+      {/* SECCIÓN 4: EVIDENCIAS Y REVISIÓN DE GERENCIA (SIN DUPLICACIÓN) */}
+      {seccionActiva === 'evidencias' && (
+        <PlanAnualAlertasEvidenciasTab
+          plan={planActivo}
           alertas={alertas}
           responsables={responsables}
-          subTabInicial={planearSubTabReset}
+          mode="ambos"
+          onAbrirActividad={abrirActividadEnModal}
           onUpdatePlan={handleUpdatePlan}
-          onSeleccionarVigencia={(anio) => setAnioActivo(anio)}
-          onNuevaActividad={handleAbrirNuevaActividad}
-          onAbrirActividad={abrirActividadEnModal}
-          onEliminarActividad={handleEliminarActividad}
-          onProgramarRiesgo={handleProgramarRiesgo}
-          onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
-          onIncorporarRequisito={handleIncorporarRequisito}
-          onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
-          onResolverSolicitud={handleResolverSolicitud}
-          onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
-          onIrAActuar={() => setFaseActiva('actuar')}
         />
       )}
 
-      {faseActiva === 'hacer' && (
-        <PlanAnualHacerTab
-          plan={planActivo}
-          trabajadores={sgsstData.trabajadores}
-          diagnosticoSalud={diagnosticoSaludAnioActivo}
-          riesgos={riesgos}
-          cargos={cargos}
-          accionesMejora={sgsstData.accionesMejora}
-          accesoMedicoAutorizado={accesoMedicoAutorizado}
-          onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
-          onSaveTrabajador={handleSaveTrabajador}
-          onSaveDiagnosticoSalud={handleSaveDiagnosticoSalud}
-          onUpdateRiesgoControles={handleUpdateRiesgoControles}
-          onAbrirActividad={abrirActividadEnModal}
-          onEnviarRecomendacionAActuar={handleEnviarRecomendacionDesdeTrabajador}
-        />
-      )}
-
-      {faseActiva === 'verificar' && (
+      {/* SECCIÓN 5: INDICADORES RELACIONADOS Y ESTÁNDARES */}
+      {seccionActiva === 'indicadores' && (
         <PlanAnualVerificarTab
+          key={`verificar-${anioActivo}-${verificarKey}`}
           plan={planActivo}
           todosLosPlanes={vigencias}
           anioActivo={anioActivo}
@@ -1711,6 +1988,9 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           accionesMejora={sgsstData.accionesMejora}
           alertas={alertas}
           responsables={responsables}
+          subTabInicial={verificarSubTabReset}
+          hideSeguimientoTab={true}
+          onUpdatePlan={handleUpdatePlan}
           onSaveRegistroPeriodo={handleSaveRegistroPeriodo}
           onSyncTrabajadoresPeriodos={handleSyncTrabajadoresPeriodos}
           onAddIndicadorCustom={handleAddIndicadorCustom}
@@ -1718,26 +1998,282 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
           onAbrirActividad={abrirActividadEnModal}
           onCrearAccionDesdeVerificar={(preset) => {
             setPresetAccionActuar(preset);
-            setFaseActiva('actuar');
+            setSubConexiones('mejoras');
+            setSeccionActiva('conexiones');
           }}
         />
       )}
 
-      {faseActiva === 'actuar' && (
-        <PlanAnualActuarTab
-          plan={planActivo}
+      {/* SECCIÓN 6: PRESUPUESTO, RECURSOS Y REPORTES */}
+      {seccionActiva === 'presupuesto' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-[#0d3b36]">
+                Presupuesto, Recursos e Informes ({planActivo.vigencia})
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Consulte el dinero planeado y ejecutado por actividad y área, o genere reportes en Excel y PDF.
+              </p>
+            </div>
+            <div className="inline-flex rounded-xl bg-[#eef6f4] border border-[#cce3dd] p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setSubPresupuesto('recursos')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subPresupuesto === 'recursos'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <DollarSign className="h-3.5 w-3.5" />
+                <span>Presupuesto y recursos</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubPresupuesto('reportes')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subPresupuesto === 'reportes'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                <span>Reportes y comparativos</span>
+              </button>
+            </div>
+          </div>
+
+          {subPresupuesto === 'recursos' && (
+            <PlanAnualPresupuestoTab
+              plan={planActivo}
+              onAbrirActividad={abrirActividadEnModal}
+              onUpdatePresupuestoGeneral={handleUpdatePresupuestoGeneral}
+              externalSearch={navPresupuestoSearch}
+              navNonce={navNonce}
+            />
+          )}
+
+          {subPresupuesto === 'reportes' && (
+            <PlanAnualReportesTab
+              plan={planActivo}
+              indicadoresCalculados={indicadoresCalculados}
+              todasLasVigencias={vigencias}
+              responsables={responsables}
+              hojasVidaIndicadores={sgsstData.hojasVidaIndicadores}
+              registrosPeriodosIndicadores={sgsstData.registrosPeriodosIndicadores}
+              trabajadores={sgsstData.trabajadores}
+              config={config}
+              riesgos={riesgos}
+              estandares={estandaresAnioActivo}
+              accionesMejora={sgsstData.accionesMejora}
+              onSeleccionarVigencia={() => {}}
+            />
+          )}
+        </div>
+      )}
+
+      {/* SECCIÓN 7: CONEXIONES (RIESGOS Y NORMAS, TRABAJADORES Y SALUD, ACCIONES DE MEJORA) */}
+      {seccionActiva === 'conexiones' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-4 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-[#0d3b36]">
+                Riesgos, Trabajadores y Acciones de Mejora
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Conexión directa entre el Plan Anual, la Matriz de Riesgos GTC 45, las normas vigentes, los trabajadores y las acciones de mejora.
+              </p>
+            </div>
+            <div className="inline-flex flex-wrap rounded-xl bg-[#eef6f4] border border-[#cce3dd] p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setSubConexiones('riesgosNormas')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subConexiones === 'riesgosNormas'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <ShieldAlert className="h-3.5 w-3.5" />
+                <span>Riesgos y normas</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubConexiones('personal')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subConexiones === 'personal'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span>Trabajadores y salud ({trabajadoresActivosCount})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubConexiones('puestos')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subConexiones === 'puestos'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Riesgos por puesto</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubConexiones('mejoras')}
+                className={`px-3 py-1.5 rounded-lg font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                  subConexiones === 'mejoras'
+                    ? 'bg-[#0f5b53] text-white'
+                    : 'text-[#1c4b45] hover:bg-white/80'
+                }`}
+              >
+                <Wrench className="h-3.5 w-3.5" />
+                <span>Acciones de mejora ({accionesAbiertasCount})</span>
+              </button>
+            </div>
+          </div>
+
+          {subConexiones === 'riesgosNormas' && (
+            <PlanAnualRiesgosNormasTab
+              plan={planActivo}
+              riesgos={riesgos}
+              config={config}
+              requisitos={requisitosObligatorios}
+              mode="ambos"
+              onProgramarRiesgo={handleProgramarRiesgo}
+              onProgramarTodosRiesgosCriticos={handleProgramarTodosRiesgosCriticos}
+              onIncorporarRequisito={handleIncorporarRequisito}
+              onIncorporarTodosRequisitos={handleIncorporarTodosRequisitos}
+              onAbrirActividad={abrirActividadEnModal}
+              onResolverSolicitud={handleResolverSolicitud}
+              onReescanearFuentes={() => sincronizarFuentesEnVivo(true)}
+            />
+          )}
+
+          {subConexiones === 'personal' && (
+            <PlanAnualHacerTab
+              key={`hacer-trab-${anioActivo}`}
+              plan={planActivo}
+              trabajadores={sgsstData.trabajadores}
+              diagnosticoSalud={diagnosticoSaludAnioActivo}
+              riesgos={riesgos}
+              cargos={cargos}
+              accionesMejora={sgsstData.accionesMejora}
+              accesoMedicoAutorizado={accesoMedicoAutorizado}
+              subTabInicial="trabajadores"
+              hideHeaderAndTabs={true}
+              onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+              onSaveTrabajador={handleSaveTrabajador}
+              onSaveDiagnosticoSalud={handleSaveDiagnosticoSalud}
+              onUpdateRiesgoControles={handleUpdateRiesgoControles}
+              onAbrirActividad={abrirActividadEnModal}
+              onEnviarRecomendacionAActuar={handleEnviarRecomendacionDesdeTrabajador}
+            />
+          )}
+
+          {subConexiones === 'puestos' && (
+            <PlanAnualHacerTab
+              key={`hacer-mat-${anioActivo}`}
+              plan={planActivo}
+              trabajadores={sgsstData.trabajadores}
+              diagnosticoSalud={diagnosticoSaludAnioActivo}
+              riesgos={riesgos}
+              cargos={cargos}
+              accionesMejora={sgsstData.accionesMejora}
+              accesoMedicoAutorizado={accesoMedicoAutorizado}
+              subTabInicial="matriz"
+              hideHeaderAndTabs={true}
+              onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+              onSaveTrabajador={handleSaveTrabajador}
+              onSaveDiagnosticoSalud={handleSaveDiagnosticoSalud}
+              onUpdateRiesgoControles={handleUpdateRiesgoControles}
+              onAbrirActividad={abrirActividadEnModal}
+              onEnviarRecomendacionAActuar={handleEnviarRecomendacionDesdeTrabajador}
+            />
+          )}
+
+          {subConexiones === 'mejoras' && (
+            <PlanAnualActuarTab
+              plan={planActivo}
+              riesgos={riesgos}
+              recomendaciones={sgsstData.recomendaciones}
+              accionesMejora={sgsstData.accionesMejora}
+              responsables={responsables}
+              accesoMedicoAutorizado={accesoMedicoAutorizado}
+              onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+              presetAccion={presetAccionActuar}
+              onClearPresetAccion={() => setPresetAccionActuar(null)}
+              onAddRecomendacion={handleAddRecomendacion}
+              onSaveAccion={handleSaveAccion}
+            />
+          )}
+        </div>
+      )}
+
+      {/* SECCIÓN 8: PLANES DE MEJORA POR RIESGO (DENTRO DE PLAN ANUAL) */}
+      {seccionActiva === 'planes_riesgo' && (
+        <PlanAnualPlanesMejoraRiesgoTab
+          planes={mejoraEmergenciasStore.planesPorRiesgo}
           riesgos={riesgos}
-          recomendaciones={sgsstData.recomendaciones}
-          accionesMejora={sgsstData.accionesMejora}
+          formatos={mejoraEmergenciasStore.formatos}
           responsables={responsables}
-          accesoMedicoAutorizado={accesoMedicoAutorizado}
-          onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
-          presetAccion={presetAccionActuar}
-          onClearPresetAccion={() => setPresetAccionActuar(null)}
-          onAddRecomendacion={handleAddRecomendacion}
-          onSaveAccion={handleSaveAccion}
+          actividadesPlan={planActivo.actividades}
+          onAbrirActividadPlan={abrirActividadEnModal}
+          externalSearch={navPlanMejoraSearch}
+          externalSelectPlanId={navPlanMejoraId}
+          navNonce={navNonce}
+          onSavePlanes={handleSavePlanesMejoraRiesgo}
+          onAbrirFormato={(fid) => setFormatoModalId(fid)}
+          onAbrirCapacitacion={(material, contexto, onSave) =>
+            setCapacitacionModalState({ material, contexto, onSave })
+          }
+          onIrAPlanEmergencias={() => setSeccionActiva('plan_emergencias')}
         />
       )}
+
+      {/* SECCIÓN 9: PLAN DE EMERGENCIAS (DENTRO DE PLAN ANUAL) */}
+      {seccionActiva === 'plan_emergencias' && (
+        <PlanAnualEmergenciasTab
+          planEmergencias={mejoraEmergenciasStore.planEmergencias}
+          formatos={mejoraEmergenciasStore.formatos}
+          actividadesPlan={planActivo.actividades}
+          onAbrirActividadPlan={abrirActividadEnModal}
+          externalSubVista={navEmergenciasSubVista}
+          externalEscenarioId={navEmergenciasEscenarioId}
+          navNonce={navNonce}
+          onSavePlanEmergencias={handleSavePlanEmergencias}
+          onAbrirFormato={(fid) => setFormatoModalId(fid)}
+          onAbrirCapacitacion={(material, contexto, onSave) =>
+            setCapacitacionModalState({ material, contexto, onSave })
+          }
+        />
+      )}
+
+      {/* Modal de Formato Editable con Caja de Calidad y Word */}
+      <FormatoDocumentoModal
+        formato={
+          formatoModalId ? mejoraEmergenciasStore.formatos[formatoModalId] || null : null
+        }
+        onClose={() => setFormatoModalId(null)}
+        onSaveFormato={handleSaveFormatoEditable}
+      />
+
+      {/* Modal de Guía Completa de Capacitación, Evaluación y Asistencia */}
+      <MaterialCapacitacionModal
+        material={capacitacionModalState?.material || null}
+        tituloContexto={capacitacionModalState?.contexto}
+        onClose={() => setCapacitacionModalState(null)}
+        onSaveMaterial={(nextMat) => {
+          capacitacionModalState?.onSave(nextMat);
+          setCapacitacionModalState((prev) =>
+            prev ? { ...prev, material: nextMat } : null
+          );
+        }}
+      />
 
       {/* Modal unificado de Actividad / Evidencia / Historial */}
       <PlanAnualActividadModal
@@ -1747,6 +2283,8 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({ normas }) => {
         responsables={responsables}
         objetivos={planActivo.objetivosEspecificos}
         initialTab={modalInitialTab}
+        presupuestoGeneralAprobado={planActivo.presupuestoGeneralAprobado || 0}
+        planActividades={planActivo.actividades}
         onClose={() => {
           setModalOpen(false);
           setActividadEditando(null);
