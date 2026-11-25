@@ -901,10 +901,10 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
             <div>
               <h4 className="font-black text-sm text-[#0d3b36] flex items-center gap-2">
                 <Users className="h-4 w-4 text-[#0f6b61]" />
-                <span>10. Organización sencilla de emergencias (Para 10 trabajadores)</span>
+                <span>10. Organización sencilla de emergencias (Distribuida entre los 6 cargos oficiales)</span>
               </h4>
               <p className="text-[11px] text-slate-500">
-                Roles prácticos para que todos sepan qué hacer sin estructuras pesadas de empresas grandes.
+                Funciones asignadas a los 6 cargos oficiales definidos en 1. Equipo y responsabilidades en SST, sin crear cargos adicionales.
               </p>
             </div>
 
@@ -1146,6 +1146,11 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
                     <p className="text-[11px] text-slate-600 leading-relaxed">
                       {act.descripcionSencilla}
                     </p>
+                    {act.materialCapacitacion?.objetivo && (
+                      <p className="text-[10px] text-[#0f5b53] bg-[#f4faf8] border border-[#d6ebe5] rounded-lg px-2 py-1">
+                        <strong>Alcance / cargos:</strong> {act.materialCapacitacion.objetivo}
+                      </p>
+                    )}
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <div>

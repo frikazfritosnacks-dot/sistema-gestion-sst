@@ -241,7 +241,7 @@ export const ObligacionModal: React.FC<ObligacionModalProps> = ({
                 value={formData.responsable}
                 onChange={(e) => setFormData({ ...formData, responsable: e.target.value })}
                 className="w-full rounded-md border border-slate-300 px-3 py-1.5 focus:border-emerald-600 focus:outline-hidden"
-                placeholder="Líder SST / Jefe de Planta"
+                placeholder="Gerente / Operario de frito"
               />
               {errors.responsable && (
                 <p className="text-[11px] text-red-600 mt-0.5">{errors.responsable}</p>

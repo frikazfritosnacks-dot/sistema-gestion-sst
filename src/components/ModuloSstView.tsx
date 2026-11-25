@@ -50,7 +50,7 @@ export const ModuloSstView: React.FC<ModuloSstViewProps> = ({
       controlesExistentes: '',
       eppRequerido: '',
       capacitacionRequerida: '',
-      responsable: 'Líder SST / Operadores',
+      responsable: 'Operario de frito / Operario de selección (Vigía SST)',
       estadoControl: 'Controlado con EPP',
     });
     setModalOpen(true);

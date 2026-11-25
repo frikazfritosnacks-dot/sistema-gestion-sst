@@ -105,53 +105,41 @@ export const CODIGOS_CANONICOS_SST: Record<
   string,
   { codigo: string; version: string; titulo: string; tipo: TipoDocumentoCalidad }
 > = {
-  // CARGOS Y RESPONSABILIDADES
+  // CARGOS Y RESPONSABILIDADES (6 CARGOS OFICIALES)
   'cargo-gerente-general': {
     codigo: 'FRK-SST-RES-01',
     version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – GERENTE GENERAL',
-    tipo: 'responsabilidades',
-  },
-  'cargo-coordinador-vigia-sst': {
-    codigo: 'FRK-SST-RES-02',
-    version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – COORDINADOR / VIGÍA DE SST',
-    tipo: 'responsabilidades',
-  },
-  'cargo-operario-frito': {
-    codigo: 'FRK-SST-RES-03',
-    version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE FRITO (LÍNEA CALIENTE)',
+    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – GERENTE',
     tipo: 'responsabilidades',
   },
   'cargo-operario-seleccion': {
-    codigo: 'FRK-SST-RES-04',
+    codigo: 'FRK-SST-RES-02',
     version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE SELECCIÓN Y LAVADO',
+    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE SELECCIÓN',
     tipo: 'responsabilidades',
   },
   'cargo-operario-pelado': {
-    codigo: 'FRK-SST-RES-05',
+    codigo: 'FRK-SST-RES-03',
     version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE PELADO Y CORTE',
+    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE PELADO',
+    tipo: 'responsabilidades',
+  },
+  'cargo-operario-frito': {
+    codigo: 'FRK-SST-RES-04',
+    version: '01',
+    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE FRITO',
     tipo: 'responsabilidades',
   },
   'cargo-operario-empaque': {
-    codigo: 'FRK-SST-RES-06',
+    codigo: 'FRK-SST-RES-05',
     version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE EMPAQUE Y SELLADO',
+    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – OPERARIO DE EMPAQUE',
     tipo: 'responsabilidades',
   },
   'cargo-conductor': {
-    codigo: 'FRK-SST-RES-07',
+    codigo: 'FRK-SST-RES-06',
     version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – CONDUCTOR / DISTRIBUCIÓN COMERCIAL',
-    tipo: 'responsabilidades',
-  },
-  'cargo-tecnico-mantenimiento': {
-    codigo: 'FRK-SST-RES-08',
-    version: '01',
-    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – TÉCNICO DE MANTENIMIENTO Y SERVICIOS',
+    titulo: 'ASIGNACIÓN DE RESPONSABILIDADES EN SST – CONDUCTOR',
     tipo: 'responsabilidades',
   },
 

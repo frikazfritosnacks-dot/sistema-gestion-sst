@@ -130,8 +130,8 @@ Este mensaje fue generado automáticamente desde la plataforma de gestión SG-SS
           subject: asunto,
           text: cuerpo,
           tipoNotificacion: `Alerta SST (${alertaParaEnviar.severidad})`,
-          workerName: 'Líder SST / Dirección',
-          cargo: 'Gerencia y SST',
+          workerName: 'Andrea Orjuela – Gerente',
+          cargo: 'Gerente',
         });
 
         setResultadoEnvioAlerta(resp);
@@ -403,7 +403,7 @@ Este mensaje fue generado automáticamente desde la plataforma de gestión SG-SS
 
               <div>
                 <label className="block text-slate-300 font-bold mb-1">
-                  Correo destinatario (Gerencia / Líder SST):
+                  Correo destinatario (Gerente):
                 </label>
                 <input
                   type="email"

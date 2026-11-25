@@ -20,6 +20,8 @@ const STORAGE_KEY_CHECKLIST = 'frikaz_checklist_partes_v1';
 const STORAGE_KEY_HISTORIAL = 'frikaz_historial_checklist_v1';
 const STORAGE_KEY_PLAIN_LANG = 'frikaz_partes_plain_lang_v1';
 const STORAGE_KEY_GERENTE_GATE = 'frikaz_partes_gerente_gate_v1';
+const STORAGE_KEY_6_CARGOS = 'frikaz_partes_6_cargos_v1';
+const STORAGE_KEY_BACKUP_6_CARGOS = 'frikaz_partes_backup_pre6cargos_v1';
 
 // ----------------------------------------------------------------------------
 // DATOS SEMILLA: PARTES INTERESADAS (INTERNAS Y EXTERNAS)
@@ -208,7 +210,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Tabla de riesgos (Matriz GTC 45) preparada con las 6 áreas; pendiente revisión y visto bueno del Gerente.',
     evidencias: 'Matriz de Riesgos Frikaz S.A.S. versión digital 2026',
-    responsable: 'Coordinador / Vigía de SST',
+    responsable: 'Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -220,7 +222,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Normas revisadas en la lista legal; en proceso de completar evidencias y ajustar controles.',
     evidencias: 'Lista de Normas Legales SST (Res. 0312/2019 y Dec. 1072/2015)',
-    responsable: 'Gerente General / Asesor Externo',
+    responsable: 'Gerente',
     fechaVerificacion: '',
   },
   {
@@ -232,7 +234,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Presupuesto 2026 propuesto para guantes térmicos, limpieza de campanas y asesoría en seguridad; pendiente aprobación del Gerente.',
     evidencias: 'Propuesta de presupuesto SST 2026',
-    responsable: 'Gerente General',
+    responsable: 'Gerente',
     fechaVerificacion: '',
   },
   {
@@ -244,7 +246,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Borrador de Política SST listo para firma y aprobación del Gerente.',
     evidencias: 'Borrador Política SST Frikaz S.A.S.',
-    responsable: 'Gerente General / Coordinador SST',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -256,7 +258,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Revisión de gerencia programada para revisar los resultados de cumplimiento.',
     evidencias: 'Calendario de reuniones de revisión 2026',
-    responsable: 'Gerente General',
+    responsable: 'Gerente',
     fechaVerificacion: '',
   },
   {
@@ -268,7 +270,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Coordinando con Caja de Compensación y ARL jornadas de examen visual y pausas activas.',
     evidencias: 'Plan de Bienestar y Salud Frikaz 2026',
-    responsable: 'Gestión Humana / Vigía de SST',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -280,7 +282,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Programación de capacitaciones y reuniones de seguimiento en curso.',
     evidencias: 'Registro de participación y reuniones',
-    responsable: 'Gerente General',
+    responsable: 'Gerente',
     fechaVerificacion: '',
   },
 
@@ -294,7 +296,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Revisión preventiva de peladora y selladora cargada; pendiente verificación del Gerente.',
     evidencias: 'Hoja de vida de máquinas y registro de mantenimiento',
-    responsable: 'Técnico de Mantenimiento / Jefe de Planta',
+    responsable: 'Operario de pelado / Gerente',
     fechaVerificacion: '',
   },
   {
@@ -306,7 +308,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Planillas de entrega de guantes largos resistentes al calor, delantales y botas en recolección.',
     evidencias: 'Planilla de entrega de EPP a cada operario',
-    responsable: 'Coordinador / Vigía de SST',
+    responsable: 'Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -318,7 +320,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Orden y aseo diario en tajado y empaque con lavado desengrasante de pisos.',
     evidencias: 'Lista diaria de orden, aseo y desinfección de planta',
-    responsable: 'Jefe de Planta / Operarios',
+    responsable: 'Operario de pelado / Operario de frito / Operario de empaque',
     fechaVerificacion: '',
   },
   {
@@ -330,7 +332,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Certificados de curso de manipulación higiénica de alimentos listos para revisión de Gerencia.',
     evidencias: 'Certificados de manipulación de alimentos',
-    responsable: 'Ingeniero de Alimentos / Asesor Externo',
+    responsable: 'Gerente',
     fechaVerificacion: '',
   },
   {
@@ -342,7 +344,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Ya se hacen pausas activas en la mañana (10:00 a. m.); falta organizarlas igual en el turno de la tarde.',
     evidencias: 'Fotos y planilla de pausas activas de la mañana',
-    responsable: 'Vigía de SST / Líder de Producción',
+    responsable: 'Operario de selección (Vigía SST) / Operario de empaque',
     fechaVerificacion: '',
   },
   {
@@ -354,7 +356,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Guía visual de pasos seguros para freír y filtrar aceite pegada junto a las freidoras; pendiente verificación.',
     evidencias: 'Cartel de pasos seguros POE-FRI-02 en zona de freidoras',
-    responsable: 'Coordinador SST / Maestro Fritador',
+    responsable: 'Operario de frito / Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -366,7 +368,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Charlas de riesgos en cada máquina y entrega de guía sencilla de seguridad por cargo.',
     evidencias: 'Registro de inducción al puesto y entrega de guía',
-    responsable: 'Coordinador / Vigía de SST',
+    responsable: 'Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -378,7 +380,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Rebanadora y freidoras revisadas; falta hacer limpieza y revisión al extractor y la campana a fin de mes.',
     evidencias: 'Calendario de mantenimiento 2026 y órdenes de trabajo',
-    responsable: 'Jefe de Planta / Mantenimiento',
+    responsable: 'Operario de pelado / Operario de frito / Gerente',
     fechaVerificacion: '',
   },
   {
@@ -390,7 +392,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Falta cambiar 3 avisos de peligro por calor (>160 °C) y pintar la señal de piso mojado en lavado.',
     evidencias: 'Cotización para comprar nuevos avisos visibles',
-    responsable: 'Coordinador SST / Compras',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
 
@@ -404,7 +406,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Certificado técnico-mecánico y factura de taller cargados; pendiente visto bueno de Gerencia.',
     evidencias: 'Certificado técnico-mecánico RUNT y factura de taller',
-    responsable: 'Conductor / Administrador de Flota',
+    responsable: 'Conductor / Gerente',
     fechaVerificacion: '',
   },
   {
@@ -416,7 +418,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Revisando vigencias de SOAT, licencia, botiquín y extintor del vehículo.',
     evidencias: 'SOAT vigente y lista de revisión del kit de carretera',
-    responsable: 'Conductor / Coordinador SST',
+    responsable: 'Conductor / Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -428,7 +430,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Se dividieron 2 zonas (Norte y Sur); falta ajustar horarios en horas de mayor trancón en Bogotá.',
     evidencias: 'Plan de Rutas Frikaz 2026 y tabla de tiempos de entrega',
-    responsable: 'Coordinador Logístico / Gerencia',
+    responsable: 'Gerente / Conductor',
     fechaVerificacion: '',
   },
   {
@@ -440,7 +442,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Programar curso de manejo preventivo y seguridad vial con la ARL.',
     evidencias: 'Programación de curso con ARL',
-    responsable: 'Asesor ARL / Coordinador SST',
+    responsable: 'Gerente / Conductor',
     fechaVerificacion: '',
   },
   {
@@ -452,7 +454,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Planilla de entrega de EPP de transporte subida para revisión de Gerencia.',
     evidencias: 'Planilla firmada de entrega de EPP de transporte',
-    responsable: 'Coordinador SST',
+    responsable: 'Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -464,7 +466,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Realizar práctica de levantamiento seguro (doblar rodillas y peso máximo) con la ARL.',
     evidencias: 'Acta pendiente de charla sobre cuidado de espalda',
-    responsable: 'Fisioterapeuta ARL / Vigía de SST',
+    responsable: 'Operario de selección (Vigía SST) / Conductor',
     fechaVerificacion: '',
   },
   {
@@ -476,7 +478,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Diligenciando lista diaria preoperacional del vehículo antes de salir de Bosa.',
     evidencias: 'Talonario y registro digital de revisiones diarias del carro',
-    responsable: 'Conductor / Coordinador SST',
+    responsable: 'Conductor / Operario de selección (Vigía SST)',
     fechaVerificacion: '',
   },
   {
@@ -488,7 +490,7 @@ export const CHECKLIST_INICIAL_CARGOS: ItemChecklistNecesidad[] = [
     observaciones:
       'Se definió parar 20 minutos cada 2 horas y media de manejo; falta revisar el cumplimiento con el reporte GPS.',
     evidencias: 'Regla interna de descanso y prevención de fatiga al volante',
-    responsable: 'Gerente / Coordinador Logístico',
+    responsable: 'Gerente / Conductor',
     fechaVerificacion: '',
   },
 ];
@@ -502,7 +504,7 @@ export const HISTORIAL_INICIAL_CHECKLIST: RegistroHistorialChecklist[] = [
     id: 'rev-01',
     fecha: '2026-03-04',
     cargo: 'operarios',
-    responsableEvaluador: 'Coordinador / Vigía de SST',
+    responsableEvaluador: 'Operario de selección (Vigía SST)',
     porcentajeCumplimiento: 0,
     cumplidas: 0,
     enProceso: 8,
@@ -601,9 +603,52 @@ function ensurePartesGerenteGateMigration(): void {
   }
 }
 
+function ensurePartesSixCargosMigration(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY_6_CARGOS) === '1') return;
+    const rawChecklist = localStorage.getItem(STORAGE_KEY_CHECKLIST);
+    const rawHist = localStorage.getItem(STORAGE_KEY_HISTORIAL);
+    if (!localStorage.getItem(STORAGE_KEY_BACKUP_6_CARGOS)) {
+      localStorage.setItem(
+        STORAGE_KEY_BACKUP_6_CARGOS,
+        JSON.stringify({ checklist: rawChecklist, historial: rawHist })
+      );
+    }
+
+    if (rawChecklist) {
+      const parsed: ItemChecklistNecesidad[] = JSON.parse(rawChecklist);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const seedById = new Map(CHECKLIST_INICIAL_CARGOS.map((c) => [c.id, c]));
+        const migrated = parsed.map((item) => {
+          const seed = seedById.get(item.id);
+          return seed ? { ...item, responsable: seed.responsable } : item;
+        });
+        localStorage.setItem(STORAGE_KEY_CHECKLIST, JSON.stringify(migrated));
+      }
+    }
+
+    if (rawHist) {
+      const parsed: RegistroHistorialChecklist[] = JSON.parse(rawHist);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const seedById = new Map(HISTORIAL_INICIAL_CHECKLIST.map((h) => [h.id, h]));
+        const migratedHist = parsed.map((h) => {
+          const seed = seedById.get(h.id);
+          return seed ? { ...h, responsableEvaluador: seed.responsableEvaluador } : h;
+        });
+        localStorage.setItem(STORAGE_KEY_HISTORIAL, JSON.stringify(migratedHist));
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEY_6_CARGOS, '1');
+  } catch (error) {
+    console.error('Error migrando responsables de Partes Interesadas a 6 cargos oficiales:', error);
+  }
+}
+
 export function getStoredPartesInteresadas(): ParteInteresada[] {
   ensurePlainLangMigration();
   ensurePartesGerenteGateMigration();
+  ensurePartesSixCargosMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PARTES);
     if (!raw) {
@@ -633,6 +678,7 @@ export function saveStoredPartesInteresadas(partes: ParteInteresada[]): void {
 export function getStoredChecklistItems(): ItemChecklistNecesidad[] {
   ensurePlainLangMigration();
   ensurePartesGerenteGateMigration();
+  ensurePartesSixCargosMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CHECKLIST);
     if (!raw) {

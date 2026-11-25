@@ -16,6 +16,34 @@ import {
 const STORAGE_KEY = 'frikaz_phva_evidence_items_v3_74normas';
 const PLAIN_LANG_FLAG = 'frikaz_phva_plain_lang_v1';
 const GERENTE_GATE_FLAG = 'frikaz_phva_gerente_gate_v1';
+const SIX_CARGOS_FLAG = 'frikaz_phva_6cargos_v1';
+const BACKUP_SIX_CARGOS_KEY = 'frikaz_phva_backup_pre6cargos_v1';
+
+function migratePhvaSixCargosIfNeeded(items: NormaPhvaItem[]): { items: NormaPhvaItem[]; changed: boolean } {
+  try {
+    if (localStorage.getItem(SIX_CARGOS_FLAG) === '1') {
+      return { items, changed: false };
+    }
+    if (!localStorage.getItem(BACKUP_SIX_CARGOS_KEY)) {
+      localStorage.setItem(BACKUP_SIX_CARGOS_KEY, JSON.stringify(items));
+    }
+    const defaultsById = new Map(INITIAL_PHVA_NORMS.map((d) => [d.id, d]));
+    const updated = items.map((it) => {
+      const def = defaultsById.get(it.id);
+      if (def) {
+        return {
+          ...it,
+          responsable: def.responsable,
+        };
+      }
+      return it;
+    });
+    localStorage.setItem(SIX_CARGOS_FLAG, '1');
+    return { items: updated, changed: true };
+  } catch {
+    return { items, changed: false };
+  }
+}
 
 export function getPhvaNorms(): NormaPhvaItem[] {
   try {
@@ -24,6 +52,7 @@ export function getPhvaNorms(): NormaPhvaItem[] {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_PHVA_NORMS));
       localStorage.setItem(PLAIN_LANG_FLAG, '1');
       localStorage.setItem(GERENTE_GATE_FLAG, '1');
+      localStorage.setItem(SIX_CARGOS_FLAG, '1');
       return INITIAL_PHVA_NORMS;
     }
     const parsed = JSON.parse(raw) as NormaPhvaItem[];
@@ -55,6 +84,8 @@ export function getPhvaNorms(): NormaPhvaItem[] {
       items = INITIAL_PHVA_NORMS.map((def) => map.get(def.id) || def);
     }
 
+    let needsSave = !migratedPlain;
+
     if (!migratedGate) {
       items = items.map((it) => {
         const est = normalizarEstadoEstandar(it.estado);
@@ -74,12 +105,17 @@ export function getPhvaNorms(): NormaPhvaItem[] {
           estado: est,
         };
       });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       localStorage.setItem(GERENTE_GATE_FLAG, '1');
-      return items;
+      needsSave = true;
     }
 
-    if (!migratedPlain) {
+    const sixMigration = migratePhvaSixCargosIfNeeded(items);
+    if (sixMigration.changed) {
+      items = sixMigration.items;
+      needsSave = true;
+    }
+
+    if (needsSave) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     }
 

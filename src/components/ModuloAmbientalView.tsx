@@ -50,7 +50,7 @@ export const ModuloAmbientalView: React.FC<ModuloAmbientalViewProps> = ({
       obligacionLegalRef: '',
       medidaControl: '',
       registroAutoridad: '',
-      responsable: 'Coordinador Ambiental',
+      responsable: 'Gerente',
       evidenciaAsociada: '',
       estadoCumplimiento: 'Cumpliendo 100%',
       accionMejora: '',

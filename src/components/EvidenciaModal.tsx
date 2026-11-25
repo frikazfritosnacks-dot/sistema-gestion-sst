@@ -63,7 +63,7 @@ export const EvidenciaModal: React.FC<EvidenciaModalProps> = ({
         codigo: `EVI-${Math.floor(100 + Math.random() * 900)}`,
         obligacionId: defaultOblig?.id || '',
         normaId: defaultOblig?.normaId || (norms[0]?.id || ''),
-        responsable: defaultOblig?.responsable || 'Responsable SST / Coordinador Ambiental',
+        responsable: defaultOblig?.responsable || 'Gerente',
       });
       setFileSelectedName('');
     }

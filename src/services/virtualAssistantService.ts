@@ -26,6 +26,13 @@ import {
   normalizarEstadoEstandar,
   NOMBRE_GERENTE_OFICIAL,
 } from './gerenteControlService';
+import {
+  CARGOS_OFICIALES_LISTA,
+  CARGOS_OFICIALES_NOMBRES,
+  coincideConCargoOficial,
+  obtenerIdCargoOficial,
+  type CargoOficialNombre,
+} from '../data/cargosOficiales';
 
 export interface AssistantMatchCard {
   id: string;
@@ -468,7 +475,8 @@ export function consultarAsistenteVirtual(
           id: 'edu-mriesgos-cargos',
           categoria: 'Vista por cargo',
           titulo: 'Ver riesgos organizados por cargo',
-          detalle: 'Ideal para consultar qué peligros aplican a Operarios de Frito, Pelado, Selección, Empaque o Conductor.',
+          detalle:
+            'Consulta qué peligros aplican a los 6 cargos oficiales: Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque y Conductor.',
           target: { tab: 'matriz_riesgos', riskViewMode: 'por_cargos', etiquetaDestino: 'Riesgos por Cargo' },
         },
       ],
@@ -741,6 +749,213 @@ export function consultarAsistenteVirtual(
         items,
       };
     }
+  }
+
+  // 3I. ¿Cuáles son los cargos oficiales de Frikaz S.A.S.?
+  if (
+    /\b(cuales son los cargos|cuantos cargos|lista de cargos|los cargos de frikaz|los 6 cargos|seis cargos|cargos oficiales|que cargos hay|puestos de trabajo)\b/.test(
+      norm
+    )
+  ) {
+    const trabajadoresActivos = sgsstData.trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO');
+    const resumenCargos = CARGOS_OFICIALES_LISTA.map((def, idx) => {
+      const countTrab = trabajadoresActivos.filter(
+        (t) => obtenerIdCargoOficial(t.cargoId || t.cargoNombre) === def.id
+      ).length;
+      const countRiesgos = riesgos.filter((r) =>
+        coincideConCargoOficial(def.nombre, r.cargo, r.cargosExpuestos)
+      ).length;
+      return `${idx + 1}. ${def.nombre} (${countTrab} trabajador(es) · ${countRiesgos} peligro(s) GTC 45)`;
+    }).join('\n');
+
+    const targetOrg: AssistantNavigationTarget = {
+      tab: 'ficha_empresa',
+      empresaSubcategoria: 'organigrama',
+      etiquetaDestino: '1. Equipo y responsabilidades en SST',
+    };
+
+    return {
+      reply: `En toda la herramienta SG-SST de Frikaz S.A.S., la fuente oficial («1. Equipo y responsabilidades en SST») define únicamente seis (6) cargos oficiales:\n${resumenCargos}`,
+      items: [
+        {
+          id: 'cargos-org',
+          categoria: 'Fuente principal · Mi Empresa',
+          titulo: '1. Equipo y responsabilidades en SST (6 cargos oficiales)',
+          detalle: `Cargos oficiales vigentes: ${CARGOS_OFICIALES_NOMBRES.join(', ')}.`,
+          target: targetOrg,
+        },
+        {
+          id: 'cargos-mr',
+          categoria: 'Matriz GTC 45 por Cargo',
+          titulo: 'Ver peligros y controles por cada uno de los 6 cargos',
+          detalle: `${riesgos.length} registros GTC 45 vinculados estrictamente a los 6 cargos oficiales.`,
+          target: {
+            tab: 'matriz_riesgos',
+            riskViewMode: 'por_cargos',
+            etiquetaDestino: 'Matriz GTC 45 por Cargo',
+          },
+        },
+        {
+          id: 'cargos-personal',
+          categoria: 'Plan Anual 2027 · Personal',
+          titulo: `Ver trabajadores asignados (${trabajadoresActivos.length} activos)`,
+          detalle: 'Cada trabajador está vinculado a uno de los 6 cargos oficiales.',
+          target: {
+            tab: 'plan_anual',
+            planSeccion: 'conexiones',
+            subConexiones: 'personal',
+            etiquetaDestino: 'Trabajadores por Cargo',
+          },
+        },
+      ],
+      autoNavigateTarget: esIntencionNavegar ? targetOrg : undefined,
+    };
+  }
+
+  // 3J. Consulta específica sobre uno de los 6 cargos oficiales
+  const esConsultaNoCargo =
+    /\b(modo gerente|ingresar como|iniciar sesion|cerrar sesion|presupuesto|aprob|politica|documento|firmado)\b/.test(
+      norm
+    );
+  const cargoDetectado: CargoOficialNombre | null = esConsultaNoCargo
+    ? null
+    : /\boperari[oa]s? de seleccion\b|\bcargo de seleccion\b|\bseleccion\b/.test(norm) &&
+      /\b(cargo|riesgo|riesgos|peligro|peligros|funcion|funciones|responsabilidad|responsabilidades|actividad|actividades|trabajador|trabajadores|hace|aplica)\b/.test(
+        norm
+      )
+    ? 'Operario de selección'
+    : /\boperari[oa]s? de pelado\b|\bcargo de pelado\b|\bpelado\b/.test(norm) &&
+      /\b(cargo|riesgo|riesgos|peligro|peligros|funcion|funciones|responsabilidad|responsabilidades|actividad|actividades|trabajador|trabajadores|hace|aplica)\b/.test(
+        norm
+      )
+    ? 'Operario de pelado'
+    : /\boperari[oa]s? de frito\b|\bcargo de frito\b|\bfrito\b|\bfritura\b|\bfreidora\b/.test(norm) &&
+      /\b(cargo|riesgo|riesgos|peligro|peligros|funcion|funciones|responsabilidad|responsabilidades|actividad|actividades|trabajador|trabajadores|hace|aplica)\b/.test(
+        norm
+      )
+    ? 'Operario de frito'
+    : /\boperari[oa]s? de empaque\b|\bcargo de empaque\b|\bempaque\b/.test(norm) &&
+      /\b(cargo|riesgo|riesgos|peligro|peligros|funcion|funciones|responsabilidad|responsabilidades|actividad|actividades|trabajador|trabajadores|hace|aplica)\b/.test(
+        norm
+      )
+    ? 'Operario de empaque'
+    : /\bconductor(es)?\b|\breparto\b/.test(norm) &&
+      /\b(cargo|riesgo|riesgos|peligro|peligros|funcion|funciones|responsabilidad|responsabilidades|actividad|actividades|trabajador|trabajadores|hace|aplica)\b/.test(
+        norm
+      )
+    ? 'Conductor'
+    : /\bgerente\b/.test(norm) &&
+      /\b(cargo|riesgo|riesgos|peligro|peligros|funcion|funciones|responsabilidad|responsabilidades|actividad|actividades|que hace)\b/.test(
+        norm
+      )
+    ? 'Gerente'
+    : null;
+
+  if (cargoDetectado) {
+    const cargoId = obtenerIdCargoOficial(cargoDetectado);
+    const cargoInfo = cargosSST.find(
+      (c) => c.id === cargoId || normalizeText(c.nombre) === normalizeText(cargoDetectado)
+    );
+    const trabajadoresCargo = sgsstData.trabajadores.filter(
+      (t) => t.estadoLaboral === 'ACTIVO' && obtenerIdCargoOficial(t.cargoId || t.cargoNombre) === cargoId
+    );
+    const riesgosCargo = riesgos.filter((r) =>
+      coincideConCargoOficial(cargoDetectado, r.cargo, r.cargosExpuestos)
+    );
+    const planesCargo = mejoraStore.planesPorRiesgo.filter((p) =>
+      coincideConCargoOficial(cargoDetectado, p.responsable, p.cargoMatriz)
+    );
+    const actividadesCargo = (plan2027?.actividades || []).filter(
+      (a) => obtenerIdCargoOficial(a.responsableId || a.responsableCargo) === cargoId
+    );
+
+    const criticosCargo = riesgosCargo.filter(
+      (r) => r.interpretacionNR === 'I' || r.interpretacionNR === 'II'
+    ).length;
+    const funcionesResumen =
+      cargoInfo?.responsabilidades?.slice(0, 2).join(' · ') ||
+      cargoInfo?.areaProceso ||
+      cargoDetectado;
+
+    const itemsCargo: AssistantMatchCard[] = [
+      {
+        id: `cargo-org-${cargoId}`,
+        categoria: '1. Equipo y responsabilidades en SST',
+        titulo: `${cargoDetectado} (${trabajadoresCargo.length} trabajador(es) activo(s))`,
+        detalle: `Área: ${cargoInfo?.areaProceso || 'Frikaz S.A.S.'} · Responsabilidades SST: ${funcionesResumen}`,
+        target: {
+          tab: 'ficha_empresa',
+          empresaSubcategoria: 'organigrama',
+          etiquetaDestino: `Cargo: ${cargoDetectado}`,
+        },
+      },
+      {
+        id: `cargo-rsk-${cargoId}`,
+        categoria: `Matriz GTC 45 · ${riesgosCargo.length} peligro(s)`,
+        titulo: `Riesgos asociados a ${cargoDetectado} (${criticosCargo} Nivel I/II)`,
+        detalle:
+          riesgosCargo.length > 0
+            ? riesgosCargo
+                .slice(0, 2)
+                .map((r) => `${r.peligroDescripcion} (Nivel ${r.interpretacionNR})`)
+                .join(' | ')
+            : 'Sin peligros críticos registrados para este cargo.',
+        target: {
+          tab: 'matriz_riesgos',
+          riskViewMode: 'por_cargos',
+          searchQuery: cargoDetectado,
+          etiquetaDestino: `Riesgos de ${cargoDetectado}`,
+        },
+      },
+      {
+        id: `cargo-pm-${cargoId}`,
+        categoria: `Planes de Mejora · ${planesCargo.length}`,
+        titulo: `Planes de mejora vinculados a ${cargoDetectado}`,
+        detalle:
+          planesCargo.length > 0
+            ? planesCargo
+                .slice(0, 2)
+                .map((p) => p.nombreRiesgo)
+                .join(' | ')
+            : 'Consulta los planes preventivos en el Plan Anual 2027.',
+        target: {
+          tab: 'plan_anual',
+          planSeccion: 'planes_riesgo',
+          etiquetaDestino: `Planes de Mejora · ${cargoDetectado}`,
+        },
+      },
+    ];
+
+    if (actividadesCargo.length > 0) {
+      itemsCargo.push({
+        id: `cargo-act-${cargoId}`,
+        categoria: `Plan Anual 2027 · ${actividadesCargo.length} actividad(es)`,
+        titulo: `Actividades 2027 asignadas a ${cargoDetectado}`,
+        detalle: actividadesCargo
+          .slice(0, 2)
+          .map((a) => `${a.nombre} (${normalizarEstadoEstandar(a.estado)})`)
+          .join(' | '),
+        target: {
+          tab: 'plan_anual',
+          planSeccion: 'actividades',
+          subActividades: 'responsables',
+          etiquetaDestino: `Responsabilidades 2027 · ${cargoDetectado}`,
+        },
+      });
+    }
+
+    return {
+      reply: `El cargo oficial «${cargoDetectado}» (área: ${
+        cargoInfo?.areaProceso || 'Frikaz S.A.S.'
+      }) cuenta actualmente con ${trabajadoresCargo.length} trabajador(es) activo(s), ${
+        riesgosCargo.length
+      } peligro(s) evaluados en la Matriz GTC 45 (${criticosCargo} de prioridad I/II), ${
+        planesCargo.length
+      } plan(es) de mejora por riesgo y ${
+        actividadesCargo.length
+      } actividad(es) asignadas en el Plan Anual 2027.`,
+      items: itemsCargo,
+    };
   }
 
   // ========================================================================

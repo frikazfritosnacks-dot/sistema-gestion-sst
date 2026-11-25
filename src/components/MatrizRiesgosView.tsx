@@ -15,6 +15,10 @@ import {
   obtenerRiesgosPorCargo,
 } from '../data/gtc45RiskMatrixData';
 import {
+  CARGOS_OFICIALES_NOMBRES,
+  coincideConCargoOficial,
+} from '../data/cargosOficiales';
+import {
   loadStoredRisks,
   saveStoredRisks,
   resetToInitialRisks,
@@ -132,12 +136,9 @@ export function MatrizRiesgosView({ navigationRequest }: MatrizRiesgosViewProps 
   // Combined Filtering: Cargo + Area + Process + Classification + Risk Level + Search Keyword
   const riesgosFiltrados = useMemo(() => {
     return dataset.filter((r) => {
-      // 1. Cargo Filter
+      // 1. Cargo Filter (estrictamente vinculado a los 6 cargos oficiales)
       if (selectedCargo !== 'Todos los cargos') {
-        const target = selectedCargo.toLowerCase().trim();
-        const c1 = (r.cargo || '').toLowerCase();
-        const c2 = (r.cargosExpuestos || '').toLowerCase();
-        if (!c1.includes(target) && !c2.includes(target)) {
+        if (!coincideConCargoOficial(selectedCargo, r.cargo, r.cargosExpuestos)) {
           return false;
         }
       }
@@ -709,10 +710,10 @@ export function MatrizRiesgosView({ navigationRequest }: MatrizRiesgosViewProps 
             )}
           </div>
 
-          {/* Quick Cargo chips */}
+          {/* Quick Cargo chips (6 cargos oficiales) */}
           <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] py-0.5 shrink-0">
-            <span className="text-slate-400 text-[10px] font-bold uppercase shrink-0">Cargos clave:</span>
-            {['Operario de Fritura y Cocción', 'Técnico de Mantenimiento Electromecánico', 'Auxiliar de Bodega y Logística', 'Auxiliar de Servicios Generales y Aseo'].map((c) => (
+            <span className="text-slate-400 text-[10px] font-bold uppercase shrink-0">6 cargos oficiales:</span>
+            {CARGOS_OFICIALES_NOMBRES.map((c) => (
               <button
                 key={c}
                 onClick={() => setSelectedCargo(c)}
@@ -722,7 +723,7 @@ export function MatrizRiesgosView({ navigationRequest }: MatrizRiesgosViewProps 
                     : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700'
                 }`}
               >
-                {c.split(' ')[0]} {c.split(' ')[1] || ''}
+                {c}
               </button>
             ))}
           </div>

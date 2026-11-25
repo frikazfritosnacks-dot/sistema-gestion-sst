@@ -24,7 +24,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de peligros y riesgos al día (matriz GTC 45, guía técnica para calificar riesgos), recorridos de seguridad, constancias de participación de los trabajadores, entrega de elementos de protección (EPP), capacitaciones y actas compartidas con el Vigía SST (compañero encargado de apoyar la seguridad).',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / Vigía de SST',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Lista de peligros (GTC 45) revisada y al día en toda la planta.',
   },
@@ -50,7 +50,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de aspectos e impactos ambientales, recibos de consumo de agua y energía, comprobantes de entrega de basura y aceite usado, recorridos de revisión ambiental y plan de mejoras.',
     estado: 'Por hacer',
-    responsable: 'Líder de Gestión Ambiental / Gerencia',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Cuidado ambiental organizado siguiendo la guía ISO 14001:2026.',
   },
@@ -76,7 +76,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Política de Seguridad y Salud firmada y con fecha, constancias de que todos los trabajadores la conocen, metas del año, presupuesto asignado, plan anual de trabajo, actas del Vigía SST y constancias de asesoría de la ARL.',
     estado: 'Por hacer',
-    responsable: 'Representante Legal / Gerente General',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Política firmada y explicada a los 10 trabajadores de Frikaz S.A.S.',
   },
@@ -102,7 +102,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Política ambiental firmada y visible en cartelera, metas ambientales del año, registros de consumo de agua y luz, y recibos de entrega de aceite usado y residuos a empresas autorizadas.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Gestión Ambiental',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Política ambiental publicada en las carteleras de la planta en Bosa.',
   },
@@ -130,7 +130,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de peligros actualizada mínimo una vez al año, formatos de recorridos de seguridad, charlas y capacitaciones, investigación de casi accidentes y actas del Vigía SST.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-02',
     observaciones: 'Revisión GTC 45 aplicada en zona de freidoras y corte.',
   },
@@ -156,7 +156,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de aspectos ambientales, metas con responsables y fechas, recibos de agua y energía, recibos de aceite usado y residuos, e informes de revisión.',
     estado: 'Por hacer',
-    responsable: 'Líder Ambiental / Gerencia',
+    responsable: 'Gerente / Operario de pelado',
     fechaVerificacion: '2026-10-02',
     observaciones: 'Aspectos ambientales revisados en toda la planta Bosa.',
   },
@@ -182,7 +182,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Control mensual de recibos de agua, luz y gas, registros para evitar desperdicios, entregas de aceite usado y revisiones ambientales en planta.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Jefe de Planta',
+    responsable: 'Gerente / Operario de pelado / Operario de frito',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Seguimiento mensual de agua, luz y gas en cocción.',
   },
@@ -210,7 +210,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Carta de nombramiento firmada, certificado del curso virtual de 50 horas (o actualización de 20 horas), plan anual de trabajo, lista de peligros y actas de capacitaciones.',
     estado: 'Por hacer',
-    responsable: 'Gerente General / Responsable Asignado',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-10',
     observaciones: 'Encargado del SG-SST nombrado y con curso de 50 horas vigente.',
   },
@@ -238,7 +238,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de residuos peligrosos, etiquetas claras en envases, lugar de acopio con bandeja antiderrames, recibos de entrega de empresa autorizada y constancias de capacitación.',
     estado: 'Por hacer',
-    responsable: 'Coordinador Ambiental / Operaciones',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Punto de acopio con bandeja antiderrames y entrega a gestor con licencia.',
   },
@@ -264,7 +264,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de máquinas que generan ruido, registro de mantenimiento preventivo, mediciones cuando apliquen y registro de atención a inquietudes.',
     estado: 'Por hacer',
-    responsable: 'Mantenimiento / Gestión Ambiental',
+    responsable: 'Gerente / Operario de pelado / Operario de empaque',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Mantenimiento y ajuste de cortadoras y extractores en planta.',
   },
@@ -290,7 +290,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Registro de mantenimiento de equipos, mediciones de sonido, entrega de protectores auditivos y actas de mejoras realizadas.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Seguridad Física',
+    responsable: 'Gerente / Operario de frito / Operario de empaque',
     fechaVerificacion: '2026-10-05',
     observaciones: 'Revisión de ruido en turnos de fritura y empaque.',
   },
@@ -316,7 +316,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de normas actualizada en la herramienta con encargado, estado de cumplimiento y soportes guardados.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Lista legal organizada y revisada.',
   },
@@ -342,7 +342,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Plan Anual de Trabajo firmado, listas de asistencia a charlas, informes de recorridos de seguridad, facturas de mantenimiento y revisión anual con gerencia.',
     estado: 'Por hacer',
-    responsable: 'Gerente General / Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Plan anual 2026 firmado y en marcha.',
   },
@@ -368,7 +368,7 @@ export const NORMS_PLANEAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Cronograma anual ambiental, registros mensuales de consumo de agua y luz, planillas de trampa de grasas y recibos de gestor autorizado de aceite usado.',
     estado: 'Por hacer',
-    responsable: 'Líder Ambiental / Gerencia',
+    responsable: 'Gerente / Operario de pelado / Operario de frito',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Actividades ambientales programadas dentro del Plan Anual.',
   },

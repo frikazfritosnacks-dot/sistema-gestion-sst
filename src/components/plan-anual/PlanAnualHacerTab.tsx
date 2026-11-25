@@ -174,7 +174,8 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   }, [plan.actividades, filtroEstadoEv]);
 
   const handleNuevoTrabajador = () => {
-    const defCargo = cargos[2] || cargos[0];
+    const defCargo =
+      cargos.find((c) => c.id === 'cargo-operario-seleccion') || cargos[1] || cargos[0];
     setTrabajadorModal({
       id: `trab-${Date.now()}`,
       estadoLaboral: 'ACTIVO',
@@ -189,7 +190,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
       telefono: '',
       correo: 'frikaz.fritosnacks@gmail.com',
       cargoId: defCargo?.id || 'cargo-operario-seleccion',
-      cargoNombre: defCargo?.nombre || 'Operario de Selección',
+      cargoNombre: defCargo?.nombre || 'Operario de selección',
       areaProceso: defCargo?.areaProceso || 'Planta de Producción',
       actividadPrincipal: '',
       tipoContrato: 'Fijo',

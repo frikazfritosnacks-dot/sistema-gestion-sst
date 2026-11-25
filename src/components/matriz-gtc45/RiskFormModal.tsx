@@ -9,6 +9,12 @@ import {
   calcularInterpretacionNR,
 } from '../../data/gtc45RiskMatrixData';
 import {
+  CARGOS_OFICIALES_NOMBRES,
+  CargoOficialNombre,
+  mapearCargoLegacyAOficiales,
+  resolverCargoPrincipalYExpuestos,
+} from '../../data/cargosOficiales';
+import {
   X,
   Save,
   AlertTriangle,
@@ -84,10 +90,14 @@ export function RiskFormModal({
   // Sync when initialData changes - Loads all existing values for easy editing
   useEffect(() => {
     if (initialData) {
+      const resuelto = resolverCargoPrincipalYExpuestos(
+        initialData.cargo,
+        initialData.cargosExpuestos
+      );
       setFormData({
         ...initialData,
-        cargo: initialData.cargo || initialData.cargosExpuestos || '',
-        cargosExpuestos: initialData.cargosExpuestos || initialData.cargo || '',
+        cargo: resuelto.cargo,
+        cargosExpuestos: resuelto.cargosExpuestos,
       });
     } else {
       setFormData({
@@ -97,8 +107,8 @@ export function RiskFormModal({
         zonaLugar: existingAreas[0] || 'Área de producción',
         actividades: '',
         tareas: '',
-        cargo: 'Operario',
-        cargosExpuestos: 'Operario',
+        cargo: 'Operario de frito',
+        cargosExpuestos: 'Operario de frito',
         rutinario: 'SÍ',
         peligroDescripcion: '',
         peligroClasificacion: 'Condiciones de Seguridad',
@@ -162,7 +172,8 @@ export function RiskFormModal({
     const normalizar = (val?: string) =>
       val && val.trim().length > 0 ? val.trim() : 'Sin información registrada';
 
-    const cargoLimpio = formData.cargo?.trim() || formData.cargosExpuestos?.trim() || 'Operario';
+    const resuelto = resolverCargoPrincipalYExpuestos(formData.cargo, formData.cargosExpuestos);
+    const cargoLimpio = resuelto.cargo;
 
     const estadoSolicitado = normalizarEstadoEstandar(formData.estadoControl || 'Por hacer');
     const estadoPrevio = normalizarEstadoEstandar(initialData?.estadoControl || 'Por hacer');
@@ -192,7 +203,7 @@ export function RiskFormModal({
       actividades: normalizar(formData.actividades),
       tareas: normalizar(formData.tareas),
       cargo: cargoLimpio,
-      cargosExpuestos: formData.cargosExpuestos?.trim() || cargoLimpio,
+      cargosExpuestos: resuelto.cargosExpuestos,
       rutinario: formData.rutinario || 'SÍ',
       peligroDescripcion: normalizar(formData.peligroDescripcion),
       peligroClasificacion: formData.peligroClasificacion || 'Condiciones de Seguridad',
@@ -344,32 +355,82 @@ export function RiskFormModal({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Puesto de Trabajo (Cargo) Principal *
+                    Cargo Oficial Principal (Equipo SST) *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    value={formData.cargo || ''}
-                    onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                    placeholder="Ej. Operario de Fritura y Cocción, Empacador..."
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                  />
+                    value={formData.cargo || 'Operario de frito'}
+                    onChange={(e) => {
+                      const nuevoCargo = e.target.value as CargoOficialNombre;
+                      const actuales = mapearCargoLegacyAOficiales(formData.cargosExpuestos);
+                      const combinados = CARGOS_OFICIALES_NOMBRES.filter(
+                        (c) => c === nuevoCargo || actuales.includes(c)
+                      );
+                      setFormData({
+                        ...formData,
+                        cargo: nuevoCargo,
+                        cargosExpuestos: combinados.join(', '),
+                      });
+                    }}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    {CARGOS_OFICIALES_NOMBRES.map((cargoOficial) => (
+                      <option key={cargoOficial} value={cargoOficial}>
+                        {cargoOficial}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Vinculado exclusivamente a los 6 cargos de «1. Equipo y responsabilidades en SST».
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Todos los Cargos Expuestos a este Peligro
+                    Cargos Oficiales Expuestos a este Peligro
                   </label>
-                  <input
-                    type="text"
-                    value={formData.cargosExpuestos || ''}
-                    onChange={(e) => setFormData({ ...formData, cargosExpuestos: e.target.value })}
-                    placeholder="Ej. Operario de Fritura, Auxiliar de Planta, Empacador..."
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                  />
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    Puedes separar varios cargos por coma si aplica a más de uno.
-                  </p>
+                  <div className="grid grid-cols-2 gap-1.5 bg-slate-950 border border-slate-700 rounded-lg p-2.5">
+                    {CARGOS_OFICIALES_NOMBRES.map((cargoOficial) => {
+                      const seleccionados = mapearCargoLegacyAOficiales(formData.cargosExpuestos);
+                      const checked =
+                        cargoOficial === formData.cargo || seleccionados.includes(cargoOficial);
+                      const esPrincipal = cargoOficial === formData.cargo;
+                      return (
+                        <label
+                          key={cargoOficial}
+                          className={`flex items-center gap-2 text-xs px-2 py-1 rounded border transition-colors ${
+                            checked
+                              ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
+                              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                          } ${esPrincipal ? 'cursor-default' : 'cursor-pointer'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={esPrincipal}
+                            onChange={(e) => {
+                              const base = new Set(mapearCargoLegacyAOficiales(formData.cargosExpuestos));
+                              if (formData.cargo) {
+                                mapearCargoLegacyAOficiales(formData.cargo).forEach((c) => base.add(c));
+                              }
+                              if (e.target.checked) {
+                                base.add(cargoOficial);
+                              } else if (!esPrincipal) {
+                                base.delete(cargoOficial);
+                              }
+                              const ordenados = CARGOS_OFICIALES_NOMBRES.filter((c) => base.has(c));
+                              setFormData({
+                                ...formData,
+                                cargosExpuestos: ordenados.join(', '),
+                              });
+                            }}
+                            className="accent-emerald-500"
+                          />
+                          <span className="truncate">{cargoOficial}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="sm:col-span-2">

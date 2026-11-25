@@ -19,6 +19,8 @@ export interface CargoSST {
   responsabilidades: string[];
   compromisos: string[];
   ordenNivel: number;
+  titularReferencia?: string;
+  funcionesSstDesignadas?: string[];
 }
 
 export interface CompromisoPolitica {

@@ -5,6 +5,11 @@ import {
   exportarResponsabilidadesWord,
 } from '../../services/organigramaService';
 import { useGerenteAutorizado } from '../../services/gerenteControlService';
+import { loadStoredRisks } from '../../services/riskMatrixStorage';
+import { getCaracterizacionActual } from '../../services/dynamicRulesEngine';
+import { loadSgsstData } from '../../services/planAnualSgsstService';
+import { loadPlanesMejoraEmergenciasStore } from '../../services/planMejoraEmergenciasService';
+import { coincideConCargoOficial } from '../../data/cargosOficiales';
 import {
   Crown,
   ShieldCheck,
@@ -92,19 +97,45 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
     }
   };
 
-  // Agrupación jerárquica canónica (3 niveles)
+  // Agrupación jerárquica canónica (1 cargo directivo + 5 cargos operativos = 6 cargos oficiales)
   const nivel1AltaDireccion = useMemo(
     () => cargos.filter((c) => c.nivelJerarquico === 'ALTA_DIRECCION'),
-    [cargos]
-  );
-  const nivel2Responsable = useMemo(
-    () => cargos.filter((c) => c.nivelJerarquico === 'RESPONSABLE_SST'),
     [cargos]
   );
   const nivel3Operativo = useMemo(
     () => cargos.filter((c) => c.nivelJerarquico === 'NIVEL_OPERATIVO'),
     [cargos]
   );
+
+  // Vinculación transversal en vivo por cada cargo oficial
+  const resumenVinculacionPorCargo = useMemo(() => {
+    const riesgos = loadStoredRisks();
+    const sgsst = loadSgsstData(getCaracterizacionActual(), riesgos);
+    const planesStore = loadPlanesMejoraEmergenciasStore(riesgos);
+
+    const map = new Map<
+      string,
+      { trabajadores: number; riesgos: number; planesMejora: number }
+    >();
+    cargos.forEach((cargo) => {
+      const trabajadores = (sgsst.trabajadores || []).filter(
+        (t) => t.cargoId === cargo.id || coincideConCargoOficial(cargo.nombre, t.cargoNombre)
+      ).length;
+      const riesgosCount = riesgos.filter((r) =>
+        coincideConCargoOficial(cargo.nombre, r.cargo, r.cargosExpuestos)
+      ).length;
+      const planesCount = (planesStore.planesPorRiesgo || []).filter((p) =>
+        coincideConCargoOficial(cargo.nombre, p.cargoMatriz)
+      ).length;
+
+      map.set(cargo.id, {
+        trabajadores,
+        riesgos: riesgosCount,
+        planesMejora: planesCount,
+      });
+    });
+    return map;
+  }, [cargos]);
 
   // Selección de cargo y apertura de panel lateral interactivo
   const handleSeleccionarCargo = (cargo: CargoSST) => {
@@ -178,7 +209,7 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
 
           <div className="bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-300 flex items-center gap-1.5 font-mono">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>7 Cargos en Planta y Ruta</span>
+            <span>{cargos.length} Cargos Oficiales en Planta y Ruta</span>
           </div>
         </div>
       </div>
@@ -301,15 +332,33 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
                         </div>
 
                         <div className="flex-1">
-                          <h3 className="text-lg font-black text-white group-hover:text-purple-200 transition-colors">
-                            {cargo.nombre}
-                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-lg font-black text-white group-hover:text-purple-200 transition-colors">
+                              {cargo.nombre}
+                            </h3>
+                            {cargo.titularReferencia && (
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/30">
+                                {cargo.titularReferencia}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-300 mt-1 leading-snug">
                             {cargo.areaProceso}
                           </p>
-                          <span className="inline-block mt-2 text-[10px] text-purple-300/90 font-mono bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800/60">
-                            {cargo.responsabilidades.length} responsabilidades asignadas
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                            <span className="inline-block text-[10px] text-purple-300/90 font-mono bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800/60">
+                              {cargo.responsabilidades.length} responsabilidades
+                            </span>
+                            {(() => {
+                              const stats = resumenVinculacionPorCargo.get(cargo.id);
+                              if (!stats) return null;
+                              return (
+                                <span className="inline-block text-[10px] text-emerald-300/90 font-mono bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/60">
+                                  {stats.riesgos} riesgos · {stats.trabajadores} titular
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
 
@@ -341,100 +390,28 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
                   );
                 })}
 
-                {/* CONECTOR VERTICAL PRINCIPAL DE NIVEL 1 A NIVEL 2 */}
+                {/* CONECTOR VERTICAL PRINCIPAL Y FUNCIONES TRANSVERSALES SST */}
                 <div className="relative w-full flex flex-col items-center my-1">
-                  <div className="w-1 h-10 bg-gradient-to-b from-purple-500 to-emerald-500 rounded-full" />
-                  <div className="h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 shadow-md flex items-center justify-center -mt-2">
-                    <ArrowDown className="h-2.5 w-2.5 text-slate-950 stroke-[3]" />
+                  <div className="w-1 h-7 bg-gradient-to-b from-purple-500 to-emerald-500 rounded-full" />
+                  <div className="px-4 py-2 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 text-center max-w-2xl shadow-lg">
+                    <div className="text-[11px] font-black uppercase tracking-wider text-emerald-300 flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>Funciones transversales SST asignadas dentro de los 6 cargos oficiales</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      Vigía de SST, apoyo operativo SG-SST, gestión ambiental (ACU) y respuesta ante emergencias se desempeñan como funciones designadas sobre estos 6 cargos (sin crear cargos adicionales).
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* ===================================================== */}
-              {/* SEGUNDO NIVEL – RESPONSABLE DEL SG-SST                */}
+              {/* CONECTOR DISTRIBUIDOR HACIA LOS 5 CARGOS OPERATIVOS   */}
               {/* ===================================================== */}
               <div className="flex flex-col items-center w-full">
-                <div className="mb-3">
-                  <span className="px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase bg-gradient-to-r from-emerald-500/20 via-emerald-500/30 to-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-lg shadow-emerald-950/50 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                    <span>SEGUNDO NIVEL – RESPONSABLE DEL SG-SST</span>
-                  </span>
-                </div>
-
-                {nivel2Responsable.map((cargo) => {
-                  const isSelected = cargoSeleccionado?.id === cargo.id;
-                  return (
-                    <div
-                      key={cargo.id}
-                      onClick={() => handleSeleccionarCargo(cargo)}
-                      className={`group relative cursor-pointer w-88 rounded-3xl p-5 bg-gradient-to-b from-slate-900/95 via-emerald-950/30 to-slate-950/95 border-2 transition-all duration-300 backdrop-blur-md shadow-xl ${
-                        isSelected
-                          ? 'border-emerald-400 ring-4 ring-emerald-500/30 shadow-emerald-500/30 scale-[1.02]'
-                          : 'border-emerald-500/50 hover:border-emerald-400 hover:shadow-2xl hover:shadow-emerald-500/25 hover:-translate-y-2'
-                      }`}
-                    >
-                      {/* Indicador de Selección Superior */}
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono uppercase font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          {cargo.nivelNombre}
-                        </span>
-                        <span className="text-[10px] text-emerald-300/80 font-bold flex items-center gap-1 group-hover:text-emerald-200 transition-colors">
-                          <span>Ver responsabilidades</span>
-                          <ChevronRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      </div>
-
-                      {/* Cuerpo de la Tarjeta */}
-                      <div className="flex items-start gap-4">
-                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-teal-600/30 text-emerald-300 border border-emerald-400/40 shadow-inner group-hover:scale-110 transition-transform">
-                          {renderIconoCargo(cargo.icono, 'h-7 w-7 text-emerald-300')}
-                        </div>
-
-                        <div className="flex-1">
-                          <h3 className="text-lg font-black text-white group-hover:text-emerald-200 transition-colors">
-                            {cargo.nombre}
-                          </h3>
-                          <p className="text-xs text-slate-300 mt-1 leading-snug">
-                            {cargo.areaProceso}
-                          </p>
-                          <span className="inline-block mt-2 text-[10px] text-emerald-300/90 font-mono bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
-                            {cargo.responsabilidades.length} responsabilidades técnicas
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Botones de acción directa integrados */}
-                      <div className="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSeleccionarCargo(cargo);
-                          }}
-                          className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 text-xs font-bold transition-all border border-emerald-500/40 flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <Eye className="h-3.5 w-3.5 text-emerald-300" />
-                          <span>Ver ficha</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => handleAbrirModalEnvio(cargo, e)}
-                          className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-emerald-900/40 text-emerald-200 text-xs font-bold transition-all border border-emerald-500/30 flex items-center gap-1.5 cursor-pointer"
-                          title="Enviar responsabilidades por correo electrónico"
-                        >
-                          <Mail className="h-3.5 w-3.5 text-emerald-300" />
-                          <span>Enviar</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* CONECTOR DISTRIBUIDOR DE NIVEL 2 HACIA NIVEL 3 */}
                 <div className="relative w-full flex flex-col items-center my-1">
                   {/* Bajante vertical */}
-                  <div className="w-1 h-8 bg-gradient-to-b from-emerald-500 to-cyan-500" />
+                  <div className="w-1 h-6 bg-gradient-to-b from-emerald-500 to-cyan-500" />
                   {/* Nodo central */}
                   <div className="h-4 w-4 rounded-full bg-cyan-400 ring-4 ring-slate-950 shadow-md flex items-center justify-center -mt-2 z-10">
                     <ArrowDown className="h-2.5 w-2.5 text-slate-950 stroke-[3]" />
@@ -453,13 +430,13 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
               </div>
 
               {/* ===================================================== */}
-              {/* TERCER NIVEL – NIVEL OPERATIVO (5 CARGOS)             */}
+              {/* SEGUNDO NIVEL – EQUIPO OPERATIVO (5 CARGOS)           */}
               {/* ===================================================== */}
               <div className="w-full">
                 <div className="flex items-center justify-center mb-4">
                   <span className="px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase bg-gradient-to-r from-blue-500/20 via-sky-500/30 to-blue-500/20 text-blue-200 border border-blue-400/40 shadow-lg shadow-blue-950/50 flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-sky-400" />
-                    <span>TERCER NIVEL – NIVEL OPERATIVO (5 CARGOS EN PLANTA Y RUTA)</span>
+                    <span>NIVEL OPERATIVO – {nivel3Operativo.length} CARGOS EN PLANTA Y RUTA</span>
                   </span>
                 </div>
 
@@ -502,6 +479,20 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
                             <p className="text-[11px] text-slate-300 mt-1 line-clamp-2 leading-relaxed">
                               {cargo.areaProceso}
                             </p>
+                            {(() => {
+                              const stats = resumenVinculacionPorCargo.get(cargo.id);
+                              if (!stats) return null;
+                              return (
+                                <div className="mt-2 flex flex-wrap gap-1 text-[10px] font-mono">
+                                  <span className="px-1.5 py-0.5 rounded bg-slate-800/90 text-slate-300 border border-slate-700">
+                                    {stats.trabajadores} trab.
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded bg-sky-950/60 text-sky-300 border border-sky-800/60">
+                                    {stats.riesgos} riesgos
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
 
@@ -581,6 +572,7 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
                   </div>
                   <h3 className="text-xl font-black text-white mt-1">
                     {cargoSeleccionado.nombre}
+                    {cargoSeleccionado.titularReferencia ? ` · ${cargoSeleccionado.titularReferencia}` : ''}
                   </h3>
                   <p className="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5">
                     <Briefcase className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
@@ -601,6 +593,47 @@ export const OrganigramaInteractivoView: React.FC<OrganigramaInteractivoViewProp
 
             {/* Contenido del Panel - Scrollable */}
             <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+              {/* Vinculación SG-SST del Cargo Oficial */}
+              {(() => {
+                const stats = resumenVinculacionPorCargo.get(cargoSeleccionado.id);
+                if (!stats) return null;
+                return (
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Trabajadores</p>
+                      <p className="text-lg font-black text-white mt-0.5">{stats.trabajadores}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Peligros GTC 45</p>
+                      <p className="text-lg font-black text-sky-300 mt-0.5">{stats.riesgos}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Planes de mejora</p>
+                      <p className="text-lg font-black text-emerald-300 mt-0.5">{stats.planesMejora}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Funciones transversales SST designadas sobre este cargo */}
+              {cargoSeleccionado.funcionesSstDesignadas && cargoSeleccionado.funcionesSstDesignadas.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                    Funciones SST y asignaciones transversales vinculadas a este cargo
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {cargoSeleccionado.funcionesSstDesignadas.map((fn) => (
+                      <span
+                        key={fn}
+                        className="px-2.5 py-1 rounded-lg bg-slate-950/70 border border-emerald-500/25 text-[11px] text-emerald-100"
+                      >
+                        {fn}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Propósito del Puesto en SST */}
               <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs text-slate-300 leading-relaxed flex items-start gap-3 shadow-inner">
                 <Info className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />

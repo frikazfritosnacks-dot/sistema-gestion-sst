@@ -7,6 +7,10 @@ import {
   evaluarCompletitudTrabajador,
 } from '../../services/planAnualSgsstService';
 import {
+  obtenerIdCargoOficial,
+  obtenerNombreCargoOficial,
+} from '../../data/cargosOficiales';
+import {
   X,
   Save,
   User,
@@ -50,11 +54,19 @@ export const PlanAnualTrabajadorModal: React.FC<PlanAnualTrabajadorModalProps> =
 
   useEffect(() => {
     if (isOpen && trabajador) {
-      setForm({ ...trabajador });
+      const oficialId = obtenerIdCargoOficial(trabajador.cargoId || trabajador.cargoNombre);
+      const oficialNombre = obtenerNombreCargoOficial(oficialId);
+      const cargoObj = cargos.find((c) => c.id === oficialId);
+      setForm({
+        ...trabajador,
+        cargoId: oficialId,
+        cargoNombre: cargoObj?.nombre || oficialNombre,
+        areaProceso: cargoObj?.areaProceso || trabajador.areaProceso,
+      });
       setSeccion('laboral');
       setErrorMsg(null);
     }
-  }, [isOpen, trabajador]);
+  }, [isOpen, trabajador, cargos]);
 
   const riesgosDelCargo = useMemo(() => {
     if (!form) return [];

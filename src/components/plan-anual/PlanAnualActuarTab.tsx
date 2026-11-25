@@ -87,7 +87,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
     situacionEncontrada: '',
     queSeNecesitaCorregir: '',
     actividadARealizar: '',
-    responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+    responsable: responsables[0]?.nombre || 'Gerente',
     fechaInicio: new Date().toISOString().split('T')[0],
     fechaLimite: new Date(Date.now() + 20 * 86400000).toISOString().split('T')[0],
     evidenciaNecesaria: 'Foto del ajuste terminado, acta firmada o factura.',
@@ -107,7 +107,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
     esConfidencialMedica: false,
     riesgoId: '',
     estandarNumero: '' as string,
-    responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+    responsable: responsables[0]?.nombre || 'Gerente',
   });
 
   // Controles por acción (historial, devolución, evidencia)
@@ -133,7 +133,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
         situacionEncontrada: presetAccion.situacionEncontrada,
         queSeNecesitaCorregir: presetAccion.queSeNecesitaCorregir,
         actividadARealizar: presetAccion.actividadARealizar,
-        responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+        responsable: responsables[0]?.nombre || 'Gerente',
         fechaInicio: new Date().toISOString().split('T')[0],
         fechaLimite: new Date(Date.now() + 20 * 86400000).toISOString().split('T')[0],
         evidenciaNecesaria: 'Foto del ajuste terminado, acta firmada o certificado.',
@@ -289,7 +289,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                 situacionEncontrada: '',
                 queSeNecesitaCorregir: '',
                 actividadARealizar: '',
-                responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+                responsable: responsables[0]?.nombre || 'Gerente',
                 fechaInicio: new Date().toISOString().split('T')[0],
                 fechaLimite: new Date(Date.now() + 20 * 86400000).toISOString().split('T')[0],
                 evidenciaNecesaria: 'Foto del ajuste terminado, acta firmada o factura.',
@@ -422,7 +422,7 @@ export const PlanAnualActuarTab: React.FC<PlanAnualActuarTabProps> = ({
                   esConfidencialMedica: false,
                   riesgoId: '',
                   estandarNumero: '',
-                  responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+                  responsable: responsables[0]?.nombre || 'Gerente',
                 });
               }}
               className="rounded-2xl border border-orange-300 bg-orange-50/40 p-4 space-y-3"

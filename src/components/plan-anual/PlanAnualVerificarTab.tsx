@@ -154,7 +154,7 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
     reglaConteo: '',
     fuenteInformacion: '',
     periodicidad: 'MENSUAL' as HojaVidaIndicadorSST['periodicidad'],
-    responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+    responsable: responsables[0]?.nombre || 'Gerente',
     interpretacionBase: 'Resultado del periodo medido.',
   });
 
@@ -288,7 +288,7 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
       reglaConteo: '',
       fuenteInformacion: '',
       periodicidad: 'MENSUAL',
-      responsable: responsables[0]?.nombre || 'Coordinador / Vigía de SST',
+      responsable: responsables[0]?.nombre || 'Gerente',
       interpretacionBase: 'Resultado del periodo medido.',
     });
   };

@@ -39,9 +39,12 @@ import {
   crearPlanesMejoraSeed,
 } from './planMejoraEmergenciasData';
 import { extraerMedidasRiesgo } from './planAnualService';
+import { resolverCargoPrincipalYExpuestos } from '../data/cargosOficiales';
 
 const STORAGE_KEY_MEJORA_EMERGENCIAS = 'frikaz_planes_mejora_emergencias_v1';
+const STORAGE_KEY_MEJORA_BACKUP_CARGOS = 'frikaz_mejora_emg_backup_pre6cargos_v1';
 const REORG_2027_FLAG_MEJORA = 'frikaz_mejora_emg_2027_reorg_v1';
+const CARGOS_6_FLAG_MEJORA = 'frikaz_mejora_emg_6_cargos_v1';
 
 // ============================================================================
 // 1. PERSISTENCIA Y SINCRONIZACIÓN CON LA MATRIZ DE RIESGOS GTC 45
@@ -125,7 +128,7 @@ export function loadPlanesMejoraEmergenciasStore(
             {
               id: `hp-reorg2027-${p.id}`,
               fecha: '2026-11-23',
-              usuario: 'Coordinador / Vigía de SST',
+              usuario: 'Gerente',
               accion: 'Reprogramado de 2026 a 2027',
               detalle: `Sin ejecución confirmada a noviembre de 2026 (${p.fechaInicio} → ${p.fechaFin}); reprogramado al calendario 2027 (${nuevaInicio} → ${nuevaFin}).`,
             },
@@ -162,6 +165,105 @@ export function loadPlanesMejoraEmergenciasStore(
       };
 
       localStorage.setItem(REORG_2027_FLAG_MEJORA, '1');
+    }
+
+    if (!localStorage.getItem(CARGOS_6_FLAG_MEJORA)) {
+      if (!localStorage.getItem(STORAGE_KEY_MEJORA_BACKUP_CARGOS)) {
+        localStorage.setItem(STORAGE_KEY_MEJORA_BACKUP_CARGOS, raw);
+      }
+      const seedPlanByRef = new Map(planesSeed.map((s) => [s.claveReferencia, s]));
+      const riskById = new Map(riesgos.map((r) => [r.id, r]));
+      mergedPlanes = mergedPlanes.map((p) => {
+        const seedPlan = seedPlanByRef.get(p.claveReferencia);
+        const risk = riskById.get(p.riesgoId);
+        const { cargoPrincipal, cargosOficiales } = resolverCargoPrincipalYExpuestos(
+          risk?.cargo || p.cargoMatriz,
+          risk?.cargosExpuestos
+        );
+        const nuevoCargoMatriz = cargosOficiales.join(', ');
+        const respNorm =
+          p.responsable &&
+          !p.responsable.toLowerCase().includes('coordinador') &&
+          !p.responsable.toLowerCase().includes('vigía') &&
+          !p.responsable.toLowerCase().includes('vigia') &&
+          !p.responsable.toLowerCase().includes('fritura') &&
+          !p.responsable.toLowerCase().includes('maquinaria') &&
+          !p.responsable.toLowerCase().includes('mantenimiento') &&
+          !p.responsable.toLowerCase().includes('repartidor') &&
+          !p.responsable.toLowerCase().includes('auxiliar')
+            ? resolverCargoPrincipalYExpuestos(p.responsable).cargoPrincipal
+            : seedPlan?.responsable || cargoPrincipal;
+
+        return {
+          ...p,
+          cargoMatriz: nuevoCargoMatriz,
+          responsable: respNorm,
+          riesgoSnapshot: {
+            ...p.riesgoSnapshot,
+            cargo: nuevoCargoMatriz,
+          },
+          capacitacion:
+            seedPlan &&
+            (!p.capacitacion.observaciones || p.capacitacion.observaciones.trim() === '')
+              ? {
+                  ...p.capacitacion,
+                  objetivo: seedPlan.capacitacion.objetivo,
+                }
+              : p.capacitacion,
+        };
+      });
+
+      const emgSeedActMap = new Map(
+        emergenciasSeed.programaCapacitacionSimulacros.map((a) => [a.id, a])
+      );
+      mergedEmergencias = {
+        ...mergedEmergencias,
+        identificacionEmpresa: {
+          ...mergedEmergencias.identificacionEmpresa,
+          numeroTrabajadores: emergenciasSeed.identificacionEmpresa.numeroTrabajadores,
+        },
+        alcance: emergenciasSeed.alcance,
+        descripcionActividadesFrikaz: emergenciasSeed.descripcionActividadesFrikaz,
+        organizacionEmergencias:
+          mergedEmergencias.organizacionEmergencias.map((org, idx) => {
+            const seedOrg = emergenciasSeed.organizacionEmergencias[idx];
+            if (!seedOrg) return org;
+            const sinAsignar =
+              !org.responsablePrincipal ||
+              org.responsablePrincipal.toLowerCase().includes('pendiente');
+            return {
+              ...org,
+              rol: seedOrg.rol,
+              responsablePrincipal: sinAsignar
+                ? seedOrg.responsablePrincipal
+                : org.responsablePrincipal,
+              suplente:
+                !org.suplente || org.suplente.toLowerCase().includes('pendiente')
+                  ? seedOrg.suplente
+                  : org.suplente,
+            };
+          }),
+        programaCapacitacionSimulacros: (
+          mergedEmergencias.programaCapacitacionSimulacros || []
+        ).map((act) => {
+          const sAct = emgSeedActMap.get(act.id);
+          return sAct
+            ? {
+                ...act,
+                titulo: sAct.titulo,
+                responsable: sAct.responsable,
+                participantesEsperados: sAct.participantesEsperados,
+              }
+            : act;
+        }),
+        inspeccionEquiposPrograma: {
+          ...mergedEmergencias.inspeccionEquiposPrograma,
+          responsable: emergenciasSeed.inspeccionEquiposPrograma.responsable,
+        },
+      };
+
+      localStorage.setItem(CARGOS_6_FLAG_MEJORA, '1');
+      dirty = true;
     }
 
     const result: PlanesMejoraYEmergenciasStore = {
@@ -246,7 +348,10 @@ export function detectarCambiosMatrizEnPlan(
   if (medidasActuales.trim() !== plan.riesgoSnapshot.medidasResumen.trim()) {
     cambios.push('Se actualizaron las medidas de prevención o control en la matriz.');
   }
-  const cargoActual = actual.cargo || actual.cargosExpuestos || '';
+  const cargoActual = resolverCargoPrincipalYExpuestos(
+    actual.cargo,
+    actual.cargosExpuestos
+  ).cargosOficiales.join(', ');
   if (cargoActual.trim() !== plan.riesgoSnapshot.cargo.trim()) {
     cambios.push(`Cambió el cargo expuesto a "${cargoActual}".`);
   }

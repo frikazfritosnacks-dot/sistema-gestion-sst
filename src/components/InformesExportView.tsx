@@ -416,13 +416,13 @@ export const InformesExportView: React.FC<InformesExportViewProps> = ({
 
               <div className="border-t border-slate-400 pt-2">
                 <p className="font-bold text-slate-900">RESPONSABLE SG-SST</p>
-                <p className="text-slate-600">Líder SST Certificado (50h)</p>
-                <p className="text-slate-500">Licencia en SST MinTrabajo</p>
+                <p className="text-slate-600">Gerente (Curso 50h SG-SST)</p>
+                <p className="text-slate-500">Andrea Orjuela – Gerente</p>
               </div>
 
               <div className="border-t border-slate-400 pt-2">
-                <p className="font-bold text-slate-900">COORDINADOR AMBIENTAL</p>
-                <p className="text-slate-600">Gestión Ambiental y ACU</p>
+                <p className="font-bold text-slate-900">VIGÍA SST Y APOYO OPERATIVO</p>
+                <p className="text-slate-600">Operario de selección / Operario de frito</p>
                 <p className="text-slate-500">Sede Bosa Piamonte</p>
               </div>
             </div>

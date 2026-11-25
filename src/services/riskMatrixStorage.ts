@@ -5,15 +5,63 @@ import {
 } from '../types/gtc45RiskMatrix';
 import { RIESGOS_GTC45_DATASET } from '../data/gtc45RiskMatrixData';
 import { normalizarEstadoEstandar } from './gerenteControlService';
+import {
+  CARGOS_OFICIALES_NOMBRES,
+  normalizarTextoCargo,
+  resolverCargoPrincipalYExpuestos,
+} from '../data/cargosOficiales';
 
 const STORAGE_KEY = 'frikaz_gtc45_matrix_v2';
+const STORAGE_KEY_BACKUP = 'frikaz_gtc45_backup_pre6cargos_v1';
 const PLAIN_LANG_FLAG = 'frikaz_gtc45_plain_lang_v1';
 const GERENTE_GATE_RISKS_FLAG = 'frikaz_gtc45_gerente_gate_v1';
+const CARGOS_6_RISKS_FLAG = 'frikaz_gtc45_6_cargos_v1';
+
+const ES_CARGO_OFICIAL_EXACTO = (valor?: string) => {
+  if (!valor) return false;
+  const norm = normalizarTextoCargo(valor);
+  return CARGOS_OFICIALES_NOMBRES.some((c) => normalizarTextoCargo(c) === norm);
+};
+
+function normalizarCargosRiesgo(
+  item: RiesgoGTC45Item,
+  canon?: RiesgoGTC45Item
+): { cargo: string; cargosExpuestos: string; observaciones?: string } {
+  const todosExpuestosValidos = (item.cargosExpuestos || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .every((s) => ES_CARGO_OFICIAL_EXACTO(s));
+
+  if (ES_CARGO_OFICIAL_EXACTO(item.cargo) && item.cargosExpuestos && todosExpuestosValidos) {
+    return {
+      cargo: resolverCargoPrincipalYExpuestos(item.cargo, item.cargosExpuestos).cargo,
+      cargosExpuestos: resolverCargoPrincipalYExpuestos(item.cargo, item.cargosExpuestos)
+        .cargosExpuestos,
+      observaciones: item.observaciones,
+    };
+  }
+
+  if (canon) {
+    return {
+      cargo: canon.cargo || 'Operario de selección',
+      cargosExpuestos: canon.cargosExpuestos || canon.cargo || 'Operario de selección',
+      observaciones: canon.observaciones || item.observaciones,
+    };
+  }
+
+  const res = resolverCargoPrincipalYExpuestos(item.cargo, item.cargosExpuestos);
+  return {
+    cargo: res.cargo,
+    cargosExpuestos: res.cargosExpuestos,
+    observaciones: item.observaciones,
+  };
+}
 
 /**
  * Loads risks from localStorage or falls back to the canonical GTC 45 dataset.
- * Automatically backfills cargo / cargosExpuestos and refreshes canonical plain-Spanish copy once
- * while preserving user-added risks and customized numerical evaluations.
+ * Automatically backfills cargo / cargosExpuestos strictly to the 6 official cargos
+ * while preserving user-added risks, customized numerical evaluations, and Gerente approvals.
  */
 export function loadStoredRisks(): RiesgoGTC45Item[] {
   try {
@@ -23,10 +71,18 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
       if (Array.isArray(parsed) && parsed.length > 0) {
         const canonicalMap = new Map(RIESGOS_GTC45_DATASET.map((r) => [r.id, r]));
         const needsPlainRefresh = !localStorage.getItem(PLAIN_LANG_FLAG);
+        const needsCargos6Migration = localStorage.getItem(CARGOS_6_RISKS_FLAG) !== '1';
+
+        if (needsCargos6Migration && !localStorage.getItem(STORAGE_KEY_BACKUP)) {
+          localStorage.setItem(STORAGE_KEY_BACKUP, raw);
+        }
+
         const merged = parsed.map((item: RiesgoGTC45Item) => {
           const canon = canonicalMap.get(item.id);
+          let nextItem = item;
+
           if (canon && needsPlainRefresh) {
-            return {
+            nextItem = {
               ...canon,
               ...item,
               actividades: canon.actividades,
@@ -44,19 +100,22 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
               medidaControlesAdministrativos: canon.medidaControlesAdministrativos,
               medidaEquiposEPP: canon.medidaEquiposEPP,
               observaciones: canon.observaciones,
-              cargo: item.cargo || canon.cargo || 'Operario',
-              cargosExpuestos: item.cargosExpuestos || canon.cargosExpuestos || canon.cargo || 'Operario',
             };
           }
-          if (canon && (!item.cargo || !item.cargosExpuestos)) {
-            return {
-              ...item,
-              cargo: item.cargo || canon.cargo || 'Operario',
-              cargosExpuestos: item.cargosExpuestos || canon.cargosExpuestos || canon.cargo || 'Operario',
+
+          if (needsCargos6Migration || !ES_CARGO_OFICIAL_EXACTO(nextItem.cargo)) {
+            const cargosNorm = normalizarCargosRiesgo(nextItem, canon);
+            nextItem = {
+              ...nextItem,
+              cargo: cargosNorm.cargo,
+              cargosExpuestos: cargosNorm.cargosExpuestos,
+              observaciones: cargosNorm.observaciones,
             };
           }
-          return item;
+
+          return nextItem;
         });
+
         const needsGateMigration = !localStorage.getItem(GERENTE_GATE_RISKS_FLAG);
         const sanitized = needsGateMigration
           ? merged.map((item: RiesgoGTC45Item) => {
@@ -71,11 +130,12 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
               estadoControl: normalizarEstadoEstandar(item.estadoControl || 'Por hacer'),
             }));
 
-        if (needsPlainRefresh || needsGateMigration) {
+        if (needsPlainRefresh || needsGateMigration || needsCargos6Migration) {
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
             if (needsPlainRefresh) localStorage.setItem(PLAIN_LANG_FLAG, '1');
             if (needsGateMigration) localStorage.setItem(GERENTE_GATE_RISKS_FLAG, '1');
+            if (needsCargos6Migration) localStorage.setItem(CARGOS_6_RISKS_FLAG, '1');
           } catch {
             // ignore quota errors
           }

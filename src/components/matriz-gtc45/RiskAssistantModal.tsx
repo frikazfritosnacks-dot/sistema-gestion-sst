@@ -19,6 +19,7 @@ import {
   esGerenteAutorizado,
   normalizarEstadoEstandar,
 } from '../../services/gerenteControlService';
+import { coincideConCargoOficial } from '../../data/cargosOficiales';
 
 interface RiskAssistantModalProps {
   isOpen: boolean;
@@ -66,8 +67,8 @@ export function RiskAssistantModal({
       texto:
         `¡Hola! Soy el asistente de seguridad de Frikaz S.A.S. Te hablo en palabras claras y consulto los datos reales que están guardados hoy en la herramienta.\n\n` +
         `Puedes preguntarme por:\n` +
-        `• Tu puesto de trabajo (Fritura, Bodega, Mantenimiento, Aseo, Empaque) o peligros urgentes (Nivel I).\n` +
-        `• Cómo va el Plan Anual y las 4 etapas (1. Planear, 2. Hacer, 3. Verificar, 4. Actuar).\n` +
+        `• Cualquiera de los 6 cargos oficiales (Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque, Conductor) o peligros urgentes (Nivel I).\n` +
+        `• Cómo va el Plan Anual 2027 y el ciclo PHVA (1. Planear, 2. Hacer, 3. Verificar, 4. Actuar).\n` +
         `• Qué significan los 6 estados y qué aprueba Gerencia.\n` +
         `• Cómo van los indicadores (Res. 0312), los documentos firmados y la Política SST.`,
     },
@@ -82,7 +83,7 @@ export function RiskAssistantModal({
     const anios = Object.keys(vigencias)
       .map(Number)
       .sort((a, b) => b - a);
-    const anioActivo = anios.includes(2026) ? 2026 : anios[0];
+    const anioActivo = anios.includes(2027) ? 2027 : anios[0];
     const planActivo = anioActivo ? vigencias[anioActivo] : undefined;
     const sgsst = loadSgsstData(config, dataset);
     const checklist = getStoredChecklistItems();
@@ -256,84 +257,67 @@ export function RiskAssistantModal({
     ) {
       relacionados = dataset.filter((r) => r.interpretacionNR === 'I');
       respuesta = `Hay ${relacionados.length} peligro(s) en Nivel I (Urgentes / No Aceptables). Según la guía GTC 45, estos requieren parar la tarea si no es segura y corregirlos de inmediato para protegerte:`;
+    } else if (q.includes('gerente') || q.includes('andrea') || q.includes('oficina') || q.includes('administrat')) {
+      relacionados = dataset.filter((r) =>
+        coincideConCargoOficial('Gerente', r.cargo, r.cargosExpuestos)
+      );
+      respuesta = `Para el cargo oficial Gerente (Andrea Orjuela) hay ${relacionados.length} riesgo(s) asociados en la Matriz GTC 45 (supervisión general en planta, atención/recaudo, registro en computador y emergencias):`;
     } else if (
+      q.includes('frito') ||
       q.includes('fritura') ||
       q.includes('coccion') ||
       q.includes('cocción') ||
       q.includes('freidora')
     ) {
-      relacionados = dataset.filter(
-        (r) =>
-          (r.cargo && r.cargo.toLowerCase().includes('fritura')) ||
-          (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('fritura')) ||
-          r.tareas.toLowerCase().includes('freidora') ||
-          r.peligroDescripcion.toLowerCase().includes('calor')
+      relacionados = dataset.filter((r) =>
+        coincideConCargoOficial('Operario de frito', r.cargo, r.cargosExpuestos)
       );
-      respuesta = `Para quien trabaja como Operario de Fritura y Cocción hay ${relacionados.length} peligro(s) clave, sobre todo el aceite caliente a 180 °C (Nivel I) y un posible incendio en la freidora (Nivel II):`;
+      respuesta = `Para el cargo oficial Operario de frito hay ${relacionados.length} peligro(s) registrados, destacando el calor extremo y salpicaduras a 180 °C (Nivel I), fuga de gas y conato de incendio en freidoras:`;
     } else if (
-      q.includes('bodega') ||
-      q.includes('almacen') ||
-      q.includes('almacén') ||
-      q.includes('estibador') ||
-      q.includes('logistica') ||
-      q.includes('logística')
+      q.includes('pelado') ||
+      q.includes('rebanado') ||
+      q.includes('rebanadora') ||
+      q.includes('cuchilla') ||
+      q.includes('mantenimiento')
     ) {
-      relacionados = dataset.filter(
-        (r) =>
-          (r.cargo && r.cargo.toLowerCase().includes('bodega')) ||
-          (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('bodega')) ||
-          r.zonaLugar.toLowerCase().includes('almacenamiento') ||
-          r.peligroDescripcion.toLowerCase().includes('estanterías')
+      relacionados = dataset.filter((r) =>
+        coincideConCargoOficial('Operario de pelado', r.cargo, r.cargosExpuestos)
       );
-      respuesta = `Para Auxiliares de Bodega, Almacenamiento y Logística tenemos ${relacionados.length} peligro(s) identificados, como estanterías sin atornillar al piso (Nivel I), paso de transpaletas y levantamiento de cajas:`;
+      respuesta = `Para el cargo oficial Operario de pelado tenemos ${relacionados.length} peligro(s) identificados (atrapamiento en piezas móviles, ruido de peladora/rebanadora, contacto eléctrico y emergencias). Nota: las reparaciones mecánicas y eléctricas mayores las realiza un proveedor externo.`;
     } else if (
-      q.includes('mantenimiento') ||
-      q.includes('mecanico') ||
-      q.includes('mecánico') ||
-      q.includes('electrico') ||
-      q.includes('eléctrico')
-    ) {
-      relacionados = dataset.filter(
-        (r) =>
-          (r.cargo && r.cargo.toLowerCase().includes('mantenimiento')) ||
-          (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('mantenimiento')) ||
-          r.peligroDescripcion.toLowerCase().includes('eléctr') ||
-          r.peligroDescripcion.toLowerCase().includes('atrapar') ||
-          r.peligroDescripcion.toLowerCase().includes('atrapamiento')
-      );
-      respuesta = `Para el Técnico de Mantenimiento Electromecánico hay ${relacionados.length} peligro(s) muy importantes, principalmente descargas eléctricas en tableros de 220V/440V (Nivel I) y piezas que giran sin tapa protectora:`;
-    } else if (
-      q.includes('aseo') ||
-      q.includes('limpieza') ||
-      q.includes('sanitizacion') ||
-      q.includes('sanitización') ||
-      q.includes('servicios generales')
-    ) {
-      relacionados = dataset.filter(
-        (r) =>
-          (r.cargo && r.cargo.toLowerCase().includes('aseo')) ||
-          (r.cargo && r.cargo.toLowerCase().includes('limpieza')) ||
-          (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('aseo')) ||
-          r.peligroDescripcion.toLowerCase().includes('químic') ||
-          r.peligroDescripcion.toLowerCase().includes('resbal')
-      );
-      respuesta = `Para el equipo de Aseo y Limpieza hay ${relacionados.length} peligro(s) registrados, sobre todo el manejo de químicos fuertes (hipoclorito y desengrasantes) y resbalones en pisos mojados:`;
-    } else if (
-      q.includes('empaque') ||
       q.includes('seleccion') ||
       q.includes('selección') ||
-      q.includes('paletizado')
+      q.includes('aseo') ||
+      q.includes('limpieza') ||
+      q.includes('calidad') ||
+      q.includes('bpm')
     ) {
-      relacionados = dataset.filter(
-        (r) =>
-          (r.cargo && r.cargo.toLowerCase().includes('empaque')) ||
-          (r.cargo && r.cargo.toLowerCase().includes('selección')) ||
-          (r.cargosExpuestos && r.cargosExpuestos.toLowerCase().includes('empaque')) ||
-          r.peligroDescripcion.toLowerCase().includes('repet') ||
-          r.peligroDescripcion.toLowerCase().includes('paletizado') ||
-          r.peligroDescripcion.toLowerCase().includes('cajas')
+      relacionados = dataset.filter((r) =>
+        coincideConCargoOficial('Operario de selección', r.cargo, r.cargosExpuestos)
       );
-      respuesta = `Para Operarios de Selección, Empaque y Paletizado hay ${relacionados.length} peligro(s) identificados, enfocados en movimientos repetitivos de manos/muñecas y levantamiento manual de cajas:`;
+      respuesta = `Para el cargo oficial Operario de selección hay ${relacionados.length} peligro(s) registrados, incluyendo químicos de limpieza, pisos húmedos, movimientos repetitivos en banda e inspección de insumos/estanterías:`;
+    } else if (
+      q.includes('empaque') ||
+      q.includes('paletizado') ||
+      q.includes('cajas') ||
+      q.includes('bodega') ||
+      q.includes('sellado')
+    ) {
+      relacionados = dataset.filter((r) =>
+        coincideConCargoOficial('Operario de empaque', r.cargo, r.cargosExpuestos)
+      );
+      respuesta = `Para el cargo oficial Operario de empaque hay ${relacionados.length} peligro(s) identificados, enfocados en levantamiento y estibado de cajas, arrumes temporales, movimiento de transpaleta y postura repetitiva:`;
+    } else if (
+      q.includes('conductor') ||
+      q.includes('ruta') ||
+      q.includes('vehiculo') ||
+      q.includes('vehículo') ||
+      q.includes('entrega')
+    ) {
+      relacionados = dataset.filter((r) =>
+        coincideConCargoOficial('Conductor', r.cargo, r.cargosExpuestos)
+      );
+      respuesta = `Para el cargo oficial Conductor hay ${relacionados.length} peligro(s) registrados, incluyendo riesgo público en ruta, cargue/descargue de cajas, tránsito en bodega y emergencias:`;
     } else if (
       q.includes('top cargos') ||
       q.includes('mayor riesgo') ||
@@ -343,11 +327,13 @@ export function RiskAssistantModal({
     ) {
       relacionados = dataset.filter((r) => r.interpretacionNR === 'I');
       respuesta =
-        `Los puestos de trabajo que necesitan más cuidado en Frikaz S.A.S. (Niveles I y II) son:\n` +
-        `1. Operario de Fritura y Cocción (aceite caliente a 180 °C y riesgo de incendio).\n` +
-        `2. Técnico de Mantenimiento Electromecánico (electricidad a 440V y piezas móviles sin tapa).\n` +
-        `3. Operario de Maquinaria y Rebanado (ruido fuerte continuo mayor a 85 dBA).\n` +
-        `4. Auxiliar de Bodega y Almacenamiento (estanterías sin anclar y levantamiento de peso).\n\n` +
+        `Los 6 cargos oficiales con mayor prioridad de control en Frikaz S.A.S. (Niveles I y II) son:\n` +
+        `1. Operario de frito (aceite caliente a 180 °C, fuga de gas y conato de incendio).\n` +
+        `2. Operario de pelado (ruido mayor a 85 dBA, atrapamiento en máquina y contacto eléctrico).\n` +
+        `3. Operario de selección (químicos sin etiqueta SGA, estanterías altas y pisos húmedos).\n` +
+        `4. Operario de empaque (estibado/cargas, atrapamiento en selladora y transpaletas).\n` +
+        `5. Conductor (riesgo público en ruta y cargue/descargue).\n` +
+        `6. Gerente (coordinación ante emergencias, fugas de gas y carga administrativa).\n\n` +
         `Hoy hay ${relacionados.length} peligro(s) en Nivel I registrados en la matriz:`;
     } else if (
       q.includes('ingenieria') ||
@@ -419,7 +405,7 @@ export function RiskAssistantModal({
           `• "Plan Anual PHVA" (las 4 etapas y actividades reales)\n` +
           `• "Qué son los 6 estados y qué aprueba el Gerente"\n` +
           `• "Indicadores 0312" o "Documentos y Política"\n` +
-          `• Tu puesto (Fritura, Bodega, Mantenimiento, Aseo, Empaque) o "Peligros Urgentes (Nivel I)".`;
+          `• Cualquiera de los 6 cargos oficiales (Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque, Conductor) o "Peligros Urgentes (Nivel I)".`;
       }
     }
 
@@ -447,10 +433,10 @@ export function RiskAssistantModal({
     'Estado del Plan Anual (PHVA)',
     'Los 6 estados y permisos de Gerencia',
     'Indicadores Res. 0312',
-    'Documentos y Política SST',
     'Peligros Urgentes (Nivel I)',
-    'Peligros del Operario de Fritura',
-    'Peligros de Bodega',
+    'Peligros de Operario de frito',
+    'Peligros de Operario de empaque',
+    'Peligros de Conductor',
   ];
 
   return (

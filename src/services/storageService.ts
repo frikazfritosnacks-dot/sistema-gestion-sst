@@ -29,6 +29,8 @@ const STORAGE_KEYS = {
   ASPECTOS: 'frikaz_normativa_aspectos_v1',
   PELIGROS: 'frikaz_normativa_peligros_v1',
 };
+const MIGRATION_6_CARGOS_FLAG = 'frikaz_normativa_6cargos_v1';
+const BACKUP_6_CARGOS_KEY = 'frikaz_normativa_backup_pre6cargos_v1';
 
 type ChangeListener = () => void;
 const listeners: Set<ChangeListener> = new Set();
@@ -70,6 +72,76 @@ function setStoredItem<T>(key: string, value: T): void {
   }
 }
 
+function migrateNormativaSixCargosIfNeeded(): void {
+  try {
+    if (localStorage.getItem(MIGRATION_6_CARGOS_FLAG) === '1') return;
+
+    const backup: Record<string, string | null> = {
+      norms: localStorage.getItem(STORAGE_KEYS.NORMS),
+      obligaciones: localStorage.getItem(STORAGE_KEYS.OBLIGACIONES),
+      phva: localStorage.getItem(STORAGE_KEYS.PHVA),
+      evidencias: localStorage.getItem(STORAGE_KEYS.EVIDENCIAS),
+      acciones: localStorage.getItem(STORAGE_KEYS.ACCIONES),
+      aspectos: localStorage.getItem(STORAGE_KEYS.ASPECTOS),
+      peligros: localStorage.getItem(STORAGE_KEYS.PELIGROS),
+    };
+    if (!localStorage.getItem(BACKUP_6_CARGOS_KEY)) {
+      localStorage.setItem(BACKUP_6_CARGOS_KEY, JSON.stringify(backup));
+    }
+
+    const syncResp = <T extends { id: string; responsable?: string }>(
+      key: string,
+      seeds: T[]
+    ) => {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as T[];
+      if (!Array.isArray(parsed)) return;
+      const seedById = new Map(seeds.map((s) => [s.id, s]));
+      const next = parsed.map((item) => {
+        const seed = seedById.get(item.id);
+        if (!seed || !seed.responsable) return item;
+        return { ...item, responsable: seed.responsable };
+      });
+      localStorage.setItem(key, JSON.stringify(next));
+    };
+
+    syncResp(STORAGE_KEYS.NORMS, INITIAL_NORMS);
+    syncResp(STORAGE_KEYS.OBLIGACIONES, INITIAL_OBLIGACIONES);
+    syncResp(STORAGE_KEYS.EVIDENCIAS, INITIAL_EVIDENCIAS);
+    syncResp(STORAGE_KEYS.ACCIONES, INITIAL_ACCIONES_CORRECTIVAS);
+    syncResp(STORAGE_KEYS.ASPECTOS, INITIAL_ASPECTOS_AMBIENTALES);
+    syncResp(STORAGE_KEYS.PELIGROS, INITIAL_PELIGROS_SST);
+
+    const rawPhva = localStorage.getItem(STORAGE_KEYS.PHVA);
+    if (rawPhva) {
+      const parsed = JSON.parse(rawPhva) as PhvaRegistro[];
+      if (Array.isArray(parsed)) {
+        const seedById = new Map(INITIAL_PHVA_REGISTROS.map((p) => [p.id, p]));
+        const next = parsed.map((p) => {
+          const seed = seedById.get(p.id);
+          if (!seed) return p;
+          return {
+            ...p,
+            planear: { ...p.planear, responsable: seed.planear.responsable },
+            hacer: { ...p.hacer, responsable: seed.hacer.responsable },
+            verificar: {
+              ...p.verificar,
+              responsableVerificacion: seed.verificar.responsableVerificacion,
+            },
+            actuar: { ...p.actuar, responsable: seed.actuar.responsable },
+          };
+        });
+        localStorage.setItem(STORAGE_KEYS.PHVA, JSON.stringify(next));
+      }
+    }
+
+    localStorage.setItem(MIGRATION_6_CARGOS_FLAG, '1');
+  } catch (err) {
+    console.error('Error migrando responsables de normativa a 6 cargos oficiales:', err);
+  }
+}
+
 // ------------------- INITIALIZATION -------------------
 export function initializeStorage(): void {
   if (!localStorage.getItem(STORAGE_KEYS.NORMS)) {
@@ -96,6 +168,7 @@ export function initializeStorage(): void {
   if (!localStorage.getItem(STORAGE_KEYS.PELIGROS)) {
     localStorage.setItem(STORAGE_KEYS.PELIGROS, JSON.stringify(INITIAL_PELIGROS_SST));
   }
+  migrateNormativaSixCargosIfNeeded();
 }
 
 // ------------------- COMPANY PROFILE -------------------

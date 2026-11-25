@@ -105,7 +105,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-09-15',
     fuenteOficial: 'SUIN-Juriscol / Ministerio del Trabajo',
     enlaceFuente: 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Decretos/30019946',
-    responsable: 'Gerente General / Responsable SST Frikaz',
+    responsable: 'Gerente',
     estadoRevision: 'Revisada',
     observaciones:
       'Base estructural del SG-SST de la empresa. Revisada con vigencia plena en plataforma oficial.',
@@ -136,7 +136,7 @@ export const INITIAL_NORMS: Norm[] = [
     fuenteOficial: 'Gestor Normativo de Función Pública / MinTrabajo',
     enlaceFuente:
       'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=91368',
-    responsable: 'Líder SST / Asesor Externo con Licencia SST',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     estadoRevision: 'Revisada',
     observaciones:
       'Los 7 estándares representan la médula de auditoría obligatoria para Frikaz S.A.S.',
@@ -166,7 +166,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-08-30',
     fuenteOficial: 'SUIN-Juriscol',
     enlaceFuente: 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Leyes/1572520',
-    responsable: 'Jefe de Planta / Administrador Frikaz',
+    responsable: 'Gerente / Operario de pelado',
     estadoRevision: 'Revisada',
     observaciones: 'Pilar histórico de la salud ocupacional y saneamiento en Colombia.',
   },
@@ -195,7 +195,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-09-02',
     fuenteOficial: 'MinTrabajo / SUIN-Juriscol',
     enlaceFuente: 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Resolucion/2400-1979',
-    responsable: 'Responsable SST / Operaciones',
+    responsable: 'Operario de frito / Gerente',
     estadoRevision: 'Revisada',
     observaciones:
       'Crucial para el control de riesgos de quemaduras térmicas y amputaciones en corte de papa/plátano.',
@@ -224,7 +224,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-09-10',
     fuenteOficial: 'Función Pública',
     enlaceFuente: 'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=13598',
-    responsable: 'Gerente General / Vigía de SST',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     estadoRevision: 'Revisada',
     observaciones: 'Obligatorio mantener carpeta con actas mensuales firmadas.',
   },
@@ -252,7 +252,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-09-12',
     fuenteOficial: 'MinTrabajo / SUIN-Juriscol',
     enlaceFuente: 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Resolucion/652-2012',
-    responsable: 'Comité de Convivencia / Gerencia',
+    responsable: 'Gerente / Operario de selección',
     estadoRevision: 'Revisada',
     observaciones: 'Reuniones ordinarias cada 3 meses según Res 1356 de 2012.',
   },
@@ -282,7 +282,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-09-20',
     fuenteOficial: 'Ministerio de Ambiente y Desarrollo Sostenible / SDA Bogotá',
     enlaceFuente: 'https://www.minambiente.gov.co/documento-normativa/resolucion-316-de-2018/',
-    responsable: 'Jefe de Planta / Coordinador de Gestión Ambiental Frikaz',
+    responsable: 'Operario de frito / Gerente',
     estadoRevision: 'Revisada',
     observaciones:
       'Exige bitácora de control de recambio de aceite y archivo físico/digital de manifiestos del gestor.',
@@ -312,7 +312,7 @@ export const INITIAL_NORMS: Norm[] = [
     fuenteOficial: 'MinAmbiente / Función Pública',
     enlaceFuente:
       'https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=105574',
-    responsable: 'Encargado de Servicios Generales y Gestión Ambiental',
+    responsable: 'Operario de pelado / Operario de empaque',
     estadoRevision: 'Revisada',
     observaciones: 'Puntos ecológicos señalizados instalados en zona de pelado y empaque.',
   },
@@ -342,7 +342,7 @@ export const INITIAL_NORMS: Norm[] = [
     fuenteOficial: 'MinAmbiente / SUIN-Juriscol',
     enlaceFuente:
       'https://www.minambiente.gov.co/documento-normativa/resolucion-0631-de-2015/',
-    responsable: 'Jefe de Planta / Operaciones',
+    responsable: 'Operario de pelado / Gerente',
     estadoRevision: 'Revisada',
     observaciones:
       'Se requiere registro de vertimientos y control de lodos de la trampa de grasa.',
@@ -371,7 +371,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-09-05',
     fuenteOficial: 'Secretaría Distrital de Ambiente de Bogotá (SDA)',
     enlaceFuente: 'https://www.ambientebogota.gov.co/normatividad-distrital',
-    responsable: 'Gerencia General / Asesor Ambiental',
+    responsable: 'Gerente',
     estadoRevision: 'En revisión',
     observaciones:
       'Pendiente verificar actualización del radicado del registro ante la plataforma de la SDA.',
@@ -400,7 +400,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-08-22',
     fuenteOficial: 'MinAmbiente',
     enlaceFuente: 'https://www.minambiente.gov.co/documento-normativa/resolucion-1407-de-2018/',
-    responsable: 'Comercial / Gerencia Frikaz',
+    responsable: 'Gerente / Operario de empaque',
     estadoRevision: 'En revisión',
     observaciones:
       'Se está cuantificando el peso total de películas plásticas adquiridas en el último ejercicio contable.',
@@ -429,7 +429,7 @@ export const INITIAL_NORMS: Norm[] = [
     fechaUltimaConsulta: '2026-08-15',
     fuenteOficial: 'SUIN-Juriscol',
     enlaceFuente: 'https://www.suin-juriscol.gov.co/viewDocument.asp?ruta=Leyes/1657662',
-    responsable: 'Jefe de Planta / Operarios de lavado',
+    responsable: 'Operario de pelado',
     estadoRevision: 'Revisada',
     observaciones:
       'Monitoreo bimestral de metros cúbicos consumidos contra recibo de la EAAB.',
@@ -448,7 +448,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Frikaz S.A.S. cuenta con 10 trabajadores y por ley debe contar con un responsable asignado y certificado.',
     actividadNecesaria:
       'Designar formalmente mediante carta firmada por la gerencia al líder de SST y adjuntar certificado vigente de 50 horas / 20 horas de actualización.',
-    responsable: 'Gerente General (Frikaz S.A.S.)',
+    responsable: 'Gerente',
     fechaLimite: '2026-10-30',
     frecuencia: 'Anual',
     recursosNecesarios: 'Presupuesto para actualización de curso y horas de dedicación asignadas.',
@@ -470,7 +470,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Ningún trabajador de producción o comercialización puede operar sin cobertura de ARL y EPS.',
     actividadNecesaria:
       'Verificar mensualmente la planilla integrada de liquidación de aportes (PILA) de los 10 trabajadores.',
-    responsable: 'Gestión Humana y Nómina',
+    responsable: 'Gerente',
     fechaLimite: '2026-10-15',
     frecuencia: 'Mensual',
     recursosNecesarios: 'Presupuesto de seguridad social y plataforma SOI/Aportes en Línea.',
@@ -492,7 +492,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Los operarios de freidoras y rebanadoras deben recibir inducción y reentrenamiento para prevenir accidentes graves.',
     actividadNecesaria:
       'Ejecutar las sesiones programadas: 1) Prevención de quemaduras con aceite caliente, 2) Uso seguro de rebanadoras, 3) Manejo de extintor Clase K.',
-    responsable: 'Responsable SST / ARL',
+    responsable: 'Operario de selección (Vigía SST) / Gerente',
     fechaLimite: '2026-10-25',
     frecuencia: 'Trimestral',
     recursosNecesarios: 'Salón o área de descanso, presentaciones, refrigerio y asesor de la ARL.',
@@ -514,7 +514,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Por ser fábrica de fritos, se requiere certificación médica ocupacional con énfasis osteomuscular y de aptitud para manipulación higiénica de alimentos.',
     actividadNecesaria:
       'Remitir a los 10 trabajadores al centro de salud ocupacional autorizado para exámenes periódicos anuales.',
-    responsable: 'Responsable SST / Gerente',
+    responsable: 'Gerente',
     fechaLimite: '2026-10-12',
     frecuencia: 'Anual',
     recursosNecesarios: 'Presupuesto de exámenes médicos ocupacionales ($120.000 por trabajador aprox).',
@@ -537,7 +537,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'La temperatura del aceite en freidoras alcanza 170°C y el suelo presenta grasitud por lo que el calzado y los guantes son vitales.',
     actividadNecesaria:
       'Entregar dotación con formato de entrega firmado, inspeccionar estado semanalmente y reponer por desgaste.',
-    responsable: 'Jefe de Planta / Líder SST',
+    responsable: 'Operario de frito / Operario de selección',
     fechaLimite: '2026-10-20',
     frecuencia: 'Permanente',
     recursosNecesarios: 'Stock de seguridad de EPP en almacén de planta.',
@@ -559,7 +559,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Frikaz S.A.S. produce cerca de 180 a 250 litros de aceite usado al mes procedentes de sus freidoras continuas.',
     actividadNecesaria:
       '1) Mantener registro activo en el aplicativo SDA de ACU. 2) Almacenar en recipientes con rótulo de ACU. 3) Entregar a gestor con manifiesto y certificado.',
-    responsable: 'Coordinador Ambiental / Jefe de Planta',
+    responsable: 'Operario de frito / Gerente',
     fechaLimite: '2026-11-05',
     frecuencia: 'Permanente',
     recursosNecesarios: 'Bidones plásticos de 55 galones con tapa aro, dique de retención y gestor contratado.',
@@ -583,7 +583,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Generación diaria de cáscara y retales plásticos en Bosa exige separación estricta para recolección selectiva.',
     actividadNecesaria:
       'Verificar estado de canecas, bolsas plásticas del color correspondiente y entrega de cáscara a gestor de compostaje.',
-    responsable: 'Servicios Generales / Auxiliar de Producción',
+    responsable: 'Operario de pelado / Operario de empaque',
     fechaLimite: '2026-10-18',
     frecuencia: 'Permanente',
     recursosNecesarios: 'Bolsas plásticas calibre 2 de colores verde, blanco y negro y canecas de 53 litros.',
@@ -605,7 +605,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'La empresa realiza lavado de materias primas y áreas con presencia de aceites vegetales comestibles.',
     actividadNecesaria:
       'Realizar limpieza quincenal de la trampa de grasas, retiro de natas y grasas cuajadas, y consignar fecha y peso en la bitácora.',
-    responsable: 'Jefe de Mantenimiento / Planta',
+    responsable: 'Operario de pelado / Operario de frito',
     fechaLimite: '2026-10-14',
     frecuencia: 'Bimestral',
     recursosNecesarios: 'Palas raspadoras, canecas para grasa retenida y servicio de succión programado.',
@@ -628,7 +628,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Frikaz empaca productos en plástico BOPP bilaminado comercializados en tiendas de barrio.',
     actividadNecesaria:
       'Cuantificar peso anual de empaques puestos en mercado para definir si supera el umbral o si se asocia a plan colectivo.',
-    responsable: 'Gerencia General / Contador',
+    responsable: 'Gerente',
     fechaLimite: '2026-11-30',
     frecuencia: 'Anual',
     recursosNecesarios: 'Facturación de compras de bolsas de empaque y asesoría ambiental.',
@@ -651,7 +651,7 @@ export const INITIAL_OBLIGACIONES: Obligacion[] = [
       'Exigencia legal obligatoria de participación de los trabajadores en la identificación de condiciones inseguras.',
     actividadNecesaria:
       'Convocar elecciones entre los operarios, levantar acta de escrutinio, acta de posesión y actas mensuales de reunión.',
-    responsable: 'Gerente General y Trabajadores',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     fechaLimite: '2026-10-28',
     frecuencia: 'Mensual',
     recursosNecesarios: '1 hora mensual laboral remunerada para recorridos de inspección.',
@@ -678,7 +678,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       actividadesPlanificacion:
         'Revisar hojas de vida de personal interno o asesor SST con licencia, proyectar carta de designación.',
       recursos: 'Plantilla de carta de designación y presupuesto de honorarios.',
-      responsable: 'Gerente General',
+      responsable: 'Gerente',
       fechaProgramada: '2026-01-15',
       indicadorEsperado: '1 documento de designación suscrito.',
       completado: true,
@@ -690,7 +690,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
         'Se firmó la carta de asignación de responsabilidades en SST y se archivó copia de la cédula y certificado SENA.',
       procedimientosAplicados: 'Procedimiento de selección y asignación de roles del SG-SST.',
       recursosUtilizados: 'Impresión y carpeta digital institucional.',
-      responsable: 'Gerente General',
+      responsable: 'Gerente',
       fechaEjecucion: '2026-01-20',
       evidenciasObtenidas: 'Carta de designación firmada y Certificado Curso 50h MinTrabajo.',
       completado: true,
@@ -704,7 +704,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       resultado: 'Conforme',
       hallazgos: 'El certificado se encuentra activo y cubre los requerimientos para riesgo II/III.',
       fechaRevision: '2026-09-20',
-      responsableVerificacion: 'Asesor Jurídico / Auditor SST',
+      responsableVerificacion: 'Gerente',
       completado: true,
     },
     actuar: {
@@ -713,7 +713,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       incumplimientoIdentificado: 'Ninguno a la fecha.',
       accionCorrectivaMejora:
         'Programar en el cronograma de 2027 la actualización de 20 horas con la ARL.',
-      responsable: 'Responsable SST',
+      responsable: 'Operario de selección (Vigía SST)',
       fechaLimite: '2027-01-20',
       estadoAccion: 'Verificada y cerrada',
       evidenciaEjecucion: 'Cronograma anual de formación continua.',
@@ -764,7 +764,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       hallazgos:
         'Cuatro (4) operarios de freidoras y pelado no tienen evaluación médica periódica vigente correspondiente al año 2026.',
       fechaRevision: '2026-09-10',
-      responsableVerificacion: 'Líder SST / Auditor Interno',
+      responsableVerificacion: 'Gerente / Operario de selección',
       completado: true,
     },
     actuar: {
@@ -774,7 +774,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
         'Vencimiento de exámenes médicos periódicos en 4 operarios de producción de freidoras.',
       accionCorrectivaMejora:
         'Reprogramar citas prioritarias en la IPS para los 4 operarios faltantes entre el 15 y 22 de octubre de 2026, cubriendo turnos con operarios de apoyo.',
-      responsable: 'Jefe de Planta y Gerente',
+      responsable: 'Gerente / Operario de frito',
       fechaLimite: '2026-10-22',
       estadoAccion: 'En ejecución',
       evidenciaEjecucion: 'Orden de servicio y citas médicas agendadas con la IPS.',
@@ -798,7 +798,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       actividadesPlanificacion:
         'Adquirir dique antiderrames, seleccionar gestor autorizado ante la SDA y elaborar bitácora de control.',
       recursos: '2 canecas herméticas de 55 galones, embudos de acero inoxidable, dique de contención.',
-      responsable: 'Coordinador Ambiental',
+      responsable: 'Operario de frito / Gerente',
       fechaProgramada: '2026-02-01',
       indicadorEsperado: '100% del ACU recolectado y certificado.',
       completado: true,
@@ -810,7 +810,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
         'Drenaje cada 3-4 días según medición de compuestos polares (<24%). Entrega mensual programada.',
       procedimientosAplicados: 'Instructivo Operativo IO-AMB-02: Drenaje y Acopio de ACU.',
       recursosUtilizados: 'Bidones plásticos rotulados y dotación de guantes de neopreno.',
-      responsable: 'Operarios de freidoras y Jefe de Planta',
+      responsable: 'Operario de frito',
       fechaEjecucion: '2026-09-25',
       evidenciasObtenidas: 'Certificado de recolección No. ACU-BOG-2026-881 por 220 litros.',
       completado: true,
@@ -826,7 +826,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       resultado: 'Conforme',
       hallazgos: 'Trazabilidad completa. El aceite usado fue destinado a producción de biocombustible.',
       fechaRevision: '2026-09-26',
-      responsableVerificacion: 'Coordinador Ambiental',
+      responsableVerificacion: 'Gerente',
       completado: true,
     },
     actuar: {
@@ -835,7 +835,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       incumplimientoIdentificado: 'Ninguno en el periodo.',
       accionCorrectivaMejora:
         'Evaluar la adquisición de un filtro continuo de papel para freidora que disminuya el recambio prematuro.',
-      responsable: 'Jefe de Planta',
+      responsable: 'Gerente / Operario de frito',
       fechaLimite: '2026-12-15',
       estadoAccion: 'Verificada y cerrada',
       evidenciaEjecucion: 'Cotizaciones de filtro de acero inoxidable.',
@@ -859,7 +859,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       actividadesPlanificacion:
         'Diseñar formato de bitácora de limpieza de trampa de grasa con fecha, responsable y volumen retirado.',
       recursos: 'Herramientas de raspado, canecas para lodos grasos, elementos de bioseguridad.',
-      responsable: 'Jefe de Mantenimiento',
+      responsable: 'Operario de pelado / Gerente',
       fechaProgramada: '2026-09-01',
       indicadorEsperado: '2 limpiezas mensuales ejecutadas y registradas.',
       completado: true,
@@ -870,7 +870,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       actividadesEjecutadas: 'Retiro físico de natas y grasas acumuladas en el compartimento.',
       procedimientosAplicados: 'Procedimiento de limpieza de trampa de grasa.',
       recursosUtilizados: 'Bolsas de alta densidad y palas plásticas.',
-      responsable: 'Operario de mantenimiento',
+      responsable: 'Operario de pelado',
       fechaEjecucion: '2026-09-30',
       evidenciasObtenidas: 'Falta formato firmado del mes de septiembre.',
       completado: false,
@@ -885,7 +885,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
       hallazgos:
         'La trampa está físicamente limpia, pero no existe trazabilidad documental firmada de la limpieza de la segunda quincena de septiembre.',
       fechaRevision: '2026-10-02',
-      responsableVerificacion: 'Coordinador Ambiental',
+      responsableVerificacion: 'Gerente',
       completado: true,
     },
     actuar: {
@@ -895,7 +895,7 @@ export const INITIAL_PHVA_REGISTROS: PhvaRegistro[] = [
         'Falta de evidencia documental en la bitácora de limpieza de trampa de grasa.',
       accionCorrectivaMejora:
         'Diligenciar la bitácora con firma del operario e implementar hoja de registro plastificada al lado de la trampa con lapicero indeleble.',
-      responsable: 'Jefe de Mantenimiento',
+      responsable: 'Operario de pelado / Gerente',
       fechaLimite: '2026-10-15',
       estadoAccion: 'En ejecución',
       evidenciaEjecucion: 'Formato diligenciado y registro fotográfico.',
@@ -920,7 +920,7 @@ export const INITIAL_EVIDENCIAS: Evidencia[] = [
       'Carta firmada por el Representante Legal de Frikaz S.A.S. nombrando al Líder de SST y copia del certificado del Curso Virtual de 50 horas expedido por el Ministerio del Trabajo.',
     fechaEmision: '2026-01-20',
     fechaVencimiento: '2028-01-20',
-    responsable: 'Gerente General',
+    responsable: 'Gerente',
     ubicacionOEnlace: '/documentos/sst/designacion_lider_sst_2026.pdf',
     archivoNombre: 'designacion_lider_sst_frikaz_2026.pdf',
     estadoRevision: 'Verificada y suficiente',
@@ -937,7 +937,7 @@ export const INITIAL_EVIDENCIAS: Evidencia[] = [
       'Soporte de pago de aportes de la seguridad social integral (Salud, Pensión, ARL Positiva) para los 10 trabajadores de la nómina de Frikaz S.A.S.',
     fechaEmision: '2026-10-05',
     fechaVencimiento: '2026-11-10',
-    responsable: 'Nómina y Gestión Humana',
+    responsable: 'Gerente',
     ubicacionOEnlace: '/documentos/seguridad_social/pila_septiembre_2026.pdf',
     archivoNombre: 'pila_pago_septiembre_2026.pdf',
     estadoRevision: 'Verificada y suficiente',
@@ -954,7 +954,7 @@ export const INITIAL_EVIDENCIAS: Evidencia[] = [
       'Actas individuales de entrega de calzado antideslizante con puntera, delantal impermeable, careta de policarbonato y guantes de carnaza y nitrilo térmico para los 10 trabajadores.',
     fechaEmision: '2026-09-28',
     fechaVencimiento: '2027-01-28',
-    responsable: 'Jefe de Planta / Líder SST',
+    responsable: 'Operario de selección (Vigía SST) / Gerente',
     ubicacionOEnlace: '/documentos/sst/entrega_dotacion_epp_sep2026.pdf',
     archivoNombre: 'actas_entrega_epp_sep_2026.pdf',
     estadoRevision: 'Verificada y suficiente',
@@ -972,7 +972,7 @@ export const INITIAL_EVIDENCIAS: Evidencia[] = [
       'Manifiesto de recolección de 220 litros de Aceite de Cocina Usado emitido por el gestor ambiental autorizado por la Secretaría Distrital de Ambiente de Bogotá.',
     fechaEmision: '2026-09-25',
     fechaVencimiento: '2026-10-25',
-    responsable: 'Coordinador Ambiental',
+    responsable: 'Operario de frito / Gerente',
     ubicacionOEnlace: '/documentos/ambiental/manifiesto_acu_sep2026_881.pdf',
     archivoNombre: 'manifiesto_acu_sep2026_881.pdf',
     estadoRevision: 'Verificada y suficiente',
@@ -988,7 +988,7 @@ export const INITIAL_EVIDENCIAS: Evidencia[] = [
     descripcion:
       'Fotografías fechadas de los 3 puntos ecológicos instalados en planta con canecas rotuladas verde (orgánicos/cáscaras), blanco (plásticos/cartón) y negro (ordinarios).',
     fechaEmision: '2026-09-22',
-    responsable: 'Servicios Generales',
+    responsable: 'Operario de pelado / Operario de empaque',
     ubicacionOEnlace: '/documentos/ambiental/fotos_puntos_ecologicos.jpg',
     archivoNombre: 'fotos_puntos_ecologicos_2026.jpg',
     estadoRevision: 'Verificada y suficiente',
@@ -1005,7 +1005,7 @@ export const INITIAL_EVIDENCIAS: Evidencia[] = [
       'Acta de votación democrática entre los 10 operarios de Frikaz S.A.S. y designación oficial del Vigía de SST y su suplente para el periodo 2025-2027.',
     fechaEmision: '2025-05-14',
     fechaVencimiento: '2027-05-14',
-    responsable: 'Gerencia y Representante de Trabajadores',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     ubicacionOEnlace: '/documentos/sst/acta_vigia_sst_2025_2027.pdf',
     archivoNombre: 'acta_eleccion_vigia_sst_frikaz.pdf',
     estadoRevision: 'Verificada y suficiente',
@@ -1025,7 +1025,7 @@ export const INITIAL_ACCIONES_CORRECTIVAS: AccionCorrectiva[] = [
       'Priorización de turnos de entrega de pedidos durante agosto y falta de coordinación con el proveedor de salud ocupacional para turnos rotativos.',
     accionPropuesta:
       'Agendar citas prioritarias en la IPS de salud ocupacional en horarios matutinos cubriendo los turnos con relevos de apoyo, y archivar los conceptos de aptitud.',
-    responsable: 'Jefe de Planta y Líder SST',
+    responsable: 'Gerente / Operario de selección (Vigía SST)',
     fechaApertura: '2026-09-10',
     fechaLimite: '2026-10-22',
     estado: 'En ejecución',
@@ -1045,7 +1045,7 @@ export const INITIAL_ACCIONES_CORRECTIVAS: AccionCorrectiva[] = [
       'El operario realizó la labor física pero no tenía el formato físico disponible en la pared adyacente a la trampa.',
     accionPropuesta:
       'Instalar una carpeta plastificada con bitácora en la pared de la zona de trampas de grasa, capacitar al operario sobre el registro inmediato y tomar foto como soporte.',
-    responsable: 'Jefe de Mantenimiento',
+    responsable: 'Operario de pelado / Gerente',
     fechaApertura: '2026-10-02',
     fechaLimite: '2026-10-15',
     estado: 'En ejecución',
@@ -1065,7 +1065,7 @@ export const INITIAL_ACCIONES_CORRECTIVAS: AccionCorrectiva[] = [
       'Postergación del taller práctico por lluvia e indisponibilidad del instructor de la empresa de recarga de extintores.',
     accionPropuesta:
       'Reprogramar el taller práctico con simulacro en patio cubierto con apoyo de la ARL y la empresa certificada de extintores.',
-    responsable: 'Líder SST',
+    responsable: 'Operario de frito / Operario de selección (Vigía SST)',
     fechaApertura: '2026-08-10',
     fechaLimite: '2026-09-15',
     estado: 'Verificada y cerrada',
@@ -1089,7 +1089,7 @@ export const INITIAL_ASPECTOS_AMBIENTALES: AspectoAmbiental[] = [
     medidaControl:
       'Almacenamiento en bidones de 55 galones con dique antiderrames y entrega exclusiva a gestor autorizado por la SDA con manifiesto.',
     registroAutoridad: 'Registro de Generadores de ACU ante Secretaría Distrital de Ambiente de Bogotá',
-    responsable: 'Coordinador Ambiental / Jefe de Planta',
+    responsable: 'Operario de frito / Gerente',
     evidenciaAsociada: 'Certificado de recolección No. 881 y bitácora de recambio',
     estadoCumplimiento: 'Cumpliendo 100%',
     accionMejora: 'Instalación de sistema de filtrado fino para optimizar rendimiento de aceite.',
@@ -1105,7 +1105,7 @@ export const INITIAL_ASPECTOS_AMBIENTALES: AspectoAmbiental[] = [
     medidaControl:
       'Separación en la fuente con código de colores (Verde para cáscaras orgánicas, Blanco para cartón/plástico limpio, Negro para ordinarios).',
     registroAutoridad: 'Plan de Gestión Integral de Residuos Sólidos (PGIRS Bogotá)',
-    responsable: 'Servicios Generales / Auxiliares de Planta',
+    responsable: 'Operario de pelado / Operario de empaque',
     evidenciaAsociada: 'Puntos ecológicos con registro fotográfico fechado',
     estadoCumplimiento: 'Cumpliendo 100%',
     accionMejora: 'Alianza con granja porcina/avícola cercana para aprovechamiento de cáscaras.',
@@ -1121,7 +1121,7 @@ export const INITIAL_ASPECTOS_AMBIENTALES: AspectoAmbiental[] = [
     medidaControl:
       'Trampa de grasa física en acero con bafles deflectores y descolmatación quincenal programada.',
     registroAutoridad: 'Registro de Vertimientos ante la Secretaría Distrital de Ambiente (SDA)',
-    responsable: 'Jefe de Mantenimiento',
+    responsable: 'Operario de pelado / Gerente',
     evidenciaAsociada: 'Bitácora quincenal de mantenimiento de trampa de grasa',
     estadoCumplimiento: 'Parcial (Requiere actualizar soporte documental)',
     accionMejora: 'Implementar toma semestral de muestra puntual para análisis de grasas y aceites.',
@@ -1137,7 +1137,7 @@ export const INITIAL_ASPECTOS_AMBIENTALES: AspectoAmbiental[] = [
     medidaControl:
       'Control de merma en selladoras y evaluación de adhesión a plan colectivo de aprovechamiento de empaques.',
     registroAutoridad: 'Registro ante MADS según umbral de toneladas comercializadas',
-    responsable: 'Gerencia General / Comercial',
+    responsable: 'Gerente / Operario de empaque',
     evidenciaAsociada: 'Consolidado contable de compras de bobinas de polipropileno',
     estadoCumplimiento: 'En evaluación de umbral',
     accionMejora: 'Estudiar viabilidad técnica de empaques monomaterial más fáciles de reciclar.',
@@ -1153,7 +1153,7 @@ export const INITIAL_ASPECTOS_AMBIENTALES: AspectoAmbiental[] = [
     medidaControl:
       'Campana extractora de acero inoxidable con filtros lavables de malla metálica y ducto vertical sobre tejado.',
     registroAutoridad: 'Control de olores y emisiones de fuentes fijas SDA',
-    responsable: 'Mantenimiento de Planta',
+    responsable: 'Operario de frito / Gerente',
     evidenciaAsociada: 'Cronograma de lavado de filtros de campana cada 8 días',
     estadoCumplimiento: 'Cumpliendo 100%',
     accionMejora: 'Instalación de filtro de carbón activado secundario en ducto de salida.',
@@ -1168,7 +1168,7 @@ export const INITIAL_ASPECTOS_AMBIENTALES: AspectoAmbiental[] = [
     medidaControl:
       'Boquillas aspersoras economizadoras en la peladora mecánica y circuito de recirculación preliminar de agua para lavado primario.',
     registroAutoridad: 'PUEAA - Empresa de Acueducto y Alcantarillado de Bogotá (EAAB)',
-    responsable: 'Jefe de Planta',
+    responsable: 'Operario de pelado / Gerente',
     evidenciaAsociada: 'Facturas bimestrales de la EAAB con registro de metros cúbicos',
     estadoCumplimiento: 'Cumpliendo 100%',
     accionMejora: 'Monitoreo del indicador m3 de agua consumida por tonelada de papa procesada.',
@@ -1190,7 +1190,7 @@ export const INITIAL_PELIGROS_SST: PeligroSST[] = [
     eppRequerido:
       'Guantes térmicos resistentes a 200°C, careta de policarbonato, delantal de carnaza o impermeable de alta densidad y botas de seguridad.',
     capacitacionRequerida: 'Protocolo de inmersión lenta y primeros auxilios para quemaduras térmicas.',
-    responsable: 'Líder SST / Operador de freidora',
+    responsable: 'Operario de frito',
     estadoControl: 'Controlado con EPP y termostato automático',
   },
   {
@@ -1206,7 +1206,7 @@ export const INITIAL_PELIGROS_SST: PeligroSST[] = [
       'Tolva de alimentación cerrada con empujador plástico (prohibido empujar con la mano), interruptor de parada de emergencia.',
     eppRequerido: 'Guante de malla de acero inoxidable para maniobras de limpieza y cambio de cuchilla.',
     capacitacionRequerida: 'Bloqueo y etiquetado (LOTO) para limpieza y cambio de cuchillas rotativas.',
-    responsable: 'Operador de corte / Jefe de Planta',
+    responsable: 'Operario de pelado',
     estadoControl: 'Controlado con guarda y empujador plástico',
   },
   {
@@ -1222,7 +1222,7 @@ export const INITIAL_PELIGROS_SST: PeligroSST[] = [
       'Aplicación de desengrasante biodegradable dos veces al día, tapetes antifatiga calados y canaletas de desagüe.',
     eppRequerido: 'Botas de seguridad con suela de poliuretano antideslizante con dibujo profundo.',
     capacitacionRequerida: 'Programa de orden y aseo 5S y reporte de derrames inmediatos.',
-    responsable: 'Servicios Generales y Operarios',
+    responsable: 'Operario de pelado / Operario de frito',
     estadoControl: 'Controlado con calzado antideslizante y desengrase diario',
   },
   {
@@ -1238,7 +1238,7 @@ export const INITIAL_PELIGROS_SST: PeligroSST[] = [
       'Válvula de corte rápido de gas exterior, termostato de seguridad de corte a 200°C, extintor de acetato de potasio Clase K.',
     eppRequerido: 'Dotación ignífuga para brigadistas.',
     capacitacionRequerida: 'Uso y manejo de extintores Clase K y simulacro anual de evacuación.',
-    responsable: 'Brigada de Emergencia / Responsable SST',
+    responsable: 'Operario de frito / Operario de selección (Vigía SST)',
     estadoControl: 'Controlado con extintor Clase K y válvula de corte de gas',
   },
   {
@@ -1254,7 +1254,7 @@ export const INITIAL_PELIGROS_SST: PeligroSST[] = [
       'Carretilla zorra para transporte de bultos de papa y plátano, rotación de puestos cada 2 horas y pausas activas.',
     eppRequerido: 'Cinturón faja lumbar ergonómica durante cargue y descargue.',
     capacitacionRequerida: 'Higiene postural y técnicas de levantamiento seguro de cargas.',
-    responsable: 'Líder SST y Trabajadores',
+    responsable: 'Operario de selección / Operario de empaque / Conductor',
     estadoControl: 'Controlado con carretilla zorra y pausas activas guiadas',
   },
 ];

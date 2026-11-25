@@ -22,6 +22,7 @@ const STORAGE_KEY_RECIBIDOS = 'frikaz_documentos_firmados_recibidos_v2';
 const STORAGE_KEY_ENVIOS = 'frikaz_envios_pendientes_documentos_v2';
 const STORAGE_KEY_DOCS_PLAIN_LANG = 'frikaz_docs_firmados_plain_lang_v1';
 const STORAGE_KEY_DOCS_GERENTE_GATE = 'frikaz_docs_firmados_gerente_v1';
+const STORAGE_KEY_DOCS_6_CARGOS = 'frikaz_docs_firmados_6cargos_v1';
 export const CUENTA_INSTITUCIONAL = 'frikaz.fritosnacks@gmail.com';
 
 // ----------------------------------------------------------------------------
@@ -31,9 +32,9 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
   {
     id: 'doc-rec-001',
     envioId: 'FRK-ENV-2026-001',
-    nombreTrabajador: 'Compañero: Operario de Frito (ID: FRK-OPR-FRITO)',
+    nombreTrabajador: 'Compañero: Operario de frito (ID: FRK-OPR-FRITO)',
     correoTrabajador: 'frikaz.fritosnacks@gmail.com',
-    cargo: 'Operario de Frito',
+    cargo: 'Operario de frito',
     tipoDocumento: 'responsabilidades',
     nombreArchivoRecibido: 'Responsabilidades_SST_Operario_Frito_Firmado.pdf',
     tamanoArchivo: '1.4 MB',
@@ -44,7 +45,7 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: 'thread-gmail-frk-882193',
     mensajeTrabajador: 'Buenas tardes equipo de seguridad, aquí les envío el documento firmado con mi cédula donde acepto mis cuidados en la freidora. Quedo pendiente de las charlas del mes.',
-    observacionesRevision: 'Archivo recibido del trabajador. Falta revisión y aprobación del Gerente General.',
+    observacionesRevision: 'Archivo recibido del trabajador. Falta revisión y aprobación de Andrea Orjuela – Gerente.',
     revisadoPor: null,
     fechaRevision: null,
     detallesFirma: {
@@ -76,11 +77,11 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
   {
     id: 'doc-rec-002',
     envioId: 'FRK-ENV-2026-002',
-    nombreTrabajador: 'Compañero: Coordinador / Vigía de SST (ID: FRK-SST-VIGIA)',
+    nombreTrabajador: 'Compañero: Operario de selección (ID: FRK-OPR-SELECCION)',
     correoTrabajador: 'frikaz.fritosnacks@gmail.com',
-    cargo: 'Coordinador / Vigía de SST',
+    cargo: 'Operario de selección',
     tipoDocumento: 'politicas',
-    nombreArchivoRecibido: 'Politica_SST_Frikaz_SAS_Firmada_Vigia.pdf',
+    nombreArchivoRecibido: 'Politica_SST_Frikaz_SAS_Firmada_Seleccion.pdf',
     tamanoArchivo: '1.8 MB',
     asuntoCorreo: 'Re: Compromiso de Seguridad y Salud (Política SST) – Frikaz S.A.S. [FRK-ENV-2026-002]',
     fechaEnvioOriginal: '2026-02-14 11:00',
@@ -89,7 +90,7 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
     cuentaReceptora: CUENTA_INSTITUCIONAL,
     hiloCorreoId: 'thread-gmail-frk-882204',
     mensajeTrabajador: 'Hola, envío firmado el compromiso de seguridad (Política SST) donde confirmo que apoyaré las reglas de higiene y prevención de accidentes en la planta.',
-    observacionesRevision: 'Archivo recibido por correo. Pendiente de revisión y aprobación por el Gerente General.',
+    observacionesRevision: 'Archivo recibido por correo. Pendiente de revisión y aprobación por Andrea Orjuela – Gerente.',
     revisadoPor: null,
     fechaRevision: null,
     detallesFirma: {
@@ -166,9 +167,9 @@ const DOCUMENTOS_INICIALES: DocumentoFirmadoRecibido[] = [
   {
     id: 'doc-rec-004',
     envioId: 'FRK-ENV-2026-004',
-    nombreTrabajador: 'Compañero: Operario de Empaque (ID: FRK-OPR-EMPAQUE)',
+    nombreTrabajador: 'Compañero: Operario de empaque (ID: FRK-OPR-EMPAQUE)',
     correoTrabajador: 'frikaz.fritosnacks@gmail.com',
-    cargo: 'Operario de Empaque',
+    cargo: 'Operario de empaque',
     tipoDocumento: 'responsabilidades',
     nombreArchivoRecibido: 'Firma_Empaque_Sellado_Scan.pdf',
     tamanoArchivo: '850 KB',
@@ -214,9 +215,9 @@ const ENVIOS_INICIALES: RegistroEnvioPendiente[] = [
   {
     id: 'env-pend-001',
     envioId: 'FRK-ENV-2026-005',
-    nombreTrabajador: 'Compañero: Operario de Pelado (ID: FRK-OPR-PELADO)',
+    nombreTrabajador: 'Compañero: Operario de pelado (ID: FRK-OPR-PELADO)',
     correoTrabajador: 'frikaz.fritosnacks@gmail.com',
-    cargo: 'Operario de Pelado',
+    cargo: 'Operario de pelado',
     tipoDocumento: 'responsabilidades',
     nombreDocumentoEnviado: 'Responsabilidades_SST_Operario_Pelado_Frikaz.docx',
     asunto: 'Tus responsabilidades de seguridad en el trabajo – Frikaz S.A.S. [FRK-ENV-2026-005]',
@@ -228,9 +229,9 @@ const ENVIOS_INICIALES: RegistroEnvioPendiente[] = [
   {
     id: 'env-pend-002',
     envioId: 'FRK-ENV-2026-006',
-    nombreTrabajador: 'Compañero: Operario de Selección (ID: FRK-OPR-SELECCION)',
+    nombreTrabajador: 'Compañero: Operario de selección (ID: FRK-OPR-SELECCION)',
     correoTrabajador: 'frikaz.fritosnacks@gmail.com',
-    cargo: 'Operario de Selección',
+    cargo: 'Operario de selección',
     tipoDocumento: 'politicas',
     nombreDocumentoEnviado: 'Politica_SST_Frikaz_SAS_2026.docx',
     asunto: 'Compromiso de Seguridad y Salud (Política SST) – Frikaz S.A.S. [FRK-ENV-2026-006]',
@@ -323,9 +324,43 @@ function ensureDocsGerenteGateMigration(): void {
   }
 }
 
+function ensureDocsSixCargosMigration(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY_DOCS_6_CARGOS) === '1') return;
+    const rawDocs = localStorage.getItem(STORAGE_KEY_RECIBIDOS);
+    if (rawDocs) {
+      const parsed: DocumentoFirmadoRecibido[] = JSON.parse(rawDocs);
+      if (Array.isArray(parsed)) {
+        const seedById = new Map(DOCUMENTOS_INICIALES.map((d) => [d.id, d]));
+        const next = parsed.map((d) => {
+          const seed = seedById.get(d.id);
+          return seed ? { ...d, cargo: seed.cargo, nombreTrabajador: seed.nombreTrabajador } : d;
+        });
+        localStorage.setItem(STORAGE_KEY_RECIBIDOS, JSON.stringify(next));
+      }
+    }
+    const rawEnvios = localStorage.getItem(STORAGE_KEY_ENVIOS);
+    if (rawEnvios) {
+      const parsed: RegistroEnvioPendiente[] = JSON.parse(rawEnvios);
+      if (Array.isArray(parsed)) {
+        const seedById = new Map(ENVIOS_INICIALES.map((e) => [e.id, e]));
+        const next = parsed.map((e) => {
+          const seed = seedById.get(e.id);
+          return seed ? { ...e, cargo: seed.cargo, nombreTrabajador: seed.nombreTrabajador } : e;
+        });
+        localStorage.setItem(STORAGE_KEY_ENVIOS, JSON.stringify(next));
+      }
+    }
+    localStorage.setItem(STORAGE_KEY_DOCS_6_CARGOS, '1');
+  } catch (err) {
+    console.error('Error migrando documentos firmados a 6 cargos oficiales:', err);
+  }
+}
+
 export function getStoredDocumentosFirmados(): DocumentoFirmadoRecibido[] {
   ensureDocsPlainLangMigration();
   ensureDocsGerenteGateMigration();
+  ensureDocsSixCargosMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_RECIBIDOS);
     if (!raw) {
@@ -350,6 +385,7 @@ export function saveStoredDocumentosFirmados(docs: DocumentoFirmadoRecibido[]): 
 
 export function getStoredEnviosPendientes(): RegistroEnvioPendiente[] {
   ensureDocsPlainLangMigration();
+  ensureDocsSixCargosMigration();
   try {
     const raw = localStorage.getItem(STORAGE_KEY_ENVIOS);
     if (!raw) {

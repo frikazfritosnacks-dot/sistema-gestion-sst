@@ -126,7 +126,7 @@ export const PhvaCycleView: React.FC<PhvaCycleViewProps> = ({
         resultado: 'Pendiente',
         hallazgos: '',
         fechaRevision: new Date().toISOString().split('T')[0],
-        responsableVerificacion: 'Líder SST / Auditor Interno',
+        responsableVerificacion: 'Gerente / Operario de selección',
         completado: false,
       },
       actuar: {

@@ -23,13 +23,20 @@ import { loadStoredRisks } from './riskMatrixStorage';
 import { getCaracterizacionActual } from './dynamicRulesEngine';
 import { getPhvaNorms } from './phvaService';
 import { NOMBRE_GERENTE_OFICIAL, normalizarEstadoEstandar } from './gerenteControlService';
+import {
+  obtenerCargoOficialPorId,
+  obtenerIdCargoOficial,
+  resolverCargoPrincipalYExpuestos,
+} from '../data/cargosOficiales';
 
 const STORAGE_KEY_PLANES = 'frikaz_plan_anual_vigencias_v1';
 const STORAGE_KEY_PLANES_HISTORICO_BACKUP = 'frikaz_plan_anual_historico_backup_v1';
+const STORAGE_KEY_PLANES_CARGOS_BACKUP = 'frikaz_plan_anual_backup_pre6cargos_v1';
 const PLAIN_LANG_FLAG_PLAN = 'frikaz_plan_anual_plain_lang_v1';
 const GERENTE_GATE_FLAG_PLAN = 'frikaz_plan_gerente_gate_v1';
 const REORG_2027_FLAG_PLAN = 'frikaz_plan_anual_2027_reorg_v1';
 const ONLY_2027_FLAG_PLAN = 'frikaz_plan_anual_only_2027_v1';
+const CARGOS_6_FLAG_PLAN = 'frikaz_plan_6_cargos_v1';
 
 // ============================================================================
 // UTILIDADES DE PRESUPUESTO DIFERENCIADO
@@ -136,43 +143,19 @@ export function getResponsablesDisponibles(): ResponsablePlanOption[] {
   const cargos = getStoredCargosSST();
   const trabajadores = getStoredTrabajadores();
 
-  const lista: ResponsablePlanOption[] = [];
-
-  cargos.forEach((c) => {
+  return cargos.map((c) => {
     const trab = trabajadores.find(
-      (t) =>
-        t.cargoId === c.id ||
-        t.cargoNombre.toLowerCase().includes(c.nombre.toLowerCase().split(' ')[0])
+      (t) => t.cargoId === c.id || t.cargoNombre.toLowerCase() === c.nombre.toLowerCase()
     );
-    lista.push({
+    return {
       id: c.id,
-      nombre:
-        c.id === 'cargo-gerente-general'
-          ? 'Gerente General (Representante Legal)'
-          : c.id === 'cargo-coordinador-vigia-sst'
-          ? 'Coordinador / Vigía de SST'
-          : c.nombre,
+      nombre: c.id === 'cargo-gerente-general' ? NOMBRE_GERENTE_OFICIAL : c.nombre,
       cargo: c.nombre,
       correo: trab?.correo || 'frikaz.fritosnacks@gmail.com',
       area: c.areaProceso,
-      esAprobador:
-        c.nivelJerarquico === 'ALTA_DIRECCION' || c.nivelJerarquico === 'RESPONSABLE_SST',
-    });
+      esAprobador: c.nivelJerarquico === 'ALTA_DIRECCION',
+    };
   });
-
-  // Asegurar opción de Líder Ambiental
-  if (!lista.some((l) => l.id === 'rol-lider-ambiental')) {
-    lista.push({
-      id: 'rol-lider-ambiental',
-      nombre: 'Líder de Gestión Ambiental',
-      cargo: 'Encargado Ambiental / Jefe de Planta',
-      correo: 'frikaz.fritosnacks@gmail.com',
-      area: 'Cuidado del ambiente, aceite usado (ACU) y trampa de grasas',
-      esAprobador: true,
-    });
-  }
-
-  return lista;
 }
 
 export function determinarGrupoEstandares0312(config: CaracterizacionEmpresaDinamica): {
@@ -242,12 +225,13 @@ export function extraerMedidasRiesgo(r: RiesgoGTC45Item): string {
 }
 
 export function crearRiesgoSnapshot(r: RiesgoGTC45Item): RiesgoSnapshotVinculado {
+  const { cargosOficiales } = resolverCargoPrincipalYExpuestos(r.cargo, r.cargosExpuestos);
   return {
     nivelRiesgo: r.nivelRiesgo,
     interpretacionNR: r.interpretacionNR,
     peligroDescripcion: r.peligroDescripcion,
     medidasResumen: extraerMedidasRiesgo(r),
-    cargo: r.cargo || r.cargosExpuestos || 'Personal Operativo',
+    cargo: cargosOficiales.join(', '),
     proceso: r.proceso,
   };
 }
@@ -307,7 +291,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: `Revisar y calificar los ${cantidadEstandares} Estándares Mínimos (${grupo}) y hacer el plan de mejoras para lo que falte.`,
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Resolución 0312 de 2019 Art. 27 y 28 (se hace una vez al año, en diciembre).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Gerente',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: `Lista de los ${cantidadEstandares} puntos calificada y firmada, más el comprobante de envío a la ARL.`,
       periodoCumplimiento: `Diciembre ${vigencia}`,
@@ -335,7 +319,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Revisar con el equipo la Matriz de Peligros GTC 45 para actualizar qué puede causar daño en cada área y cómo prevenirlo.',
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.15 Parágrafo 1 (mínimo 1 vez al año).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Operario de selección',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Matriz de peligros actualizada, lista de asistencia de trabajadores que participaron y acta de entrega.',
       periodoCumplimiento: `Febrero ${vigencia}`,
@@ -363,7 +347,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.7 (se revisa mínimo 1 vez al año).',
       responsableSugerido: NOMBRE_GERENTE_OFICIAL,
-      aprobadorSugerido: 'Coordinador / Vigía de SST',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Documento de la Política firmado y fechado, más firmas o registro de que todos los trabajadores la leyeron.',
       periodoCumplimiento: `Enero ${vigencia}`,
       mesesSugeridos: [1],
@@ -394,7 +378,7 @@ export function identificarRequisitosObligatorios(
         : 'Recorrido mensual de revisión del Vigía de SST en la planta y reporte de cosas por mejorar.',
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Resolución 2013 de 1986 Art. 7 (debe reunirse o hacer seguimiento mínimo una vez al mes).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Operario de selección',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: esCopasst
         ? 'Acta de reunión mensual del COPASST firmada y lista de revisión de la planta.'
@@ -423,7 +407,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: `Hacer la reunión cada 3 meses del Comité de Convivencia Laboral (${miembrosConvivencia}) para escuchar inquietudes y promover el respeto.`,
       frecuenciaRespaldada: 'TRIMESTRAL',
       sustentoFrecuencia: 'Resolución 1356 de 2012 Art. 3 (reunión obligatoria cada 3 meses).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Gerente',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Acta privada de la reunión cada 3 meses firmada por los integrantes del Comité.',
       periodoCumplimiento: `Cada 3 meses (Q1-Q4 ${vigencia})`,
@@ -457,7 +441,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Resolución 2674 de 2013 Art. 11 (chequeo médico mínimo 1 vez al año) y Res. 1843/2025.',
       responsableSugerido: NOMBRE_GERENTE_OFICIAL,
-      aprobadorSugerido: 'Coordinador / Vigía de SST',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Certificados médicos de aptitud para el trabajo y carnés al día de manipulación de alimentos.',
       periodoCumplimiento: `Marzo ${vigencia}`,
       mesesSugeridos: [3],
@@ -490,7 +474,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Envasar el aceite frío (< 40 °C), pesarlo y entregarlo (180 a 250 litros/mes) al gestor autorizado SDA con recibo firmado.',
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Resolución 316 de 2018 Art. 6 y registro SDA Bogotá (almacenamiento seguro y entrega periódica).',
-      responsableSugerido: 'Líder de Gestión Ambiental',
+      responsableSugerido: 'Operario de frito',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Recibos o certificados mensuales entregados por el recolector autorizado con los litros o kilos entregados.',
       periodoCumplimiento: `Cada mes (Ene-Dic ${vigencia})`,
@@ -520,8 +504,8 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Limpieza mensual de la trampa de grasas, retiro de natas a bolsa sellada y anotación en la planilla de control ambiental.',
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Resolución 0631 de 2015 y programa mensual para evitar taponamientos y contaminación del agua.',
-      responsableSugerido: 'Líder de Gestión Ambiental',
-      aprobadorSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Operario de frito',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Planilla de limpieza de trampa de grasas firmada y comprobante de entrega de las grasas retiradas.',
       periodoCumplimiento: `Cada mes (Ene-Dic ${vigencia})`,
       mesesSugeridos: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -552,7 +536,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Recarga anual certificada de extintores Clase K y práctica de simulacro de incendio por aceite o fuga de gas con todo el equipo.',
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.25 Num. 10 (mínimo 1 simulacro al año) y NTC 2885 (revisión y recarga anual).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Gerente',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Etiqueta y certificado de recarga del extintor Clase K al día, guion, fotos y lista de asistencia del simulacro.',
       periodoCumplimiento: `Octubre ${vigencia}`,
@@ -581,7 +565,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Hacer la revisión anual de cumplimiento (auditoría interna) y entregar el informe de resultados a la Gerencia para corregir lo necesario.',
       frecuenciaRespaldada: 'ANUAL',
       sustentoFrecuencia: 'Decreto 1072 de 2015 Art. 2.2.4.6.29 y 2.2.4.6.31 (obligatorio mínimo 1 vez al año).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Gerente',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Informe de la revisión anual (auditoría) y acta firmada por la Gerencia con los compromisos de mejora.',
       periodoCumplimiento: `Noviembre ${vigencia}`,
@@ -609,7 +593,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Lavado profundo de ductos y filtros de la campana extractora y revisión mecánica de motores y cortadoras para bajar el ruido.',
       frecuenciaRespaldada: 'SEMESTRAL',
       sustentoFrecuencia: 'Control preventivo cada 6 meses para evitar incendios en ductos y cuidar a los vecinos de Bosa.',
-      responsableSugerido: 'Líder de Gestión Ambiental',
+      responsableSugerido: 'Operario de frito',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Certificado o comprobante de lavado de ductos y filtros, más registro del mantenimiento de extractores.',
       periodoCumplimiento: `Mayo y Noviembre ${vigencia}`,
@@ -636,7 +620,7 @@ export function identificarRequisitosObligatorios(
       actividadPropuesta: 'Revisar planilla PILA al día de contratistas por prestación de servicios y explicarles las normas de seguridad antes de trabajar.',
       frecuenciaRespaldada: 'MENSUAL',
       sustentoFrecuencia: 'Decreto 723 de 2013 (revisión cada mes antes de pagar o dejar ingresar a planta).',
-      responsableSugerido: 'Coordinador / Vigía de SST',
+      responsableSugerido: 'Gerente',
       aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Copias mensuales de planilla PILA paga y registro firmado de la charla de inducción en seguridad.',
       periodoCumplimiento: `Cada mes ${vigencia}`,
@@ -662,7 +646,7 @@ export function identificarRequisitosObligatorios(
       frecuenciaRespaldada: 'SEMESTRAL',
       sustentoFrecuencia: 'Ley 789 de 2002 (cada vez que ingresa un nuevo grupo o cada 6 meses).',
       responsableSugerido: NOMBRE_GERENTE_OFICIAL,
-      aprobadorSugerido: 'Coordinador / Vigía de SST',
+      aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
       evidenciaNecesaria: 'Contrato de aprendizaje, certificado de afiliación a la ARL y planilla firmada de entrega de EPP e inducción.',
       periodoCumplimiento: `Cada 6 meses ${vigencia}`,
       mesesSugeridos: [2, 8],
@@ -693,7 +677,7 @@ export function identificarRequisitosObligatorios(
           actividadPropuesta: `Tarea para ponerse al día con la norma: ${n.aplicabilidad.slice(0, 140)}`,
           frecuenciaRespaldada: 'UNICA',
           sustentoFrecuencia: 'Pendiente encontrado en la lista de normas — requiere ponerse al día este año.',
-          responsableSugerido: n.responsable || 'Coordinador / Vigía de SST',
+          responsableSugerido: resolverCargoPrincipalYExpuestos(n.responsable).cargoPrincipal,
           aprobadorSugerido: NOMBRE_GERENTE_OFICIAL,
           evidenciaNecesaria: n.evidenciaCumplimiento.slice(0, 180),
           periodoCumplimiento: `Año ${vigencia}`,
@@ -1000,6 +984,8 @@ export function detectarImpactosEnPlan(
 
   riesgosCriticos.forEach((r) => {
     const actVinculada = plan.actividades.find((a) => a.riesgoId === r.id);
+    const { cargosOficiales } = resolverCargoPrincipalYExpuestos(r.cargo, r.cargosExpuestos);
+    const cargoDisplay = cargosOficiales.join(', ');
     if (!actVinculada) {
       const key = `${r.id}|AGREGAR_ACTIVIDAD`;
       if (!existentesIds.has(key)) {
@@ -1009,7 +995,7 @@ export function detectarImpactosEnPlan(
           fechaDeteccion: hoy,
           tipoFuente: 'MATRIZ_RIESGOS',
           titulo: `Nuevo riesgo alto (Nivel ${r.interpretacionNR}) sin tarea en el Plan Anual (${r.codigo || r.id})`,
-          descripcion: `Peligro: ${r.peligroDescripcion}. Puesto: ${r.cargo || r.cargosExpuestos || 'Operario'}. Área: ${r.proceso}.`,
+          descripcion: `Peligro: ${r.peligroDescripcion}. Puesto: ${cargoDisplay}. Área: ${r.proceso}.`,
           impactoPlan: `Conviene programar una acción de protección: ${medidas}`,
           entidadId: r.id,
           accionSugerida: 'AGREGAR_ACTIVIDAD',
@@ -1022,7 +1008,7 @@ export function detectarImpactosEnPlan(
             riesgoId: r.id,
             riesgoCodigo: r.codigo || r.id,
             riesgoNivelNR: r.interpretacionNR,
-            riesgoCargo: r.cargo || r.cargosExpuestos || 'Operario',
+            riesgoCargo: cargoDisplay,
             riesgoProceso: r.proceso,
             riesgoMedidasControl: medidas,
             riesgoSnapshot: crearRiesgoSnapshot(r),
@@ -1056,7 +1042,7 @@ export function detectarImpactosEnPlan(
             datosPropuestos: {
               riesgoNivelNR: r.interpretacionNR,
               riesgoMedidasControl: medidasActuales,
-              riesgoCargo: r.cargo || r.cargosExpuestos,
+              riesgoCargo: cargoDisplay,
               riesgoProceso: r.proceso,
               riesgoSnapshot: crearRiesgoSnapshot(r),
             },
@@ -1220,7 +1206,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       titulo: 'Atender el 100% de los peligros más graves (Nivel I y II): calor, ruido, químicos y esfuerzo físico',
       descripcion:
         'Instalar barreras en las máquinas, organizar pausas y entregar los elementos de protección (EPP) para reducir los riesgos altos encontrados en la planta de Frikaz S.A.S.',
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: 'Operario de selección',
       metas: [
         {
           id: `meta-${anio}-01a`,
@@ -1265,7 +1251,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
       titulo: 'Cuidar el agua y el aire evitando botar aceite usado (ACU), grasas y humo sin control',
       descripcion:
         'Entregar todo el Aceite de Cocina Usado (ACU) al recolector autorizado, limpiar la trampa de grasas cada mes y lavar la campana extractora.',
-      responsable: 'Líder de Gestión Ambiental',
+      responsable: 'Operario de frito',
       metas: [
         {
           id: `meta-${anio}-03a`,
@@ -1295,7 +1281,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
         'Cuenta solo las tareas marcadas como CUMPLIDAS con prueba aprobada y las divide por el total de tareas del año.',
       unidadMedida: '%',
       fuenteInformacion: 'Calendario y pruebas del Plan Anual Frikaz S.A.S.',
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: NOMBRE_GERENTE_OFICIAL,
       periodicidad: 'TRIMESTRAL',
       tipoCalculo: 'AUTOMATICO_ACTIVIDADES',
       filtroArea: 'TODAS',
@@ -1317,7 +1303,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
         'Revisa en vivo la Matriz de Peligros GTC 45 y verifica que todos los riesgos altos tengan una tarea asignada en el Plan Anual.',
       unidadMedida: '%',
       fuenteInformacion: 'Matriz de Peligros GTC 45 + Plan Anual',
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: 'Operario de selección',
       periodicidad: 'TRIMESTRAL',
       tipoCalculo: 'AUTOMATICO_RIESGOS_CRITICOS',
       historicoMediciones: [],
@@ -1357,7 +1343,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
         'Revisa cuántas tareas del Plan Anual ya tienen al menos un documento o foto aprobada por quien revisa.',
       unidadMedida: '%',
       fuenteInformacion: 'Archivo de Soportes del Plan Anual',
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: NOMBRE_GERENTE_OFICIAL,
       periodicidad: 'MENSUAL',
       tipoCalculo: 'AUTOMATICO_EVIDENCIAS',
       filtroArea: 'TODAS',
@@ -1378,7 +1364,7 @@ function generarObjetivosYIndicadoresIniciales(anio: number): {
         'Toma solo las tareas de cuidado ambiental y calcula cuántas están cerradas y aprobadas.',
       unidadMedida: '%',
       fuenteInformacion: 'Calendario Ambiental del Plan Anual',
-      responsable: 'Líder de Gestión Ambiental',
+      responsable: 'Operario de frito',
       periodicidad: 'MENSUAL',
       tipoCalculo: 'AUTOMATICO_ACTIVIDADES',
       filtroArea: 'AMBIENTAL',
@@ -1410,9 +1396,9 @@ function buildPlan2025Seed(
     esRecurrente: partial.esRecurrente ?? false,
     periodicidad: partial.periodicidad || 'ANUAL',
     programacionMensual: partial.programacionMensual || [3],
-    responsableId: partial.responsableId || 'cargo-coordinador-vigia-sst',
-    responsableNombre: partial.responsableNombre || 'Coordinador / Vigía de SST',
-    responsableCargo: partial.responsableCargo || 'Coordinador / Vigía de SST',
+    responsableId: partial.responsableId || 'cargo-gerente-general',
+    responsableNombre: partial.responsableNombre || NOMBRE_GERENTE_OFICIAL,
+    responsableCargo: partial.responsableCargo || 'Gerente',
     responsableCorreo: 'frikaz.fritosnacks@gmail.com',
     aprobadorId: 'cargo-gerente-general',
     aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1430,24 +1416,24 @@ function buildPlan2025Seed(
               tipoSoporte: 'PDF',
               descripcionSoporte: `Documento cargado para revisión de Gerencia (${partial.nombre}).`,
               fechaCarga: partial.fechaLimite,
-              cargadoPor: partial.responsableNombre || 'Coordinador / Vigía de SST',
+              cargadoPor: partial.responsableNombre || NOMBRE_GERENTE_OFICIAL,
               estadoRevision: 'PENDIENTE_REVISION',
             },
           ]
         : [],
     resultadoActividad:
       idx <= 2
-        ? 'Soporte cargado; pendiente revisión y aprobación por el Gerente General.'
+        ? 'Soporte cargado; pendiente revisión y aprobación por Gerencia.'
         : undefined,
     observaciones:
       idx <= 2
-        ? 'Pendiente de revisión y aprobación por el Gerente.'
+        ? 'Pendiente de revisión y aprobación por Gerencia.'
         : 'Por hacer o completar evidencias de vigencia 2025.',
     historialRevisiones: [
       {
         id: `hr-2025-${idx}`,
         fecha: partial.fechaInicio,
-        usuario: partial.responsableNombre || 'Coordinador / Vigía de SST',
+        usuario: partial.responsableNombre || NOMBRE_GERENTE_OFICIAL,
         rol: 'Responsable',
         accion: idx <= 2 ? 'EVIDENCIA_ADJUNTADA' : 'CREADA',
         detalle:
@@ -1538,8 +1524,8 @@ function buildPlan2025Seed(
     objetivoGeneral:
       'Cuidar la salud y evitar accidentes en la elaboración de snacks de Frikaz S.A.S., cumpliendo las normas de seguridad y cuidado ambiental durante el 2025.',
     fechaElaboracion: '2025-01-10',
-    responsableId: 'cargo-coordinador-vigia-sst',
-    responsableNombre: 'Coordinador / Vigía de SST',
+    responsableId: 'cargo-gerente-general',
+    responsableNombre: NOMBRE_GERENTE_OFICIAL,
     aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
     estadoAprobacion: 'EN_REVISION',
     empresaSnapshot: construirEmpresaSnapshot(config),
@@ -1552,9 +1538,9 @@ function buildPlan2025Seed(
       {
         id: 'h-2025-01',
         fechaHora: '2025-01-15T09:00:00',
-        usuario: 'Coordinador / Vigía de SST',
+        usuario: NOMBRE_GERENTE_OFICIAL,
         accion: 'Borrador listo para Gerencia',
-        detalle: 'Registro base 2025 preparado; pendiente de revisión y aprobación por el Gerente.',
+        detalle: 'Registro base 2025 preparado; pendiente de revisión y aprobación por Gerencia.',
       },
     ],
   };
@@ -1600,9 +1586,9 @@ function buildPlan2026Seed(
       fechaLimite: '2026-02-15',
       programacionMensual: [1, 2],
       reprogramadaParaAnio: 2027,
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1653,8 +1639,8 @@ function buildPlan2026Seed(
             programacionMensual: [3, 4],
             reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-frito',
-            responsableNombre: 'Operario de Frito',
-            responsableCargo: 'Operario de Frito',
+            responsableNombre: 'Operario de frito',
+            responsableCargo: 'Operario de frito',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1708,8 +1694,8 @@ function buildPlan2026Seed(
             programacionMensual: [6, 7],
             reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-seleccion',
-            responsableNombre: 'Operario de Selección',
-            responsableCargo: 'Operario de Selección',
+            responsableNombre: 'Operario de selección',
+            responsableCargo: 'Operario de selección',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1763,8 +1749,8 @@ function buildPlan2026Seed(
             programacionMensual: [9, 10],
             reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-pelado',
-            responsableNombre: 'Operario de Pelado',
-            responsableCargo: 'Operario de Pelado',
+            responsableNombre: 'Operario de pelado',
+            responsableCargo: 'Operario de pelado',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1809,8 +1795,8 @@ function buildPlan2026Seed(
             programacionMensual: [8, 9],
             reprogramadaParaAnio: 2027,
             responsableId: 'cargo-operario-empaque',
-            responsableNombre: 'Operario de Empaque',
-            responsableCargo: 'Operario de Empaque',
+            responsableNombre: 'Operario de empaque',
+            responsableCargo: 'Operario de empaque',
             responsableCorreo: 'frikaz.fritosnacks@gmail.com',
             aprobadorId: 'cargo-gerente-general',
             aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1847,9 +1833,9 @@ function buildPlan2026Seed(
       fechaLimite: '2026-12-15',
       programacionMensual: [3, 6, 9, 12],
       reprogramadaParaAnio: 2027,
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1884,9 +1870,9 @@ function buildPlan2026Seed(
       fechaLimite: '2026-12-20',
       programacionMensual: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       reprogramadaParaAnio: 2027,
-      responsableId: 'rol-lider-ambiental',
-      responsableNombre: 'Líder de Gestión Ambiental',
-      responsableCargo: 'Encargado Ambiental / Jefe de Planta',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1921,9 +1907,9 @@ function buildPlan2026Seed(
       fechaLimite: '2026-12-20',
       programacionMensual: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       reprogramadaParaAnio: 2027,
-      responsableId: 'rol-lider-ambiental',
-      responsableNombre: 'Líder de Gestión Ambiental',
-      responsableCargo: 'Encargado Ambiental / Jefe de Planta',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1957,9 +1943,9 @@ function buildPlan2026Seed(
       fechaLimite: '2026-12-22',
       programacionMensual: [12],
       reprogramadaParaAnio: 2027,
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -1984,8 +1970,8 @@ function buildPlan2026Seed(
     objetivoGeneral:
       'Registro histórico del periodo 2026 de Frikaz S.A.S. Las actividades sin ejecución confirmada a noviembre de 2026 se mantienen como pendientes / reprogramadas al Plan Anual 2027 con $0 de presupuesto ejecutado.',
     fechaElaboracion: '2026-01-12',
-    responsableId: 'cargo-coordinador-vigia-sst',
-    responsableNombre: 'Coordinador / Vigía de SST',
+    responsableId: 'cargo-gerente-general',
+    responsableNombre: NOMBRE_GERENTE_OFICIAL,
     aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
     estadoAprobacion: 'EN_REVISION',
     empresaSnapshot: construirEmpresaSnapshot(config),
@@ -1998,14 +1984,14 @@ function buildPlan2026Seed(
       {
         id: 'h-2026-01',
         fechaHora: '2026-01-16T10:00:00',
-        usuario: 'Coordinador / Vigía de SST',
+        usuario: NOMBRE_GERENTE_OFICIAL,
         accion: 'Registro inicial 2026',
         detalle: `Plan Anual 2026 (${config.numeroTrabajadores} trabajadores, ${grupo}) registrado.`,
       },
       {
         id: 'h-2026-reorg-2027',
         fechaHora: '2026-11-23T09:00:00',
-        usuario: 'Coordinador / Vigía de SST',
+        usuario: NOMBRE_GERENTE_OFICIAL,
         accion: 'Reorganización y trazabilidad hacia 2027',
         detalle:
           'A noviembre de 2026 no hay ejecución confirmada; las actividades no ejecutadas se conservan en el histórico 2026 como pendientes / reprogramadas al Plan Anual 2027 con $0 ejecutado.',
@@ -2090,9 +2076,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Tiempo del responsable SST, equipo de planta y plataforma digital actual.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes; disponibilidad horaria por confirmar en enero 2027.',
@@ -2150,9 +2136,9 @@ export function buildPlan2027Seed(
       area: 'INTEGRAL',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       recursosNecesarios: 'Carpetas, impresiones básicas de formatos y archivo digital actual.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Costo de papelería e impresión pendiente de valoración en enero 2027.',
@@ -2179,8 +2165,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-pelado',
-      responsableNombre: 'Operario de Pelado',
-      responsableCargo: 'Operario de Pelado',
+      responsableNombre: 'Operario de pelado',
+      responsableCargo: 'Operario de pelado',
       recursosNecesarios: 'Tiempo de inspección visual y tornillería o ajuste mecánico si se detecta falla.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Inspección con tiempo interno; posibles repuestos pendientes de valoración.',
@@ -2204,9 +2190,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       recursosNecesarios: 'Señalización de tablero eléctrico y servicio de electricista certificado si hay hallazgos.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Valor del electricista pendiente de cotización si la inspección encuentra fallas.',
@@ -2231,8 +2217,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-frito',
-      responsableNombre: 'Operario de Frito',
-      responsableCargo: 'Operario de Frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       recursosNecesarios: 'Señalización de llave de corte rápido y revisión de técnico de gas si se requiere.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Costo de revisión técnica de gas pendiente de valoración según proveedor.',
@@ -2256,9 +2242,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Tiempo del Vigía/COPASST y formato de reporte de condiciones inseguras.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes del equipo en planta (por confirmar horario).',
@@ -2285,9 +2271,9 @@ export function buildPlan2027Seed(
       area: 'INTEGRAL',
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-03',
-      responsableId: 'rol-lider-ambiental',
-      responsableNombre: 'Líder de Gestión Ambiental',
-      responsableCargo: 'Encargado Ambiental / Jefe de Planta',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       recursosNecesarios: 'Implementos de aseo, aviso de piso húmedo y entrega segura de ACU/grasas.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Insumos de aseo y señalización de piso húmedo pendientes de confirmar.',
@@ -2322,8 +2308,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-seleccion',
-      responsableNombre: 'Operario de Selección',
-      responsableCargo: 'Operario de Selección',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Impresión de etiquetas resistentes al agua, carpeta para FDS y guantes largos de nitrilo.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Costo de etiquetas e implementos pendiente de valoración con Gerencia.',
@@ -2355,9 +2341,9 @@ export function buildPlan2027Seed(
       area: 'INTEGRAL',
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-03',
-      responsableId: 'rol-lider-ambiental',
-      responsableNombre: 'Líder de Gestión Ambiental',
-      responsableCargo: 'Encargado Ambiental / Jefe de Planta',
+      responsableId: 'cargo-operario-empaque',
+      responsableNombre: 'Operario de empaque',
+      responsableCargo: 'Operario de empaque',
       recursosNecesarios: 'Tiempo de revisión del equipo y rótulos de separación bodega/químicos/ACU.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Pendiente confirmar si se requieren estibas o señalización adicional.',
@@ -2383,9 +2369,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Guía de capacitación del sistema y 20 minutos de jornada (o apoyo gratuito ARL).',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa material propio de la herramienta; horario por confirmar con producción.',
@@ -2411,8 +2397,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-empaque',
-      responsableNombre: 'Operario de Empaque',
-      responsableCargo: 'Operario de Empaque',
+      responsableNombre: 'Operario de empaque',
+      responsableCargo: 'Operario de empaque',
       recursosNecesarios: 'Carretilla existente y valoración de tapetes antifatiga si Gerencia los aprueba.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Práctica con equipo actual; compra de tapetes pendiente de valoración y aprobación.',
@@ -2446,8 +2432,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-frito',
-      responsableNombre: 'Operario de Frito',
-      responsableCargo: 'Operario de Frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       recursosNecesarios: 'Guía de capacitación de calor, punto de agua potable y chequeo de extractores.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Charla interna con recursos existentes; reposición de EPP térmico se revisa en junio.',
@@ -2480,8 +2466,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-pelado',
-      responsableNombre: 'Operario de Pelado',
-      responsableCargo: 'Operario de Pelado',
+      responsableNombre: 'Operario de pelado',
+      responsableCargo: 'Operario de pelado',
       recursosNecesarios: 'Material de capacitación, tapaoídos limpios y gestión sin costo ante ARL.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Pendiente confirmar cobertura de sonometría con ARL o costo de proveedor.',
@@ -2516,8 +2502,8 @@ export function buildPlan2027Seed(
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
       responsableId: 'cargo-operario-pelado',
-      responsableNombre: 'Operario de Pelado',
-      responsableCargo: 'Operario de Pelado',
+      responsableNombre: 'Operario de pelado',
+      responsableCargo: 'Operario de pelado',
       recursosNecesarios: 'Guía práctica en planta y tarjetas de aviso "No encender - En limpieza".',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes en planta; tarjetas de aviso por confirmar.',
@@ -2544,9 +2530,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Revisión física de EPP actuales y cotización de reposiciones faltantes.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Valor de compra de reposiciones pendiente de valoración y aprobación de Gerencia.',
@@ -2570,9 +2556,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       recursosNecesarios: 'Formato de entrega de EPP y reposiciones aprobadas por Andrea Orjuela – Gerente.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Sujeto a compra aprobada según la revisión de inicios de junio.',
@@ -2627,14 +2613,14 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Reunión corta con los 10 trabajadores y cartelera de roles en planta.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes; impresión de cartelera pendiente por confirmar.',
       evidenciaRequerida: 'Cuadro de roles con nombres y suplentes firmado y publicado en planta.',
-      observaciones: 'Pensado para un equipo real de 10 personas sin brigadas irrealizables.',
+      observaciones: 'Pensado para un equipo real de 10 personas dentro de los 6 cargos oficiales sin brigadas irrealizables.',
       esPlanEmergencias: true,
       normaOficial: 'Decreto 1072 de 2015 Art. 2.2.4.6.25',
     },
@@ -2651,9 +2637,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: '30 minutos de jornada con el equipo y guía de socialización.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes de la empresa.',
@@ -2679,9 +2665,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       recursosNecesarios: 'Guía del Plan de Emergencias y apoyo ARL / Bomberos si está disponible.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Capacitación interna sin costo; práctica con recarga o apoyo externo por confirmar.',
@@ -2707,9 +2693,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'RIESGO_GTC45',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-frito',
+      responsableNombre: 'Operario de frito',
+      responsableCargo: 'Operario de frito',
       recursosNecesarios: 'Guía práctica de 20 minutos en planta.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes (tiempo interno en planta).',
@@ -2727,7 +2713,7 @@ export function buildPlan2027Seed(
       mes: 8,
       nombre: 'Orientación sobre evacuación y actuación ante emergencias',
       descripcion:
-        'Repaso práctico de salida ordenada (sin correr ni devolverse), primeros auxilios básicos en quemaduras/cortes y no confrontación ante robos o sismos.',
+        'Repaso práctico de salida ordenada (sin correr ni devolverse), primeros auxilios básicos en quemaduras/cortes y no confrontación ante robos o sismos (planta y conducción).',
       criterioAceptacion:
         'Personal orientado en ruta de salida, conteo en punto de encuentro y números de ayuda externa.',
       fechaInicio: '2027-08-21',
@@ -2735,9 +2721,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-conductor',
+      responsableNombre: 'Conductor',
+      responsableCargo: 'Conductor',
       recursosNecesarios: '20 minutos de práctica guiada y cartelera de teléfonos de emergencia.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes; cartelera pendiente de actualización si cambia algún teléfono.',
@@ -2763,9 +2749,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Inspección en planta; recarga de extintores o reposición de botiquín si se detecta faltante.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Costo de recarga de extintores o insumos de botiquín pendiente de valoración.',
@@ -2789,9 +2775,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-empaque',
+      responsableNombre: 'Operario de empaque',
+      responsableCargo: 'Operario de empaque',
       recursosNecesarios: 'Verificación en planta y señalización de salida si falta algún aviso.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Posibles letreros de salida o punto de encuentro pendientes de confirmar.',
@@ -2815,9 +2801,9 @@ export function buildPlan2027Seed(
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
       responsableId: 'cargo-gerente-general',
-      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
       responsableCargo: 'Gerente',
-      recursosNecesarios: 'Revisión conjunta entre Gerencia y Coordinador / Vigía SST.',
+      recursosNecesarios: 'Revisión conjunta entre Gerente y equipo operativo SST.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Verificación administrativa previa con recursos existentes.',
       evidenciaRequerida: 'Acta corta de confirmación de condiciones o registro de pendientes por resolver.',
@@ -2842,7 +2828,7 @@ export function buildPlan2027Seed(
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
       responsableId: 'cargo-gerente-general',
-      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
       responsableCargo: 'Gerente',
       recursosNecesarios: 'Alarma o pito operativo, rutas despejadas, guion sencillo y 30 minutos de jornada.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
@@ -2871,9 +2857,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Formatos de evaluación y mejora post-simulacro y tiempo de análisis del equipo.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes y formatos editables de la herramienta.',
@@ -2923,9 +2909,9 @@ export function buildPlan2027Seed(
       area: 'INTEGRAL',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-operario-seleccion',
+      responsableNombre: 'Operario de selección',
+      responsableCargo: 'Operario de selección',
       recursosNecesarios: 'Tiempo de análisis de registros del año 2027.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes del área SST.',
@@ -2947,10 +2933,10 @@ export function buildPlan2027Seed(
       area: 'INTEGRAL',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-01',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
-      recursosNecesarios: 'Revisión con responsables de área y aprobación de Andrea Orjuela – Gerente.',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
+      recursosNecesarios: 'Revisión con responsables de los 6 cargos oficiales y aprobación de Gerencia.',
       tipoRecurso: 'PENDIENTE_VALORACION',
       confirmacionRecursos: 'Los costos de nuevas acciones correctivas se valorarán según cada hallazgo.',
       evidenciaRequerida: 'Plan de acciones correctivas y de mejora registrado con responsables y fechas.',
@@ -2974,7 +2960,7 @@ export function buildPlan2027Seed(
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
       responsableId: 'cargo-gerente-general',
-      responsableNombre: 'Andrea Orjuela – Gerente',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
       responsableCargo: 'Gerente',
       recursosNecesarios: 'Soportes acumulados 2027 y revisión conjunta entre SST y Gerencia.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
@@ -3005,9 +2991,9 @@ export function buildPlan2027Seed(
       area: 'SST',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       recursosNecesarios: 'Registros mensuales de nómina, incapacidades y reportes ARL de 2027.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa registros internos y módulo Indicadores de la herramienta.',
@@ -3029,9 +3015,9 @@ export function buildPlan2027Seed(
       area: 'INTEGRAL',
       origen: 'NORMA_OBLIGATORIA',
       objetivoId: 'obj-2027-02',
-      responsableId: 'cargo-coordinador-vigia-sst',
-      responsableNombre: 'Coordinador / Vigía de SST',
-      responsableCargo: 'Coordinador / Vigía de SST',
+      responsableId: 'cargo-gerente-general',
+      responsableNombre: NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: 'Gerente',
       recursosNecesarios: 'Evaluación de cierre 2027 y reunión de planeación con Gerencia.',
       tipoRecurso: 'RECURSOS_EXISTENTES',
       confirmacionRecursos: 'Usa recursos existentes de cierre anual.',
@@ -3044,12 +3030,15 @@ export function buildPlan2027Seed(
 
   const actividades: ActividadPlanAnual[] = specs.map((s) => {
     const code = `PA-2027-${String(s.num).padStart(2, '0')}`;
+    const cargoSnapshot = s.riesgo
+      ? resolverCargoPrincipalYExpuestos(s.riesgo.cargo, s.riesgo.cargosExpuestos).cargosOficiales.join(', ')
+      : undefined;
     const historialCambiosFechas = s.reprogramacionOrigen
       ? [
           {
             id: `hcf-2027-${s.num}`,
             fechaRegistro: '2026-11-23',
-            usuario: 'Coordinador / Vigía de SST',
+            usuario: NOMBRE_GERENTE_OFICIAL,
             fechaInicioAnterior: s.reprogramacionOrigen.fechaInicioOriginal,
             fechaLimiteAnterior: s.reprogramacionOrigen.fechaLimiteOriginal,
             fechaInicioNueva: s.fechaInicio,
@@ -3071,7 +3060,7 @@ export function buildPlan2027Seed(
       riesgoId: s.riesgo?.id,
       riesgoCodigo: s.riesgo?.codigo || s.riesgo?.id,
       riesgoNivelNR: s.riesgo?.interpretacionNR,
-      riesgoCargo: s.riesgo?.cargo || s.riesgo?.cargosExpuestos,
+      riesgoCargo: cargoSnapshot,
       riesgoProceso: s.riesgo?.proceso,
       riesgoMedidasControl: s.riesgo ? extraerMedidasRiesgo(s.riesgo) : undefined,
       riesgoSnapshot: s.riesgo ? crearRiesgoSnapshot(s.riesgo) : undefined,
@@ -3096,9 +3085,9 @@ export function buildPlan2027Seed(
           }
         : undefined,
       historialCambiosFechas,
-      responsableId: s.responsableId || 'cargo-coordinador-vigia-sst',
-      responsableNombre: s.responsableNombre || 'Coordinador / Vigía de SST',
-      responsableCargo: s.responsableCargo || 'Coordinador / Vigía de SST',
+      responsableId: s.responsableId || 'cargo-gerente-general',
+      responsableNombre: s.responsableNombre || NOMBRE_GERENTE_OFICIAL,
+      responsableCargo: s.responsableCargo || 'Gerente',
       responsableCorreo: 'frikaz.fritosnacks@gmail.com',
       aprobadorId: 'cargo-gerente-general',
       aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
@@ -3117,7 +3106,7 @@ export function buildPlan2027Seed(
         {
           id: `hr-2027-${s.num}`,
           fecha: '2026-11-23T09:00:00',
-          usuario: 'Coordinador / Vigía de SST',
+          usuario: NOMBRE_GERENTE_OFICIAL,
           rol: 'Planificador',
           accion: 'CREADA',
           detalle: s.reprogramacionOrigen
@@ -3135,8 +3124,8 @@ export function buildPlan2027Seed(
     objetivoGeneral:
       'Ejecutar de manera realista y progresiva entre enero y diciembre de 2027 las 34 actividades de prevención, control de riesgos, capacitación, preparación ante emergencias y cierre SG-SST para los trabajadores de Frikaz S.A.S., con presupuesto ejecutado inicial en $0 y seguimiento verificado por Gerencia.',
     fechaElaboracion: '2026-11-23',
-    responsableId: 'cargo-coordinador-vigia-sst',
-    responsableNombre: 'Coordinador / Vigía de SST',
+    responsableId: 'cargo-gerente-general',
+    responsableNombre: NOMBRE_GERENTE_OFICIAL,
     aprobadorNombre: NOMBRE_GERENTE_OFICIAL,
     estadoAprobacion: 'BORRADOR',
     presupuestoGeneralAprobado: 0,
@@ -3150,7 +3139,7 @@ export function buildPlan2027Seed(
       {
         id: 'h-2027-01',
         fechaHora: '2026-11-23T09:00:00',
-        usuario: 'Coordinador / Vigía de SST',
+        usuario: NOMBRE_GERENTE_OFICIAL,
         accion: 'Reorganización Plan Anual 2027',
         detalle: `Se creó la programación realista de enero a diciembre de 2027 con 34 actividades distribuidas por mes, presupuesto ejecutado inicial de $0 y trazabilidad de actividades reprogramadas desde 2026 (${config.numeroTrabajadores} trabajadores, ${grupo}).`,
       },
@@ -3208,25 +3197,101 @@ function guardarBackupHistoricoPlanes(historicos: Record<number, PlanAnualVigenc
   }
 }
 
+function normalizarResponsableCargoOficial(
+  responsableId?: string,
+  responsableCargo?: string,
+  responsableNombre?: string
+): { id: string; cargo: string; nombre: string } {
+  const byId = obtenerCargoOficialPorId(responsableId);
+  if (byId) {
+    return {
+      id: byId.id,
+      cargo: byId.nombre,
+      nombre:
+        byId.id === 'cargo-gerente-general'
+          ? NOMBRE_GERENTE_OFICIAL
+          : responsableNombre &&
+              responsableNombre !== 'Coordinador / Vigía de SST' &&
+              responsableNombre !== 'Líder de Gestión Ambiental'
+            ? byId.nombre
+            : byId.nombre,
+    };
+  }
+  const combined = `${responsableId || ''} ${responsableCargo || ''} ${responsableNombre || ''}`.toLowerCase();
+  if (combined.includes('ambiental') || combined.includes('acu') || combined.includes('frito')) {
+    return { id: 'cargo-operario-frito', cargo: 'Operario de frito', nombre: 'Operario de frito' };
+  }
+  if (combined.includes('vigía') || combined.includes('vigia') || combined.includes('coordinador') || combined.includes('selección') || combined.includes('seleccion')) {
+    // Tareas administrativas/de dirección quedan en Gerente; operativas de planta en Operario de selección
+    if (combined.includes('selección') || combined.includes('seleccion')) {
+      return { id: 'cargo-operario-seleccion', cargo: 'Operario de selección', nombre: 'Operario de selección' };
+    }
+    return { id: 'cargo-gerente-general', cargo: 'Gerente', nombre: NOMBRE_GERENTE_OFICIAL };
+  }
+  const { cargoPrincipal } = resolverCargoPrincipalYExpuestos(responsableCargo || responsableNombre);
+  const idOficial = obtenerIdCargoOficial(cargoPrincipal);
+  return {
+    id: idOficial,
+    cargo: cargoPrincipal,
+    nombre: idOficial === 'cargo-gerente-general' ? NOMBRE_GERENTE_OFICIAL : cargoPrincipal,
+  };
+}
+
 function normalizarPlan2027Unico(plan2027: PlanAnualVigencia): PlanAnualVigencia {
+  const respPlan = normalizarResponsableCargoOficial(
+    plan2027.responsableId,
+    undefined,
+    plan2027.responsableNombre
+  );
   return {
     ...plan2027,
     vigencia: 2027,
     presupuestoGeneralAprobado: plan2027.presupuestoGeneralAprobado ?? 0,
+    responsableId: respPlan.id,
+    responsableNombre: respPlan.nombre,
     aprobadorNombre:
       plan2027.aprobadorNombre === 'Gerente General (Representante Legal)' ||
       plan2027.aprobadorNombre === 'Gerente General'
         ? NOMBRE_GERENTE_OFICIAL
         : plan2027.aprobadorNombre || NOMBRE_GERENTE_OFICIAL,
-    actividades: deduplicarActividadesPlan(plan2027.actividades || []).map((a) => ({
-      ...a,
-      aprobadorNombre:
-        a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
-        a.aprobadorNombre === 'Gerente General'
-          ? NOMBRE_GERENTE_OFICIAL
-          : a.aprobadorNombre || NOMBRE_GERENTE_OFICIAL,
-      aprobadorCargo: a.aprobadorCargo === 'Gerente General' ? 'Gerente' : a.aprobadorCargo,
+    objetivosEspecificos: (plan2027.objetivosEspecificos || []).map((obj) => ({
+      ...obj,
+      responsable: normalizarResponsableCargoOficial(undefined, obj.responsable, obj.responsable).cargo,
     })),
+    indicadores: (plan2027.indicadores || []).map((ind) => ({
+      ...ind,
+      responsable: normalizarResponsableCargoOficial(undefined, ind.responsable, ind.responsable).cargo,
+    })),
+    actividades: deduplicarActividadesPlan(plan2027.actividades || []).map((a) => {
+      const resp = normalizarResponsableCargoOficial(
+        a.responsableId,
+        a.responsableCargo,
+        a.responsableNombre
+      );
+      const riesgoCargos = a.riesgoCargo
+        ? resolverCargoPrincipalYExpuestos(a.riesgoCargo).cargosOficiales.join(', ')
+        : undefined;
+      return {
+        ...a,
+        responsableId: resp.id,
+        responsableCargo: resp.cargo,
+        responsableNombre: resp.nombre,
+        riesgoCargo: riesgoCargos,
+        riesgoSnapshot: a.riesgoSnapshot
+          ? {
+              ...a.riesgoSnapshot,
+              cargo: resolverCargoPrincipalYExpuestos(a.riesgoSnapshot.cargo).cargosOficiales.join(', '),
+            }
+          : undefined,
+        aprobadorId: 'cargo-gerente-general',
+        aprobadorNombre:
+          a.aprobadorNombre === 'Gerente General (Representante Legal)' ||
+          a.aprobadorNombre === 'Gerente General'
+            ? NOMBRE_GERENTE_OFICIAL
+            : a.aprobadorNombre || NOMBRE_GERENTE_OFICIAL,
+        aprobadorCargo: 'Gerente',
+      };
+    }),
   };
 }
 
@@ -3264,6 +3329,28 @@ export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
         if (!plan2027) {
           plan2027 = buildPlan2027Seed(config, riesgos);
           plan2027.solicitudesRevision = detectarImpactosEnPlan(plan2027, riesgos, config, normas);
+          dirty = true;
+        }
+
+        if (!localStorage.getItem(CARGOS_6_FLAG_PLAN)) {
+          if (!localStorage.getItem(STORAGE_KEY_PLANES_CARGOS_BACKUP)) {
+            localStorage.setItem(STORAGE_KEY_PLANES_CARGOS_BACKUP, raw);
+          }
+          plan2027 = {
+            ...plan2027,
+            historialCambios: [
+              {
+                id: `h-6cargos-${Date.now()}`,
+                fechaHora: new Date().toISOString(),
+                usuario: 'Sistema SG-SST Frikaz',
+                accion: 'Unificación de responsables a los 6 cargos oficiales',
+                detalle:
+                  'Se vinculó el Plan Anual 2027 exclusivamente con los 6 cargos oficiales (Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque y Conductor) conservando fechas, presupuesto y aprobaciones.',
+              },
+              ...(plan2027.historialCambios || []),
+            ],
+          };
+          localStorage.setItem(CARGOS_6_FLAG_PLAN, '1');
           dirty = true;
         }
 
@@ -3337,6 +3424,7 @@ export function loadAllVigencias(): Record<number, PlanAnualVigencia> {
   localStorage.setItem(GERENTE_GATE_FLAG_PLAN, '1');
   localStorage.setItem(REORG_2027_FLAG_PLAN, '1');
   localStorage.setItem(ONLY_2027_FLAG_PLAN, '1');
+  localStorage.setItem(CARGOS_6_FLAG_PLAN, '1');
   return solo2027;
 }
 

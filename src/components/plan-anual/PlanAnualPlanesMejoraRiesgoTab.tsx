@@ -28,6 +28,10 @@ import {
 } from '../../services/gerenteControlService';
 import { crearRiesgoSnapshot, extraerMedidasRiesgo } from '../../services/planAnualService';
 import {
+  CARGOS_OFICIALES_NOMBRES,
+  coincideConCargoOficial,
+} from '../../data/cargosOficiales';
+import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -92,6 +96,7 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
   const [filtroValidacion, setFiltroValidacion] = useState<'TODOS' | 'CONFIRMADO' | 'PENDIENTE_VALIDACION'>('TODOS');
   const [filtroNivel, setFiltroNivel] = useState<'TODOS' | 'I' | 'II' | 'III_IV'>('TODOS');
   const [filtroEstado, setFiltroEstado] = useState<'TODOS' | EstadoEstandarFrikaz>('TODOS');
+  const [filtroCargo, setFiltroCargo] = useState<'TODOS' | string>('TODOS');
   const [busqueda, setBusqueda] = useState(externalSearch || '');
 
   useEffect(() => {
@@ -167,13 +172,23 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
         ) {
           return false;
         }
+        if (
+          filtroCargo !== 'TODOS' &&
+          !coincideConCargoOficial(
+            filtroCargo,
+            p.cargoMatriz,
+            p.riesgoSnapshot?.cargo || p.cargoMatriz
+          )
+        ) {
+          return false;
+        }
         if (term) {
           const blob = `${p.nombreRiesgo} ${p.riesgoCodigo} ${p.cargoMatriz} ${p.procesoMatriz} ${p.actividadMejoraPropuesta}`.toLowerCase();
           if (!blob.includes(term)) return false;
         }
         return true;
       });
-  }, [planes, filtroValidacion, filtroNivel, filtroEstado, busqueda]);
+  }, [planes, filtroValidacion, filtroNivel, filtroEstado, filtroCargo, busqueda]);
 
   const planSeleccionado = useMemo(
     () => planes.find((p) => p.id === selectedId) || null,
@@ -629,9 +644,11 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
                     }
                     className="w-full rounded-xl border border-slate-200 p-2 bg-white font-bold disabled:opacity-80"
                   >
-                    <option value={planSeleccionado.responsable}>
-                      {planSeleccionado.responsable}
-                    </option>
+                    {!responsables.some((r) => r.nombre === planSeleccionado.responsable) && (
+                      <option value={planSeleccionado.responsable}>
+                        {planSeleccionado.responsable}
+                      </option>
+                    )}
                     {responsables.map((r) => (
                       <option key={r.id} value={r.nombre}>
                         {r.nombre} ({r.cargo})
@@ -1152,7 +1169,7 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
         )}
 
         {/* Filtros */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1">
           <div className="relative">
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
@@ -1163,6 +1180,19 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
               className="w-full rounded-xl border border-slate-300 pl-8 pr-3 py-1.5 bg-white"
             />
           </div>
+
+          <select
+            value={filtroCargo}
+            onChange={(e) => setFiltroCargo(e.target.value)}
+            className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
+          >
+            <option value="TODOS">Cargo oficial: Todos (6)</option>
+            {CARGOS_OFICIALES_NOMBRES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
 
           <select
             value={filtroValidacion}
@@ -1253,9 +1283,14 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
                 </p>
 
                 <div className="rounded-xl bg-[#f4faf8] border border-[#d6ebe5] p-2.5 text-[11px] space-y-0.5 text-[#173f3a]">
-                  <p className="truncate">
-                    <strong>Cargo / Área:</strong> {plan.cargoMatriz}
+                  <p className="truncate" title={plan.cargoMatriz}>
+                    <strong>Cargos oficiales expuestos:</strong> {plan.cargoMatriz}
                   </p>
+                  {plan.capacitacion.requiereCapacitacion && (
+                    <p className="truncate text-[10px] text-[#0f5b53]">
+                      <strong>Capacitación:</strong> {plan.capacitacion.nombre}
+                    </p>
+                  )}
                   <p className="flex flex-wrap items-center gap-2 text-[10px] text-slate-600">
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3 w-3" /> {plan.fechaInicio} → {plan.fechaFin}

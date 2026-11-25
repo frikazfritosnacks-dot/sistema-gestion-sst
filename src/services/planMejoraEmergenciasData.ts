@@ -8,6 +8,7 @@ import type {
   RegistroAsistenciaItem,
 } from '../types/planAnualMejoraEmergencias';
 import { crearRiesgoSnapshot, extraerMedidasRiesgo } from './planAnualService';
+import { resolverCargoPrincipalYExpuestos } from '../data/cargosOficiales';
 
 // ============================================================================
 // UTILIDADES DE CAJA DE CALIDAD Y LISTAS BASE (SIN INVENTAR CÓDIGOS NI APROBACIONES)
@@ -840,7 +841,11 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
     const nivel = r?.interpretacionNR || 'II';
     const puntaje = r?.nivelRiesgo || 200;
     const proceso = r?.proceso || cfg.procesoFallback;
-    const cargo = r?.cargo || r?.cargosExpuestos || cfg.cargoFallback;
+    const { cargosOficiales } = resolverCargoPrincipalYExpuestos(
+      r?.cargo || cfg.cargoFallback,
+      r?.cargosExpuestos
+    );
+    const cargo = cargosOficiales.join(', ');
     const actividad = r?.actividades || cfg.actividadFallback;
 
     return {
@@ -903,7 +908,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Calor extremo por las actividades de producción',
       riesgoFallbackId: 'RSK-PROD-01',
       riesgoFallbackCodigo: 'GTC45-PR-01',
-      cargoFallback: 'Operario de Fritura y Cocción',
+      cargoFallback: 'Operario de frito',
       procesoFallback: 'Operativo / Manufactura',
       actividadFallback: 'Fritura continua de pasabocas (papas y plátanos)',
       estadoValidacionReal: 'CONFIRMADO',
@@ -912,7 +917,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       situacionQueSeBuscaMejorar:
         'Exposición continua al calor de las freidoras y riesgo de salpicaduras de aceite caliente en manos, brazos y cara durante el turno.',
       actividadMejoraPropuesta:
-        'Verificar semanalmente la campana extractora, asegurar guantes térmicos y caretas completas en buen estado, y establecer pausas cortas de agua fresca para quienes trabajan en fritura.',
+        'Verificar semanalmente la campana extractora, asegurar guantes térmicos y caretas completas en buen estado, y establecer pausas cortas de agua fresca para Operario de frito.',
       explicacionSencilla:
         'Trabajar muchas horas junto al aceite caliente cansa el cuerpo y puede causar quemaduras graves si salpica una gota o tocamos una superficie caliente. Con buena ventilación, guantes largos y tomando agua con frecuencia cuidamos la salud.',
       medidaPrevencionControl:
@@ -921,7 +926,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Trabajo seguro frente al calor y prevención de quemaduras en freidoras',
         objetivo:
-          'Enseñar a los operarios de fritura y apoyo a reconocer señales de cansancio por calor y usar correctamente los elementos contra salpicaduras de aceite.',
+          'Capacitar específicamente al Operario de frito (y al Operario de pelado y Operario de empaque cuando apoyen cerca de fritura) para reconocer señales de cansancio por calor y usar los EPP térmicos.',
         duracionSugerida: '25 minutos en planta',
         temasPrincipales: [
           'Por qué el calor excesivo agota el cuerpo y cómo evitar mareos.',
@@ -955,7 +960,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-inspeccion-calor-freidoras', 'fmt-entrega-epp', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Coordinador / Vigía de SST y Operario de Fritura',
+      responsable: 'Operario de frito',
       fechaInicio: '2027-05-03',
       fechaFin: '2027-06-28',
       recursosNecesarios:
@@ -963,7 +968,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       evidenciaRequerida:
         'Lista de chequeo de zona de fritura diligenciada, registro de entrega de EPP térmico firmado y lista de asistencia a la charla.',
       resultadoEsperado:
-        'Operarios de fritura protegidos contra quemaduras y fatiga térmica, con elementos completos y extractor funcionando en cada turno.',
+        'Operario de frito protegido contra quemaduras y fatiga térmica, con elementos completos y extractor funcionando en cada turno.',
     }),
 
     // B. Ruido constante
@@ -973,7 +978,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Ruido constante',
       riesgoFallbackId: 'RSK-PROD-03',
       riesgoFallbackCodigo: 'GTC45-PR-03',
-      cargoFallback: 'Operario de Maquinaria y Rebanado',
+      cargoFallback: 'Operario de pelado, Operario de frito, Operario de empaque',
       procesoFallback: 'Operativo / Manufactura',
       actividadFallback: 'Pelado mecánico, rebanado de papa/plátano y extracción de humos',
       estadoValidacionReal: 'PENDIENTE_VALIDACION',
@@ -982,7 +987,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       situacionQueSeBuscaMejorar:
         'Posible exposición diaria a ruido fuerte continuo de la peladora, rebanadora y extractor sin haber confirmado los decibeles reales ni el ajuste de protectores auditivos.',
       actividadMejoraPropuesta:
-        'Revisar tornillos y mantenimiento preventivo de motores para quitar vibraciones, garantizar tapaoídos limpios para todo el personal de zona ruidosa y solicitar apoyo a la ARL para medir el ruido real.',
+        'Revisar tornillos y mantenimiento preventivo de motores para quitar vibraciones, garantizar tapaoídos limpios para Operario de pelado, Operario de frito, Operario de selección y Operario de empaque, y solicitar apoyo a la ARL para medir el ruido real.',
       explicacionSencilla:
         'El ruido fuerte todos los días va dañando el oído poco a poco sin que uno lo note al principio. Cuidar los motores para que no suenen golpeados y usar los tapaoídos bien puestos evita quedar con zumbido o sordera.',
       medidaPrevencionControl:
@@ -991,7 +996,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Cuidado del oído y uso correcto de tapaoídos en zona de máquinas',
         objetivo:
-          'Explicar cómo el ruido continuo daña la audición y enseñar a colocar, limpiar y guardar correctamente los protectores de oídos.',
+          'Capacitar a Operario de pelado, Operario de selección, Operario de frito y Operario de empaque expuestos al ruido de planta en la colocación, limpieza y resguardo correcto de protectores auditivos.',
         duracionSugerida: '20 minutos',
         temasPrincipales: [
           'Señales de alerta en el oído (zumbido después del turno o necesidad de gritar para hablar).',
@@ -1022,7 +1027,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-inspeccion-ruido-auditiva', 'fmt-entrega-epp', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Coordinador / Vigía de SST y Operario de Pelado',
+      responsable: 'Operario de pelado',
       fechaInicio: '2027-05-12',
       fechaFin: '2027-06-28',
       recursosNecesarios:
@@ -1040,12 +1045,12 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Atrapamiento en maquinaria y partes en movimiento',
       riesgoFallbackId: 'RSK-CIRC-02',
       riesgoFallbackCodigo: 'GTC45-CM-02',
-      cargoFallback: 'Técnico de Mantenimiento / Operario de Maquinaria y Rebanado',
+      cargoFallback: 'Operario de pelado, Operario de empaque',
       procesoFallback: 'Operativo / Mantenimiento',
       actividadFallback: 'Pelado, rebanado, sellado y bandas o motores en movimiento',
       estadoValidacionReal: 'CONFIRMADO',
       motivoValidacionReal:
-        'Confirmado en planta: Frikaz cuenta con peladora mecánica, rebanadora con cuchillas y selladora de banda térmica con partes móviles.',
+        'Confirmado en planta: Frikaz cuenta con peladora mecánica, rebanadora con cuchillas y selladora de banda térmica con partes móviles operadas por Operario de pelado y Operario de empaque.',
       situacionQueSeBuscaMejorar:
         'Riesgo de atrapar dedos, manos, ropa o cabello al operar o limpiar máquinas con cuchillas, poleas o bandas sin protección completa o sin desconectar la energía.',
       actividadMejoraPropuesta:
@@ -1058,7 +1063,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Reglas de oro para trabajar y limpiar máquinas sin atrapamientos ni cortes',
         objetivo:
-          'Garantizar que ningún trabajador meta la mano, destape tapas o limpie la peladora, rebanadora o selladora mientras esté conectada.',
+          'Garantizar que Operario de pelado y Operario de empaque nunca metan la mano, destapen tapas o limpien la peladora, rebanadora o selladora mientras esté conectada.',
         duracionSugerida: '25 minutos',
         temasPrincipales: [
           'Qué partes de nuestras máquinas pueden atrapar o cortar (cuchillas, rodillos, bandas, poleas).',
@@ -1089,7 +1094,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-inspeccion-maquinaria-atrapamiento', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Coordinador / Vigía de SST y Operario de Pelado',
+      responsable: 'Operario de pelado',
       fechaInicio: '2027-02-01',
       fechaFin: '2027-05-29',
       recursosNecesarios:
@@ -1107,16 +1112,16 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Riesgo eléctrico',
       riesgoFallbackId: 'RSK-INST-01',
       riesgoFallbackCodigo: 'GTC45-IP-01',
-      cargoFallback: 'Técnico de Mantenimiento / Todo el Personal',
+      cargoFallback: 'Operario de selección, Operario de pelado, Operario de frito, Operario de empaque',
       procesoFallback: 'Infraestructura / Mantenimiento',
-      actividadFallback: 'Uso y revisión de energía eléctrica (220V) en equipos y tableros',
+      actividadFallback: 'Uso y revisión visual de energía eléctrica (220V) en equipos y tableros',
       estadoValidacionReal: 'CONFIRMADO',
       motivoValidacionReal:
-        'Confirmado en planta: Frikaz trabaja con equipos eléctricos y zonas húmedas de lavado y fritura, lo que exige tableros sellados y cables en perfecto estado.',
+        'Confirmado en planta: Frikaz trabaja con equipos eléctricos y zonas húmedas de lavado y fritura, lo que exige tableros sellados y cables en perfecto estado (sin reparaciones improvisadas).',
       situacionQueSeBuscaMejorar:
         'Tableros o tomas eléctricas cerca de agua y aceite que puedan causar descargas eléctricas o cortos si tienen tapas dañadas, cables pelados o cosas arrumadas al frente.',
       actividadMejoraPropuesta:
-        'Realizar inspección visual mensual de tomas y cables (sin abrir tableros), mantener siempre despejado el frente de tableros eléctricos y contratar electricista certificado para corregir cualquier falla o falta de tapa interna.',
+        'Realizar inspección visual mensual de tomas y cables (sin abrir tableros), mantener siempre despejado el frente de tableros eléctricos y contratar electricista certificado externo cuando se requiera corregir alguna falla.',
       explicacionSencilla:
         'El agua y la electricidad no se pueden juntar. Un cable pelado o un enchufe mojado puede dar un corrientazo mortal. Ningún trabajador sin formación eléctrica debe abrir cajas de tacos ni arreglar cables.',
       medidaPrevencionControl:
@@ -1125,7 +1130,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Prevención de accidentes eléctricos en planta de alimentos húmeda',
         objetivo:
-          'Enseñar qué sí puede hacer y qué NO debe hacer jamás un trabajador frente a enchufes, cables y tableros eléctricos.',
+          'Capacitar a Operario de selección, Operario de pelado, Operario de frito y Operario de empaque sobre qué sí pueden hacer y qué NO deben hacer jamás frente a enchufes, cables y tableros eléctricos.',
         duracionSugerida: '15 minutos',
         temasPrincipales: [
           'Peligro del agua y pisos mojados cerca de enchufes o cables.',
@@ -1152,8 +1157,8 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
           },
         ],
       }),
-      formatosIds: ['fmt-inspeccion-electrica', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Andrea Orjuela – Gerente y Coordinador / Vigía de SST',
+        formatosIds: ['fmt-inspeccion-electrica', 'fmt-registro-capacitacion-riesgos'],
+      responsable: 'Gerente',
       fechaInicio: '2027-02-08',
       fechaFin: '2027-02-27',
       recursosNecesarios:
@@ -1171,12 +1176,12 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Fuga de gas',
       riesgoFallbackId: 'RSK-INST-02',
       riesgoFallbackCodigo: 'GTC45-IP-02',
-      cargoFallback: 'Operario de Planta y Servicios / Todo el Personal',
+      cargoFallback: 'Operario de frito',
       procesoFallback: 'Infraestructura / Servicios Industriales',
       actividadFallback: 'Suministro de gas hacia los quemadores de freidoras',
       estadoValidacionReal: 'CONFIRMADO',
       motivoValidacionReal:
-        'Confirmado en planta: Frikaz utiliza gas combustible en los quemadores de las freidoras industriales.',
+        'Confirmado en planta: Frikaz utiliza gas combustible en los quemadores de las freidoras industriales operadas por el Operario de frito.',
       situacionQueSeBuscaMejorar:
         'Posibilidad de escape de gas en válvulas, uniones o quemadores por descuido al cerrar llaves o desgaste de tubería.',
       actividadMejoraPropuesta:
@@ -1189,7 +1194,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Manejo seguro de gas y qué hacer si huele a gas en planta',
         objetivo:
-          'Asegurar el cierre correcto de quemadores al final del día y enseñar pasos seguros ante un olor a gas sin provocar chispas.',
+          'Capacitar principalmente al Operario de frito (y al personal de planta) en el cierre correcto de quemadores al final del día y pasos seguros ante olor a gas sin provocar chispas.',
         duracionSugerida: '20 minutos',
         temasPrincipales: [
           'Dónde queda la llave principal de corte rápido de gas.',
@@ -1217,7 +1222,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-inspeccion-gas', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Operario de Fritura y Coordinador / Vigía de SST',
+      responsable: 'Operario de frito',
       fechaInicio: '2027-02-12',
       fechaFin: '2027-08-21',
       recursosNecesarios:
@@ -1235,16 +1240,16 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Orden y aseo (pisos húmedos, grasa y obstáculos)',
       riesgoFallbackId: 'RSK-ALM-ASEO-02',
       riesgoFallbackCodigo: 'GTC45-AA-02',
-      cargoFallback: 'Todo el Personal / Auxiliar de Aseo y Bodega',
+      cargoFallback: 'Operario de selección, Operario de pelado, Operario de frito, Operario de empaque, Conductor',
       procesoFallback: 'Apoyo / Saneamiento Básico y Planta',
       actividadFallback: 'Circulación en planta, lavado de pisos y almacenamiento de cajas',
       estadoValidacionReal: 'CONFIRMADO',
       motivoValidacionReal:
-        'Confirmado en planta: en áreas de lavado, pelado y fritura hay agua, grasa en piso y movimiento constante de canastillas y cajas.',
+        'Confirmado en planta: en áreas de selección, pelado, fritura, empaque y carga hay agua, grasa en piso y movimiento constante de canastillas y cajas.',
       situacionQueSeBuscaMejorar:
         'Riesgo de resbalones, tropiezos o caída de cajas mal apiladas en pasillos por pisos mojados/grasosos o desorden temporal.',
       actividadMejoraPropuesta:
-        'Establecer rutina diaria de orden y aseo por turnos, usar siempre aviso de piso húmedo al lavar, limpiar de inmediato cualquier gota de aceite y mantener libres los pasillos.',
+        'Establecer rutina diaria de orden y aseo entre los cargos operativos de planta, usar siempre aviso de piso húmedo al lavar, limpiar de inmediato cualquier gota de aceite y mantener libres los pasillos.',
       explicacionSencilla:
         'Una gota de aceite o una canastilla atravesada en el pasillo puede causar una caída fuerte o fractura. Mantener el puesto limpio y el camino despejado nos cuida a todos.',
       medidaPrevencionControl:
@@ -1253,7 +1258,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Orden, limpieza inmediata y prevención de caídas en planta',
         objetivo:
-          'Lograr que cada trabajador mantenga su zona limpia y libre de obstáculos durante toda la jornada.',
+          'Lograr que Operario de selección, Operario de pelado, Operario de frito, Operario de empaque y Conductor mantengan sus zonas limpias y pasillos despejados durante toda la jornada.',
         duracionSugerida: '15 minutos',
         temasPrincipales: [
           'Por qué ocurren resbalones en planta de fritos (agua + aceite).',
@@ -1279,7 +1284,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-inspeccion-orden-aseo', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Todo el Equipo (Liderado por Coordinador / Vigía de SST)',
+      responsable: 'Operario de selección',
       fechaInicio: '2027-03-01',
       fechaFin: '2027-03-30',
       recursosNecesarios:
@@ -1297,7 +1302,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Exposición a productos químicos',
       riesgoFallbackId: 'RSK-PROD-02',
       riesgoFallbackCodigo: 'GTC45-PR-02',
-      cargoFallback: 'Operario de Selección / Aseo y Fritura',
+      cargoFallback: 'Operario de selección, Operario de frito, Operario de empaque',
       procesoFallback: 'Operativo / Saneamiento Básico',
       actividadFallback: 'Lavado y desinfección de mesones, equipos y pisos',
       estadoValidacionReal: 'PENDIENTE_VALIDACION',
@@ -1315,7 +1320,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Uso seguro y etiquetado de productos de limpieza y desinfección',
         objetivo:
-          'Evitar quemaduras en piel u ojos, confusión de envases y mezclas peligrosas al usar químicos de aseo en planta.',
+          'Capacitar a Operario de selección, Operario de frito y Operario de empaque (y apoyo de limpieza de turno) para evitar quemaduras en piel u ojos, confusión de envases y mezclas peligrosas.',
         duracionSugerida: '20 minutos',
         temasPrincipales: [
           'Regla cero envases sin etiqueta ni botellas de bebidas.',
@@ -1348,7 +1353,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-inventario-quimicos', 'fmt-entrega-epp', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Coordinador / Vigía de SST y Auxiliar de Aseo / Selección',
+      responsable: 'Operario de selección',
       fechaInicio: '2027-03-08',
       fechaFin: '2027-03-30',
       recursosNecesarios:
@@ -1366,16 +1371,16 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Riesgo biomecánico por posturas prolongadas y manipulación de cargas',
       riesgoFallbackId: 'RSK-PROD-04',
       riesgoFallbackCodigo: 'GTC45-PR-04',
-      cargoFallback: 'Operario de Selección, Pelado, Empaque y Conductor',
+      cargoFallback: 'Operario de selección, Operario de pelado, Operario de empaque, Conductor',
       procesoFallback: 'Operativo / Manufactura y Despacho',
       actividadFallback: 'Selección en mesa, empaque manual de bolsas y movimiento de bultos o cajas',
       estadoValidacionReal: 'CONFIRMADO',
       motivoValidacionReal:
-        'Confirmado en planta: en selección y empaque se trabaja varias horas de pie con movimientos repetitivos, y en recibo/bodega/reparto se mueven bultos y cajas.',
+        'Confirmado en planta: en selección y empaque se trabaja varias horas de pie con movimientos repetitivos, y en pelado, bodega y reparto se mueven bultos y cajas.',
       situacionQueSeBuscaMejorar:
         'Cansancio en espalda, piernas, hombros y muñecas por permanecer mucho tiempo en la misma postura de pie, hacer movimientos repetitivos o levantar peso doblando mal la espalda.',
       actividadMejoraPropuesta:
-        'Implementar 2 pausas activas guiadas al día (mañana y tarde), rotar tareas entre selección/empaque/sellado para descansar las muñecas, y reforzar técnica correcta de levantamiento y uso de carretilla.',
+        'Implementar 2 pausas activas guiadas al día (mañana y tarde), rotar tareas entre Operario de selección, Operario de pelado y Operario de empaque para descansar las muñecas, y reforzar técnica de cargas con el Conductor.',
       explicacionSencilla:
         'Estar parado muchas horas haciendo el mismo movimiento o agacharse a levantar bultos con la espalda doblada va lastimando la columna y las muñecas. Estirar unos minutos y usar las piernas al cargar evita dolores e incapacidades.',
       medidaPrevencionControl:
@@ -1384,7 +1389,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Cuidado de la espalda, muñecas y pausas activas en planta y reparto',
         objetivo:
-          'Enseñar a cargar bultos y cajas sin lastimarse la columna y hacer estiramientos cortos para relajar manos, cuello y piernas.',
+          'Capacitar a Operario de selección, Operario de pelado, Operario de empaque y Conductor sobre cómo cargar bultos y cajas sin lastimar la columna y hacer estiramientos cortos.',
         duracionSugerida: '20 minutos',
         temasPrincipales: [
           'Cómo levantar una caja o bulto: acercar el peso al cuerpo, doblar rodillas y subir con las piernas.',
@@ -1410,7 +1415,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-ergonomia-pausas', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: 'Operario de empaque',
       fechaInicio: '2027-04-05',
       fechaFin: '2027-04-29',
       recursosNecesarios:
@@ -1428,7 +1433,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Situaciones de emergencia (incendio, fuga, quemadura, sismo y evacuación)',
       riesgoFallbackId: 'RSK-EMERG-02',
       riesgoFallbackCodigo: 'GTC45-EM-02',
-      cargoFallback: 'Todo el Personal (10 Trabajadores)',
+      cargoFallback: 'Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque, Conductor',
       procesoFallback: 'Gestión de Emergencias y Seguridad',
       actividadFallback: 'Prevención, preparación y respuesta ante emergencias en planta',
       estadoValidacionReal: 'PENDIENTE_VALIDACION',
@@ -1436,23 +1441,23 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         'Confirmada la necesidad del Plan de Emergencias por uso de aceite a 180 °C, gas, electricidad y riesgo sísmico; los datos físicos exactos de rutas, salidas, punto de encuentro y equipos disponibles requieren inspección y validación en planta.',
       vinculadoAPlanEmergencias: true,
       situacionQueSeBuscaMejorar:
-        'Necesidad de contar con un Plan de Emergencias completo adaptado a los 10 trabajadores de Frikaz S.A.S., con equipos verificados, salidas definidas y práctica real mediante simulacro.',
+        'Necesidad de contar con un Plan de Emergencias completo adaptado a los 6 cargos oficiales de Frikaz S.A.S., con equipos verificados, salidas definidas y práctica real mediante simulacro.',
       actividadMejoraPropuesta:
         'Validar e implementar el Plan de Prevención, Preparación y Respuesta ante Emergencias en la sección dedicada de PLAN ANUAL, verificar equipos (extintores, botiquín), definir punto de encuentro y hacer simulacro.',
       explicacionSencilla:
         'En una emergencia (como fuego en una freidora, olor a gas, quemadura o temblor) cada segundo cuenta. Saber quién avisa, por dónde salir y dónde reunirse afuera salva vidas.',
       medidaPrevencionControl:
-        'Mantener salidas de evacuación destapadas y sin candado durante la jornada, verificar estado de extintores y botiquín, asignar roles sencillos entre los 10 trabajadores y consultar siempre el módulo PLAN DE EMERGENCIAS.',
+        'Mantener salidas de evacuación destapadas y sin candado durante la jornada, verificar estado de extintores y botiquín, asignar roles sencillos entre los 6 cargos oficiales y consultar siempre el módulo PLAN DE EMERGENCIAS.',
       capacitacion: crearCapacitacion({
         requiereCapacitacion: true,
-        nombre: 'Socialización del Plan de Emergencias y roles de los 10 trabajadores',
+        nombre: 'Socialización del Plan de Emergencias y roles en los 6 cargos oficiales',
         objetivo:
-          'Dar a conocer el Plan de Emergencias de Frikaz S.A.S., qué hacer en cada situación sin ponerse en peligro y cómo evacuar hacia el punto de encuentro.',
+          'Dar a conocer a Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque y Conductor el Plan de Emergencias, qué hacer sin exponerse al peligro y cómo evacuar.',
         duracionSugerida: '30 minutos',
         temasPrincipales: [
           'Señales de alarma y qué emergencia puede ocurrir en nuestra planta.',
           'Qué NO intentar hacer (no apagar fuego grande ni echar agua al aceite; no reparar gas ni electricidad).',
-          'Roles sencillos de aviso, corte seguro, evacuación, conteo y llamada a emergencias.',
+          'Roles sencillos de aviso, corte seguro, evacuación, conteo y llamada a emergencias asignados en los 6 cargos oficiales.',
         ],
         desarrolloSencillo: [
           '1. Si ocurre fuego en aceite, fuga de gas o temblor, la prioridad siempre es la vida de las personas.',
@@ -1478,7 +1483,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         'fmt-emg-rutas-evacuacion',
         'fmt-emg-registro-simulacro',
       ],
-      responsable: 'Andrea Orjuela – Gerente y Coordinador / Vigía de SST',
+      responsable: 'Gerente',
       fechaInicio: '2027-07-02',
       fechaFin: '2027-10-29',
       recursosNecesarios:
@@ -1486,7 +1491,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       evidenciaRequerida:
         'Plan de Emergencias validado, listas de inspección de equipos y rutas, asistencia a capacitación y registro del simulacro.',
       resultadoEsperado:
-        'Plan de Emergencias completo, validado en planta y practicado por los 10 trabajadores de Frikaz S.A.S.',
+        'Plan de Emergencias completo, validado en planta y practicado por los 6 cargos oficiales de Frikaz S.A.S.',
     }),
 
     // J. Robos
@@ -1496,16 +1501,16 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       nombreRiesgo: 'Robos o situaciones de inseguridad',
       riesgoFallbackId: 'RSK-EXT-02',
       riesgoFallbackCodigo: 'GTC45-EX-02',
-      cargoFallback: 'Conductor / Repartidor y Todo el Personal',
+      cargoFallback: 'Conductor, Gerente',
       procesoFallback: 'Seguridad Física / Entorno Laboral y Rutas',
       actividadFallback: 'Entrada y salida de planta y entregas comerciales en calle',
       estadoValidacionReal: 'PENDIENTE_VALIDACION',
       motivoValidacionReal:
-        'PENDIENTE DE VALIDACIÓN: la exposición exacta a hurtos en los alrededores de la planta y en las rutas actuales de entrega debe confirmarse directamente con Andrea Orjuela – Gerente y los conductores.',
+        'PENDIENTE DE VALIDACIÓN: la exposición exacta a hurtos en los alrededores de la planta y en las rutas actuales de entrega debe confirmarse directamente con Andrea Orjuela – Gerente y el Conductor.',
       situacionQueSeBuscaMejorar:
         'Exposición a posibles hurtos o atracos durante el ingreso/salida del personal o en entregas comerciales con manejo de mercancía o efectivo.',
       actividadMejoraPropuesta:
-        'Confirmar con Gerencia y conductores las medidas reales de seguridad hoy existentes (iluminación, puerta cerrada, pagos por transferencia), acordar salida acompañada al fin del turno y socializar pautas de no confrontación.',
+        'Confirmar con Gerente y Conductor las medidas reales de seguridad hoy existentes (iluminación, puerta cerrada, pagos por transferencia), acordar salida acompañada al fin del turno y socializar pautas de no confrontación.',
       explicacionSencilla:
         'Ninguna mercancía, dinero ni celular vale más que la vida de un trabajador. La regla más importante ante un robo es mantener la calma, no enfrentarse ni discutir, proteger la integridad y avisar luego a las autoridades y a Gerencia.',
       medidaPrevencionControl:
@@ -1514,7 +1519,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         requiereCapacitacion: true,
         nombre: 'Autocuidado en calle y actuación segura (sin confrontación) ante un robo',
         objetivo:
-          'Dar pautas claras de prevención diaria y proteger la vida del trabajador evitando enfrentamientos durante un posible atraco.',
+          'Capacitar principalmente al Conductor (y al personal en ingreso y salida de turno) sobre pautas de prevención diaria y protección de la vida sin enfrentamientos.',
         duracionSugerida: '15 minutos',
         temasPrincipales: [
           'Medidas preventivas al entrar/salir de planta y durante entregas.',
@@ -1531,7 +1536,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
           'La empresa prioriza siempre su vida por encima de cualquier caja o dinero.',
         ],
         actividadComprension:
-          'Conversatorio corto con el conductor y el equipo para identificar los horarios o puntos que sienten más solos al salir.',
+          'Conversatorio corto con el Conductor y el equipo para identificar los horarios o puntos que sienten más solos al salir.',
         evaluacionSencilla: [
           {
             pregunta: 'Si un delincuente exige el dinero o mercancía durante una entrega, ¿qué debe hacer el trabajador?',
@@ -1541,7 +1546,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
         ],
       }),
       formatosIds: ['fmt-reporte-incidentes-condiciones', 'fmt-registro-capacitacion-riesgos'],
-      responsable: 'Andrea Orjuela – Gerente y Conductor / Repartidor',
+      responsable: 'Conductor',
       fechaInicio: '2027-07-02',
       fechaFin: '2027-08-31',
       recursosNecesarios:
@@ -1563,7 +1568,11 @@ export function construirPlanDesdeRiesgoMatriz(
   orden: number
 ): PlanMejoraPorRiesgo {
   const medidas = extraerMedidasRiesgo(r);
-  const cargo = r.cargo || r.cargosExpuestos || 'Personal de Frikaz S.A.S.';
+  const { cargoPrincipal, cargosOficiales } = resolverCargoPrincipalYExpuestos(
+    r.cargo,
+    r.cargosExpuestos
+  );
+  const cargo = cargosOficiales.join(', ');
   const hoy = new Date().toISOString().split('T')[0];
 
   return {
@@ -1592,7 +1601,7 @@ export function construirPlanDesdeRiesgoMatriz(
     capacitacion: crearCapacitacion({
       requiereCapacitacion: true,
       nombre: `Prevención y control frente a: ${r.peligroClasificacion} (${r.codigo || r.id})`,
-      objetivo: `Explicar de forma sencilla a ${cargo} cómo prevenir accidentes o molestias por este peligro.`,
+      objetivo: `Capacitar específicamente a ${cargo} en cómo prevenir accidentes o molestias por este peligro.`,
       duracionSugerida: '15 minutos',
       temasPrincipales: [
         `Qué es el peligro identificado en ${r.zonaLugar}.`,
@@ -1614,7 +1623,7 @@ export function construirPlanDesdeRiesgoMatriz(
       ],
     }),
     formatosIds: ['fmt-registro-capacitacion-riesgos', 'fmt-reporte-incidentes-condiciones'],
-    responsable: 'Coordinador / Vigía de SST',
+    responsable: cargoPrincipal,
     fechaInicio: '2027-01-15',
     fechaFin: '2027-11-30',
     recursosNecesarios: 'Recursos internos proporcionales a 10 trabajadores (pendiente validar costo exacto).',
@@ -1629,7 +1638,7 @@ export function construirPlanDesdeRiesgoMatriz(
         fecha: hoy,
         usuario: 'Matriz de Riesgos GTC 45',
         accion: 'Plan generado desde matriz',
-        detalle: `Sincronizado con el riesgo ${r.codigo || r.id} (Nivel ${r.interpretacionNR}).`,
+        detalle: `Sincronizado con el riesgo ${r.codigo || r.id} (${cargo} - Nivel ${r.interpretacionNR}).`,
       },
     ],
   };
@@ -1640,6 +1649,7 @@ export function construirPlanDesdeRiesgoMatriz(
 //    - Nunca inventa dirección, teléfonos locales, rutas, salidas, punto de encuentro ni equipos.
 //    - Marca explícitamente "Pendiente por definir / verificar en planta" donde falta confirmación.
 //    - Nunca instruye a trabajadores sin formación a combatir incendios grandes o reparar gas/electricidad.
+//    - Vinculado estrictamente con los 6 cargos oficiales de Frikaz S.A.S.
 // ============================================================================
 
 export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
@@ -1652,31 +1662,32 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
       nit: 'Pendiente por confirmar en cámara de comercio / RUT',
       actividadEconomica:
         'Elaboración y comercialización de snacks fritos (papas, plátanos y pasabocas)',
-      numeroTrabajadores: '10 trabajadores (planta de producción, empaque, administración y conducción/entrega)',
+      numeroTrabajadores:
+        '10 trabajadores distribuidos en los 6 cargos oficiales (Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque y Conductor)',
       procesosPrincipales:
-        'Selección de materia prima, pelado, fritura en aceite caliente, empaque/sellado, almacenamiento y distribución.',
+        'Selección de materia prima, pelado, fritura en aceite caliente, empaque/sellado y distribución en vehículo.',
       direccionVerificada: 'Pendiente por definir / verificar en planta',
       telefonoEmergenciasInterno: 'Pendiente por definir / verificar en planta',
       horarioOperacion: 'Pendiente por confirmar horario exacto de turnos',
     },
     objetivoGeneral:
-      'Proteger la vida y la salud de los 10 trabajadores de Frikaz S.A.S. y visitantes ante cualquier emergencia que pueda presentarse en la planta o durante las entregas, definiendo pasos sencillos, seguros y claros para prevenir, avisar, evacuar y pedir ayuda a tiempo.',
+      'Proteger la vida y la salud de los 10 trabajadores de Frikaz S.A.S. (en sus 6 cargos oficiales) y visitantes ante cualquier emergencia en planta o entregas, definiendo pasos sencillos, seguros y claros para prevenir, avisar, evacuar y pedir ayuda a tiempo.',
     objetivosEspecificos: [
       'Identificar las emergencias reales posibles en Frikaz S.A.S. (aceite caliente, gas, electricidad, máquinas, sismos, caídas y otras por validar en planta).',
-      'Definir responsabilidades sencillas que pueda cumplir un equipo pequeño de 10 trabajadores sin improvisar ni exponerse al peligro.',
+      'Asignar responsabilidades sencillas de emergencia dentro de los 6 cargos oficiales sin crear cargos ficticios ni brigadas irrealizables.',
       'Establecer qué debe hacer y qué NO debe intentar hacer cada trabajador en cada emergencia.',
       'Verificar físicamente en planta los equipos disponibles (extintores, botiquín, camilla, alarma), las salidas reales y el punto de encuentro seguro.',
       'Capacitar al personal y realizar simulacros sencillos para corregir fallas a tiempo.',
     ],
     alcance:
-      'Aplica a los 10 trabajadores de Frikaz S.A.S. (selección, pelado, fritura, empaque, administración y conductores), así como a contratistas o visitantes mientras permanezcan en la planta.',
+      'Aplica a los 6 cargos oficiales de Frikaz S.A.S. (Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque y Conductor), así como a contratistas o visitantes mientras permanezcan en la planta.',
     descripcionActividadesFrikaz:
-      'En Frikaz S.A.S. trabajan 10 personas en áreas de recibo y selección, pelado y corte mecánico, fritura con gas y aceite a alta temperatura, sazonado y empaque con selladora térmica, almacenamiento/aseo y entrega de pedidos en vehículo.',
+      'En Frikaz S.A.S. laboran 10 trabajadores organizados en 6 cargos oficiales: Gerente (dirección y control SST), Operario de selección (clasificación y apoyo Vigía SST), Operario de pelado (peladora y rebanadora), Operario de frito (freidoras con gas y aceite caliente), Operario de empaque (selladora y bodega) y Conductor (entrega de pedidos en ruta).',
     identificacionAmenazasResumen:
       'Se evalúan 10 escenarios principales diferenciando los que ya están confirmados por los procesos de snacks fritos (freidoras, gas, máquinas, electricidad, caídas, sismo) de los que requieren inspección y validación directa en planta o rutas (derrames químicos específicos y robos/inseguridad).',
     analisisVulnerabilidad: {
       enPersonas:
-        'Equipo pequeño (10 trabajadores) donde todos deben conocer pasos básicos porque no hay personal exclusivo de emergencias; requiere rotación clara de funciones y simulacro práctico.',
+        'Equipo de 10 trabajadores en 6 cargos oficiales donde todos conocen pasos básicos de aviso y evacuación; las funciones de emergencia se asignan dentro de los mismos 6 cargos (con formación pendiente por confirmar).',
       enRecursosYEquipos:
         'Pendiente por verificar en planta: confirmar ubicación real, cantidad y vigencia de extintores, botiquín completo, camilla, linternas y sistema de alarma.',
       enProcesosEInstalaciones:
@@ -1738,43 +1749,43 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
     organizacionEmergencias: [
       {
         id: 'org-1',
-        rol: 'Coordinación general y decisión de evacuación',
+        rol: 'Coordinación general y decisión de evacuación (Función asignada a: Gerente)',
         funcionSencilla:
-          'Dar la orden clara de evacuar o suspender labores, recibir información del equipo y coordinar con Andrea Orjuela – Gerente.',
-        responsablePrincipal: 'Pendiente por asignar / confirmar',
-        suplente: 'Pendiente por asignar / confirmar',
+          'Dar la orden clara de evacuar o suspender labores y liderar la respuesta general de Frikaz S.A.S.',
+        responsablePrincipal: 'Gerente (Andrea Orjuela) — pendiente confirmar suplente en turno',
+        suplente: 'Operario de selección (función Vigía SST — pendiente confirmar)',
       },
       {
         id: 'org-2',
-        rol: 'Activar alarma y dar aviso al equipo',
+        rol: 'Activar alarma, dar aviso y corte seguro en planta (Función asignada en: Operario de frito / Operario de pelado)',
         funcionSencilla:
-          'Sonar el pito o alarma acordada y avisar en voz clara a las áreas con ruido (pelado/fritura) para que apaguen equipos si es seguro y salgan.',
-        responsablePrincipal: 'Pendiente por asignar / confirmar',
-        suplente: 'Pendiente por asignar / confirmar',
+          'Sonar el pito o alarma, avisar a las zonas con ruido y cerrar la llave de gas o apagar máquinas solo si está al alcance y sin peligro.',
+        responsablePrincipal: 'Pendiente por asignar entre Operario de frito y Operario de pelado',
+        suplente: 'Pendiente por asignar dentro de los 6 cargos oficiales',
       },
       {
         id: 'org-3',
-        rol: 'Apoyar la salida y verificar que no quede nadie adentro',
+        rol: 'Apoyar la salida y verificar que no quede nadie adentro (Función asignada en: Operario de empaque)',
         funcionSencilla:
-          'Guiar al equipo hacia la salida definida, revisar rápidamente baños o bodega sin arriesgarse y abrir la puerta de salida.',
-        responsablePrincipal: 'Pendiente por asignar / confirmar',
-        suplente: 'Pendiente por asignar / confirmar',
+          'Guiar al equipo hacia la salida definida, revisar rápidamente área de empaque/bodega sin arriesgarse y abrir la puerta de salida.',
+        responsablePrincipal: 'Pendiente por asignar dentro de Operario de empaque',
+        suplente: 'Pendiente por asignar dentro de los 6 cargos oficiales',
       },
       {
         id: 'org-4',
-        rol: 'Llevar listado y verificar asistencia en el punto de encuentro',
+        rol: 'Llevar listado y verificar asistencia en el punto de encuentro (Función asignada en: Operario de selección)',
         funcionSencilla:
           'Tomar la lista de los 10 trabajadores del día y contar que todos estén completos y sanos afuera.',
-        responsablePrincipal: 'Pendiente por asignar / confirmar',
-        suplente: 'Pendiente por asignar / confirmar',
+        responsablePrincipal: 'Pendiente por asignar dentro de Operario de selección',
+        suplente: 'Gerente (pendiente confirmar)',
       },
       {
         id: 'org-5',
-        rol: 'Solicitar ayuda externa y acompañar primeros auxilios básicos',
+        rol: 'Solicitar ayuda externa y acercar botiquín (Función asignada en: Gerente / Conductor en planta)',
         funcionSencilla:
-          'Llamar al 123 / Bomberos / Ambulancia / ARL con dirección exacta, esperar en la puerta para orientarlos y acercar el botiquín si hay un herido leve.',
-        responsablePrincipal: 'Pendiente por asignar / confirmar',
-        suplente: 'Pendiente por asignar / confirmar',
+          'Llamar al 123 / Bomberos / Ambulancia / ARL con dirección exacta, esperar en la puerta para orientarlos y acercar el botiquín básico.',
+        responsablePrincipal: 'Pendiente por asignar dentro de los 6 cargos oficiales (con formación por validar)',
+        suplente: 'Pendiente por asignar dentro de los 6 cargos oficiales',
       },
     ],
     procedimientoGeneral: [
@@ -2080,13 +2091,13 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
       {
         id: 'emg-act-1',
         tipo: 'CAPACITACION',
-        titulo: 'Socialización del Plan de Emergencias y roles de los 10 trabajadores',
+        titulo: 'Socialización del Plan de Emergencias y roles en los 6 cargos oficiales',
         descripcionSencilla:
-          'Explicar a todo el equipo qué emergencias aplican a Frikaz S.A.S., quién hace cada tarea sencilla, por dónde salir y dónde reunirse.',
-        objetivo: 'Que los 10 trabajadores conozcan y entiendan el Plan de Emergencias.',
+          'Explicar a todo el equipo qué emergencias aplican a Frikaz S.A.S., qué rol asume cada cargo oficial, por dónde salir y dónde reunirse.',
+        objetivo: 'Que los 10 trabajadores (en sus 6 cargos oficiales) conozcan y entiendan el Plan de Emergencias.',
         fechaProgramada: 'Julio 2027',
-        responsable: 'Coordinador / Vigía de SST y Andrea Orjuela – Gerente',
-        participantesEsperados: '10 trabajadores de Frikaz S.A.S.',
+        responsable: 'Gerente y Operario de selección',
+        participantesEsperados: '10 trabajadores de Frikaz S.A.S. (6 cargos oficiales)',
         estado: 'Por hacer',
         observaciones: '',
         evidencias: [],
@@ -2094,17 +2105,17 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
           requiereCapacitacion: true,
           nombre: 'Socialización del Plan de Emergencias de Frikaz S.A.S.',
           objetivo:
-            'Presentar en lenguaje claro el Plan de Emergencias, la alarma, las salidas verificadas, el punto de encuentro y el rol de cada persona.',
+            'Presentar en lenguaje claro el Plan de Emergencias, la alarma, las salidas verificadas, el punto de encuentro y la función de cada uno de los 6 cargos oficiales.',
           duracionSugerida: '30 minutos',
           temasPrincipales: [
             'Cuáles son nuestras emergencias reales y cuáles requieren cuidado diario.',
             'La señal de aviso o pito de emergencia.',
-            'Roles sencillos asignados entre los 10 compañeros.',
+            'Funciones sencillas asignadas dentro de los 6 cargos oficiales.',
             'Camino al punto de encuentro y lista de asistencia.',
           ],
           desarrolloSencillo: [
             '1. Explicar los 5 pasos del procedimiento general (calma, proteger vida, corte seguro si aplica, salir sin correr, contarse afuera).',
-            '2. Confirmar en voz alta quién tiene cada rol y su suplente.',
+            '2. Confirmar en voz alta quién tiene cada función y su suplente entre los 6 cargos oficiales.',
             '3. Hacer recorrido a pie hasta la salida y el punto de encuentro.',
           ],
           recomendacionesPracticas: [
@@ -2128,8 +2139,8 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
           'Aprender qué hacer si se prende el aceite, por qué jamás echar agua, cuándo evacuar y práctica con apoyo de ARL/Bomberos.',
         objetivo: 'Prevenir quemaduras graves o incendios descontrolados en fritura.',
         fechaProgramada: 'Agosto 2027',
-        responsable: 'Coordinador / Vigía de SST (con apoyo ARL / Bomberos si aplica)',
-        participantesEsperados: '10 trabajadores (énfasis en operarios de fritura)',
+        responsable: 'Operario de frito',
+        participantesEsperados: '10 trabajadores (énfasis en Operario de frito)',
         estado: 'Por hacer',
         observaciones: '',
         evidencias: [],
@@ -2168,8 +2179,8 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
           'Qué hacer si huele a gas o hay falla eléctrica sin provocar chispas ni tocar cables ni tuberías.',
         objetivo: 'Evitar explosiones o electrocuciones por reacciones inseguras.',
         fechaProgramada: 'Agosto 2027',
-        responsable: 'Coordinador / Vigía de SST',
-        participantesEsperados: '10 trabajadores',
+        responsable: 'Operario de frito',
+        participantesEsperados: '10 trabajadores (6 cargos oficiales)',
         estado: 'Por hacer',
         observaciones: '',
         evidencias: [],
@@ -2206,8 +2217,8 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
           'Práctica paso a paso de cómo apagar equipos con seguridad, salir en orden y pasar lista de los 10 trabajadores.',
         objetivo: 'Lograr una evacuación ordenada sin tropiezos ni olvido de personal.',
         fechaProgramada: 'Agosto 2027',
-        responsable: 'Coordinador / Vigía de SST',
-        participantesEsperados: '10 trabajadores',
+        responsable: 'Operario de empaque',
+        participantesEsperados: '10 trabajadores (6 cargos oficiales)',
         estado: 'Por hacer',
         observaciones: '',
         evidencias: [],
@@ -2244,8 +2255,8 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
           'Qué hacer mientras llega la ambulancia usando el botiquín básico y qué errores evitar (como echar remedios caseros en quemaduras).',
         objetivo: 'Brindar atención inicial segura en accidentes frecuentes de planta de alimentos.',
         fechaProgramada: 'Agosto / Septiembre 2027',
-        responsable: 'Coordinador / Vigía de SST (con apoyo ARL)',
-        participantesEsperados: '10 trabajadores',
+        responsable: 'Operario de selección',
+        participantesEsperados: '10 trabajadores (6 cargos oficiales)',
         estado: 'Por hacer',
         observaciones: '',
         evidencias: [],
@@ -2283,8 +2294,8 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
         objetivo:
           'Medir cuánto tiempo tardamos en evacuar y detectar fallas reales (alarma, puertas, rutas o roles) para corregirlas.',
         fechaProgramada: 'Octubre 2027 (siempre que existan las condiciones necesarias)',
-        responsable: 'Andrea Orjuela – Gerente y Coordinador / Vigía de SST',
-        participantesEsperados: 'Los 10 trabajadores de Frikaz S.A.S.',
+        responsable: 'Gerente',
+        participantesEsperados: 'Los 10 trabajadores de Frikaz S.A.S. (6 cargos oficiales)',
         estado: 'Por hacer',
         observaciones: 'Llenar el formato de Registro y Evaluación de Simulacros y el Plan de Mejora post-simulacro después de hacerlo.',
         evidencias: [],
@@ -2292,7 +2303,7 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
     ],
     inspeccionEquiposPrograma: {
       frecuenciaSugerida: 'Revisión mensual de extintores, botiquín y salidas despejadas',
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: 'Operario de selección',
       criteriosRevision:
         'Comprobar manómetro en verde, fecha vigente de recarga, botiquín sin elementos vencidos, salidas sin candados y pito/alarma funcionando.',
       proximaInspeccion: 'Septiembre 2027 (verificación previa antes del simulacro)',

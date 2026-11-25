@@ -24,7 +24,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Fichas sencillas de indicadores, resultados mensuales, listas de asistencia a charlas, recorridos de seguridad y plan de mejoras.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Indicadores de organización, actividades y resultados organizados en la herramienta.',
   },
@@ -50,7 +50,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Política firmada, presupuesto aprobado, Plan Anual, nombramiento del Vigía SST, lista de peligros y plan de emergencias.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / Gerente General',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Documentos base y presupuesto de seguridad revisados al 100%.',
   },
@@ -76,7 +76,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Seguimiento mensual al Plan Anual, listas de asistencia, reportes de condiciones inseguras cerrados e informes de simulacro.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Seguimiento mensual de actividades y capacitaciones al día.',
   },
@@ -102,7 +102,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Estadísticas de accidentalidad e incapacidades, evaluación de metas del año, revisión de leyes y actas de cierre de mejoras.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Líder SST',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Cero accidentes graves y metas de prevención cumplidas.',
   },
@@ -128,7 +128,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planilla mensual de agua y energía, registro de kilos reciclados y litros de aceite usado entregados, e informe de desempeño ambiental.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Jefe de Planta',
+    responsable: 'Gerente / Operario de pelado / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Medición mensual de agua, energía y aceite vegetal usado (AVU).',
   },
@@ -153,7 +153,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Autoevaluación anual de estándares mínimos firmada, lista de peligros, Plan Anual y presupuesto.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Autoevaluación anual según la Resolución 0312 de 2019 completada.',
   },
@@ -179,7 +179,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Documento de metas anuales, actas donde se compartieron con el equipo y revisión de avance.',
     estado: 'Por hacer',
-    responsable: 'Gerente General / Líder SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Metas revisadas y compartidas en jornada de inducción.',
   },
@@ -207,7 +207,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Actas de recorridos de seguridad, planillas de EPP, registros de capacitaciones y reportes de condiciones inseguras solucionados.',
     estado: 'Por hacer',
-    responsable: 'Equipo Auditor / Vigía de SST',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Revisión en campo hecha directamente en el puesto de fritura.',
   },
@@ -233,7 +233,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Plan de revisión anual, lista de chequeo, informe de hallazgos encontrados y plan de mejoras con fechas.',
     estado: 'Por hacer',
-    responsable: 'Auditor Interno de SST / Vigía',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Revisión interna anual ejecutada junto con el Vigía SST.',
   },
@@ -259,7 +259,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Acta anual de revisión gerencial firmada, resumen de indicadores y compromisos aprobados para el siguiente año.',
     estado: 'Por hacer',
-    responsable: 'Gerente General / Representante Legal',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Acta de revisión gerencial firmada por el representante legal.',
   },
@@ -285,7 +285,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Acta de revisión ambiental de gerencia, indicadores de agua/energía/residuos y plan de mejoras.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Líder Ambiental',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Revisión ambiental incluida en la reunión anual de gerencia.',
   },
@@ -311,7 +311,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planilla semanal de limpieza de la trampa de grasas, análisis del agua de salida cuando aplique y actas de revisión.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Mantenimiento',
+    responsable: 'Gerente / Operario de pelado',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Limpieza semanal de trampa de grasas al día.',
   },
@@ -337,7 +337,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Resultados de laboratorio acreditado por el IDEAM, planilla de limpieza de trampa de grasas y revisión de desagües.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Laboratorio Acreditado',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Muestras de agua verificadas con laboratorio acreditado.',
   },
@@ -363,7 +363,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de chequeo ambiental, informe de hallazgos y seguimiento de las correcciones hechas.',
     estado: 'Por hacer',
-    responsable: 'Auditor Ambiental Interno / Gerencia',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Revisión interna ambiental realizada con verificación de residuos y AVU.',
   },
@@ -391,7 +391,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planillas de afiliación a ARL, lista de peligros, constancias de entrega de EPP y capacitaciones.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / Gerente',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Cumplimiento revisado cada seis meses.',
   },
@@ -417,7 +417,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Evaluación inicial, lista de peligros, Plan Anual, capacitaciones, entrega de EPP, auditoría y revisión de gerencia.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Revisión semestral de cumplimiento del Decreto 1072 al día.',
   },
@@ -443,7 +443,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de aspectos ambientales, recibos de entrega de residuos, planillas de trampa de grasas y charlas ambientales.',
     estado: 'Por hacer',
-    responsable: 'Líder Ambiental / Gerencia',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Verificación periódica al día frente a la Secretaría Distrital de Ambiente.',
   },
@@ -469,7 +469,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Plan de bienestar y salud mental, ruta visible de apoyo emocional ("Código Dorado"), charlas de buen trato y seguimiento con la ARL.',
     estado: 'Por hacer',
-    responsable: 'Gestión Humana / Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Ruta de apoyo emocional "Código Dorado" articulada con la ARL.',
   },
@@ -497,7 +497,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Acta anual de revisión gerencial, presupuesto aprobado del SG-SST y acta de socialización con el Vigía SST.',
     estado: 'Por hacer',
-    responsable: 'Gerente General / Representante Legal',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Reunión gerencial con acta y presupuesto aprobado.',
   },
@@ -523,7 +523,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Política ambiental firmada, asignación de responsables, presupuesto ambiental y seguimiento a metas.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Compromiso firme de cero aceite al desagüe y ahorro de agua.',
   },
@@ -549,7 +549,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Informe ambiental presentado a gerencia, acta de revisión y aprobación de acciones de mejora.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Líder Ambiental',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Informe ambiental presentado con indicadores claros.',
   },
@@ -575,7 +575,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Contrato de aprendizaje, afiliación a EPS y ARL, planilla PILA, examen médico de ingreso, registro de inducción, entrega de EPP y actas de comités.',
     estado: 'Por hacer',
-    responsable: 'Gestión Humana / Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Afiliación a ARL y exámenes médicos garantizados para aprendices SENA.',
   },
@@ -601,7 +601,7 @@ export const NORMS_VERIFICAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Política y protocolo contra violencia y acoso, canal confidencial de quejas, programación de turnos con descansos y registro de pausas activas.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Comité de Convivencia Laboral',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Protocolo de buen trato y horarios saludables implementado.',
   },

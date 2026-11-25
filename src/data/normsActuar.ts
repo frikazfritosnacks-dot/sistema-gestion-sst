@@ -24,7 +24,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Formato FURAT radicado dentro de los 2 días hábiles, constancia de entrega de copia al trabajador y seguimiento médico del caso.',
     estado: 'Por hacer',
-    responsable: 'Gestión Humana / Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Ruta de atención de urgencias y reporte en línea con la ARL lista y divulgada.',
   },
@@ -50,7 +50,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Informe de investigación con causas encontradas, acta firmada con el Vigía SST y plan de mejoras cumplido.',
     estado: 'Por hacer',
-    responsable: 'Equipo Investigador / Vigía de SST',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Formato sencillo de investigación con análisis de causas listo para usar.',
   },
@@ -76,7 +76,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Registro de adaptaciones en puestos de trabajo cuando apliquen, revisión de accesibilidad y charlas de respeto e inclusión.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Gestión Humana',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-15',
     observaciones: 'Revisión de accesibilidad en sede y compromiso de trato igualitario.',
   },
@@ -102,7 +102,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Acta de reintegro laboral con las tareas adaptadas y concepto de recomendaciones médicas de la EPS, ARL o médico laboral.',
     estado: 'Por hacer',
-    responsable: 'Gestión Humana / Médico Ocupacional',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Procedimiento claro para retorno seguro y adaptación de funciones.',
   },
@@ -130,7 +130,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planillas PILA pagadas cada mes, comprobantes de afiliación previos al ingreso y certificados de cobertura activa.',
     estado: 'Por hacer',
-    responsable: 'Gestión Humana / Contador',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Afiliaciones y pagos de seguridad social al día.',
   },
@@ -156,7 +156,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planillas semanales de trampa de grasas, certificados de aceite usado (AVU), recibos de residuos peligrosos (RESPEL) y revisiones ambientales.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Líder Ambiental',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Planta al día sin quejas ni llamados de atención de la autoridad ambiental.',
   },
@@ -182,7 +182,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Capacitaciones firmadas, inspecciones de máquinas y tableros eléctricos, entrega de EPP, permisos de trabajo seguro y guías claras de operación.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Responsable SG-SST',
+    responsable: 'Gerente / Operario de frito / Conductor',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Reglas claras de bloqueo y operación segura en fritura y corte.',
   },
@@ -208,7 +208,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Plan de prevención del SG-SST, charlas de manejo seguro de máquinas, tapetes antideslizantes, delantales térmicos y carretillas para bultos.',
     estado: 'Por hacer',
-    responsable: 'Líder SST / Supervisor de Producción',
+    responsable: 'Gerente / Operario de pelado / Operario de frito / Operario de empaque',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Tapetes antideslizantes, carretillas y delantales térmicos en uso en planta.',
   },
@@ -234,7 +234,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Inventarios de bodega, planillas de entrega de EPP y facturas de compras de seguridad y mantenimiento.',
     estado: 'Por hacer',
-    responsable: 'Administración / Contabilidad',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-30',
     observaciones: 'Presupuesto de SST respaldado con facturas y entregas firmadas.',
   },
@@ -260,7 +260,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Recibos de entrega de aceite usado y residuos peligrosos a gestores con licencia ambiental, y planillas de limpieza de la trampa de grasas.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Coordinador Ambiental',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Todo el aceite usado se entrega con recibo para hacer biodiésel.',
   },
@@ -288,7 +288,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Registro sencillo de fallas y mejoras con su causa, acción tomada, responsable, fecha y comprobación de que funcionó.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / Vigía de SST',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Todas las mejoras encontradas en auditoría tienen seguimiento y cierre.',
   },
@@ -314,7 +314,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Actas de sugerencias de trabajadores atendidas, mejoras realizadas en planta y revisión anual de gerencia.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Líder SST',
+    responsable: 'Gerente / Operario de empaque / Conductor',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Mejoras continuas implementadas con aportes del equipo de planta.',
   },
@@ -340,7 +340,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Registro de fallas ambientales y mejoras realizadas, con verificación posterior.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Operaciones',
+    responsable: 'Gerente / Operario de pelado',
     fechaVerificacion: '2026-09-28',
     observaciones: 'Correcciones ambientales cerradas y verificadas en planta.',
   },
@@ -368,7 +368,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Evaluación inicial documentada, lista de normas con soportes, plan de emergencias y carpeta ordenada para inspecciones.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Carpeta de soportes completa y lista para inspecciones.',
   },
@@ -394,7 +394,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Resumen anual de consumos de agua y energía, entregas certificadas de residuos y aceite usado, y lista ambiental actualizada.',
     estado: 'Por hacer',
-    responsable: 'Coordinador Ambiental',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Prácticas ambientales alineadas con las normas de Bogotá y del país.',
   },
@@ -420,7 +420,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de aspectos ambientales actualizada y firmada, balance anual ambiental y metas para el año siguiente.',
     estado: 'Por hacer',
-    responsable: 'Gestión Ambiental / Dirección',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Lista ambiental actualizada al cierre del ciclo.',
   },
@@ -446,7 +446,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Matriz de peligros GTC 45 actualizada y firmada cada año, y registros de socialización con el equipo.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / Vigía de SST',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Lista de peligros revisada al día y explicada al equipo.',
   },
@@ -472,7 +472,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Informes de investigación, actas de charlas de lecciones aprendidas y guías de operación actualizadas.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / Supervisor de Planta',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Charlas de lecciones aprendidas compartidas con todo el personal.',
   },
@@ -498,7 +498,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Designación de encargado con curso 50h, planillas PILA, capacitaciones, Plan Anual firmado, exámenes médicos, matriz de peligros y autoevaluación anual ante el Ministerio y la ARL.',
     estado: 'Por hacer',
-    responsable: 'Gerente General / Responsable SG-SST',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Los 7 estándares mínimos cumplidos y reportados al día.',
   },
@@ -524,7 +524,7 @@ export const NORMS_ACTUAR: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Manual sencillo de cuidado integrado, puntos ecológicos señalizados y registros de separación de residuos.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Líder SIG',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Buenas prácticas aplicadas en la rutina diaria de planta.',
   },

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NormaPhvaItem } from '../../types/phvaEvidence';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
+import { obtenerIdCargoOficial } from '../../data/cargosOficiales';
 import {
   AccionMejoraPlan,
   ActividadPlanAnual,
@@ -729,15 +730,17 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
       return;
     }
     const num = planActivo.actividades.length + 1;
-    const defResp = responsables[0] || {
-      id: 'cargo-coordinador-vigia-sst',
-      nombre: 'Coordinador / Vigía de SST',
-      cargo: 'Coordinador / Vigía de SST',
-      correo: 'frikaz.fritosnacks@gmail.com',
-      area: 'SST',
-    };
+    const defResp =
+      responsables.find((r) => r.id === 'cargo-operario-seleccion') ||
+      responsables[0] || {
+        id: 'cargo-operario-seleccion',
+        nombre: 'Operario de selección',
+        cargo: 'Operario de selección',
+        correo: 'frikaz.fritosnacks@gmail.com',
+        area: 'Producción / Selección y Alistamiento',
+      };
     const defAprob =
-      responsables.find((r) => r.id === 'cargo-gerente-general') || responsables[1] || defResp;
+      responsables.find((r) => r.id === 'cargo-gerente-general') || responsables[0] || defResp;
 
     const mesActual = new Date().getMonth() + 1;
     const mm = String(mesActual).padStart(2, '0');
@@ -785,12 +788,11 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
     }
     const medidas = extraerMedidasRiesgo(r);
     const num = planActivo.actividades.length + 1;
+    const cargoOficialId = obtenerIdCargoOficial(r.cargo || r.cargosExpuestos);
     const defResp =
-      responsables.find((resp) =>
-        resp.cargo.toLowerCase().includes((r.cargo || '').toLowerCase().split(' ')[0])
-      ) || responsables[0];
+      responsables.find((resp) => resp.id === cargoOficialId) || responsables[0];
     const defAprob =
-      responsables.find((resp) => resp.id === 'cargo-coordinador-vigia-sst') || responsables[0];
+      responsables.find((resp) => resp.id === 'cargo-gerente-general') || responsables[0];
     const mesActual = new Date().getMonth() + 1;
     const mm = String(mesActual).padStart(2, '0');
 
@@ -805,7 +807,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
       riesgoId: r.id,
       riesgoCodigo: r.codigo || r.id,
       riesgoNivelNR: r.interpretacionNR,
-      riesgoCargo: r.cargo || r.cargosExpuestos || 'Personal Operativo',
+      riesgoCargo: r.cargo || r.cargosExpuestos || 'Operario de selección',
       riesgoProceso: r.proceso,
       riesgoMedidasControl: medidas,
       riesgoSnapshot: crearRiesgoSnapshot(r),
@@ -854,17 +856,16 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
       return;
     }
     const defAprob =
-      responsables.find((resp) => resp.id === 'cargo-coordinador-vigia-sst') || responsables[0];
+      responsables.find((resp) => resp.id === 'cargo-gerente-general') || responsables[0];
     const mesActual = new Date().getMonth() + 1;
     const mm = String(mesActual).padStart(2, '0');
     let seq = planActivo.actividades.length + 1;
 
     const nuevas: ActividadPlanAnual[] = pendientes.map((r) => {
       const medidas = extraerMedidasRiesgo(r);
+      const cargoOficialId = obtenerIdCargoOficial(r.cargo || r.cargosExpuestos);
       const defResp =
-        responsables.find((resp) =>
-          resp.cargo.toLowerCase().includes((r.cargo || '').toLowerCase().split(' ')[0])
-        ) || responsables[0];
+        responsables.find((resp) => resp.id === cargoOficialId) || responsables[0];
       const code = `PA-${planActivo.vigencia}-${String(seq++).padStart(2, '0')}`;
       return {
         id: `act-${planActivo.vigencia}-rsk-${r.id}-${Date.now()}`,
@@ -877,7 +878,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
         riesgoId: r.id,
         riesgoCodigo: r.codigo || r.id,
         riesgoNivelNR: r.interpretacionNR,
-        riesgoCargo: r.cargo || r.cargosExpuestos || 'Personal Operativo',
+        riesgoCargo: r.cargo || r.cargosExpuestos || 'Operario de selección',
         riesgoProceso: r.proceso,
         riesgoMedidasControl: medidas,
         riesgoSnapshot: crearRiesgoSnapshot(r),
@@ -2338,8 +2339,8 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
                 <option value="Médico Ocupacional / IPS Autorizada">
                   Médico Ocupacional / IPS Autorizada
                 </option>
-                <option value="Coordinador / Vigía de SST (con reserva)">
-                  Coordinador / Vigía de SST (bajo reserva médica)
+                <option value="Operario de selección / Vigía SST (bajo reserva médica)">
+                  Operario de selección / Vigía SST (bajo reserva médica)
                 </option>
                 <option value="Auditoría / Autoridad Competente">
                   Auditoría / Autoridad Competente

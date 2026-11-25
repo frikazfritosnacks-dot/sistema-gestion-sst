@@ -7,6 +7,10 @@ import {
   InterpretacionNR,
   AceptabilidadRiesgo,
 } from '../types/gtc45RiskMatrix';
+import {
+  CARGOS_OFICIALES_NOMBRES,
+  coincideConCargoOficial,
+} from './cargosOficiales';
 
 export function calcularInterpretacionNP(np: number): InterpretacionNP {
   if (np >= 24) return 'Muy Alto';
@@ -45,8 +49,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de producción',
     actividades: 'Fritura continua de pasabocas (papas y plátanos)',
     tareas: 'Vigilar y controlar la temperatura de la freidora industrial (180 °C) y agregar aceite vegetal con cuidado',
-    cargo: 'Operario de Fritura y Cocción',
-    cargosExpuestos: 'Operario de Fritura y Cocción, Auxiliar de Planta',
+    cargo: 'Operario de frito',
+    cargosExpuestos: 'Operario de frito',
     rutinario: 'SÍ',
     peligroDescripcion: 'Calor extremo y riesgo de salpicaduras por trabajo junto a freidoras con aceite a 180 °C',
     peligroClasificacion: 'Físico',
@@ -81,8 +85,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de producción',
     actividades: 'Limpieza y desinfección de mesones y equipos en la línea de fritura',
     tareas: 'Aplicar desengrasantes y desinfectantes fuertes que fueron pasados a otros envases sin etiqueta de seguridad',
-    cargo: 'Auxiliar de Limpieza y Sanitización',
-    cargosExpuestos: 'Auxiliar de Limpieza y Sanitización, Operario de Fritura y Cocción',
+    cargo: 'Operario de selección',
+    cargosExpuestos: 'Operario de selección, Operario de frito',
     rutinario: 'SÍ',
     peligroDescripcion: 'Productos químicos de limpieza en envases sin etiqueta ni hoja de seguridad (riesgo de confundirlos o usarlos sin protección)',
     peligroClasificacion: 'Químico',
@@ -98,7 +102,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 450,
     interpretacionNR: 'II',
     aceptabilidadRiesgo: 'II - No Aceptable o Aceptable con control específico',
-    numeroExpuestos: 6,
+    numeroExpuestos: 4,
     peorConsecuencia: 'Daño permanente en los ojos por salpicadura de desengrasante fuerte sin lavado inmediato.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Resolución 773 de 2021 (uso obligatorio de etiquetas de peligro SGA — Sistema Globalmente Armonizado en Colombia).',
@@ -107,7 +111,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     medidaControlesIngenieria: 'Instalar una estación lavaojos de emergencia y un dosificador automático cerrado para no mezclar químicos a mano.',
     medidaControlesAdministrativos: 'Pegar etiquetas claras del sistema SGA (con dibujos de advertencia) en todos los frascos, tener a la mano las FDS (Fichas de Datos de Seguridad, donde dice qué hacer en caso de accidente) y capacitar al equipo.',
     medidaEquiposEPP: 'EPP (Elementos de Protección Personal): gafas cerradas antisalpicaduras (ANSI Z87+) y guantes gruesos de nitrilo verde calibre 15.',
-    observaciones: 'Corrección urgente pendiente tras la última revisión de seguridad.',
+    observaciones: 'Corrección urgente pendiente tras revisión de seguridad. Pendiente validar en planta productos químicos exactos y operarios asignados a limpieza por zona.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -117,8 +121,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de producción',
     actividades: 'Pelado mecánico, rebanado de papa/plátano y extracción de humos',
     tareas: 'Trabajar todo el turno cerca del motor de la máquina rebanadora industrial y el extractor de la campana',
-    cargo: 'Operario de Maquinaria y Rebanado',
-    cargosExpuestos: 'Operario de Maquinaria y Rebanado, Operario de Fritura y Cocción',
+    cargo: 'Operario de pelado',
+    cargosExpuestos: 'Operario de pelado, Operario de frito',
     rutinario: 'SÍ',
     peligroDescripcion: 'Ruido constante y fuerte producido por la peladora, la rebanadora y el motor del extractor',
     peligroClasificacion: 'Físico',
@@ -153,8 +157,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de producción',
     actividades: 'Revisión visual, selección en banda y empaque manual de bolsas',
     tareas: 'Escoger hojuelas con la mano de pie durante 6 a 8 horas seguidas y sellar bolsas con pedal',
-    cargo: 'Operario de Selección y Empaque',
-    cargosExpuestos: 'Operario de Selección y Empaque, Empacador',
+    cargo: 'Operario de selección',
+    cargosExpuestos: 'Operario de selección, Operario de empaque',
     rutinario: 'SÍ',
     peligroDescripcion: 'Estar de pie mucho tiempo en la misma posición y repetir los mismos movimientos de manos y muñecas al seleccionar y sellar',
     peligroClasificacion: 'Biomecánico',
@@ -193,8 +197,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de almacenamiento/aseo',
     actividades: 'Preparación de mezclas desinfectantes y desengrasantes para lavar tinas y pisos',
     tareas: 'Revolver hipoclorito de sodio al 13% y detergente fuerte con agua dentro de baldes',
-    cargo: 'Auxiliar de Servicios Generales y Aseo',
-    cargosExpuestos: 'Auxiliar de Servicios Generales y Aseo, Auxiliar de Planta',
+    cargo: 'Operario de selección',
+    cargosExpuestos: 'Operario de selección',
     rutinario: 'SÍ',
     peligroDescripcion: 'Manejo de líquidos químicos fuertes (como cloro o desengrasantes) que pueden quemar la piel o soltar gases irritantes',
     peligroClasificacion: 'Químico',
@@ -219,7 +223,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     medidaControlesIngenieria: 'Instalar ducha de emergencia y lavaojos en el pasillo junto al cuarto de aseo.',
     medidaControlesAdministrativos: 'Tener visible la tabla de qué químicos NO se pueden mezclar nunca, explicar paso a paso cómo diluir sin salpicar y capacitar en manejo seguro de químicos.',
     medidaEquiposEPP: 'EPP (Elementos de Protección Personal): monogafas cerradas que no dejen entrar gotas, guantes largos de nitrilo industrial y botas de caucho con puntera de protección.',
-    observaciones: 'Mantener siempre a la mano el kit para recoger derrames químicos en la pared del área.',
+    observaciones: 'Mantener siempre a la mano el kit para recoger derrames químicos. Pendiente validar qué operario oficial prepara las diluciones diarias.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -229,8 +233,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de almacenamiento/aseo',
     actividades: 'Lavado general de pisos y canastillas plásticas',
     tareas: 'Echar agua con jabón al piso y secar con haragán (escobilla de goma)',
-    cargo: 'Auxiliar de Servicios Generales y Aseo',
-    cargosExpuestos: 'Auxiliar de Servicios Generales y Aseo, Auxiliar de Bodega y Logística',
+    cargo: 'Operario de selección',
+    cargosExpuestos: 'Operario de selección, Operario de pelado, Operario de frito',
     rutinario: 'SÍ',
     peligroDescripcion: 'Pisos mojados, con agua y jabón o grasa donde es fácil resbalarse y caer',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -269,8 +273,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Áreas de circulación y maquinaria',
     actividades: 'Movimiento de canastillas con producto y bultos usando estibador manual (transpaleta)',
     tareas: 'Llevar la transpaleta cargada por los pasillos de producción hasta el área de empaque',
-    cargo: 'Auxiliar de Bodega y Logística',
-    cargosExpuestos: 'Auxiliar de Bodega y Logística, Operario de Empaque y Paletizado',
+    cargo: 'Operario de empaque',
+    cargosExpuestos: 'Operario de selección, Operario de empaque, Conductor',
     rutinario: 'SÍ',
     peligroDescripcion: 'Paso de carretas o transpaletas pesadas por pasillos estrechos con riesgo de golpear a un compañero o pisarle los pies',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -301,12 +305,12 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
   {
     id: 'RSK-CIRC-02',
     codigo: 'GTC45-CM-02',
-    proceso: 'Operativo / Mantenimiento',
+    proceso: 'Operativo / Manufactura y Limpieza de Equipos',
     zonaLugar: 'Áreas de circulación y maquinaria',
-    actividades: 'Revisión de cadenas, motores y poleas en bandas transportadoras',
-    tareas: 'Pasar o trabajar cerca de piezas que giran mientras la máquina está prendida',
-    cargo: 'Técnico de Mantenimiento Electromecánico',
-    cargosExpuestos: 'Técnico de Mantenimiento Electromecánico, Operario de Maquinaria y Rebanado',
+    actividades: 'Operación, limpieza y verificación de peladora, rebanadora y selladora de banda',
+    tareas: 'Operar y destrabar o limpiar equipos con piezas móviles (reparaciones eléctricas/mecánicas mayores solo por técnico externo)',
+    cargo: 'Operario de pelado',
+    cargosExpuestos: 'Operario de pelado, Operario de empaque',
     rutinario: 'SÍ',
     peligroDescripcion: 'Piezas de máquinas que giran o se mueven sin tapa ni rejilla protectora (riesgo de atrapar la ropa, un dedo o la mano)',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -322,16 +326,16 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 1080,
     interpretacionNR: 'I',
     aceptabilidadRiesgo: 'I - No Aceptable',
-    numeroExpuestos: 5,
+    numeroExpuestos: 4,
     peorConsecuencia: 'Pérdida de dedos de la mano al quedar atrapados en una cadena o engranaje sin tapa de protección.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Resolución 2400 de 1979 (Arts. 266-295 sobre tapas y resguardos obligatorios en máquinas en movimiento).',
     medidaEliminacion: 'Sin información registrada',
     medidaSustitucion: 'Sin información registrada',
     medidaControlesIngenieria: 'Colocar mallas o tapas fijas con sensor (que apagan la máquina si alguien abre la tapa) y botones rojos grandes de parada de emergencia.',
-    medidaControlesAdministrativos: 'Aplicar la regla LOTO (Lockout/Tagout: apagar, poner candado y tarjeta de "NO ENCENDER") siempre antes de limpiar o reparar una máquina.',
+    medidaControlesAdministrativos: 'Aplicar la regla LOTO (Lockout/Tagout: apagar, desconectar y poner tarjeta de "NO ENCENDER") siempre antes de limpiar o revisar una máquina; contratar mantenimiento externo autorizado para fallas.',
     medidaEquiposEPP: 'Prohibido usar guantes flojos cerca de ejes que giran; usar uniforme ajustado al cuerpo y cofia que cubra todo el cabello.',
-    observaciones: 'Prioridad número 1: instalar las tapas protectoras faltantes en las bandas.',
+    observaciones: 'Prioridad número 1: instalar las tapas protectoras faltantes en las bandas. Frikaz S.A.S. no cuenta con técnico mecánico de planta; cualquier reparación se realiza con proveedor externo.',
     fechaEvaluacion: '2025-01-15'
   },
 
@@ -345,15 +349,15 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de emergencias',
     actividades: 'Cuidado y disponibilidad de botiquines, extintores, camilla y salidas de emergencia',
     tareas: 'Revisar cada mes los equipos contra incendio y verificar que los pasillos de salida estén libres',
-    cargo: 'Brigadista de Emergencias',
-    cargosExpuestos: 'Brigadista de Emergencias, Todo el Personal (10 Trabajadores)',
+    cargo: 'Gerente',
+    cargosExpuestos: 'Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque',
     rutinario: 'NO',
     peligroDescripcion: 'Pasillos y puertas de emergencia tapados o bloqueados con canastillas y cajas',
     peligroClasificacion: 'Condiciones de Seguridad',
     efectosPosibles: 'Demora para salir en caso de incendio o temblor, intoxicación por respirar humo, tropiezos, caídas en grupo y golpes contra objetos atravesados.',
     controlesFuente: 'Puerta de emergencia con barra de empuje rápido hacia la calle.',
     controlesMedio: 'Señales luminosas de "Salida de Emergencia" que brillan en la oscuridad.',
-    controlesIndividuo: 'Brigada de emergencias conformada por 3 compañeros capacitados para guiar la salida.',
+    controlesIndividuo: 'Designación y capacitación en emergencias pendiente de formalizar sobre los cargos oficiales de planta.',
     nivelDeficiencia: 2,
     nivelExposicion: 2,
     nivelProbabilidad: 4,
@@ -362,16 +366,16 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 240,
     interpretacionNR: 'II',
     aceptabilidadRiesgo: 'II - No Aceptable o Aceptable con control específico',
-    numeroExpuestos: 10,
+    numeroExpuestos: 9,
     peorConsecuencia: 'Asfixia grave por humo tóxico si los trabajadores no logran abrir la salida de emergencia bloqueada.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Resolución 2400 de 1979 (Arts. 220-223) y Decreto 1072 de 2015 (Art. 2.2.4.6.25 Plan de Emergencias).',
     medidaEliminacion: 'Prohibir por completo dejar canastillas, cajas o bultos frente a extintores y puertas de salida.',
     medidaSustitucion: 'Sin información registrada',
     medidaControlesIngenieria: 'Instalar luces de emergencia con batería que duren al menos 90 minutos prendidas si se va la luz.',
-    medidaControlesAdministrativos: 'Pintar franjas amarillas y negras en el suelo dejando 1 metro libre frente a extintores y tableros eléctricos; revisar cada 15 días.',
-    medidaEquiposEPP: 'Dotación para los brigadistas: chaleco reflectivo, pito, linterna recargable, casco con correa y botiquín completo tipo A (Resolución 705 de 2007).',
-    observaciones: 'La puerta de emergencia jamás debe tener candado mientras haya gente trabajando.',
+    medidaControlesAdministrativos: 'Pintar franjas amarillas y negras en el suelo dejando 1 metro libre frente a extintores y tableros eléctricos; formalizar roles de apoyo en emergencias dentro de los 6 cargos oficiales.',
+    medidaEquiposEPP: 'Dotación para los trabajadores designados en respuesta a emergencias: chaleco reflectivo, pito, linterna recargable y botiquín completo tipo A (Resolución 705 de 2007).',
+    observaciones: 'La puerta de emergencia jamás debe tener candado mientras haya gente trabajando. Pendiente formalizar acta de designación de apoyo en emergencias dentro de los cargos oficiales.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -381,15 +385,15 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de emergencias',
     actividades: 'Control inicial de fuego pequeño (conato de incendio) en freidoras o zona de gas',
     tareas: 'Usar el extintor especial Clase K cuando se prende el aceite caliente de la freidora',
-    cargo: 'Operario de Fritura y Cocción',
-    cargosExpuestos: 'Operario de Fritura y Cocción, Brigadista de Emergencias',
+    cargo: 'Operario de frito',
+    cargosExpuestos: 'Operario de frito, Operario de pelado, Operario de empaque',
     rutinario: 'NO',
     peligroDescripcion: 'Incendio repentino por sobrecalentamiento del aceite de fritura o fuga en quemadores de gas',
     peligroClasificacion: 'Condiciones de Seguridad',
     efectosPosibles: 'Quemaduras muy graves de 3.° grado, ahogo por humo negro, lesiones por explosión o intoxicación por humo (monóxido de carbono).',
     controlesFuente: 'Llave de paso manual de cierre rápido del gas ubicada en la entrada.',
     controlesMedio: 'Extintor especial Clase K (para aceites y grasas) de 6 litros ubicado a 5 metros de la freidora.',
-    controlesIndividuo: 'Capacitación práctica a 4 trabajadores sobre qué extintor usar y cómo accionarlo (¡nunca echar agua al aceite en llamas!).',
+    controlesIndividuo: 'Capacitación práctica al personal de planta sobre qué extintor usar y cómo accionarlo (¡nunca echar agua al aceite en llamas!).',
     nivelDeficiencia: 2,
     nivelExposicion: 1,
     nivelProbabilidad: 2,
@@ -398,7 +402,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 200,
     interpretacionNR: 'II',
     aceptabilidadRiesgo: 'II - No Aceptable o Aceptable con control específico',
-    numeroExpuestos: 10,
+    numeroExpuestos: 7,
     peorConsecuencia: 'Accidente grave o fatal para el equipo si el fuego se extiende por la campana hacia el techo.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Norma NSR-10 (Títulos J y K contra incendios), normas NFPA 10 / NFPA 96 y Decreto 1072 de 2015.',
@@ -417,12 +421,12 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
   {
     id: 'RSK-INST-01',
     codigo: 'GTC45-IP-01',
-    proceso: 'Infraestructura / Mantenimiento',
+    proceso: 'Infraestructura / Seguridad Eléctrica en Planta',
     zonaLugar: 'Instalaciones y área de producción',
-    actividades: 'Uso y revisión de energía eléctrica (220V / 440V) en motores y tableros',
-    tareas: 'Prender o apagar tacos (interruptores) eléctricos y revisar cables de potencia',
-    cargo: 'Técnico de Mantenimiento Electromecánico',
-    cargosExpuestos: 'Técnico de Mantenimiento Electromecánico, Operario de Fritura y Cocción',
+    actividades: 'Encendido y apagado de equipos eléctricos en planta húmeda (mantenimiento exclusivo por electricista externo)',
+    tareas: 'Prender o apagar interruptores de peladora, rebanadora y selladora en áreas con humedad o grasa',
+    cargo: 'Operario de pelado',
+    cargosExpuestos: 'Operario de selección, Operario de pelado, Operario de frito, Operario de empaque',
     rutinario: 'SÍ',
     peligroDescripcion: 'Contacto accidental con electricidad en tableros sin tapa interna protectora o tomas cerca del agua y aceite',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -438,16 +442,16 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 1800,
     interpretacionNR: 'I',
     aceptabilidadRiesgo: 'I - No Aceptable',
-    numeroExpuestos: 10,
+    numeroExpuestos: 8,
     peorConsecuencia: 'Muerte por descarga eléctrica grave (electrocución).',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Reglamento Técnico de Instalaciones Eléctricas RETIE (Resolución 90708 de 2013) y Resolución 2400 de 1979 (Título III).',
     medidaEliminacion: 'Sin información registrada',
     medidaSustitucion: 'Sin información registrada',
     medidaControlesIngenieria: 'Instalar tomas con corte rápido ante humedad (GFCI), polo a tierra verificado y tapas transparentes selladas (IP65) que eviten el contacto con agua o aceite.',
-    medidaControlesAdministrativos: 'Revisión anual certificada bajo norma RETIE, letreros amarillos de "Peligro Alto Voltaje" y prohibir que personal sin tarjeta profesional de electricista abra los tableros.',
-    medidaEquiposEPP: 'EPP (Elementos de Protección Personal): guantes dieléctricos (aislantes de electricidad) y botas dieléctricas certificadas para el técnico electricista autorizado.',
-    observaciones: 'Urgente: el tablero secundario de mando necesita su tapa protectora interna.',
+    medidaControlesAdministrativos: 'Revisión anual certificada bajo norma RETIE, letreros amarillos de "Peligro Alto Voltaje" y prohibir que los operarios abran tableros (solo técnico electricista externo autorizado).',
+    medidaEquiposEPP: 'EPP (Elementos de Protección Personal): guantes dieléctricos y botas dieléctricas exigidos al electricista externo autorizado en intervenciones.',
+    observaciones: 'Urgente: el tablero secundario de mando necesita su tapa protectora interna. Las reparaciones eléctricas se contratan externamente.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -456,9 +460,9 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     proceso: 'Infraestructura / Servicios Industriales',
     zonaLugar: 'Instalaciones y área de producción',
     actividades: 'Suministro de gas natural o propano hacia los quemadores de freidoras',
-    tareas: 'Encender quemadores, revisar que la llama sea azul y purgar tuberías de gas',
-    cargo: 'Operario de Planta y Servicios',
-    cargosExpuestos: 'Operario de Planta y Servicios, Todo el Personal (10 Trabajadores)',
+    tareas: 'Encender quemadores, revisar que la llama sea azul y reportar olor a gas para cierre inmediato',
+    cargo: 'Operario de frito',
+    cargosExpuestos: 'Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque',
     rutinario: 'SÍ',
     peligroDescripcion: 'Posible fuga de gas combustible en tuberías o quemadores con riesgo de explosión o incendio',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -474,15 +478,15 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 600,
     interpretacionNR: 'I',
     aceptabilidadRiesgo: 'I - No Aceptable',
-    numeroExpuestos: 10,
-    peorConsecuencia: 'Accidente catastrófico para todo el equipo por explosión y daños en las paredes de la planta.',
+    numeroExpuestos: 9,
+    peorConsecuencia: 'Accidente catastrófico para todo el equipo de planta por explosión y daños en las paredes de la planta.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Resolución 2400 de 1979 (Arts. 338-348), norma técnica NTC 2505 (instalaciones de gas) y Decreto 1072 de 2015.',
     medidaEliminacion: 'Sin información registrada',
     medidaSustitucion: 'Sin información registrada',
     medidaControlesIngenieria: 'Instalar detectores de fuga de gas conectados a una alarma sonora y a una válvula externa que cierre el gas automáticamente.',
-    medidaControlesAdministrativos: 'Revisar cada 6 meses las uniones de las tuberías con agua jabonosa o detector para descartar fugas, hacer mantenimiento a quemadores y practicar qué hacer si huele a gas.',
-    medidaEquiposEPP: 'Equipo especial de respiración autónoma o mascarilla con filtro para los brigadistas que atiendan una fuga.',
+    medidaControlesAdministrativos: 'Revisar cada 6 meses las uniones de las tuberías con agua jabonosa o detector para descartar fugas, hacer mantenimiento externo a quemadores y practicar qué hacer si huele a gas.',
+    medidaEquiposEPP: 'Elementos de respuesta inicial disponibles para evacuación y cierre externo de válvula principal.',
     observaciones: 'Coordinar con la empresa de gas la revisión técnica obligatoria cada 5 años.',
     fechaEvaluacion: '2025-01-15'
   },
@@ -497,8 +501,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Exterior/punto de encuentro',
     actividades: 'Salida ordenada y conteo del personal durante un temblor o simulacro de evacuación',
     tareas: 'Caminar con calma desde la planta hacia la acera y el punto de encuentro exterior',
-    cargo: 'Todo el Personal',
-    cargosExpuestos: 'Todo el Personal (10 Trabajadores)',
+    cargo: 'Gerente',
+    cargosExpuestos: 'Gerente, Operario de selección, Operario de pelado, Operario de frito, Operario de empaque, Conductor',
     rutinario: 'NO',
     peligroDescripcion: 'Temblores o sismos fuertes en Bogotá D.C. con caída de objetos, muros o cables',
     peligroClasificacion: 'Fenómenos Naturales',
@@ -522,8 +526,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     medidaSustitucion: 'Sin información registrada',
     medidaControlesIngenieria: 'Atornillar firmemente al piso y a la pared las estanterías metálicas, lámparas pesadas y tuberías de gas para que no se caigan.',
     medidaControlesAdministrativos: 'Participar en el Simulacro Distrital de Bogotá, pasar lista en el punto de encuentro y revisar las paredes antes de volver a entrar.',
-    medidaEquiposEPP: 'Casco protector y chaleco reflectivo para los líderes de evacuación de la brigada.',
-    observaciones: 'El punto de encuentro está marcado con pintura verde en el andén exterior.',
+    medidaEquiposEPP: 'Casco protector y chaleco reflectivo para los trabajadores designados como líderes de evacuación.',
+    observaciones: 'El punto de encuentro está marcado con pintura verde en el andén exterior. Aplica a los 6 cargos oficiales de la empresa.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -531,10 +535,10 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     codigo: 'GTC45-EX-02',
     proceso: 'Seguridad Física / Entorno Laboral',
     zonaLugar: 'Exterior/punto de encuentro',
-    actividades: 'Entrada y salida del personal en turnos de la mañana y de la tarde',
-    tareas: 'Caminar por la calle alrededor de la planta hacia el paradero o estación de transporte',
-    cargo: 'Conductor / Repartidor Logístico',
-    cargosExpuestos: 'Conductor / Repartidor Logístico, Todo el Personal (10 Trabajadores)',
+    actividades: 'Desplazamientos en ruta, entregas e ingreso/salida en alrededores de planta',
+    tareas: 'Realizar entregas en Bogotá y desplazarse en ingresos/salidas de turno',
+    cargo: 'Conductor',
+    cargosExpuestos: 'Conductor, Gerente',
     rutinario: 'SÍ',
     peligroDescripcion: 'Inseguridad en la calle (robos, atracos o agresiones al llegar o salir del trabajo o en ruta)',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -550,16 +554,16 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 240,
     interpretacionNR: 'II',
     aceptabilidadRiesgo: 'II - No Aceptable o Aceptable con control específico',
-    numeroExpuestos: 10,
+    numeroExpuestos: 4,
     peorConsecuencia: 'Herida grave o pérdida de la vida por agresión armada durante un atraco en la vía pública.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Resolución 2400 de 1979 y Guía GTC 45 (prevención del riesgo público).',
     medidaEliminacion: 'Sin información registrada',
     medidaSustitucion: 'Sin información registrada',
     medidaControlesIngenieria: 'Poner un reflector LED con sensor de movimiento en el portón y un botón de pánico conectado con la policía del cuadrante.',
-    medidaControlesAdministrativos: 'Pedir rondas de policía a las horas de entrada y salida (6:00 a.m. y 6:00 p.m.) y organizar salida en grupo hasta la avenida principal.',
+    medidaControlesAdministrativos: 'Pedir rondas de policía a las horas de entrada y salida (6:00 a.m. y 6:00 p.m.) y definir protocolo de riesgo público en ruta.',
     medidaEquiposEPP: 'Sin información registrada',
-    observaciones: 'Zona industrial con poco tránsito peatonal al anochecer; se recomienda salir acompañados.',
+    observaciones: 'Pendiente validación en campo sobre afectación real al resto de los cargos en ingreso/salida de planta.',
     fechaEvaluacion: '2025-01-15'
   },
 
@@ -573,8 +577,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de almacenamiento/producción',
     actividades: 'Empaque de bolsas en cajas de cartón y armado de estibas (paletizado)',
     tareas: 'Levantar con la mano cajas de 12 a 15 kg y apilarlas desde el suelo hasta 1.8 metros de alto',
-    cargo: 'Operario de Empaque y Paletizado',
-    cargosExpuestos: 'Operario de Empaque y Paletizado, Auxiliar de Bodega y Logística',
+    cargo: 'Operario de empaque',
+    cargosExpuestos: 'Operario de empaque, Conductor',
     rutinario: 'SÍ',
     peligroDescripcion: 'Levantar y mover cajas pesadas doblando la espalda muchas veces durante el turno',
     peligroClasificacion: 'Biomecánico',
@@ -609,8 +613,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de almacenamiento/producción',
     actividades: 'Acomodo temporal de cajas listas para entregar a clientes',
     tareas: 'Hacer arrumes altos de cajas de cartón sin envolverlas en plástico (vinipel) cerca del paso de trabajadores',
-    cargo: 'Auxiliar de Bodega y Despacho',
-    cargosExpuestos: 'Auxiliar de Bodega y Despacho, Operario de Empaque y Paletizado',
+    cargo: 'Operario de empaque',
+    cargosExpuestos: 'Operario de empaque, Conductor',
     rutinario: 'SÍ',
     peligroDescripcion: 'Torres de cajas mal acomodadas o muy altas que pueden caerse encima de quien pase al lado',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -649,8 +653,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de almacenamiento',
     actividades: 'Guardar insumos secos (sal, condimentos, saborizantes y rollos de plástico) en estanterías metálicas',
     tareas: 'Subir y bajar insumos pesados de los niveles altos de la estantería (hasta 3 metros)',
-    cargo: 'Auxiliar de Bodega y Almacenamiento',
-    cargosExpuestos: 'Auxiliar de Bodega y Almacenamiento, Conductor / Repartidor Logístico',
+    cargo: 'Operario de selección',
+    cargosExpuestos: 'Operario de selección, Operario de empaque, Conductor',
     rutinario: 'SÍ',
     peligroDescripcion: 'Estanterías metálicas sin atornillar al piso o con exceso de peso que pueden doblarse o venirse abajo',
     peligroClasificacion: 'Condiciones de Seguridad',
@@ -675,7 +679,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     medidaControlesIngenieria: 'Anclar cada pata de la estantería al piso de concreto con pernos de expansión y poner protectores en las esquinas contra golpes de transpaleta.',
     medidaControlesAdministrativos: 'Pegar letreros visibles en cada nivel indicando el peso máximo permitido (ej. "Máximo 800 kg por nivel") y revisar mensualmente que las patas no estén torcidas.',
     medidaEquiposEPP: 'EPP (Elementos de Protección Personal): casco de seguridad (ANSI Z89.1) y botas con puntera reforzada.',
-    observaciones: 'Revisar los tornillos y anclajes de inmediato; dos módulos se ven un poco doblados.',
+    observaciones: 'Revisar los tornillos y anclajes de inmediato; dos módulos se ven un poco doblados. Pendiente validar qué cargo oficial realiza el almacenamiento en estanterías altas.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -685,8 +689,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Área de almacenamiento',
     actividades: 'Revisión y cuidado de bultos de papa fresca y bidones de aceite en bodega',
     tareas: 'Revisar las estibas para detectar insectos, ratones o humedad en los bultos',
-    cargo: 'Auxiliar de Calidad y BPM',
-    cargosExpuestos: 'Auxiliar de Calidad y BPM, Auxiliar de Bodega y Almacenamiento',
+    cargo: 'Operario de selección',
+    cargosExpuestos: 'Operario de selección, Operario de frito, Gerente',
     rutinario: 'SÍ',
     peligroDescripcion: 'Presencia posible de plagas (ratones, cucarachas, moscas) y hongos por humedad en la papa almacenada',
     peligroClasificacion: 'Biológico',
@@ -725,8 +729,8 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     zonaLugar: 'Acceso y área de atención',
     actividades: 'Atención en ventanilla a clientes, repartidores, conductores y proveedores',
     tareas: 'Recibir pagos en efectivo, hacer facturas, atender reclamos y coordinar entregas',
-    cargo: 'Asistente Administrativo y Comercial',
-    cargosExpuestos: 'Asistente Administrativo y Comercial, Recepcionista',
+    cargo: 'Gerente',
+    cargosExpuestos: 'Gerente, Conductor',
     rutinario: 'SÍ',
     peligroDescripcion: 'Estrés por atención al público, manejo de dinero en efectivo y solución de reclamos difíciles',
     peligroClasificacion: 'Psicosocial',
@@ -751,7 +755,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     medidaControlesIngenieria: 'Mejorar el aislamiento de vidrio y paredes entre la recepción y la planta para que el ruido no supere 65 decibeles y se pueda hablar tranquilo.',
     medidaControlesAdministrativos: 'Aplicar la encuesta anual de bienestar laboral (batería psicosocial), hacer talleres de manejo del estrés y definir pasos claros cuando llegue un cliente molesto.',
     medidaEquiposEPP: 'Sin información registrada',
-    observaciones: 'Si un reclamo se vuelve difícil, pasarlo de inmediato al jefe o a la gerencia.',
+    observaciones: 'Pendiente validación en campo: Frikaz S.A.S. no cuenta con recepcionista ni asistente administrativo separado; estas gestiones recaen en Gerente y Conductor en entregas.',
     fechaEvaluacion: '2025-01-15'
   },
   {
@@ -760,9 +764,9 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     proceso: 'Administrativo / Facturación',
     zonaLugar: 'Acceso y área de atención',
     actividades: 'Registro de pedidos, remisiones y cuentas en computador',
-    tareas: 'Trabajar sentado frente a la pantalla del computador durante 7 horas escribiendo pedidos y facturas',
-    cargo: 'Auxiliar Contable y de Facturación',
-    cargosExpuestos: 'Auxiliar Contable y de Facturación, Asistente Administrativo y Comercial',
+    tareas: 'Trabajar sentado frente a la pantalla del computador escribiendo pedidos, nómina y facturación',
+    cargo: 'Gerente',
+    cargosExpuestos: 'Gerente',
     rutinario: 'SÍ',
     peligroDescripcion: 'Estar sentado muchas horas frente al computador con silla o mesa que no se ajustan bien a la postura',
     peligroClasificacion: 'Biomecánico',
@@ -778,7 +782,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     nivelRiesgo: 60,
     interpretacionNR: 'III',
     aceptabilidadRiesgo: 'III - Mejorable',
-    numeroExpuestos: 2,
+    numeroExpuestos: 1,
     peorConsecuencia: 'Dolor crónico y contractura fuerte en el cuello que impida trabajar con normalidad.',
     existenciaRequisitoLegal: 'SÍ',
     requisitoLegalEspecifico: 'Resolución 2400 de 1979 y Guía de Ergonomía para trabajo en computador del Ministerio del Trabajo.',
@@ -787,7 +791,7 @@ export const RIESGOS_GTC45_DATASET: RiesgoGTC45Item[] = [
     medidaControlesIngenieria: 'Dar silla cómoda ajustable con soporte en la espalda baja, base para subir la pantalla a la altura de los ojos y almohadilla suave para el ratón (mouse).',
     medidaControlesAdministrativos: 'Enseñar cómo sentarse bien frente al PC, aplicar la regla 20-20-20 (cada 20 minutos mirar lejos 20 segundos) y hacer examen visual ocupacional cada año.',
     medidaEquiposEPP: 'Gafas con filtro de luz azul antirreflejo si el médico las formula.',
-    observaciones: 'Programar el examen visual anual el próximo mes.',
+    observaciones: 'Pendiente validación administrativa: Frikaz S.A.S. no tiene auxiliar contable de nómina; el registro en computador corresponde a Gerencia.',
     fechaEvaluacion: '2025-01-15'
   }
 ];
@@ -809,23 +813,9 @@ export function obtenerRiesgosPorArea(items: RiesgoGTC45Item[], area: string): R
   return items.filter((item) => item.zonaLugar.toLowerCase() === area.toLowerCase());
 }
 
-// Helper to get unique cargos dynamically from dataset
-export function obtenerCargosUnicos(items: RiesgoGTC45Item[]): string[] {
-  const setCargos = new Set<string>();
-  items.forEach((item) => {
-    if (item.cargo && item.cargo.trim().length > 0) {
-      setCargos.add(item.cargo.trim());
-    }
-    if (item.cargosExpuestos && item.cargosExpuestos.trim().length > 0) {
-      item.cargosExpuestos.split(',').forEach((sub) => {
-        const c = sub.trim();
-        if (c.length > 0 && !c.includes('10 Trabajadores')) {
-          setCargos.add(c);
-        }
-      });
-    }
-  });
-  return Array.from(setCargos).sort((a, b) => a.localeCompare(b));
+// Helper to return ONLY the 6 official cargos from «1. Equipo y responsabilidades en SST»
+export function obtenerCargosUnicos(_items?: RiesgoGTC45Item[]): string[] {
+  return [...CARGOS_OFICIALES_NOMBRES];
 }
 
 // Helper to get unique processes dynamically from dataset
@@ -839,15 +829,12 @@ export function obtenerProcesosUnicos(items: RiesgoGTC45Item[]): string[] {
   return Array.from(setProcesos).sort((a, b) => a.localeCompare(b));
 }
 
-// Helper to filter hazards by cargo
+// Helper to filter hazards by canonical official cargo
 export function obtenerRiesgosPorCargo(items: RiesgoGTC45Item[], cargoBuscado: string): RiesgoGTC45Item[] {
   if (!cargoBuscado || cargoBuscado === 'TODOS' || cargoBuscado === 'Todos los cargos') {
     return items;
   }
-  const term = cargoBuscado.toLowerCase().trim();
-  return items.filter((item) => {
-    const c1 = (item.cargo || '').toLowerCase();
-    const c2 = (item.cargosExpuestos || '').toLowerCase();
-    return c1.includes(term) || c2.includes(term);
-  });
+  return items.filter((item) =>
+    coincideConCargoOficial(cargoBuscado, item.cargo, item.cargosExpuestos)
+  );
 }

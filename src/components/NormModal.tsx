@@ -28,7 +28,7 @@ const INITIAL_NORM_FORM: Omit<Norm, 'id'> = {
   fechaUltimaConsulta: new Date().toISOString().split('T')[0],
   fuenteOficial: 'SUIN-Juriscol',
   enlaceFuente: '',
-  responsable: 'Responsable SST / Coordinador Ambiental',
+  responsable: 'Gerente / Operario de selección (Vigía SST)',
   estadoRevision: 'Revisada',
   observaciones: '',
 };
@@ -370,7 +370,7 @@ export const NormModal: React.FC<NormModalProps> = ({
                 value={formData.responsable}
                 onChange={(e) => setFormData({ ...formData, responsable: e.target.value })}
                 className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-xs focus:border-emerald-600 focus:outline-hidden bg-white"
-                placeholder="Líder SST / Asesor Jurídico"
+                placeholder="Gerente"
               />
             </div>
           </div>

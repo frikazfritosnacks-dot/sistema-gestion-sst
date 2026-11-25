@@ -18,12 +18,19 @@ import { CaracterizacionEmpresaDinamica } from '../types/dynamicConfig';
 import { getStoredCargosSST } from './organigramaService';
 import { determinarGrupoEstandares0312 } from './planAnualService';
 import { normalizarEstadoEstandar } from './gerenteControlService';
+import {
+  coincideConCargoOficial,
+  obtenerIdCargoOficial,
+  obtenerNombreCargoOficial,
+} from '../data/cargosOficiales';
 
 const STORAGE_KEY_SGSST = 'frikaz_plan_anual_sgsst_v1';
+const STORAGE_KEY_SGSST_BACKUP_6 = 'frikaz_sgsst_backup_pre6cargos_v1';
 const STORAGE_KEY_SGSST_HISTORICO_BACKUP = 'frikaz_sgsst_historico_backup_v1';
 const GERENTE_GATE_FLAG_SGSST = 'frikaz_sgsst_gerente_gate_v1';
 const REORG_2027_FLAG_SGSST = 'frikaz_sgsst_2027_reorg_v1';
 const ONLY_2027_FLAG_SGSST = 'frikaz_sgsst_only_2027_v1';
+const CARGOS_6_FLAG_SGSST = 'frikaz_sgsst_6_cargos_v1';
 
 export const MESES_NOMBRES = [
   'Enero',
@@ -68,7 +75,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Registro de reportes de accidente ante la ARL (FURAT) y listado de trabajadores activos en el apartado HACER.',
     periodicidad: 'MENSUAL',
-    responsable: 'Coordinador / Vigía de SST',
+    responsable: 'Gerente (con apoyo de Vigía SST)',
     interpretacionBase:
       'Por cada cien (100) trabajadores que laboraron en el mes, se presentaron X accidentes de trabajo.',
   },
@@ -96,7 +103,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Incapacidades médicas de la EPS/ARL por accidente de trabajo y registro mensual de personal activo.',
     periodicidad: 'MENSUAL',
-    responsable: 'Coordinador / Vigía de SST',
+    responsable: 'Gerente (con apoyo de Vigía SST)',
     interpretacionBase:
       'Por cada cien (100) trabajadores que laboraron en el mes, se perdieron X días por accidente de trabajo.',
   },
@@ -123,7 +130,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Investigación oficial de accidentes de trabajo, reportes a la ARL y actas de cierre anual.',
     periodicidad: 'ANUAL',
-    responsable: 'Andrea Orjuela – Gerente / Vigía SST',
+    responsable: 'Gerente (Andrea Orjuela)',
     interpretacionBase: 'En el año, el X % de accidentes de trabajo fueron mortales.',
   },
   {
@@ -150,7 +157,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Calificaciones médicas de origen laboral (EPS / ARL / Juntas) consolidadas de forma confidencial en el registro de salud.',
     periodicidad: 'ANUAL',
-    responsable: 'Coordinador / Vigía de SST y Médico Ocupacional',
+    responsable: 'Gerente y Médico Ocupacional Externo',
     interpretacionBase:
       'Por cada 100.000 trabajadores existen X casos de enfermedad laboral en el periodo Z.',
   },
@@ -178,7 +185,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Notificaciones nuevas de enfermedad laboral emitidas por EPS/ARL en el año (manejo confidencial).',
     periodicidad: 'ANUAL',
-    responsable: 'Coordinador / Vigía de SST y Médico Ocupacional',
+    responsable: 'Gerente y Médico Ocupacional Externo',
     interpretacionBase:
       'Por cada 100.000 trabajadores existen X casos nuevos de enfermedad laboral en el periodo Z.',
   },
@@ -205,7 +212,7 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     fuenteInformacion:
       'Planilla mensual de novedades de nómina e incapacidades médicas radicadas ante EPS/ARL.',
     periodicidad: 'MENSUAL',
-    responsable: 'Coordinador / Vigía de SST y Administración',
+    responsable: 'Gerente',
     interpretacionBase:
       'En el mes se perdió X % de días programados de trabajo por incapacidad médica.',
   },
@@ -274,10 +281,10 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     localidadResidencia: 'Bosa Brasil, Bogotá',
     telefono: '314 298 1102',
     correo: 'frikaz.fritosnacks@gmail.com',
-    cargoId: 'cargo-coordinador-vigia-sst',
-    cargoNombre: 'Coordinador / Vigía de SST',
-    areaProceso: 'Seguridad y Salud en el Trabajo (SST)',
-    actividadPrincipal: 'Inspecciones de planta, capacitaciones, entrega de EPP y seguimiento SST',
+    cargoId: 'cargo-operario-seleccion',
+    cargoNombre: 'Operario de selección',
+    areaProceso: 'Planta – Recibo, Selección y Lavado (con función designada de Vigía SST)',
+    actividadPrincipal: 'Apoyo operativo en selección/BPM y función transversal de Vigía SST (inspecciones, capacitaciones y entrega de EPP)',
     tipoContrato: 'Indefinido',
     fechaIngreso: '2022-04-10',
     turnoHorario: 'Lunes a Sábado 7:00 a.m. - 4:00 p.m.',
@@ -320,7 +327,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '320 671 3340',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-frito',
-    cargoNombre: 'Operario de Frito',
+    cargoNombre: 'Operario de frito',
     areaProceso: 'Planta de Producción – Área de Cocción y Freidoras',
     actividadPrincipal: 'Operación de freidoras industriales a gas (>170 °C), control de aceite y escurrido',
     tipoContrato: 'Indefinido',
@@ -365,7 +372,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '313 842 1900',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-frito',
-    cargoNombre: 'Operario de Frito',
+    cargoNombre: 'Operario de frito',
     areaProceso: 'Planta de Producción – Área de Cocción y Freidoras',
     actividadPrincipal: 'Sazonado, centrifugado, trasiego de aceite frío (<40 °C) y apoyo en freidoras',
     tipoContrato: 'Fijo',
@@ -410,7 +417,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '310 519 4481',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-pelado',
-    cargoNombre: 'Operario de Pelado',
+    cargoNombre: 'Operario de pelado',
     areaProceso: 'Planta – Pelado y Corte en Rebanadora',
     actividadPrincipal: 'Pelado mecánico y rebanado de papa y plátano con cuchillas protegidas',
     tipoContrato: 'Indefinido',
@@ -455,7 +462,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '315 704 2219',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-seleccion',
-    cargoNombre: 'Operario de Selección',
+    cargoNombre: 'Operario de selección',
     areaProceso: 'Planta – Recibo, Selección y Lavado',
     actividadPrincipal: 'Selección, lavado manual de papa/plátano y desinfección de áreas',
     tipoContrato: 'Indefinido',
@@ -500,7 +507,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '318 902 5541',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-empaque',
-    cargoNombre: 'Operario de Empaque',
+    cargoNombre: 'Operario de empaque',
     areaProceso: 'Planta – Empaque y Sellado Térmico',
     actividadPrincipal: 'Pesaje, sellado térmico continuo de bolsas y embalaje en cajas',
     tipoContrato: 'Indefinido',
@@ -545,7 +552,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '321 440 7731',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-empaque',
-    cargoNombre: 'Operario de Empaque',
+    cargoNombre: 'Operario de empaque',
     areaProceso: 'Planta – Empaque y Sellado Térmico',
     actividadPrincipal: 'Empaque en bolsas, fechado de lotes y armado de cajas',
     tipoContrato: 'Fijo',
@@ -590,7 +597,7 @@ const TRABAJADORES_INICIALES_SST: TrabajadorFichaSST[] = [
     telefono: '312 618 0942',
     correo: 'frikaz.fritosnacks@gmail.com',
     cargoId: 'cargo-operario-seleccion',
-    cargoNombre: 'Operario de Selección',
+    cargoNombre: 'Operario de selección',
     areaProceso: 'Planta – Recibo, Selección y Lavado',
     actividadPrincipal: 'Descargue de bultos de papa y plátano, lavado y apoyo en bodega',
     tipoContrato: 'Fijo',
@@ -1006,7 +1013,7 @@ function crearSeedInicialSgsst(
       trabajadorId: 'trab-07',
       riesgoId: rBiomec?.id,
       estandarNumero: 7,
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: 'Gerente',
       estado: 'CONVERTIDA_EN_ACCION',
       accionMejoraId: 'acm-01',
     },
@@ -1021,7 +1028,7 @@ function crearSeedInicialSgsst(
       esConfidencialMedica: false,
       riesgoId: rRuido?.id,
       estandarNumero: 7,
-      responsable: 'Operario de Pelado',
+      responsable: 'Operario de pelado',
       estado: 'ABIERTA',
     },
     {
@@ -1034,7 +1041,7 @@ function crearSeedInicialSgsst(
       prioridad: 'MEDIA',
       esConfidencialMedica: true,
       estandarNumero: 5,
-      responsable: 'Coordinador / Vigía de SST',
+      responsable: 'Gerente',
       estado: 'ABIERTA',
     },
   ];
@@ -1051,7 +1058,7 @@ function crearSeedInicialSgsst(
         'Valorar con Gerencia la compra de tapetes antifatiga e implementar las orientaciones y pausas activas programadas para abril de 2027 (PA-2027-12).',
       actividadARealizar:
         'Presentar cotización de tapetes antifatiga para aprobación de Gerencia e iniciar pausas activas en planta en 2027.',
-      responsable: 'Operario de Empaque',
+      responsable: 'Operario de empaque',
       fechaInicio: '2027-04-01',
       fechaLimite: '2027-04-29',
       evidenciaNecesaria: 'Cotización aprobada / factura de compra, fotos de los tapetes puestos y planilla de pausas activas.',
@@ -1067,14 +1074,14 @@ function crearSeedInicialSgsst(
         {
           id: 'hm-01',
           fecha: '2026-10-15',
-          usuario: 'Coordinador / Vigía de SST',
+          usuario: 'Gerente (Andrea Orjuela)',
           accion: 'CREADA',
           detalle: 'Acción abierta por recomendación ergonómica en selección y empaque.',
         },
         {
           id: 'hm-02',
           fecha: '2026-11-23',
-          usuario: 'Coordinador / Vigía de SST',
+          usuario: 'Gerente (Andrea Orjuela)',
           accion: 'REPROGRAMADA_2027',
           detalle: 'Reprogramada a abril de 2027 sin ejecución previa confirmada (gasto ejecutado $0).',
         },
@@ -1091,7 +1098,7 @@ function crearSeedInicialSgsst(
         'Asegurar que ningún termostato sobrepase 180 °C y revisar/reponer guantes térmicos en el calendario 2027.',
       actividadARealizar:
         'Inspección de freidoras y capacitación de calor (mayo 2027) más revisión y entrega de EPP (junio 2027).',
-      responsable: 'Operario de Frito',
+      responsable: 'Operario de frito',
       fechaInicio: '2027-05-03',
       fechaLimite: '2027-06-28',
       evidenciaNecesaria: 'Lista de chequeo de freidoras y planilla firmada de entrega de EPP.',
@@ -1106,14 +1113,14 @@ function crearSeedInicialSgsst(
         {
           id: 'hm-03',
           fecha: '2026-04-28',
-          usuario: 'Coordinador / Vigía de SST',
+          usuario: 'Gerente (Andrea Orjuela)',
           accion: 'CREADA',
           detalle: 'Acción preventiva vinculada a RSK-PROD-01.',
         },
         {
           id: 'hm-04',
           fecha: '2026-11-23',
-          usuario: 'Coordinador / Vigía de SST',
+          usuario: 'Gerente (Andrea Orjuela)',
           accion: 'REPROGRAMADA_2027',
           detalle: 'Reprogramada a mayo–junio de 2027 sin ejecución previa confirmada.',
         },
@@ -1134,7 +1141,7 @@ function crearSeedInicialSgsst(
       },
       analisisFactibilidad: {
         actividadEconomicaCIIU: config.ciiuPrincipal,
-        gruposPoblacionalesAnalizados: 'Fritura (2), Pelado/Corte (1), Selección/Lavado (2), Empaque (2), Logística (1), Administración/SST (2).',
+        gruposPoblacionalesAnalizados: 'Gerente (1), Operario de selección (3), Operario de pelado (1), Operario de frito (2), Operario de empaque (2), Conductor (1).',
         conclusionesFactibilidad: 'Es viable implementar mejoras ergonómicas de bajo costo (tapetes, rotación de puestos) y pausas de hidratación.',
         fechaActualizacion: '2025-11-20',
       },
@@ -1191,7 +1198,7 @@ function crearSeedInicialSgsst(
       {
         id: 'aud-init-01',
         fechaHora: '2026-11-23T09:00:00',
-        usuario: 'Coordinador / Vigía de SST',
+        usuario: 'Gerente (Andrea Orjuela)',
         modulo: 'PLANEAR',
         accion: 'Reorganización Plan Anual 2027',
         detalle: 'Conectados trabajadores, matriz GTC 45, 6 indicadores Res. 0312/2019 (2027 vacío) y 7 estándares mínimos 2027 en estado Por hacer.',
@@ -1213,28 +1220,91 @@ export function loadSgsstData(
     if (raw) {
       const parsed = JSON.parse(raw) as PlanAnualSgsstData;
       if (parsed && Array.isArray(parsed.trabajadores) && Array.isArray(parsed.hojasVidaIndicadores)) {
-        const existentesCustom = parsed.hojasVidaIndicadores.filter((i) => !i.esNormativo0312);
-        const hojasVida = [...INDICADORES_NORMATIVOS_0312, ...existentesCustom];
+        const existenCustom = parsed.hojasVidaIndicadores.filter((i) => !i.esNormativo0312);
+        const hojasVida = [...INDICADORES_NORMATIVOS_0312, ...existenCustom];
         let needsSave = false;
+        const needsCargos6 = localStorage.getItem(CARGOS_6_FLAG_SGSST) !== '1';
+        if (needsCargos6 && !localStorage.getItem(STORAGE_KEY_SGSST_BACKUP_6)) {
+          try {
+            localStorage.setItem(STORAGE_KEY_SGSST_BACKUP_6, raw);
+          } catch {
+            // ignore quota errors
+          }
+        }
+
         const trabajadoresActualizados = parsed.trabajadores.map((t) => {
+          let nextT = t;
           if (
-            t.id === 'trab-01' &&
-            (t.nombreCompleto === 'Carlos Andrés Méndez Rojas' || t.cargoNombre === 'Gerente General')
+            nextT.id === 'trab-01' &&
+            (nextT.nombreCompleto === 'Carlos Andrés Méndez Rojas' ||
+              nextT.cargoNombre === 'Gerente General')
           ) {
             needsSave = true;
-            return {
-              ...t,
+            nextT = {
+              ...nextT,
               nombreCompleto: 'Andrea Orjuela',
               sexo: 'Femenino' as const,
+              cargoId: 'cargo-gerente-general',
               cargoNombre: 'Gerente',
             };
           }
-          return t;
+
+          const eraVigiaLegacy =
+            nextT.cargoId === 'cargo-coordinador-vigia-sst' ||
+            nextT.cargoNombre.toLowerCase().includes('vigía') ||
+            nextT.cargoNombre.toLowerCase().includes('coordinador');
+
+          const targetCargoId = eraVigiaLegacy
+            ? 'cargo-operario-seleccion'
+            : obtenerIdCargoOficial(nextT.cargoId || nextT.cargoNombre);
+          const targetCargoNombre = obtenerNombreCargoOficial(targetCargoId);
+
+          if (nextT.cargoId !== targetCargoId || nextT.cargoNombre !== targetCargoNombre) {
+            needsSave = true;
+            nextT = {
+              ...nextT,
+              cargoId: targetCargoId,
+              cargoNombre: targetCargoNombre,
+              areaProceso: eraVigiaLegacy
+                ? 'Planta – Recibo, Selección y Lavado (con función designada de Vigía SST)'
+                : nextT.areaProceso,
+              actividadPrincipal: eraVigiaLegacy
+                ? 'Apoyo operativo en selección/BPM y función transversal de Vigía SST (inspecciones, capacitaciones y entrega de EPP)'
+                : nextT.actividadPrincipal,
+            };
+          }
+          return nextT;
         });
+
+        const recomendacionesActualizadas = (parsed.recomendaciones || []).map((rec) => {
+          const respNorm = obtenerNombreCargoOficial(rec.responsable);
+          if (rec.responsable !== respNorm) {
+            needsSave = true;
+            return { ...rec, responsable: respNorm };
+          }
+          return rec;
+        });
+
+        const accionesActualizadas = (parsed.accionesMejora || []).map((acm) => {
+          const respNorm = obtenerNombreCargoOficial(acm.responsable);
+          if (acm.responsable !== respNorm) {
+            needsSave = true;
+            return { ...acm, responsable: respNorm };
+          }
+          return acm;
+        });
+
+        if (needsCargos6) {
+          localStorage.setItem(CARGOS_6_FLAG_SGSST, '1');
+          needsSave = true;
+        }
+
         let result: PlanAnualSgsstData = {
           ...parsed,
           trabajadores: trabajadoresActualizados,
           hojasVidaIndicadores: hojasVida,
+          recomendaciones: recomendacionesActualizadas,
+          accionesMejora: accionesActualizadas,
         };
 
         if (!localStorage.getItem(GERENTE_GATE_FLAG_SGSST)) {
@@ -1634,16 +1704,7 @@ export function construirResumenSociodemografico(trabajadores: TrabajadorFichaSS
 // ============================================================================
 
 export function coincidenCargoYRiesgo(cargoTrabajador: string, r: RiesgoGTC45Item): boolean {
-  const cTrab = cargoTrabajador.toLowerCase().trim();
-  const cRiesgo = `${r.cargo || ''} ${r.cargosExpuestos || ''}`.toLowerCase();
-  if (!cTrab || !cRiesgo) return false;
-  if (cRiesgo.includes('todo el personal') || cRiesgo.includes('todos')) return true;
-
-  const palabrasClave = cTrab
-    .split(/[\s/]+/)
-    .filter((w) => w.length >= 4 && w !== 'operario' && w !== 'general' && w !== 'vigía');
-  if (cRiesgo.includes(cTrab)) return true;
-  return palabrasClave.some((p) => cRiesgo.includes(p));
+  return coincideConCargoOficial(cargoTrabajador, r.cargo, r.cargosExpuestos);
 }
 
 export function obtenerConexionesRiesgo(
@@ -2326,9 +2387,19 @@ export function obtenerSoportesRealesEstandar(
 
   if (numero === 1) {
     const cargos = getStoredCargosSST();
-    const vigia = cargos.find((c) => c.id === 'cargo-coordinador-vigia-sst');
-    if (vigia) disponibles.push(`Cargo definido en Organigrama: ${vigia.nombre}`);
-    else faltantes.push('Falta asignar responsable SST en el Organigrama.');
+    const gerente = cargos.find((c) => c.id === 'cargo-gerente-general');
+    const trabajadorVigia = activos.find((t) =>
+      t.actividadPrincipal.toLowerCase().includes('vigía')
+    );
+    if (gerente) {
+      disponibles.push(
+        `Responsable SG-SST definido en los 6 cargos oficiales: ${gerente.nombre}${
+          trabajadorVigia ? ` (con función designada de Vigía SST en ${trabajadorVigia.cargoNombre})` : ''
+        }`
+      );
+    } else {
+      faltantes.push('Falta asignar responsable SST dentro de los 6 cargos oficiales.');
+    }
 
     const acts1 = plan.actividades.filter((a) => a.estandarMinimoNumero === 1 || a.nombre.toLowerCase().includes('vigía'));
     if (acts1.length > 0) disponibles.push(`${acts1.length} actividad(es) relacionadas en el Plan Anual.`);

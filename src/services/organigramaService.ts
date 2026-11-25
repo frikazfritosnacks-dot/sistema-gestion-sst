@@ -32,17 +32,27 @@ const PLAIN_LANG_POLITICA_FLAG = 'frikaz_politica_plain_lang_v1';
 const PLAIN_LANG_CARGOS_FLAG = 'frikaz_cargos_plain_lang_v1';
 const GERENTE_GATE_POLITICA_FLAG = 'frikaz_politica_gerente_gate_v1';
 
+const STORAGE_KEY_CARGOS_BACKUP = 'frikaz_cargos_backup_pre6_v1';
+const CARGOS_6_OFICIALES_FLAG = 'frikaz_cargos_6_oficiales_v1';
+
 // ============================================================================
 // DATOS CANÓNICOS DEL ORGANIGRAMA Y RESPONSABILIDADES SST (FRIKAZ S.A.S.)
+// FUENTE ÚNICA DE LOS 6 CARGOS OFICIALES DE LA EMPRESA
 // ============================================================================
 export const CARGOS_SST_CANONICOS: CargoSST[] = [
-  // NIVEL 1. ALTA DIRECCIÓN
+  // NIVEL 1. DIRECCIÓN GENERAL Y COORDINACIÓN SG-SST
   {
     id: 'cargo-gerente-general',
-    nombre: 'Andrea Orjuela – Gerente',
+    nombre: 'Gerente',
+    titularReferencia: 'Andrea Orjuela',
+    funcionesSstDesignadas: [
+      'Representante Legal y Responsable del SG-SST',
+      'Líder de Gestión Ambiental (ACU)',
+      'Aprobación de Plan Anual y Matrices',
+    ],
     nivelJerarquico: 'ALTA_DIRECCION',
-    nivelNombre: 'Nivel 1. Dirección de la Empresa',
-    areaProceso: 'Dirección General y Toma de Decisiones',
+    nivelNombre: 'Nivel 1. Dirección y Coordinación SG-SST',
+    areaProceso: 'Dirección General, Administración y Coordinación del SG-SST',
     icono: 'Crown',
     colorTheme: {
       badgeBg: 'bg-purple-500/20',
@@ -53,67 +63,37 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       cardBg: 'bg-slate-900/90',
     },
     descripcionPuesto:
-      'Es la persona que dirige Frikaz S.A.S. Se encarga de respaldar la seguridad de todo el equipo y asegurar el dinero, los materiales y el tiempo necesarios para trabajar sin accidentes (Decreto 1072 de 2015, Art. 2.2.4.6.8).',
+      'Es el cargo de dirección general de Frikaz S.A.S. (actualmente ocupado por Andrea Orjuela). Respalda la seguridad de todo el equipo, asegura el presupuesto, lidera la coordinación administrativa del SG-SST y asigna funciones transversales (como Vigía de SST y apoyo en emergencias) dentro de los cargos oficiales existentes (Decreto 1072 de 2015, Art. 2.2.4.6.8).',
     responsabilidades: [
-      'Dirigir el cuidado de la seguridad y salud en Frikaz S.A.S. y explicar cómo vamos cada año ante los trabajadores, el Ministerio del Trabajo y la ARL (aseguradora de riesgos laborales).',
+      'Dirigir el cuidado de la seguridad y salud en Frikaz S.A.S. y explicar cómo vamos cada año ante los trabajadores, el Ministerio del Trabajo y la ARL.',
       'Firmar, dar a conocer a todos y revisar cada año la Política de Seguridad y Salud en el Trabajo.',
-      'Entregar a tiempo el dinero, herramientas y elementos de protección: guantes contra el calor (hasta 200 °C), caretas, botas antideslizantes, mantenimiento de freidoras y extintores Clase K.',
-      'Apoyar la elección y el trabajo diario del Vigía de Seguridad (o del equipo COPASST), dándole tiempo dentro de la jornada para revisar la planta.',
-      'Revisar una vez al año cómo va la seguridad en la fábrica junto con los trabajadores y aprobar mejoras reales para los 10 compañeros.',
-      'Asegurar que el Aceite de Cocina Usado (ACU) se entregue únicamente a una empresa autorizada por la Secretaría de Ambiente, sin botarlo nunca al sifón.',
+      'Entregar a tiempo el presupuesto, herramientas y elementos de protección: guantes contra el calor (hasta 200 °C), caretas, botas antideslizantes, mantenimiento de freidoras y extintores Clase K.',
+      'Organizar y hacer cumplir el Plan Anual 2027, mantener actualizada la Matriz GTC 45 y coordinar el seguimiento con la ARL.',
+      'Designar formalmente dentro de los 6 cargos oficiales las funciones de Vigía de SST, apoyo operativo SG-SST y respuesta ante emergencias, otorgando tiempo dentro de la jornada.',
+      'Investigar o liderar el análisis de incidentes y accidentes de trabajo (Resolución 1401 de 2007) junto al Vigía designado y aprobar mejoras reales para los trabajadores.',
+      'Asegurar la entrega trazable del Aceite de Cocina Usado (ACU) a un gestor autorizado por la Secretaría de Ambiente y custodiar los manifiestos y registros administrativos.',
     ],
     compromisos: [
-      'Participar puntualmente en las reuniones anuales donde revisamos cómo va la seguridad en la planta.',
-      'Mantener siempre presupuesto listo para cambiar botas antideslizantes, guantes y delantales dañados sin demora.',
-      'Escuchar de forma directa y rápida al Coordinador o Vigía de SST cuando avise de un peligro en la planta.',
-      'Apoyar a cualquier compañero que pare una máquina o tarea si ve un peligro grave (por ejemplo, olor a gas o una freidora sin control de temperatura).',
+      'Participar puntualmente en las revisiones periódicas y anuales del SG-SST en la planta.',
+      'Mantener presupuesto listo para reposición oportuna de botas antideslizantes, guantes, delantales y recarga de extintores.',
+      'Escuchar de forma directa y rápida al trabajador designado como Vigía de SST cuando reporte un peligro en planta o en ruta.',
+      'Respaldar a cualquier trabajador que detenga una máquina o tarea ante un peligro grave (fuga de gas, falla térmica o eléctrica).',
     ],
     ordenNivel: 1,
   },
 
-  // NIVEL 2. RESPONSABLE DEL SG-SST
-  {
-    id: 'cargo-coordinador-vigia-sst',
-    nombre: 'Coordinador / Vigía de SST',
-    nivelJerarquico: 'RESPONSABLE_SST',
-    nivelNombre: 'Nivel 2. Encargado de Seguridad y Salud',
-    areaProceso: 'Seguridad y Salud en el Trabajo (SST)',
-    icono: 'ShieldCheck',
-    colorTheme: {
-      badgeBg: 'bg-emerald-500/20',
-      badgeText: 'text-emerald-300',
-      border: 'border-emerald-500/40',
-      accent: 'text-emerald-400',
-      gradient: 'from-emerald-950/70 via-slate-900 to-slate-950',
-      cardBg: 'bg-slate-900/90',
-    },
-    descripcionPuesto:
-      'Es quien organiza, acompaña y revisa que todas las medidas de cuidado funcionen cada día en Frikaz S.A.S., cumpliendo los 7 Estándares Básicos de la Resolución 0312 de 2019 y el Decreto 1072 de 2015.',
-    responsabilidades: [
-      'Organizar y hacer cumplir el Plan Anual de Seguridad y las charlas de capacitación con apoyo de la ARL.',
-      'Mantener al día la lista de peligros de cada puesto (Matriz de Riesgos GTC 45) y las normas que debe cumplir la planta.',
-      'Revisar con frecuencia las freidoras a gas, la campana extractora, las cuchillas y que los pisos estén secos y sin huecos.',
-      'Investigar todos los accidentes y sustos (incidentes) dentro de los 15 días hábiles siguientes (Resolución 1401 de 2007) para entender qué pasó y que no se repita.',
-      'Entregar, revisar y cambiar a tiempo los Elementos de Protección Personal (EPP) de cada compañero y enseñar cómo usarlos.',
-      'Coordinar con la ARL prácticas de qué hacer si se prende el aceite (uso del extintor Clase K), primeros auxilios en quemaduras y pausas activas.',
-      'Guardar en orden todos los recibos de entrega de Aceite de Cocina Usado (ACU) para presentarlos a la Secretaría de Ambiente.',
-    ],
-    compromisos: [
-      'Tener al día el certificado del curso de 50 horas en Seguridad y Salud en el Trabajo del Ministerio del Trabajo.',
-      'Hacer recorridos sorpresa por la planta para revisar que todos trabajemos seguros y con la protección puesta.',
-      'Guardar total respeto y reserva con los exámenes médicos y la salud de cada compañero.',
-      'Avisar de inmediato a la Gerencia si encuentra fallas graves en el gas, las freidoras o la electricidad.',
-    ],
-    ordenNivel: 2,
-  },
-
-  // NIVEL 3. NIVEL OPERATIVO (5 CARGOS)
+  // NIVEL OPERATIVO EN PLANTA Y RUTA (5 CARGOS OFICIALES)
   {
     id: 'cargo-operario-seleccion',
-    nombre: 'Operario de Selección',
+    nombre: 'Operario de selección',
+    funcionesSstDesignadas: [
+      'Control de calidad / BPM e inspección de materia prima',
+      'Limpieza, desinfección y orden en planta',
+      'Función transversal designable: Vigía / Apoyo operativo SST',
+    ],
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
-    areaProceso: 'Planta – Recibo, Selección y Lavado de Papa y Plátano',
+    nivelNombre: 'Nivel 2. Equipo Operativo en Planta y Ruta',
+    areaProceso: 'Planta – Recibo, Selección, Lavado, BPM, Insumos Secos y Aseo',
     icono: 'CheckCircle2',
     colorTheme: {
       badgeBg: 'bg-blue-500/20',
@@ -142,9 +122,9 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
   },
   {
     id: 'cargo-operario-pelado',
-    nombre: 'Operario de Pelado',
+    nombre: 'Operario de pelado',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    nivelNombre: 'Nivel 2. Equipo Operativo en Planta y Ruta',
     areaProceso: 'Planta – Pelado y Corte en Rebanadora',
     icono: 'Scissors',
     colorTheme: {
@@ -170,13 +150,13 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       'Usar siempre el empujador plástico para meter la papa o el plátano en la rebanadora.',
       'Guardar los cuchillos en su estuche o porta-cuchillos apenas termine de usarlos; nunca dejarlos sueltos en la mesa.',
     ],
-    ordenNivel: 3,
+    ordenNivel: 2,
   },
   {
     id: 'cargo-operario-frito',
-    nombre: 'Operario de Frito',
+    nombre: 'Operario de frito',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    nivelNombre: 'Nivel 2. Equipo Operativo en Planta y Ruta',
     areaProceso: 'Planta – Freidoras Industriales a Gas (170 °C a 180 °C)',
     icono: 'Flame',
     colorTheme: {
@@ -203,14 +183,14 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       'Mantener el piso alrededor de las freidoras totalmente seco y sin grasa para evitar caídas sobre el calor.',
       'Tomar sus pausas de hidratación y descanso para bajar el calor del cuerpo.',
     ],
-    ordenNivel: 3,
+    ordenNivel: 2,
   },
   {
     id: 'cargo-operario-empaque',
-    nombre: 'Operario de Empaque',
+    nombre: 'Operario de empaque',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
-    areaProceso: 'Planta – Pesaje, Sellado Térmico y Empaque',
+    nivelNombre: 'Nivel 2. Equipo Operativo en Planta y Ruta',
+    areaProceso: 'Planta – Pesaje, Sellado Térmico, Empaque y Estibado',
     icono: 'Package',
     colorTheme: {
       badgeBg: 'bg-amber-500/20',
@@ -235,13 +215,13 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       'Hacer pausas cortas para descansar las manos y muñecas cada 2 horas.',
       'Dejar siempre despejados los pasillos de salida y el espacio alrededor de la báscula.',
     ],
-    ordenNivel: 3,
+    ordenNivel: 2,
   },
   {
     id: 'cargo-conductor',
     nombre: 'Conductor',
     nivelJerarquico: 'NIVEL_OPERATIVO',
-    nivelNombre: 'Nivel 3. Equipo de Planta y Ruta',
+    nivelNombre: 'Nivel 2. Equipo Operativo en Planta y Ruta',
     areaProceso: 'Entregas en Vehículo y Distribución en Bogotá',
     icono: 'Truck',
     colorTheme: {
@@ -268,7 +248,7 @@ export const CARGOS_SST_CANONICOS: CargoSST[] = [
       'Usar siempre el cinturón de seguridad y pedirle a cualquier acompañante que también se lo abroche.',
       'Descansar unos minutos en rutas largas o con mucho trancón para manejar alerta y sin sueño.',
     ],
-    ordenNivel: 3,
+    ordenNivel: 2,
   },
 ];
 
@@ -425,21 +405,48 @@ export function getStoredCargosSST(): CargoSST[] {
     const raw = localStorage.getItem(STORAGE_KEY_CARGOS);
     if (!raw) {
       localStorage.setItem(PLAIN_LANG_CARGOS_FLAG, '1');
+      localStorage.setItem(CARGOS_6_OFICIALES_FLAG, '1');
       return CARGOS_SST_CANONICOS;
     }
     const parsed: CargoSST[] = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem(CARGOS_6_OFICIALES_FLAG, '1');
       return CARGOS_SST_CANONICOS;
     }
-    const alreadyMigrated = localStorage.getItem(PLAIN_LANG_CARGOS_FLAG) === '1';
-    if (!alreadyMigrated) {
+
+    const migrated6 = localStorage.getItem(CARGOS_6_OFICIALES_FLAG) === '1';
+    const tieneCantidadInconsistente =
+      parsed.length !== CARGOS_SST_CANONICOS.length ||
+      parsed.some((c) => !CARGOS_SST_CANONICOS.some((canon) => canon.id === c.id));
+
+    if (!migrated6 || tieneCantidadInconsistente) {
+      if (!localStorage.getItem(STORAGE_KEY_CARGOS_BACKUP)) {
+        localStorage.setItem(STORAGE_KEY_CARGOS_BACKUP, raw);
+      }
       localStorage.setItem(PLAIN_LANG_CARGOS_FLAG, '1');
-      const canonIds = new Set(CARGOS_SST_CANONICOS.map((c) => c.id));
-      const extras = parsed.filter((c) => !canonIds.has(c.id));
-      const merged = [...CARGOS_SST_CANONICOS, ...extras];
-      localStorage.setItem(STORAGE_KEY_CARGOS, JSON.stringify(merged));
-      return merged;
+      localStorage.setItem(CARGOS_6_OFICIALES_FLAG, '1');
+
+      const mapById = new Map(parsed.map((item) => [item.id, item]));
+      const normalized = CARGOS_SST_CANONICOS.map((canon) => {
+        const previo = mapById.get(canon.id);
+        if (!previo) return canon;
+        return {
+          ...canon,
+          responsabilidades:
+            Array.isArray(previo.responsabilidades) && previo.responsabilidades.length > 0
+              ? previo.responsabilidades
+              : canon.responsabilidades,
+          compromisos:
+            Array.isArray(previo.compromisos) && previo.compromisos.length > 0
+              ? previo.compromisos
+              : canon.compromisos,
+        };
+      });
+
+      localStorage.setItem(STORAGE_KEY_CARGOS, JSON.stringify(normalized));
+      return normalized;
     }
+
     return parsed;
   } catch (e) {
     console.error('Error cargando cargos SST de localStorage:', e);
@@ -1091,7 +1098,7 @@ export function construirDocumentoResponsabilidadesDocx(
                         spacing: { line: DOCX_LINE_SPACING_1_5, after: 40 },
                         children: [
                           new TextRun({
-                            text: 'Nombre: Coordinador / Vigía de SST',
+                            text: 'Nombre: Andrea Orjuela – Gerente (Frikaz S.A.S.)',
                             size: DOCX_FONT_SIZE_12,
                             font: DOCX_FONT,
                           }),

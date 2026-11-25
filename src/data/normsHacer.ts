@@ -24,7 +24,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Contrato firmado, comprobante de afiliación a la ARL con fecha anterior al ingreso y planilla mensual PILA pagada al día.',
     estado: 'Por hacer',
-    responsable: 'Gestión Humana / Gerencia',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Todo el equipo afiliado al día (Riesgo III en planta y Riesgo I en oficina).',
   },
@@ -49,7 +49,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Tabla de exámenes por cargo (Profesiograma) firmada y certificados médicos de aptitud guardados bajo reserva médica.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST / IPS Ocupacional',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-09-18',
     observaciones: 'Chequeos enfocados en manipulación de alimentos y cuidado de espalda y manos.',
   },
@@ -74,7 +74,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Registro de inducción firmado por el trabajador, temas vistos y evaluación corta de comprensión.',
     estado: 'Por hacer',
-    responsable: 'Responsable SG-SST',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Inducción práctica en planta antes de operar cualquier equipo.',
   },
@@ -99,7 +99,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Certificado anual de manipulación de alimentos (mínimo 10 horas) y registro de charla de ahorro de agua y manejo de residuos.',
     estado: 'Por hacer',
-    responsable: 'Calidad / Higiene de Planta',
+    responsable: 'Operario de selección / Operario de pelado / Operario de frito / Operario de empaque',
     fechaVerificacion: '2026-09-15',
     observaciones: 'Todo el personal de producción tiene su curso de manipulación vigente.',
   },
@@ -126,7 +126,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Carta de nombramiento del Vigía SST, acta de votación del Comité de Convivencia y actas de recorridos y reuniones.',
     estado: 'Por hacer',
-    responsable: 'Gerencia General / Trabajadores',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-09-10',
     observaciones: 'Vigía SST y Comité de Convivencia activos para el periodo 2026-2028.',
   },
@@ -151,7 +151,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planilla individual firmada con fecha cada vez que recibes tus EPP o tu dotación.',
     estado: 'Por hacer',
-    responsable: 'Jefe de Planta / Responsable SG-SST',
+    responsable: 'Gerente / Operario de empaque',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Planillas de entrega firmadas con fecha y firma de cada trabajador.',
   },
@@ -176,7 +176,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Fichas técnicas y hojas de seguridad de los productos de aseo donde dice que son biodegradables.',
     estado: 'Por hacer',
-    responsable: 'Compras / Gestión Ambiental',
+    responsable: 'Gerente / Operario de pelado',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Todos los desengrasantes de planta cuentan con ficha biodegradable.',
   },
@@ -203,7 +203,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Informe confidencial del psicólogo con licencia en SST y registro de pausas activas y charlas de bienestar.',
     estado: 'Por hacer',
-    responsable: 'Psicólogo Especialista SST / Gerencia',
+    responsable: 'Gerente',
     fechaVerificacion: '2026-08-15',
     observaciones: 'Encuesta aplicada con plan de pausas activas y turnos equilibrados.',
   },
@@ -228,7 +228,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Lista de peligros al día, permisos escritos para tareas de alto riesgo, uso de candados de bloqueo (LOTO) y registro de mantenimiento de máquinas.',
     estado: 'Por hacer',
-    responsable: 'Mantenimiento / Responsable SG-SST',
+    responsable: 'Gerente / Operario de pelado / Operario de frito',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Guardas protectoras instaladas y regla de apagar y bloquear antes de limpiar.',
   },
@@ -253,7 +253,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Tabla visible de compatibilidad química, hojas de seguridad en español (sistema SGA con dibujos de peligro) y kit antiderrames completo.',
     estado: 'Por hacer',
-    responsable: 'Seguridad Química / Gestión Ambiental',
+    responsable: 'Gerente / Operario de selección',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Kit antiderrames listo junto al almacén de aseo.',
   },
@@ -280,7 +280,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Envases con etiqueta SGA, Plan de Emergencias escrito, extintores Clase K y ABC recargados al día, botiquín y acta del simulacro anual con fotos.',
     estado: 'Por hacer',
-    responsable: 'Brigada de Emergencias / Líder SST',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-10-02',
     observaciones: 'Extintores Clase K instalados junto a freidoras y simulacro realizado.',
   },
@@ -305,7 +305,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Registro ante la autoridad ambiental, contrato con gestor autorizado y recibos firmados por cada entrega de aceite usado.',
     estado: 'Por hacer',
-    responsable: 'Líder Ambiental / Cocina Industrial',
+    responsable: 'Operario de frito / Gerente',
     fechaVerificacion: '2026-10-02',
     observaciones: 'Entregamos entre 180 y 250 litros mensuales con certificado oficial.',
   },
@@ -330,7 +330,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Canecas marcadas con los tres colores, guía de manejo de residuos (PGIRS) y planillas de entrega.',
     estado: 'Por hacer',
-    responsable: 'Servicios Generales / Gestión Ambiental',
+    responsable: 'Operario de selección / Operario de pelado / Operario de empaque',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Puntos ecológicos señalizados en recepción, planta y empaque.',
   },
@@ -355,7 +355,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Planilla mensual de cantidades entregadas, zona de acopio segura y certificados de disposición de empresa con licencia ambiental.',
     estado: 'Por hacer',
-    responsable: 'Mantenimiento / Gestión Ambiental',
+    responsable: 'Gerente / Operario de frito',
     fechaVerificacion: '2026-09-25',
     observaciones: 'Bitácora mensual al día con certificados de gestor autorizado.',
   },
@@ -380,7 +380,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Comprobantes de entrega en puntos posconsumo o a gestores autorizados.',
     estado: 'Por hacer',
-    responsable: 'Mantenimiento / Gestión Ambiental',
+    responsable: 'Gerente / Operario de empaque',
     fechaVerificacion: '2026-09-20',
     observaciones: 'Entrega periódica de pilas y partes electrónicas en puntos posconsumo.',
   },
@@ -405,7 +405,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Plan de manejo de envases y empaques (propio o en grupo ante la ANLA) y registros de material reciclado.',
     estado: 'Por hacer',
-    responsable: 'Desarrollo de Producto / Gestión Ambiental',
+    responsable: 'Operario de empaque / Gerente',
     fechaVerificacion: '2026-09-15',
     observaciones: 'Uso optimizado de rollo de empaque y reciclaje de cartón limpio.',
   },
@@ -431,7 +431,7 @@ export const NORMS_HACER: NormaPhvaItem[] = [
     evidenciaCumplimiento:
       'Pruebas periódicas de laboratorio acreditado sobre el agua de salida, planilla semanal de limpieza de la Trampa de Grasas y revisión técnica de campanas y extractores.',
     estado: 'Por hacer',
-    responsable: 'Operaciones / Mantenimiento de Planta',
+    responsable: 'Operario de pelado / Operario de frito',
     fechaVerificacion: '2026-10-01',
     observaciones: 'Trampa de grasas con limpieza semanal registrada en planilla.',
   },

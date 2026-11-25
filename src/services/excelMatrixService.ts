@@ -75,13 +75,13 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
   });
 
   const listasData = [
-    ['SST', 'Por hacer', 'Planear', 'Responsable SG-SST', 'Procedimiento Documentado', 'Por hacer'],
-    ['Ambiental', 'En proceso', 'Hacer', 'Líder Gestión Ambiental', 'Registro o Formato Firmado', 'En proceso'],
-    ['Integral', 'Pendiente de revisión', 'Verificar', 'Gerencia General / Representante Legal', 'Certificado ARL / SDA', 'Pendiente de revisión'],
-    ['', 'Devuelto para ajustes', 'Actuar', 'COPASST / Vigía de SST', 'Factura / Manifiesto de Gestor', 'Devuelto para ajustes'],
-    ['', 'Cumplido', '', 'Jefe de Planta y Producción', 'Acta de Reunión o Inspección', 'Cumplido'],
-    ['', 'Aprobado', '', 'Gestión Humana', 'Matriz de Peligros o Aspectos', 'Aprobado'],
-    ['', '', '', 'Asesor Externo SST', 'Informe de Auditoría o Medición', ''],
+    ['SST', 'Por hacer', 'Planear', 'Gerente', 'Procedimiento Documentado', 'Por hacer'],
+    ['Ambiental', 'En proceso', 'Hacer', 'Operario de selección', 'Registro o Formato Firmado', 'En proceso'],
+    ['Integral', 'Pendiente de revisión', 'Verificar', 'Operario de pelado', 'Certificado ARL / SDA', 'Pendiente de revisión'],
+    ['', 'Devuelto para ajustes', 'Actuar', 'Operario de frito', 'Factura / Manifiesto de Gestor', 'Devuelto para ajustes'],
+    ['', 'Cumplido', '', 'Operario de empaque', 'Acta de Reunión o Inspección', 'Cumplido'],
+    ['', 'Aprobado', '', 'Conductor', 'Matriz de Peligros o Aspectos', 'Aprobado'],
+    ['', '', '', '', 'Informe de Auditoría o Medición', ''],
   ];
 
   listasData.forEach((row) => wsListas.addRow(row));
@@ -792,7 +792,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       'Renovar el curso de actualización de 20 horas de la persona encargada de seguridad (SG-SST).',
       'Se cumplió el plazo de 2 años para renovar el certificado.',
       'Inscribir al encargado en la plataforma de la ARL (aseguradora de riesgos) para completar las 20 horas.',
-      'Gestión Humana / Líder SST',
+      'Gerente',
       '2026-09-01',
       '2026-11-30',
       'En proceso',
@@ -805,7 +805,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       'Completar la planilla de entrega de Aceite de Cocina Usado (ACU) del mes pasado.',
       'La empresa recolectora autorizada aún no enviaba el recibo digital.',
       'Pedir al recolector autorizado el certificado de entrega y guardarlo en la carpeta ambiental.',
-      'Coordinador Ambiental',
+      'Operario de frito',
       '2026-09-15',
       '2026-10-30',
       'Por hacer',
@@ -818,7 +818,7 @@ export async function generateFrikazExcelWorkbook(items: NormaPhvaItem[]): Promi
       'Revisión periódica de extintores especiales (Clase K / CO2) junto a las freidoras.',
       'Revisión programada cada seis meses para mantenerlos listos.',
       'Revisar presión, sellos y fecha de recarga de los 4 extintores de la planta.',
-      'Responsable SG-SST / Jefe Planta',
+      'Operario de selección',
       '2026-08-01',
       '2026-08-20',
       'Pendiente de revisión',

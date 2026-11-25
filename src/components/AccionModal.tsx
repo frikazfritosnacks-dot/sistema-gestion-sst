@@ -61,7 +61,7 @@ export const AccionModal: React.FC<AccionModalProps> = ({
         codigo: `AC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
         obligacionId: defaultOblig?.id || '',
         normaId: defaultOblig?.normaId || (norms[0]?.id || ''),
-        responsable: defaultOblig?.responsable || 'Líder SST / Jefe de Planta',
+        responsable: defaultOblig?.responsable || 'Gerente',
       });
     }
     setErrors({});

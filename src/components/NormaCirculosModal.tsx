@@ -501,7 +501,7 @@ export const NormaCirculosModal: React.FC<NormaCirculosModalProps> = ({
                     value={formData.responsable}
                     onChange={(e) => handleChange('responsable', e.target.value)}
                     className="w-full rounded-lg border border-slate-300 p-2 text-xs focus:border-[#0f172a] focus:outline-hidden bg-white"
-                    placeholder="Ej. Líder SST / Andrea Orjuela – Gerente"
+                    placeholder="Ej. Gerente / Operario de selección"
                   />
                 </div>
 
