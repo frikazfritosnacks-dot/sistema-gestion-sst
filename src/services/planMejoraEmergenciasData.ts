@@ -1,5 +1,6 @@
 import type { RiesgoGTC45Item } from '../types/gtc45RiskMatrix';
 import type {
+  ActividadPrimerosAuxiliosBrigada,
   CajaCalidadEditable,
   FormatoEditableDocumento,
   MaterialCapacitacionPlan,
@@ -834,6 +835,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
     recursosNecesarios: string;
     evidenciaRequerida: string;
     resultadoEsperado: string;
+    calorExtremoControl?: PlanMejoraPorRiesgo['calorExtremoControl'];
   }): PlanMejoraPorRiesgo => {
     const r = byId(cfg.riesgoFallbackId);
     const riesgoId = r?.id || cfg.riesgoFallbackId;
@@ -887,6 +889,7 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       evidenciasAdjuntas: [],
       resultadoEsperado: cfg.resultadoEsperado,
       estado: 'Por hacer',
+      calorExtremoControl: cfg.calorExtremoControl,
       observacionesGerencia: '',
       historialCambios: [
         {
@@ -917,11 +920,28 @@ export function crearPlanesMejoraSeed(riesgos: RiesgoGTC45Item[]): PlanMejoraPor
       situacionQueSeBuscaMejorar:
         'Exposición continua al calor de las freidoras y riesgo de salpicaduras de aceite caliente en manos, brazos y cara durante el turno.',
       actividadMejoraPropuesta:
-        'Verificar semanalmente la campana extractora, asegurar guantes térmicos y caretas completas en buen estado, y establecer pausas cortas de agua fresca para Operario de frito.',
+        'Establecer intervalos de descanso de 30 minutos para favorecer la aclimatación al calor, organizando pausas en espacios frescos y ventilados, con acceso a hidratación y seguimiento de las condiciones de exposición de los trabajadores. Verificar semanalmente la campana extractora, asegurar guantes térmicos y caretas completas en buen estado para Operario de frito.',
       explicacionSencilla:
-        'Trabajar muchas horas junto al aceite caliente cansa el cuerpo y puede causar quemaduras graves si salpica una gota o tocamos una superficie caliente. Con buena ventilación, guantes largos y tomando agua con frecuencia cuidamos la salud.',
+        'Trabajar muchas horas junto al aceite caliente cansa el cuerpo y puede causar quemaduras graves si salpica una gota o tocamos una superficie caliente. Con buena ventilación, pausas en lugar fresco, guantes largos y tomando agua con frecuencia cuidamos la salud.',
       medidaPrevencionControl:
-        'Mantener encendida la campana extractora durante todo el freído, usar siempre guantes largos resistentes al calor, delantal impermeable y careta facial al mover cestas, rotar tareas cuando sea posible y tener agua fresca disponible.',
+        'Mantener encendida la campana extractora durante todo el freído, aplicar los intervalos propuestos de descanso de 30 minutos en espacio fresco y ventilado (sujetos a validación técnica según temperatura real y carga de trabajo), usar siempre guantes largos resistentes al calor, delantal impermeable y careta facial al mover cestas, rotar tareas cuando sea viable y mantener hidratación disponible.',
+      calorExtremoControl: {
+        validacionCondicionesReales:
+          'Medida propuesta de intervalos de descanso de 30 minutos pendiente de validación técnica frente a la exposición real, temperatura ambiente/proceso en zona de freidoras, carga física de trabajo, actividad desarrollada y criterios técnicos de SST.',
+        temperaturaReferencia: 'Pendiente de registro en planta (medición térmica)',
+        cargaTrabajo: 'Moderada a alta (pendiente validar en puesto de fritura)',
+        duracionPausaMinutos: 30,
+        requiereValidacionTecnicaSst: true,
+        medidasComplementarias: {
+          hidratacion: true,
+          ventilacion: true,
+          reduccionExposicion: true,
+          rotacionTareas: false,
+          vigilanciaSintomas: true,
+          notasComplementarias:
+            'Complementar con campana extractora encendida, punto de hidratación fresco, rotación cuando sea viable en el equipo de 10 trabajadores y vigilancia de síntomas de agotamiento térmico.',
+        },
+      },
       capacitacion: crearCapacitacion({
         requiereCapacitacion: true,
         nombre: 'Trabajo seguro frente al calor y prevención de quemaduras en freidoras',
@@ -2301,6 +2321,88 @@ export function crearPlanEmergenciasSeed(): PlanEmergenciasFrikaz {
         evidencias: [],
       },
     ],
+    actividadesPrimerosAuxilios: [
+      {
+        id: 'pa-brig-01',
+        tipoActividad: 'Capacitación en primeros auxilios',
+        nombre: 'Capacitación en primeros auxilios básicos para brigada y planta Frikaz',
+        objetivo: 'Fortalecer los conocimientos básicos de los trabajadores para brindar auxilio seguro y oportuno mientras llega atención médica.',
+        descripcion: 'Sesión práctica sobre bioseguridad con guantes del botiquín, control básico de heridas y qué no hacer en quemaduras por aceite.',
+        fechaProgramada: '2027-03-18',
+        fechaRealizacion: '',
+        responsable: 'Operario de selección',
+        participantes: [],
+        participantesNotas: '10 trabajadores de Frikaz S.A.S. (6 cargos oficiales)',
+        estado: 'Pendiente',
+        evidencias: [],
+        observaciones: 'Programada para vigencia 2027; pendiente de ejecución y adjunto de lista de asistencia.',
+        indicadorCodigo: 'IND-EMG-PA',
+      },
+      {
+        id: 'pa-brig-02',
+        tipoActividad: 'Atención inicial de lesiones',
+        nombre: 'Taller de atención inicial de lesiones en cocina, pelado y fritura',
+        objetivo: 'Asegurar respuesta inicial correcta ante quemaduras térmicas por aceite caliente y cortes leves en peladora/rebanadora.',
+        descripcion: 'Demostración práctica de lavado con agua fresca (10-20 min) en quemaduras, presión directa limpia en sangrados y verificación del botiquín.',
+        fechaProgramada: '2027-05-14',
+        fechaRealizacion: '',
+        responsable: 'Operario de frito',
+        participantes: [],
+        participantesNotas: 'Brigadistas y operarios de planta',
+        estado: 'Pendiente',
+        evidencias: [],
+        observaciones: 'Requiere verificar insumos vigentes en botiquín antes de la práctica.',
+        indicadorCodigo: 'IND-EMG-PA',
+      },
+      {
+        id: 'pa-brig-03',
+        tipoActividad: 'Valoración básica de una persona afectada',
+        nombre: 'Entrenamiento en valoración básica de una persona afectada (desmayo o golpe de calor)',
+        objetivo: 'Capacitar en la verificación segura de conciencia, respiración y signos de alarma sin mover inadecuadamente al trabajador lesionado.',
+        descripcion: 'Revisión paso a paso para identificar desmayos por calor en freidoras, caídas en piso húmedo y señales que obligan a no movilizar.',
+        fechaProgramada: '2027-06-25',
+        fechaRealizacion: '',
+        responsable: 'Operario de pelado',
+        participantes: [],
+        participantesNotas: 'Brigada de emergencias y personal de planta',
+        estado: 'Pendiente',
+        evidencias: [],
+        observaciones: 'Pendiente de realización en planta.',
+        indicadorCodigo: 'IND-EMG-PA',
+      },
+      {
+        id: 'pa-brig-04',
+        tipoActividad: 'Activación de la ruta de atención',
+        nombre: 'Ejercicio de activación de la ruta de atención (123, ARL y Gerencia)',
+        objetivo: 'Validar que cualquier integrante de la brigada sepa activar con rapidez la línea 123, la ARL y el reporte a Gerencia.',
+        descripcion: 'Simulación de llamada de emergencia con ubicación exacta de planta, notificación a Andrea Orjuela – Gerente y registro de evento en ARL.',
+        fechaProgramada: '2027-08-12',
+        fechaRealizacion: '',
+        responsable: 'Gerente',
+        participantes: [],
+        participantesNotas: 'Gerencia, Brigada y Conductor (rutas de entrega)',
+        estado: 'Pendiente',
+        evidencias: [],
+        observaciones: 'Confirmar previamente números actualizados de ARL y cuadrante en cartelera.',
+        indicadorCodigo: 'IND-EMG-PA',
+      },
+      {
+        id: 'pa-brig-05',
+        tipoActividad: 'Práctica de respuesta ante emergencias',
+        nombre: 'Práctica integral de respuesta ante emergencias y traslado con camilla/botiquín',
+        objetivo: 'Evaluar la coordinación real de la brigada entre atención inicial en primeros auxilios y evacuación hacia el punto de encuentro.',
+        descripcion: 'Ejercicio práctico previo al simulacro anual integrando señal de alarma, atención primaria y conteo completo de los 10 trabajadores.',
+        fechaProgramada: '2027-09-24',
+        fechaRealizacion: '',
+        responsable: 'Operario de empaque',
+        participantes: [],
+        participantesNotas: '10 trabajadores de Frikaz S.A.S.',
+        estado: 'Pendiente',
+        evidencias: [],
+        observaciones: 'Debe registrar evidencias fotográficas y fecha real antes de marcarse como Realizada.',
+        indicadorCodigo: 'IND-EMG-PA',
+      },
+    ] as ActividadPrimerosAuxiliosBrigada[],
     inspeccionEquiposPrograma: {
       frecuenciaSugerida: 'Revisión mensual de extintores, botiquín y salidas despejadas',
       responsable: 'Operario de selección',

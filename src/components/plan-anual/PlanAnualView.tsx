@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NormaPhvaItem } from '../../types/phvaEvidence';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
-import { obtenerIdCargoOficial } from '../../data/cargosOficiales';
+import {
+  CARGOS_OFICIALES_NOMBRES,
+  obtenerIdCargoOficial,
+} from '../../data/cargosOficiales';
 import {
   AccionMejoraPlan,
   ActividadPlanAnual,
@@ -57,7 +60,9 @@ import { PlanAnualPresupuestoTab } from './PlanAnualPresupuestoTab';
 import { PlanAnualReportesTab } from './PlanAnualReportesTab';
 import { PlanAnualRiesgosNormasTab } from './PlanAnualRiesgosNormasTab';
 import { PlanAnualAlertasEvidenciasTab } from './PlanAnualAlertasEvidenciasTab';
-import { PlanAnualPlanesMejoraRiesgoTab } from './PlanAnualPlanesMejoraRiesgoTab';
+import { PlanAnualPlanesMejoraRiesgoTab, type SubTabPlanesMejora } from './PlanAnualPlanesMejoraRiesgoTab';
+import { PlanAnualPsicosocialTab, type SubTabPsicosocial } from './PlanAnualPsicosocialTab';
+import { CopasstView, type SubTabCopasst } from '../CopasstView';
 import {
   PlanAnualEmergenciasTab,
   type SubVistaEmergencias,
@@ -77,8 +82,11 @@ import type {
   PlanMejoraPorRiesgo,
   PlanesMejoraYEmergenciasStore,
 } from '../../types/planAnualMejoraEmergencias';
+import type { CapacitacionCertificadoContext } from '../../types/planMejoraRepositorio';
+import { CertificadoCapacitacionModal } from './CertificadoCapacitacionModal';
 import type { AssistantNavigationTarget } from '../../types/assistantNavigation';
 import {
+  Brain,
   ClipboardCheck,
   TrendingUp,
   Wrench,
@@ -98,6 +106,7 @@ import {
   FileCheck2,
   DollarSign,
   BarChart3,
+  Vote,
   GanttChart,
   UserCheck,
   Users,
@@ -116,11 +125,13 @@ import {
 interface PlanAnualViewProps {
   normas: NormaPhvaItem[];
   navigationRequest?: AssistantNavigationTarget | null;
+  onNavigate?: (target: AssistantNavigationTarget) => void;
 }
 
 export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
   normas,
   navigationRequest,
+  onNavigate,
 }) => {
   const [vigencias, setVigencias] = useState<Record<number, PlanAnualVigencia>>(() =>
     loadAllVigencias()
@@ -142,7 +153,10 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
     material: MaterialCapacitacionPlan;
     contexto: string;
     onSave: (nextMat: MaterialCapacitacionPlan) => void;
+    certContext?: CapacitacionCertificadoContext;
   } | null>(null);
+  const [certificadoContext, setCertificadoContext] =
+    useState<CapacitacionCertificadoContext | null>(null);
 
   // Secciones del apartado independiente PLAN ANUAL (Resumen + secciones operativas)
   const [seccionActiva, setSeccionActiva] = useState<SeccionPlanAnual>('resumen');
@@ -166,6 +180,13 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
   const [navEmergenciasEscenarioId, setNavEmergenciasEscenarioId] = useState<string | undefined>(
     undefined
   );
+  const [navSubPlanesMejora, setNavSubPlanesMejora] = useState<SubTabPlanesMejora | undefined>(
+    undefined
+  );
+  const [navSubPsicosocial, setNavSubPsicosocial] = useState<SubTabPsicosocial | undefined>(
+    undefined
+  );
+  const [navSubCopasst, setNavSubCopasst] = useState<SubTabCopasst | undefined>(undefined);
 
   // Control de confidencialidad médica individual
   const [accesoMedicoAutorizado, setAccesoMedicoAutorizado] = useState(false);
@@ -401,6 +422,80 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
     []
   );
 
+  const abrirCertificadoDesdeActividad = useCallback(
+    (act: ActividadPlanAnual) => {
+      const matchedPlan = act.planMejoraRiesgoId
+        ? mejoraEmergenciasStore.planesPorRiesgo.find((p) => p.id === act.planMejoraRiesgoId)
+        : undefined;
+      const matchedEmg = act.esPlanEmergencias
+        ? mejoraEmergenciasStore.planEmergencias.programaCapacitacionSimulacros.find(
+            (e) =>
+              e.id === act.id ||
+              e.titulo.toLowerCase() === act.nombre.toLowerCase() ||
+              (act.capacitacionNombre &&
+                e.materialCapacitacion?.nombre?.toLowerCase() ===
+                  act.capacitacionNombre.toLowerCase())
+          )
+        : undefined;
+
+      const asistencia =
+        matchedPlan?.capacitacion?.asistenciaRegistrada ||
+        matchedEmg?.materialCapacitacion?.asistenciaRegistrada;
+      const fechaAsistencia = asistencia?.find((a) => a.asistio && a.fecha)?.fecha;
+      const fechaRealizacion =
+        act.fechaCierre ||
+        fechaAsistencia ||
+        matchedEmg?.registroSimulacro?.fechaEjecucionReal ||
+        '';
+
+      let respNombre = '';
+      if (act.responsableNombre) {
+        if (act.responsableNombre.includes('Andrea Orjuela')) {
+          respNombre = 'Andrea Orjuela';
+        } else if (act.responsableNombre !== act.responsableCargo) {
+          respNombre = act.responsableNombre;
+        }
+      }
+
+      setCertificadoContext({
+        capacitacionKey: matchedPlan
+          ? `PM:${matchedPlan.id}`
+          : matchedEmg
+          ? `EMG:${matchedEmg.id}`
+          : `PA:${act.id}`,
+        origenModulo: matchedPlan
+          ? 'PLAN_MEJORA_RIESGO'
+          : matchedEmg || act.esPlanEmergencias
+          ? 'PLAN_EMERGENCIAS'
+          : 'PLAN_ANUAL',
+        planId: matchedPlan ? matchedPlan.id : `PA:${act.id}`,
+        nombrePlan: matchedPlan
+          ? `Plan #${matchedPlan.orden}: ${matchedPlan.nombreRiesgo}`
+          : act.esPlanEmergencias
+          ? 'Plan de Prevención, Preparación y Respuesta ante Emergencias'
+          : `Plan Anual ${planActivo?.vigencia || 2027}`,
+        riesgoCodigo: act.riesgoCodigo || matchedPlan?.riesgoCodigo || act.codigo,
+        nombreRiesgo: matchedPlan?.nombreRiesgo || act.area || 'SST',
+        actividadId: act.id,
+        nombreCapacitacion: act.capacitacionNombre || act.nombre,
+        fechaRealizacion,
+        duracionHoras:
+          matchedPlan?.capacitacion?.duracionSugerida ||
+          matchedEmg?.materialCapacitacion?.duracionSugerida ||
+          '',
+        responsableNombre: respNombre,
+        responsableCargo: act.responsableCargo || '',
+        observaciones: '',
+        asistenciaRegistrada: asistencia,
+      });
+    },
+    [
+      mejoraEmergenciasStore.planesPorRiesgo,
+      mejoraEmergenciasStore.planEmergencias.programaCapacitacionSimulacros,
+      planActivo?.vigencia,
+    ]
+  );
+
   // =========================================================================
   // HANDLERS PRIVACIDAD MÉDICA INDIVIDUAL
   // =========================================================================
@@ -595,6 +690,25 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
         modulo: 'VERIFICAR',
         accion: `Nuevo indicador propio creado: ${nuevo.codigo}`,
         detalle: nuevo.nombre,
+      }
+    );
+  };
+
+  const handleUpdateHojaVidaIndicador = (
+    updated: HojaVidaIndicadorSST,
+    auditDetail?: string
+  ) => {
+    persistSgsst(
+      (prev) => ({
+        ...prev,
+        hojasVidaIndicadores: prev.hojasVidaIndicadores.map((hv) =>
+          hv.id === updated.id ? updated : hv
+        ),
+      }),
+      {
+        modulo: 'VERIFICAR',
+        accion: `Medición directa actualizada: ${updated.codigo}`,
+        detalle: auditDetail || updated.nombre,
       }
     );
   };
@@ -1411,6 +1525,15 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
     if (navigationRequest.subConexiones) {
       setSubConexiones(navigationRequest.subConexiones);
     }
+    if (navigationRequest.subPlanesMejora) {
+      setNavSubPlanesMejora(navigationRequest.subPlanesMejora);
+    }
+    if (navigationRequest.subPsicosocial) {
+      setNavSubPsicosocial(navigationRequest.subPsicosocial);
+    }
+    if (navigationRequest.subCopasst) {
+      setNavSubCopasst(navigationRequest.subCopasst);
+    }
 
     const nonceVal = navigationRequest.nonce || Date.now();
     setNavNonce(nonceVal);
@@ -1543,6 +1666,17 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
       badge: mejoraEmergenciasStore.planEmergencias.escenarios.length,
       icon: Flame,
     },
+    {
+      id: 'riesgo_psicosocial',
+      label: 'Batería psicosocial',
+      badge: trabajadoresActivosCount,
+      icon: Brain,
+    },
+    {
+      id: 'copasst',
+      label: 'COPASST',
+      icon: Vote,
+    },
   ];
 
   const handleSavePlanesMejoraRiesgo = (
@@ -1623,6 +1757,15 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
     }
     if (opciones?.subConexiones) {
       setSubConexiones(opciones.subConexiones);
+    }
+    if (opciones?.subPlanesMejora) {
+      setNavSubPlanesMejora(opciones.subPlanesMejora);
+    }
+    if (opciones?.subPsicosocial) {
+      setNavSubPsicosocial(opciones.subPsicosocial);
+    }
+    if (opciones?.subCopasst) {
+      setNavSubCopasst(opciones.subCopasst);
     }
     setSeccionActiva(seccion);
   };
@@ -1924,6 +2067,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
               onNuevaActividad={handleAbrirNuevaActividad}
               onAbrirActividad={abrirActividadEnModal}
               onEliminarActividad={handleEliminarActividad}
+              onGenerarCertificado={abrirCertificadoDesdeActividad}
               externalSearch={navCronogramaSearch}
               externalEstadoFiltro={navCronogramaEstado}
               navNonce={navNonce}
@@ -1948,6 +2092,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
               onUpdateRiesgoControles={handleUpdateRiesgoControles}
               onAbrirActividad={abrirActividadEnModal}
               onEnviarRecomendacionAActuar={handleEnviarRecomendacionDesdeTrabajador}
+              onGenerarCertificado={abrirCertificadoDesdeActividad}
             />
           )}
 
@@ -1995,6 +2140,9 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
           onSaveRegistroPeriodo={handleSaveRegistroPeriodo}
           onSyncTrabajadoresPeriodos={handleSyncTrabajadoresPeriodos}
           onAddIndicadorCustom={handleAddIndicadorCustom}
+          onUpdateHojaVidaIndicador={handleUpdateHojaVidaIndicador}
+          planesMejora={mejoraEmergenciasStore.planesPorRiesgo}
+          planEmergencias={mejoraEmergenciasStore.planEmergencias}
           onUpdateEstandar={handleUpdateEstandar}
           onAbrirActividad={abrirActividadEnModal}
           onCrearAccionDesdeVerificar={(preset) => {
@@ -2223,16 +2371,58 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
           formatos={mejoraEmergenciasStore.formatos}
           responsables={responsables}
           actividadesPlan={planActivo.actividades}
+          trabajadores={sgsstData.trabajadores}
+          subTabInicial={navSubPlanesMejora}
           onAbrirActividadPlan={abrirActividadEnModal}
           externalSearch={navPlanMejoraSearch}
           externalSelectPlanId={navPlanMejoraId}
           navNonce={navNonce}
           onSavePlanes={handleSavePlanesMejoraRiesgo}
           onAbrirFormato={(fid) => setFormatoModalId(fid)}
-          onAbrirCapacitacion={(material, contexto, onSave) =>
-            setCapacitacionModalState({ material, contexto, onSave })
-          }
+          onAbrirCapacitacion={(material, contexto, onSave) => {
+            const matchedPlan = mejoraEmergenciasStore.planesPorRiesgo.find(
+              (p) =>
+                p.capacitacion === material ||
+                `Plan #${p.orden}: ${p.nombreRiesgo}` === contexto
+            );
+            const respRaw = (matchedPlan?.responsable || '').trim();
+            const esCargoSolo = CARGOS_OFICIALES_NOMBRES.some(
+              (c) => c.toLowerCase() === respRaw.toLowerCase()
+            );
+            setCapacitacionModalState({
+              material,
+              contexto,
+              onSave,
+              certContext: matchedPlan
+                ? {
+                    capacitacionKey: `PM:${matchedPlan.id}`,
+                    origenModulo: 'PLAN_MEJORA_RIESGO',
+                    planId: matchedPlan.id,
+                    nombrePlan: contexto,
+                    riesgoCodigo: matchedPlan.riesgoCodigo,
+                    nombreRiesgo: matchedPlan.nombreRiesgo,
+                    nombreCapacitacion: material.nombre,
+                    fechaRealizacion:
+                      material.asistenciaRegistrada?.find((a) => a.asistio && a.fecha)?.fecha ||
+                      '',
+                    duracionHoras: material.duracionSugerida || '',
+                    responsableNombre: respRaw.includes('Andrea Orjuela')
+                      ? 'Andrea Orjuela'
+                      : esCargoSolo
+                      ? ''
+                      : respRaw,
+                    responsableCargo: respRaw.includes('Andrea Orjuela')
+                      ? 'Gerente'
+                      : esCargoSolo
+                      ? respRaw
+                      : '',
+                    asistenciaRegistrada: material.asistenciaRegistrada,
+                  }
+                : undefined,
+            });
+          }}
           onIrAPlanEmergencias={() => setSeccionActiva('plan_emergencias')}
+          onGenerarCertificado={(ctx) => setCertificadoContext(ctx)}
         />
       )}
 
@@ -2241,6 +2431,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
         <PlanAnualEmergenciasTab
           planEmergencias={mejoraEmergenciasStore.planEmergencias}
           formatos={mejoraEmergenciasStore.formatos}
+          trabajadores={sgsstData.trabajadores}
           actividadesPlan={planActivo.actividades}
           onAbrirActividadPlan={abrirActividadEnModal}
           externalSubVista={navEmergenciasSubVista}
@@ -2248,9 +2439,65 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
           navNonce={navNonce}
           onSavePlanEmergencias={handleSavePlanEmergencias}
           onAbrirFormato={(fid) => setFormatoModalId(fid)}
-          onAbrirCapacitacion={(material, contexto, onSave) =>
-            setCapacitacionModalState({ material, contexto, onSave })
-          }
+          onAbrirCapacitacion={(material, contexto, onSave) => {
+            const matchedEmg =
+              mejoraEmergenciasStore.planEmergencias.programaCapacitacionSimulacros.find(
+                (e) =>
+                  e.materialCapacitacion === material ||
+                  `Plan de Emergencias · ${e.titulo}` === contexto
+              );
+            const matSlug = material.nombre.toLowerCase().replace(/\s+/g, '_').slice(0, 32);
+            setCapacitacionModalState({
+              material,
+              contexto,
+              onSave,
+              certContext: {
+                capacitacionKey: matchedEmg ? `EMG:${matchedEmg.id}` : `EMG:${matSlug}`,
+                origenModulo: 'PLAN_EMERGENCIAS',
+                planId: matchedEmg ? `EMG:${matchedEmg.id}` : `EMG:${matSlug}`,
+                nombrePlan: 'Plan de Prevención, Preparación y Respuesta ante Emergencias',
+                riesgoCodigo: 'EMERGENCIAS',
+                nombreRiesgo: matchedEmg?.titulo || contexto,
+                actividadId: matchedEmg?.id,
+                nombreCapacitacion: material.nombre,
+                fechaRealizacion:
+                  material.asistenciaRegistrada?.find((a) => a.asistio && a.fecha)?.fecha ||
+                  matchedEmg?.registroSimulacro?.fechaEjecucionReal ||
+                  '',
+                duracionHoras: material.duracionSugerida || '',
+                responsableNombre: matchedEmg?.responsable?.includes('Andrea Orjuela')
+                  ? 'Andrea Orjuela'
+                  : '',
+                responsableCargo: matchedEmg?.responsable || '',
+                asistenciaRegistrada: material.asistenciaRegistrada,
+              },
+            });
+          }}
+          onGenerarCertificado={(ctx) => setCertificadoContext(ctx)}
+        />
+      )}
+
+      {/* SECCIÓN 10: BATERÍA DE RIESGO PSICOSOCIAL (DENTRO DE PLAN ANUAL) */}
+      {seccionActiva === 'riesgo_psicosocial' && (
+        <PlanAnualPsicosocialTab
+          trabajadores={sgsstData.trabajadores}
+          accesoMedicoAutorizado={accesoMedicoAutorizado}
+          onSolicitarDesbloqueoMedico={handleTogglePrivacidadMedica}
+          onIrAMatrizRiesgos={() => {
+            setSubConexiones('puestos');
+            setSeccionActiva('conexiones');
+          }}
+          subTabInicial={navSubPsicosocial}
+        />
+      )}
+
+      {/* SECCIÓN 11: COPASST – COMITÉ PARITARIO DE SEGURIDAD Y SALUD EN EL TRABAJO */}
+      {seccionActiva === 'copasst' && (
+        <CopasstView
+          trabajadores={sgsstData.trabajadores}
+          initialSubTab={navSubCopasst}
+          onIrASeccionPlan={(sec) => setSeccionActiva(sec)}
+          onNavigate={onNavigate}
         />
       )}
 
@@ -2271,9 +2518,51 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
         onSaveMaterial={(nextMat) => {
           capacitacionModalState?.onSave(nextMat);
           setCapacitacionModalState((prev) =>
-            prev ? { ...prev, material: nextMat } : null
+            prev
+              ? {
+                  ...prev,
+                  material: nextMat,
+                  certContext: prev.certContext
+                    ? {
+                        ...prev.certContext,
+                        asistenciaRegistrada: nextMat.asistenciaRegistrada,
+                        fechaRealizacion:
+                          prev.certContext.fechaRealizacion ||
+                          nextMat.asistenciaRegistrada?.find((a) => a.asistio && a.fecha)?.fecha ||
+                          '',
+                      }
+                    : undefined,
+                }
+              : null
           );
         }}
+        onGenerarCertificado={
+          capacitacionModalState
+            ? () => {
+                const mat = capacitacionModalState.material;
+                const matSlug = mat.nombre.toLowerCase().replace(/\s+/g, '_').slice(0, 32);
+                const ctx = capacitacionModalState.certContext || {
+                  capacitacionKey: `MAT:${matSlug}`,
+                  origenModulo: 'OTRO' as const,
+                  planId: `MAT:${matSlug}`,
+                  nombrePlan: capacitacionModalState.contexto || mat.nombre,
+                  riesgoCodigo: 'CAP',
+                  nombreRiesgo: capacitacionModalState.contexto || mat.nombre,
+                  nombreCapacitacion: mat.nombre,
+                  fechaRealizacion:
+                    mat.asistenciaRegistrada?.find((a) => a.asistio && a.fecha)?.fecha || '',
+                  duracionHoras: mat.duracionSugerida || '',
+                  responsableNombre: '',
+                  responsableCargo: '',
+                  asistenciaRegistrada: mat.asistenciaRegistrada,
+                };
+                setCertificadoContext({
+                  ...ctx,
+                  asistenciaRegistrada: mat.asistenciaRegistrada,
+                });
+              }
+            : undefined
+        }
       />
 
       {/* Modal unificado de Actividad / Evidencia / Historial */}
@@ -2293,6 +2582,7 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
         onSave={handleSaveActividad}
         onAprobarYCerrar={handleAprobarYCerrarActividad}
         onDevolverEvidencia={handleDevolverEvidencia}
+        onGenerarCertificado={abrirCertificadoDesdeActividad}
       />
 
       {/* Modal de Confirmación Autorizada para Información Médica Confidencial */}
@@ -2426,6 +2716,13 @@ export const PlanAnualView: React.FC<PlanAnualViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal unificado de Generación, Vista Previa, PDF e Impresión de Certificados */}
+      <CertificadoCapacitacionModal
+        contexto={certificadoContext}
+        trabajadores={sgsstData.trabajadores}
+        onClose={() => setCertificadoContext(null)}
+      />
     </div>
   );
 };

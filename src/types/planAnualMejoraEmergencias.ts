@@ -119,6 +119,22 @@ export interface PlanMejoraPorRiesgo {
   evidenciasAdjuntas: EvidenciaActividad[];
   resultadoEsperado: string;
   estado: EstadoEstandarFrikaz;
+  fechaEjecucionReal?: string;
+  calorExtremoControl?: {
+    validacionCondicionesReales: string;
+    temperaturaReferencia?: string;
+    cargaTrabajo?: string;
+    duracionPausaMinutos?: number;
+    requiereValidacionTecnicaSst: boolean;
+    medidasComplementarias: {
+      hidratacion: boolean;
+      ventilacion: boolean;
+      reduccionExposicion: boolean;
+      rotacionTareas: boolean;
+      vigilanciaSintomas: boolean;
+      notasComplementarias?: string;
+    };
+  };
   observacionesGerencia: string;
   revisionGerente?: RegistroRevisionGerente;
   historialCambios: HistorialPlanMejoraItem[];
@@ -161,6 +177,69 @@ export interface RolOrganizacionEmergencias {
   suplente: string;
 }
 
+export interface RegistroSimulacroReal {
+  fechaEjecucionReal?: string;
+  participantesEsperados?: number | null;
+  participantesReales?: number | null;
+  tiempoEvacuacionMinutos?: number | null;
+  tiempoEvacuacionSegundos?: number | null;
+  dificultadesIdentificadas?: string;
+  cumplimientoProcedimientos?:
+    | 'Cumplido'
+    | 'Cumplido parcialmente'
+    | 'No cumplido'
+    | 'Pendiente de verificación';
+  hallazgosYOportunidades?: string;
+  responsableRegistro?: string;
+  fechaRegistro?: string;
+}
+
+export type CondicionIndicadorCapacitacion =
+  | 'Satisfactorio'
+  | 'Normal'
+  | 'Crítico'
+  | 'Pendiente de registro';
+
+export interface EncuestaSatisfaccionCapacitacion {
+  id: string;
+  participanteNombre?: string;
+  cargo?: string;
+  fecha: string;
+  p1Contenido: 1 | 2 | 3 | 4 | 5;
+  p2Claridad: 1 | 2 | 3 | 4 | 5;
+  p3Utilidad: 1 | 2 | 3 | 4 | 5;
+  p4Metodologia: 1 | 2 | 3 | 4 | 5;
+  p5MejoraAbierta: string;
+}
+
+export interface HistorialIndicadorCapacitacionItem {
+  id: string;
+  fechaHora: string;
+  seccion: 'ASISTENCIA' | 'PRESUPUESTO' | 'SATISFACCION';
+  detalle: string;
+  usuario: string;
+}
+
+export interface IndicadoresGestionCapacitacion {
+  asistencia: {
+    convocados: number | null;
+    asistentes: number | null;
+    evidencias: EvidenciaActividad[];
+    fechaActualizacion?: string;
+    observaciones?: string;
+  };
+  presupuesto: {
+    presupuestoAsignado: number | null;
+    valorEjecutado: number | null;
+    soportesGasto: EvidenciaActividad[];
+    fechaActualizacion?: string;
+    observaciones?: string;
+  };
+  encuestasSatisfaccion: EncuestaSatisfaccionCapacitacion[];
+  fechaActualizacionSatisfaccion?: string;
+  historialCambios: HistorialIndicadorCapacitacionItem[];
+}
+
 export interface ActividadCapacitacionSimulacro {
   id: string;
   tipo: 'CAPACITACION' | 'SIMULACRO';
@@ -172,9 +251,41 @@ export interface ActividadCapacitacionSimulacro {
   participantesEsperados: string;
   estado: EstadoEstandarFrikaz;
   materialCapacitacion?: MaterialCapacitacionPlan;
+  registroSimulacro?: RegistroSimulacroReal;
+  indicadoresGestion?: IndicadoresGestionCapacitacion;
   observaciones: string;
   evidencias: EvidenciaActividad[];
   revisionGerente?: RegistroRevisionGerente;
+}
+
+export type EstadoPrimerosAuxilios = 'Pendiente' | 'En proceso' | 'Realizada';
+
+export type TipoActividadPrimerosAuxilios =
+  | 'Capacitación en primeros auxilios'
+  | 'Atención inicial de lesiones'
+  | 'Valoración básica de una persona afectada'
+  | 'Activación de la ruta de atención'
+  | 'Práctica de respuesta ante emergencias'
+  | 'Otra actividad de brigada';
+
+export interface ActividadPrimerosAuxiliosBrigada {
+  id: string;
+  tipoActividad: TipoActividadPrimerosAuxilios;
+  nombre: string;
+  objetivo: string;
+  descripcion: string;
+  fechaProgramada: string;
+  fechaRealizacion: string;
+  responsable: string;
+  participantes: string[];
+  participantesNotas?: string;
+  estado: EstadoPrimerosAuxilios;
+  evidencias: EvidenciaActividad[];
+  observaciones: string;
+  actividadPlanAnualId?: string;
+  indicadorCodigo?: string;
+  fechaCreacion?: string;
+  fechaUltimaActualizacion?: string;
 }
 
 export interface PlanEmergenciasFrikaz {
@@ -242,6 +353,8 @@ export interface PlanEmergenciasFrikaz {
   };
   // 16 & 17. Capacitación en emergencias y Simulacros
   programaCapacitacionSimulacros: ActividadCapacitacionSimulacro[];
+  // 17B. Primeros Auxilios (Brigada de Emergencias)
+  actividadesPrimerosAuxilios?: ActividadPrimerosAuxiliosBrigada[];
   // 18. Inspección de equipos de emergencia
   inspeccionEquiposPrograma: {
     frecuenciaSugerida: string;

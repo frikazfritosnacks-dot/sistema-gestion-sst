@@ -31,12 +31,14 @@ import {
   Edit3,
   ExternalLink,
   Save,
+  Award,
 } from 'lucide-react';
 import {
   getBadgeClassesEstadoFrikaz,
   normalizarEstadoEstandar,
   type EstadoEstandarFrikaz,
 } from '../../services/gerenteControlService';
+import { esActividadCapacitacion } from './PlanAnualCronogramaTab';
 
 interface PlanAnualHacerTabProps {
   plan: PlanAnualVigencia;
@@ -56,6 +58,7 @@ interface PlanAnualHacerTabProps {
     act: ActividadPlanAnual,
     tab?: 'datos' | 'evidencias' | 'historial'
   ) => void;
+  onGenerarCertificado?: (act: ActividadPlanAnual) => void;
   onEnviarRecomendacionAActuar: (trab: TrabajadorFichaSST) => void;
 }
 
@@ -76,6 +79,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
   onSaveDiagnosticoSalud,
   onUpdateRiesgoControles,
   onAbrirActividad,
+  onGenerarCertificado,
   onEnviarRecomendacionAActuar,
 }) => {
   const [subTab, setSubTab] = useState<SubTabHacer>(subTabInicial);
@@ -204,6 +208,7 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
       otrasSustancias: 'Ninguna',
       actividadFisica: 'Pendiente',
       nutricionHabitos: '',
+      historialHabitosHidratacion: [],
       morbilidadSentida: '',
       enfermedadesDiagnosticadas: '',
       tieneEnfermedadLaboralCalificada: false,
@@ -434,19 +439,42 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                   )}
 
                   {accesoMedicoAutorizado ? (
-                    <div className="text-[11px] text-slate-700 bg-emerald-50/60 p-2 rounded-lg border border-emerald-200 flex items-center justify-between gap-2">
-                      <span>
-                        <strong>Último examen ({t.tipoUltimoExamen}):</strong> {t.conceptoAptitud} · Prioridad: {t.prioridadIntervencion}
-                      </span>
-                      {t.prioridadIntervencion === 'ALTA' && (
-                        <button
-                          type="button"
-                          onClick={() => onEnviarRecomendacionAActuar(t)}
-                          className="text-[#f97316] font-black hover:underline shrink-0 cursor-pointer"
-                        >
-                          Registrar acción de mejora →
-                        </button>
-                      )}
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] text-slate-700 bg-emerald-50/60 p-2 rounded-lg border border-emerald-200 flex items-center justify-between gap-2">
+                        <span>
+                          <strong>Último examen ({t.tipoUltimoExamen}):</strong> {t.conceptoAptitud} · Prioridad: {t.prioridadIntervencion}
+                        </span>
+                        {t.prioridadIntervencion === 'ALTA' && (
+                          <button
+                            type="button"
+                            onClick={() => onEnviarRecomendacionAActuar(t)}
+                            className="text-[#f97316] font-black hover:underline shrink-0 cursor-pointer"
+                          >
+                            Registrar acción de mejora →
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-[#0d3b36] bg-[#f4faf8] p-2 rounded-lg border border-[#cce3dd] flex flex-wrap items-center justify-between gap-1.5">
+                        <span>
+                          <strong>Hidratación y alimentación:</strong>{' '}
+                          {t.consumeAguaJornada
+                            ? `Agua: ${t.consumeAguaJornada}${
+                                t.frecuenciaConsumoAgua
+                                  ? ` (${
+                                      t.frecuenciaConsumoAgua === 'Otra'
+                                        ? t.frecuenciaConsumoAguaOtra || 'Otra'
+                                        : t.frecuenciaConsumoAgua
+                                    })`
+                                  : ' · Frecuencia: Pendiente de registro'
+                              }`
+                            : 'Pendiente de registro'}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#0f5b53]">
+                          {t.alimentacionSaludableDescripcion?.trim()
+                            ? 'Alimentación registrada'
+                            : 'Alimentación: Pendiente de registro'}
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-[11px] text-slate-500 bg-slate-100 p-2 rounded-lg flex items-center gap-1.5">
@@ -1032,7 +1060,17 @@ export const PlanAnualHacerTab: React.FC<PlanAnualHacerTabProps> = ({
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {onGenerarCertificado && esActividadCapacitacion(act) && (
+                    <button
+                      type="button"
+                      onClick={() => onGenerarCertificado(act)}
+                      className="px-3 py-1.5 rounded-lg bg-[#0f5b53] text-white font-black hover:bg-[#0c4842] inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Award className="h-3.5 w-3.5 text-[#fed7aa]" />
+                      <span>GENERAR CERTIFICADO</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onAbrirActividad(act, 'datos')}

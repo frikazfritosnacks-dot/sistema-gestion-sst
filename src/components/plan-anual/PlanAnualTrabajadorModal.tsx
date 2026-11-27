@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TrabajadorFichaSST, PruebaComplementariaTrabajador } from '../../types/planAnual';
+import {
+  FrecuenciaConsumoAgua,
+  HistorialHabitoHidratacionTrabajador,
+  PruebaComplementariaTrabajador,
+  TrabajadorFichaSST,
+} from '../../types/planAnual';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import { CargoSST } from '../../types/organigramaSst';
 import {
@@ -23,6 +28,9 @@ import {
   Unlock,
   CheckCircle2,
   AlertTriangle,
+  Droplets,
+  Utensils,
+  History,
 } from 'lucide-react';
 
 interface PlanAnualTrabajadorModalProps {
@@ -113,9 +121,73 @@ export const PlanAnualTrabajadorModal: React.FC<PlanAnualTrabajadorModalProps> =
       setSeccion('laboral');
       return;
     }
+    if (form.frecuenciaConsumoAgua === 'Otra' && !form.frecuenciaConsumoAguaOtra?.trim()) {
+      setErrorMsg(
+        'Por favor especifica la frecuencia de consumo de agua cuando seleccionas la opción "Otra".'
+      );
+      setSeccion('habitos');
+      return;
+    }
+
+    const hoy = new Date().toISOString().split('T')[0];
+    const prevConsume = trabajador?.consumeAguaJornada;
+    const prevFrec = trabajador?.frecuenciaConsumoAgua;
+    const prevFrecOtra = trabajador?.frecuenciaConsumoAguaOtra || '';
+    const prevAlim = trabajador?.alimentacionSaludableDescripcion || '';
+
+    const nextConsume = form.consumeAguaJornada;
+    const nextFrec = form.frecuenciaConsumoAgua;
+    const nextFrecOtra =
+      nextFrec === 'Otra' ? (form.frecuenciaConsumoAguaOtra || '').trim() : '';
+    const nextAlim = (form.alimentacionSaludableDescripcion || '').trim();
+
+    const cambioHidratacion =
+      prevConsume !== nextConsume ||
+      prevFrec !== nextFrec ||
+      prevFrecOtra !== nextFrecOtra ||
+      prevAlim !== nextAlim;
+
+    const hayDatoNuevo = Boolean(nextConsume || nextFrec || nextAlim);
+    let historialActualizado = [...(form.historialHabitosHidratacion || [])];
+
+    if (cambioHidratacion && hayDatoNuevo) {
+      const partesCambio: string[] = [];
+      if (prevConsume !== nextConsume) {
+        partesCambio.push(`Consumo de agua: ${nextConsume || 'Pendiente de registro'}`);
+      }
+      if (prevFrec !== nextFrec || prevFrecOtra !== nextFrecOtra) {
+        const labelFrec =
+          nextFrec === 'Otra'
+            ? `Otra (${nextFrecOtra || 'sin detalle'})`
+            : nextFrec || 'Pendiente de registro';
+        partesCambio.push(`Frecuencia: ${labelFrec}`);
+      }
+      if (prevAlim !== nextAlim) {
+        partesCambio.push('Actualizó descripción de hábitos de alimentación saludable');
+      }
+
+      const nuevaEntrada: HistorialHabitoHidratacionTrabajador = {
+        id: `hist-hid-${Date.now()}`,
+        fechaHora: new Date().toISOString(),
+        usuario: accesoMedicoAutorizado ? 'Personal Autorizado SST' : 'Responsable SG-SST',
+        consumeAguaJornada: nextConsume,
+        frecuenciaConsumoAgua: nextFrec,
+        frecuenciaConsumoAguaOtra: nextFrecOtra || undefined,
+        alimentacionSaludableDescripcion: nextAlim || undefined,
+        resumenCambio: partesCambio.join(' · '),
+      };
+      historialActualizado = [nuevaEntrada, ...historialActualizado].slice(0, 50);
+    }
+
     onSave({
       ...form,
-      fechaActualizacion: new Date().toISOString().split('T')[0],
+      frecuenciaConsumoAguaOtra: nextFrecOtra || undefined,
+      alimentacionSaludableDescripcion: nextAlim || undefined,
+      fechaRegistroHabitosHidratacion: hayDatoNuevo
+        ? hoy
+        : form.fechaRegistroHabitosHidratacion,
+      historialHabitosHidratacion: historialActualizado,
+      fechaActualizacion: hoy,
     });
     onClose();
   };
@@ -566,14 +638,212 @@ export const PlanAnualTrabajadorModal: React.FC<PlanAnualTrabajadorModalProps> =
                   </div>
                   <div>
                     <label className="font-bold text-slate-700 block mb-1">
-                      Nutrición, alimentación e hidratación en el turno
+                      Nutrición, alimentación e hidratación en el turno (notas generales)
                     </label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       value={form.nutricionHabitos}
                       onChange={(e) => setForm({ ...form, nutricionHabitos: e.target.value })}
                       className="w-full rounded-lg border border-slate-300 p-2 bg-white"
                     />
+                  </div>
+
+                  {/* SECCIÓN DEDICADA: HÁBITOS DE HIDRATACIÓN Y ALIMENTACIÓN SALUDABLE */}
+                  <div className="rounded-2xl border-2 border-[#cce3dd] bg-[#f4faf8] p-4 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d6ebe5] pb-2.5">
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-black text-[#0d3b36] flex items-center gap-2">
+                          <Droplets className="h-4 w-4 text-[#0f5b53]" />
+                          <span>HÁBITOS DE HIDRATACIÓN Y ALIMENTACIÓN SALUDABLE</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-600 mt-0.5">
+                          Registro individual confidencial de <strong>{form.nombreCompleto || 'este trabajador'}</strong>. Los campos sin diligenciar se muestran como Pendiente de registro.
+                        </p>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-md bg-white border border-[#cce3dd] text-[#0f5b53] font-bold text-[10px]">
+                        {form.fechaRegistroHabitosHidratacion
+                          ? `Último registro: ${form.fechaRegistroHabitosHidratacion}`
+                          : 'Pendiente de registro'}
+                      </span>
+                    </div>
+
+                    {/* A. Consumo de agua */}
+                    <div className="rounded-xl bg-white border border-slate-200 p-3.5 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label className="font-bold text-slate-800">
+                          A. Consumo de agua — ¿Consume agua durante su jornada laboral?
+                        </label>
+                        {!form.consumeAguaJornada && (
+                          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
+                            Pendiente de registro
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(['Sí', 'No'] as const).map((op) => {
+                          const active = form.consumeAguaJornada === op;
+                          return (
+                            <button
+                              key={op}
+                              type="button"
+                              onClick={() =>
+                                setForm({ ...form, consumeAguaJornada: op })
+                              }
+                              className={`px-4 py-1.5 rounded-lg border font-black text-xs cursor-pointer transition-colors ${
+                                active
+                                  ? 'bg-[#0f5b53] text-white border-[#0f5b53]'
+                                  : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+                              }`}
+                            >
+                              {op}
+                            </button>
+                          );
+                        })}
+                        {form.consumeAguaJornada && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm({ ...form, consumeAguaJornada: undefined })
+                            }
+                            className="text-[10px] font-bold text-slate-500 hover:underline ml-2 cursor-pointer"
+                          >
+                            Dejar pendiente
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* B. Frecuencia de consumo de agua */}
+                    <div className="rounded-xl bg-white border border-slate-200 p-3.5 space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label className="font-bold text-slate-800">
+                          B. Frecuencia de consumo de agua — ¿Con qué frecuencia consume agua durante su jornada laboral?
+                        </label>
+                        {!form.frecuenciaConsumoAgua && (
+                          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
+                            Pendiente de registro
+                          </span>
+                        )}
+                      </div>
+                      <select
+                        value={form.frecuenciaConsumoAgua || ''}
+                        onChange={(e) => {
+                          const val = e.target.value as FrecuenciaConsumoAgua | '';
+                          setForm({
+                            ...form,
+                            frecuenciaConsumoAgua: val === '' ? undefined : val,
+                            frecuenciaConsumoAguaOtra:
+                              val === 'Otra' ? form.frecuenciaConsumoAguaOtra : undefined,
+                          });
+                        }}
+                        className="w-full rounded-lg border border-slate-300 p-2 bg-white font-semibold text-xs"
+                      >
+                        <option value="">Pendiente de registro</option>
+                        <option value="Varias veces durante la jornada">
+                          Varias veces durante la jornada
+                        </option>
+                        <option value="Cada hora">Cada hora</option>
+                        <option value="Cada dos horas">Cada dos horas</option>
+                        <option value="Solo durante los descansos">
+                          Solo durante los descansos
+                        </option>
+                        <option value="Ocasionalmente">Ocasionalmente</option>
+                        <option value="Otra">Otra</option>
+                      </select>
+
+                      {form.frecuenciaConsumoAgua === 'Otra' && (
+                        <div className="pt-1">
+                          <label className="font-bold text-slate-700 block mb-1 text-[11px]">
+                            Especifica la frecuencia de consumo de agua *
+                          </label>
+                          <input
+                            type="text"
+                            value={form.frecuenciaConsumoAguaOtra || ''}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                frecuenciaConsumoAguaOtra: e.target.value,
+                              })
+                            }
+                            placeholder="Describe libremente con qué frecuencia consume agua en el turno..."
+                            className="w-full rounded-lg border border-slate-300 p-2 bg-white text-xs"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* C. Alimentación saludable */}
+                    <div className="rounded-xl bg-white border border-slate-200 p-3.5 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <Utensils className="h-3.5 w-3.5 text-[#f97316]" />
+                          <span>
+                            C. Alimentación saludable — ¿Cómo considera que son sus hábitos de alimentación y qué alimentos suele consumir durante su jornada laboral?
+                          </span>
+                        </label>
+                        {!form.alimentacionSaludableDescripcion?.trim() && (
+                          <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
+                            Pendiente de registro
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        rows={4}
+                        value={form.alimentacionSaludableDescripcion || ''}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            alimentacionSaludableDescripcion: e.target.value,
+                          })
+                        }
+                        placeholder="Pendiente de registro. Describe libremente los hábitos de alimentación del trabajador y los alimentos que consume durante la jornada laboral..."
+                        className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-xs leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Resumen actual e historial de cambios individual */}
+                    <div className="rounded-xl bg-white border border-[#cce3dd] p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <h5 className="font-black text-[#0d3b36] text-[11px] flex items-center gap-1.5">
+                          <History className="h-3.5 w-3.5 text-[#0f5b53]" />
+                          <span>
+                            Historial de cambios individual ({(form.historialHabitosHidratacion || []).length})
+                          </span>
+                        </h5>
+                        <span className="text-[10px] text-slate-500">
+                          Se actualiza automáticamente al guardar cambios
+                        </span>
+                      </div>
+
+                      {(!form.historialHabitosHidratacion ||
+                        form.historialHabitosHidratacion.length === 0) ? (
+                        <p className="text-[11px] text-slate-500 italic">
+                          Pendiente de registro. Aún no se han guardado cambios en hidratación y alimentación saludable para este trabajador.
+                        </p>
+                      ) : (
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                          {form.historialHabitosHidratacion.map((h) => (
+                            <div
+                              key={h.id}
+                              className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] space-y-0.5"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500 font-bold">
+                                <span>
+                                  {new Date(h.fechaHora).toLocaleString('es-CO')}
+                                </span>
+                                <span>{h.usuario}</span>
+                              </div>
+                              <p className="font-bold text-slate-800">{h.resumenCambio}</p>
+                              {h.alimentacionSaludableDescripcion && (
+                                <p className="text-[10px] text-slate-600 line-clamp-2">
+                                  Alimentación: {h.alimentacionSaludableDescripcion}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

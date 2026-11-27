@@ -7,6 +7,7 @@ import {
 } from './planAnualService';
 import { loadPlanesMejoraEmergenciasStore } from './planMejoraEmergenciasService';
 import {
+  calcularResultadoDirectoIndicador,
   calcularResultadoIndicadorPeriodo,
   loadSgsstData,
 } from './planAnualSgsstService';
@@ -15,7 +16,11 @@ import { getCaracterizacionActual } from './dynamicRulesEngine';
 import {
   getStoredCargosSST,
   getStoredPoliticaSST,
+  getStoredVigiaSST,
 } from './organigramaService';
+import { loadCopasstStore } from './copasstService';
+import { loadRiesgoPsicosocialStore } from './riesgoPsicosocialService';
+import { loadPlanMejoraRepositorio } from './planMejoraRepoService';
 import {
   getStoredDocumentosFirmados,
   getStoredEnviosPendientes,
@@ -255,7 +260,7 @@ export function consultarAsistenteVirtual(
           id: 'map-plan',
           categoria: 'Módulo independiente',
           titulo: 'PLAN ANUAL 2027',
-          detalle: 'Resumen, Objetivos, Cronograma, Evidencias, Indicadores Res. 0312, Presupuesto 2027, Mejoras por riesgo y Emergencias.',
+          detalle: 'Resumen, Objetivos, Cronograma, Evidencias, Indicadores Res. 0312, Presupuesto 2027, Mejoras por riesgo, Emergencias, Batería psicosocial y COPASST.',
           target: { tab: 'plan_anual', planSeccion: 'resumen', etiquetaDestino: 'PLAN ANUAL 2027' },
         },
         {
@@ -751,6 +756,174 @@ export function consultarAsistenteVirtual(
     }
   }
 
+  // 3H-bis. COPASST (dentro de PLAN ANUAL 2027)
+  if (
+    /\b(copasst|comite paritario|votacion|eleccion|elecciones|representante de los trabajadores|representantes del empleador|simulacion copasst|actas copasst|reunion copasst)\b/.test(
+      norm
+    )
+  ) {
+    const copStore = loadCopasstStore();
+    const votosCount = copStore.procesoEleccion.votos.length;
+    const candidatosCount = copStore.procesoEleccion.candidatos.length;
+    const miembrosActivos = copStore.miembros.filter((m) => m.estado === 'Activo').length;
+    const subCop = norm.includes('votac') || norm.includes('elecc') || norm.includes('candidato')
+      ? 'votacion'
+      : norm.includes('miembro') || norm.includes('integrante')
+      ? 'miembros'
+      : norm.includes('funcion') || norm.includes('responsabilidad')
+      ? 'funciones'
+      : norm.includes('correo') || norm.includes('notific')
+      ? 'notificaciones'
+      : norm.includes('simulac') || norm.includes('organigrama')
+      ? 'simulacion'
+      : norm.includes('acta') || norm.includes('repositorio') || norm.includes('archivo')
+      ? 'repositorio'
+      : 'conformacion';
+
+    const targetCop: AssistantNavigationTarget = {
+      tab: 'plan_anual',
+      planSeccion: 'copasst',
+      subCopasst: subCop,
+      etiquetaDestino: 'PLAN ANUAL → COPASST',
+    };
+
+    return {
+      reply: `El apartado «COPASST – Comité Paritario de Seguridad y Salud en el Trabajo» está integrado dentro de PLAN ANUAL 2027 → COPASST. Estado actual: convocatoria ${
+        copStore.procesoEleccion.fechaConvocatoria || 'Pendiente de registro'
+      }, ${candidatosCount} candidato(s) postulado(s), ${votosCount} voto(s) registrado(s), ${miembrosActivos} miembro(s) activo(s) y ${
+        copStore.repositorioDocumentos.length
+      } documento(s) en repositorio.`,
+      items: [
+        {
+          id: 'copasst-main',
+          categoria: 'PLAN ANUAL 2027 · COPASST',
+          titulo: 'Abrir COPASST – Comité Paritario SST',
+          detalle:
+            'Gestiona conformación, votación secreta, miembros oficiales, 10 funciones, envío real de correos, simulación sobre organigrama y repositorio.',
+          target: targetCop,
+        },
+        {
+          id: 'copasst-sim',
+          categoria: 'Simulación Visual',
+          titulo: 'Simulación del COPASST en el organigrama',
+          detalle: 'Visualiza cómo quedaría integrado el comité con los 6 cargos oficiales.',
+          target: {
+            tab: 'plan_anual',
+            planSeccion: 'copasst',
+            subCopasst: 'simulacion',
+            etiquetaDestino: 'Simulación COPASST',
+          },
+        },
+      ],
+      autoNavigateTarget: esIntencionNavegar ? targetCop : undefined,
+    };
+  }
+
+  // 3H-ter. VIGÍA SST (en 1. Equipo y responsabilidades en SST)
+  if (/\b(vigia|vigia sst|vigia de seguridad)\b/.test(norm)) {
+    const vigia = getStoredVigiaSST();
+    const targetVigia: AssistantNavigationTarget = {
+      tab: 'ficha_empresa',
+      empresaSubcategoria: 'organigrama',
+      etiquetaDestino: 'Vigía SST · Organigrama',
+    };
+    return {
+      reply: `El Vigía de Seguridad y Salud en el Trabajo (SST) hace parte de «1. Equipo y responsabilidades en SST» como una función asignada dentro de los 6 cargos oficiales (sin crear un 7.º cargo). Estado actual: ${vigia.estado}${
+        vigia.nombrePersona ? ` · Persona designada: ${vigia.nombrePersona}` : ' · Persona pendiente de confirmación'
+      }${vigia.cargoBase ? ` (cargo oficial base: ${vigia.cargoBase})` : ''}.`,
+      items: [
+        {
+          id: 'vigia-org',
+          categoria: 'Mi Empresa · 1. Equipo y responsabilidades en SST',
+          titulo: `Vigía SST (${vigia.estado})`,
+          detalle: `${vigia.responsabilidades.length} responsabilidades definidas · Envío por correo y descarga en Word (.DOCX).`,
+          estadoLabel: vigia.estado,
+          target: targetVigia,
+        },
+      ],
+      autoNavigateTarget: esIntencionNavegar ? targetVigia : undefined,
+    };
+  }
+
+  // 3H-quater. BATERÍA DE RIESGO PSICOSOCIAL (dentro de PLAN ANUAL 2027)
+  if (
+    /\b(psicosocial|bateria psicosocial|forma a|forma b|riesgo psicosocial|estres laboral|cuestionario psicosocial)\b/.test(
+      norm
+    )
+  ) {
+    const psiStore = loadRiesgoPsicosocialStore(sgsstData.trabajadores);
+    const evaluados = psiStore.registros.filter((r) => r.estadoEvaluacion !== 'Pendiente').length;
+    const autorizado = Boolean(context.accesoMedicoAutorizado) || gerenteActivo;
+    const subPsi: 'registro' | 'aplicacion' | 'repositorio' | 'consolidado' | 'excel' =
+      norm.includes('cuestionario') || norm.includes('forma') || norm.includes('aplicacion')
+        ? 'aplicacion'
+        : norm.includes('resultado') || norm.includes('informe') || norm.includes('estres') || norm.includes('consolidado')
+        ? 'consolidado'
+        : norm.includes('excel')
+        ? 'excel'
+        : norm.includes('repositorio') || norm.includes('archivo')
+        ? 'repositorio'
+        : 'registro';
+    const targetPsi: AssistantNavigationTarget = {
+      tab: 'plan_anual',
+      planSeccion: 'riesgo_psicosocial',
+      subPsicosocial: subPsi,
+      etiquetaDestino: 'Batería de Riesgo Psicosocial',
+    };
+    return {
+      reply: `La Batería de Riesgo Psicosocial (Resolución 2764 de 2022) está dentro de PLAN ANUAL 2027 → Batería psicosocial. Hay ${psiStore.registros.length} trabajador(es) vinculado(s) (${evaluados} con registro evaluado). ${
+        autorizado
+          ? 'Tienes acceso autorizado para consultar resultados.'
+          : 'Por confidencialidad clínica, los resultados individuales permanecen bloqueados y solo los ve el médico ocupacional autorizado o Gerencia.'
+      }`,
+      notaPermiso: !autorizado
+        ? 'Confidencialidad médica activa: puedes consultar indicadores grupales y cuestionarios, pero los resultados individuales están protegidos.'
+        : undefined,
+      items: [
+        {
+          id: 'psi-main',
+          categoria: 'PLAN ANUAL 2027 · Riesgo Psicosocial',
+          titulo: 'Batería de Riesgo Psicosocial (Forma A, Forma B y Estrés)',
+          detalle: `${psiStore.registros.length} trabajadores vinculados · Auditoría de accesos y planes de intervención.`,
+          target: targetPsi,
+        },
+      ],
+      autoNavigateTarget: esIntencionNavegar ? targetPsi : undefined,
+    };
+  }
+
+  // 3H-quinquies. CERTIFICADOS, REPOSITORIO Y TRAZABILIDAD DE PLANES DE MEJORA
+  if (/\b(certificado|certificados|repositorio documental|trazabilidad)\b/.test(norm)) {
+    const repo = loadPlanMejoraRepositorio();
+    const subPM = norm.includes('certificado') ? 'certificados' : 'repositorio';
+    const targetRepo: AssistantNavigationTarget = {
+      tab: 'plan_anual',
+      planSeccion: 'planes_riesgo',
+      subPlanesMejora: subPM,
+      etiquetaDestino:
+        subPM === 'certificados'
+          ? 'Certificados de Participación'
+          : 'Repositorio Documental de Planes de Mejora',
+    };
+    return {
+      reply: `En PLAN ANUAL 2027 → Planes mejora riesgo encuentras el módulo de Certificados de Participación (${repo.certificados.length} emitidos, únicamente a quienes tengan asistencia confirmada) y el Repositorio Documental (${repo.documentos.length} soportes) junto con la descarga de trazabilidad en Excel.`,
+      items: [
+        {
+          id: 'pm-cert-repo',
+          categoria: 'Planes de Mejora por Riesgo',
+          titulo:
+            subPM === 'certificados'
+              ? `Certificados en PDF (${repo.certificados.length})`
+              : `Repositorio Documental (${repo.documentos.length})`,
+          detalle:
+            'Validación estricta de asistencia, vista previa e impresión de certificados y descarga en Excel.',
+          target: targetRepo,
+        },
+      ],
+      autoNavigateTarget: esIntencionNavegar ? targetRepo : undefined,
+    };
+  }
+
   // 3I. ¿Cuáles son los cargos oficiales de Frikaz S.A.S.?
   if (
     /\b(cuales son los cargos|cuantos cargos|lista de cargos|los cargos de frikaz|los 6 cargos|seis cargos|cargos oficiales|que cargos hay|puestos de trabajo)\b/.test(
@@ -886,7 +1059,8 @@ export function consultarAsistenteVirtual(
         target: {
           tab: 'ficha_empresa',
           empresaSubcategoria: 'organigrama',
-          etiquetaDestino: `Cargo: ${cargoDetectado}`,
+          cargoPeligrosId: cargoId,
+          etiquetaDestino: `Peligros en Organigrama · ${cargoDetectado}`,
         },
       },
       {
@@ -1156,11 +1330,15 @@ export function consultarAsistenteVirtual(
 
     const items: AssistantMatchCard[] = [];
     simulacros.forEach((sim) => {
+      const reg = sim.registroSimulacro;
+      const detalleReg = reg?.fechaEjecucionReal
+        ? `Ejecutado el ${reg.fechaEjecucionReal} (${reg.participantesReales ?? '—'}/${reg.participantesEsperados ?? '—'} part.)`
+        : `Programado: ${sim.fechaProgramada || 'Por definir'} (Pendiente de ejecución)`;
       items.push({
         id: `sim-${sim.id}`,
         categoria: 'Simulacro · Plan de Emergencias',
         titulo: sim.titulo,
-        detalle: `Fecha: ${sim.fechaProgramada || 'Por definir'} · Responsable: ${sim.responsable} · Soportes adjuntos: ${sim.evidencias.length}.`,
+        detalle: `${detalleReg} · Responsable: ${sim.responsable} · Soportes adjuntos: ${sim.evidencias.length}.`,
         estadoLabel: normalizarEstadoEstandar(sim.estado),
         target: {
           tab: 'plan_anual',
@@ -1436,6 +1614,7 @@ export function consultarAsistenteVirtual(
       : 'tablero';
 
     const items: AssistantMatchCard[] = sgsstData.hojasVidaIndicadores.slice(0, 6).map((hv) => {
+      const directo = calcularResultadoDirectoIndicador(hv);
       const regRef =
         hv.periodicidad === 'ANUAL'
           ? regs2027.find((r) => r.mes === 0)
@@ -1444,15 +1623,22 @@ export function consultarAsistenteVirtual(
       const res = regRef
         ? calcularResultadoIndicadorPeriodo(hv, regRef, sgsstData.trabajadores, config)
         : null;
+      const valorFinal = directo.tieneDatosSuficientes ? directo.valorCalculado : res?.valor ?? null;
+      const fechaMostrar = directo.tieneDatosSuficientes
+        ? hv.fechaMedicionManual || 'Medición directa'
+        : res?.periodoLabel || '2027';
       return {
         id: `ind-${hv.id}`,
         categoria: `Indicador ${hv.codigo} · ${hv.periodicidad}`,
         titulo: hv.nombre,
         detalle:
-          res && res.valor !== null
-            ? `Resultado actual (${res.periodoLabel}): ${res.valor} ${hv.unidadMedida}`
-            : `Fórmula: ${hv.formula} · Pendiente de captura/validación en 2027.`,
-        estadoLabel: res && res.valor !== null ? `${res.valor} ${hv.unidadMedida}` : 'Pendiente',
+          valorFinal !== null
+            ? `Resultado (${fechaMostrar}): ${valorFinal} ${hv.unidadMedida}`
+            : `Fórmula: ${hv.formula} · Pendiente de diligenciamiento.`,
+        estadoLabel:
+          valorFinal !== null
+            ? `${valorFinal} ${hv.unidadMedida}`
+            : 'Pendiente de diligenciamiento',
         target: {
           tab: 'plan_anual',
           planSeccion: 'indicadores',

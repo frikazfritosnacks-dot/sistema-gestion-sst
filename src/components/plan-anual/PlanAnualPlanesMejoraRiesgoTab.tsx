@@ -4,18 +4,38 @@ import type {
   ActividadPlanAnual,
   EvidenciaActividad,
   ResponsablePlanOption,
+  TrabajadorFichaSST,
 } from '../../types/planAnual';
 import type {
   FormatoEditableDocumento,
   MaterialCapacitacionPlan,
   PlanMejoraPorRiesgo,
 } from '../../types/planAnualMejoraEmergencias';
+import type {
+  CapacitacionCertificadoContext,
+  CertificadoParticipacionMejora,
+  DocumentoRepositorioMejora,
+  PlanMejoraRepositorioStore,
+  TipoDocumentoRepositorioMejora,
+} from '../../types/planMejoraRepositorio';
 import {
   crearPlanesParaRiesgosFaltantes,
   detectarCambiosMatrizEnPlan,
   exportarPlanMejoraIndividualWordDocx,
   obtenerRiesgosMatrizSinPlan,
 } from '../../services/planMejoraEmergenciasService';
+import {
+  descargarCertificadoPdf,
+  descargarCertificadosPlanPdfConjunto,
+  detectarCambiosAsistenciaEnCertificados,
+  evaluarParticipacionTrabajadoresPlan,
+  exportarTrazabilidadPlanesMejoraExcel,
+  generarCertificadoPdfDataUrl,
+  imprimirCertificadosCarta,
+  loadPlanMejoraRepositorio,
+  registrarDocumentoEnRepositorio,
+  savePlanMejoraRepositorio,
+} from '../../services/planMejoraRepoService';
 import {
   ESTADOS_ESTANDAR_FRIKAZ,
   ESTADOS_TRABAJADOR_FRIKAZ,
@@ -33,16 +53,22 @@ import {
 } from '../../data/cargosOficiales';
 import {
   AlertTriangle,
+  Archive,
   ArrowLeft,
   ArrowRight,
+  Award,
   BookOpen,
   Calendar,
   CheckCircle2,
   Download,
+  Eye,
+  FileSpreadsheet,
   FileText,
   Flame,
+  History,
   Paperclip,
   Plus,
+  Printer,
   RefreshCw,
   Save,
   Search,
@@ -50,13 +76,27 @@ import {
   ShieldCheck,
   Upload,
   UserCheck,
+  X,
 } from 'lucide-react';
+
+export type SubTabPlanesMejora = 'planes' | 'certificados' | 'repositorio';
+
+const TIPOS_DOC_REPO: TipoDocumentoRepositorioMejora[] = [
+  'Asistencia',
+  'Documento trabajador',
+  'Evidencia',
+  'Capacitación',
+  'Evaluación',
+  'Certificado',
+  'Otro soporte',
+];
 
 interface PlanAnualPlanesMejoraRiesgoTabProps {
   planes: PlanMejoraPorRiesgo[];
   riesgos: RiesgoGTC45Item[];
   formatos: Record<string, FormatoEditableDocumento>;
   responsables: ResponsablePlanOption[];
+  trabajadores?: TrabajadorFichaSST[];
   actividadesPlan?: ActividadPlanAnual[];
   onAbrirActividadPlan?: (
     act: ActividadPlanAnual,
@@ -64,6 +104,7 @@ interface PlanAnualPlanesMejoraRiesgoTabProps {
   ) => void;
   externalSearch?: string;
   externalSelectPlanId?: string;
+  subTabInicial?: SubTabPlanesMejora;
   navNonce?: number;
   onSavePlanes: (next: PlanMejoraPorRiesgo[], auditDetail?: string) => void;
   onAbrirFormato: (formatoId: string) => void;
@@ -73,6 +114,7 @@ interface PlanAnualPlanesMejoraRiesgoTabProps {
     onSave: (nextMat: MaterialCapacitacionPlan) => void
   ) => void;
   onIrAPlanEmergencias: () => void;
+  onGenerarCertificado?: (ctx: CapacitacionCertificadoContext) => void;
 }
 
 export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesgoTabProps> = ({
@@ -80,19 +122,63 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
   riesgos,
   formatos,
   responsables,
+  trabajadores = [],
   actividadesPlan = [],
   onAbrirActividadPlan,
   externalSearch,
   externalSelectPlanId,
+  subTabInicial,
   navNonce,
   onSavePlanes,
   onAbrirFormato,
   onAbrirCapacitacion,
   onIrAPlanEmergencias,
+  onGenerarCertificado,
 }) => {
   const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
 
+  const [subTab, setSubTab] = useState<SubTabPlanesMejora>(subTabInicial || 'planes');
   const [selectedId, setSelectedId] = useState<string | null>(externalSelectPlanId || null);
+  const [repoStore, setRepoStore] = useState<PlanMejoraRepositorioStore>(() =>
+    loadPlanMejoraRepositorio()
+  );
+  const [exportandoExcel, setExportandoExcel] = useState(false);
+
+  // Estados de Certificados
+  const [certPlanFilterId, setCertPlanFilterId] = useState<string>(planes[0]?.id || '');
+  const [certIntensidadHoraria, setCertIntensidadHoraria] = useState('');
+  const [certTemaOverride, setCertTemaOverride] = useState('');
+  const [certificadorNombre, setCertificadorNombre] = useState('');
+  const [certificadorCargo, setCertificadorCargo] = useState('');
+  const [generandoCertKey, setGenerandoCertKey] = useState<string | null>(null);
+  const [previewCertPdf, setPreviewCertPdf] = useState<{
+    cert: CertificadoParticipacionMejora;
+    dataUrl: string;
+  } | null>(null);
+
+  // Estados de Repositorio documental
+  const [repoSearch, setRepoSearch] = useState('');
+  const [repoFilterCargo, setRepoFilterCargo] = useState('TODOS');
+  const [repoFilterPlanId, setRepoFilterPlanId] = useState('TODOS');
+  const [repoFilterTipo, setRepoFilterTipo] = useState('TODOS');
+  const [repoFilterDesde, setRepoFilterDesde] = useState('');
+  const [repoFilterHasta, setRepoFilterHasta] = useState('');
+  const [showRepoForm, setShowRepoForm] = useState(false);
+  const [showRepoHistorial, setShowRepoHistorial] = useState(false);
+  const [repoForm, setRepoForm] = useState({
+    trabajadorNombre: '',
+    cargo: CARGOS_OFICIALES_NOMBRES[0] as string,
+    planId: planes[0]?.id || '',
+    actividadNombre: '',
+    tipoDocumento: 'Evidencia' as TipoDocumentoRepositorioMejora,
+    nombreArchivo: '',
+    archivoDataUrl: undefined as string | undefined,
+    fechaActividad: '',
+    estadoDocumento: 'Registrado' as DocumentoRepositorioMejora['estadoDocumento'],
+    observaciones: '',
+  });
+  const [previewDocRepo, setPreviewDocRepo] = useState<DocumentoRepositorioMejora | null>(null);
+
   const [filtroValidacion, setFiltroValidacion] = useState<'TODOS' | 'CONFIRMADO' | 'PENDIENTE_VALIDACION'>('TODOS');
   const [filtroNivel, setFiltroNivel] = useState<'TODOS' | 'I' | 'II' | 'III_IV'>('TODOS');
   const [filtroEstado, setFiltroEstado] = useState<'TODOS' | EstadoEstandarFrikaz>('TODOS');
@@ -101,13 +187,137 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
 
   useEffect(() => {
     if (navNonce === undefined) return;
+    if (subTabInicial) {
+      setSubTab(subTabInicial);
+    }
     if (externalSelectPlanId !== undefined) {
       setSelectedId(externalSelectPlanId || null);
+      if (externalSelectPlanId) setSubTab('planes');
     }
     if (externalSearch !== undefined) {
       setBusqueda(externalSearch);
     }
-  }, [navNonce, externalSelectPlanId, externalSearch]);
+  }, [navNonce, externalSelectPlanId, externalSearch, subTabInicial]);
+
+  useEffect(() => {
+    if (!certPlanFilterId && planes.length > 0) {
+      setCertPlanFilterId(planes[0].id);
+    }
+  }, [planes, certPlanFilterId]);
+
+  useEffect(() => {
+    const refreshRepo = () => setRepoStore(loadPlanMejoraRepositorio());
+    window.addEventListener('frikaz:repo-mejora-updated', refreshRepo);
+    window.addEventListener('storage', refreshRepo);
+    return () => {
+      window.removeEventListener('frikaz:repo-mejora-updated', refreshRepo);
+      window.removeEventListener('storage', refreshRepo);
+    };
+  }, []);
+
+  const construirContextoCertPlan = (
+    plan: PlanMejoraPorRiesgo,
+    certEditar?: CertificadoParticipacionMejora
+  ): CapacitacionCertificadoContext => {
+    const respRaw = (plan.responsable || '').trim();
+    const esCargoSolo = CARGOS_OFICIALES_NOMBRES.some(
+      (c) => c.toLowerCase() === respRaw.toLowerCase()
+    );
+    const respNomPlan = respRaw.includes('Andrea Orjuela')
+      ? 'Andrea Orjuela'
+      : esCargoSolo
+      ? ''
+      : respRaw;
+    const respCargoPlan = respRaw.includes('Andrea Orjuela')
+      ? 'Gerente'
+      : esCargoSolo
+      ? respRaw
+      : '';
+
+    if (certEditar) {
+      return {
+        capacitacionKey: certEditar.capacitacionKey || `PM:${plan.id}`,
+        origenModulo: certEditar.origenModulo || 'PLAN_MEJORA_RIESGO',
+        planId: certEditar.planId || plan.id,
+        nombrePlan: certEditar.nombrePlan || plan.nombreRiesgo,
+        riesgoCodigo: certEditar.riesgoCodigo || plan.riesgoCodigo,
+        nombreRiesgo: certEditar.nombreRiesgo || plan.nombreRiesgo,
+        actividadId: certEditar.actividadId,
+        nombreCapacitacion:
+          certEditar.temaDesarrollado ||
+          certEditar.nombreActividad ||
+          plan.capacitacion.nombre,
+        fechaRealizacion: certEditar.fechaRealizacion || '',
+        duracionHoras: certEditar.intensidadHoraria || plan.capacitacion.duracionSugerida || '',
+        responsableNombre: certEditar.certificadorNombre || respNomPlan,
+        responsableCargo: certEditar.certificadorCargo || respCargoPlan,
+        observaciones: certEditar.observaciones || '',
+        asistenciaRegistrada: plan.capacitacion?.asistenciaRegistrada,
+        certificadoEditar: certEditar,
+      };
+    }
+
+    const fechaAsistencia =
+      plan.capacitacion?.asistenciaRegistrada?.find((a) => a.asistio && a.fecha)?.fecha || '';
+
+    return {
+      capacitacionKey: `PM:${plan.id}`,
+      origenModulo: 'PLAN_MEJORA_RIESGO',
+      planId: plan.id,
+      nombrePlan: `Plan #${plan.orden}: ${plan.nombreRiesgo}`,
+      riesgoCodigo: plan.riesgoCodigo,
+      nombreRiesgo: plan.nombreRiesgo,
+      nombreCapacitacion: plan.capacitacion.nombre,
+      fechaRealizacion: fechaAsistencia,
+      duracionHoras: plan.capacitacion.duracionSugerida || '',
+      responsableNombre: respNomPlan,
+      responsableCargo: respCargoPlan,
+      observaciones: '',
+      asistenciaRegistrada: plan.capacitacion?.asistenciaRegistrada,
+    };
+  };
+
+  const construirContextoEdicionCert = (
+    cert: CertificadoParticipacionMejora
+  ): CapacitacionCertificadoContext => {
+    const matchedPlan = planes.find((p) => p.id === cert.planId);
+    if (matchedPlan) {
+      return construirContextoCertPlan(matchedPlan, cert);
+    }
+    return {
+      capacitacionKey: cert.capacitacionKey || cert.planId,
+      origenModulo: cert.origenModulo || 'OTRO',
+      planId: cert.planId,
+      nombrePlan: cert.nombrePlan,
+      riesgoCodigo: cert.riesgoCodigo,
+      nombreRiesgo: cert.nombreRiesgo,
+      actividadId: cert.actividadId,
+      nombreCapacitacion: cert.temaDesarrollado || cert.nombreActividad,
+      fechaRealizacion: cert.fechaRealizacion || '',
+      duracionHoras: cert.intensidadHoraria || '',
+      responsableNombre: cert.certificadorNombre || '',
+      responsableCargo: cert.certificadorCargo || '',
+      observaciones: cert.observaciones || '',
+      certificadoEditar: cert,
+    };
+  };
+
+  useEffect(() => {
+    const { storeActualizado, alertasNuevas } = detectarCambiosAsistenciaEnCertificados(
+      repoStore,
+      planes,
+      actividadesPlan
+    );
+    if (alertasNuevas > 0) {
+      savePlanMejoraRepositorio(storeActualizado);
+      setRepoStore(storeActualizado);
+    }
+  }, [planes, actividadesPlan]);
+
+  const persistRepo = (next: PlanMejoraRepositorioStore) => {
+    savePlanMejoraRepositorio(next);
+    setRepoStore(next);
+  };
 
   // Form estados en vista detalle
   const [nuevoSoporteNombre, setNuevoSoporteNombre] = useState('');
@@ -383,10 +593,191 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
     }
   };
 
+  const handleDescargarExcelTrazabilidad = async () => {
+    setExportandoExcel(true);
+    try {
+      await exportarTrazabilidadPlanesMejoraExcel(planes, repoStore, actividadesPlan);
+    } finally {
+      setExportandoExcel(false);
+    }
+  };
+
+  const handleEmitirCertificado = async (
+    plan: PlanMejoraPorRiesgo,
+    part: ReturnType<typeof evaluarParticipacionTrabajadoresPlan>[number]
+  ) => {
+    if (!part.cumpleCondicion) {
+      showToast(part.motivoBloqueo || 'El trabajador no cumple con asistencia verificada.');
+      return;
+    }
+    const key = `${plan.id}::${part.trabajadorNombre.toLowerCase()}`;
+    setGenerandoCertKey(key);
+    try {
+      const hoy = new Date().toISOString().split('T')[0];
+      const nextNum = repoStore.certificados.length + 1;
+      const codigoCert = `CERT-PM-${plan.orden}-${String(nextNum).padStart(3, '0')}`;
+      const temaFinal =
+        certTemaOverride.trim() ||
+        plan.capacitacion?.nombre ||
+        plan.actividadMejoraPropuesta;
+
+      const certId = `cert-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const nuevoCert: CertificadoParticipacionMejora = {
+        id: certId,
+        codigoCertificado: codigoCert,
+        planId: plan.id,
+        nombrePlan: `Plan #${plan.orden}: ${plan.nombreRiesgo}`,
+        riesgoCodigo: plan.riesgoCodigo,
+        nombreRiesgo: plan.nombreRiesgo,
+        nombreActividad: plan.capacitacion?.nombre || plan.actividadMejoraPropuesta,
+        trabajadorNombre: part.trabajadorNombre,
+        cargo: part.cargo,
+        fechaRealizacion: part.fechaRealizacion,
+        intensidadHoraria: certIntensidadHoraria.trim(),
+        temaDesarrollado: temaFinal,
+        certificadorNombre: certificadorNombre.trim(),
+        certificadorCargo: certificadorCargo.trim(),
+        fechaEmision: hoy,
+        emitidoPor: esGerente ? nombreGerente : 'Equipo SST Frikaz S.A.S.',
+        asistenciaHash: part.asistenciaHash,
+        estadoValidez: 'VIGENTE',
+      };
+
+      const pdfDataUrl = await generarCertificadoPdfDataUrl(nuevoCert);
+      const resRepo = registrarDocumentoEnRepositorio(
+        {
+          ...repoStore,
+          certificados: [nuevoCert, ...repoStore.certificados],
+        },
+        {
+          trabajadorNombre: nuevoCert.trabajadorNombre,
+          cargo: nuevoCert.cargo,
+          planId: plan.id,
+          nombrePlan: nuevoCert.nombrePlan,
+          riesgoCodigo: plan.riesgoCodigo,
+          nombreRiesgo: plan.nombreRiesgo,
+          actividadNombre: nuevoCert.nombreActividad,
+          tipoDocumento: 'Certificado',
+          nombreArchivo: `${codigoCert}_${part.trabajadorNombre.replace(/\s+/g, '_')}.pdf`,
+          archivoDataUrl: pdfDataUrl,
+          fechaActividad: nuevoCert.fechaRealizacion,
+          estadoDocumento: 'Registrado',
+          responsableRegistro: nuevoCert.emitidoPor,
+          observaciones: `Certificado emitido y archivado automáticamente (${codigoCert}).`,
+          certificadoId: certId,
+          esAutomatico: true,
+        },
+        nuevoCert.emitidoPor
+      );
+
+      const finalStore: PlanMejoraRepositorioStore = {
+        ...resRepo.store,
+        certificados: resRepo.store.certificados.map((c) =>
+          c.id === certId ? { ...c, documentoRepoId: resRepo.doc.id } : c
+        ),
+      };
+      persistRepo(finalStore);
+      setPreviewCertPdf({ cert: nuevoCert, dataUrl: pdfDataUrl });
+      showToast(
+        `Certificado ${codigoCert} emitido para ${part.trabajadorNombre} y archivado automáticamente en el Repositorio Documental.`
+      );
+    } finally {
+      setGenerandoCertKey(null);
+    }
+  };
+
+  const handleVerCertificadoPdf = async (cert: CertificadoParticipacionMejora) => {
+    const docExistente = repoStore.documentos.find((d) => d.certificadoId === cert.id);
+    const dataUrl =
+      docExistente?.archivoDataUrl || (await generarCertificadoPdfDataUrl(cert));
+    setPreviewCertPdf({ cert, dataUrl });
+  };
+
+  const handleRegistrarDocRepositorio = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!repoForm.trabajadorNombre.trim() || !repoForm.nombreArchivo.trim()) return;
+    const planSel = planes.find((p) => p.id === repoForm.planId) || planes[0];
+    if (!planSel) return;
+    const actor = esGerente ? nombreGerente : 'Equipo Frikaz S.A.S.';
+    const { store } = registrarDocumentoEnRepositorio(
+      repoStore,
+      {
+        trabajadorNombre: repoForm.trabajadorNombre.trim(),
+        cargo: repoForm.cargo,
+        planId: planSel.id,
+        nombrePlan: `Plan #${planSel.orden}: ${planSel.nombreRiesgo}`,
+        riesgoCodigo: planSel.riesgoCodigo,
+        nombreRiesgo: planSel.nombreRiesgo,
+        actividadNombre:
+          repoForm.actividadNombre.trim() ||
+          planSel.capacitacion?.nombre ||
+          planSel.actividadMejoraPropuesta,
+        tipoDocumento: repoForm.tipoDocumento,
+        nombreArchivo: repoForm.nombreArchivo.trim(),
+        archivoDataUrl: repoForm.archivoDataUrl,
+        fechaActividad: repoForm.fechaActividad.trim() || 'Pendiente de verificación',
+        estadoDocumento: repoForm.estadoDocumento,
+        responsableRegistro: actor,
+        observaciones: repoForm.observaciones.trim(),
+        esAutomatico: false,
+      },
+      actor
+    );
+    persistRepo(store);
+    setShowRepoForm(false);
+    setRepoForm({
+      ...repoForm,
+      trabajadorNombre: '',
+      actividadNombre: '',
+      nombreArchivo: '',
+      archivoDataUrl: undefined,
+      fechaActividad: '',
+      observaciones: '',
+    });
+    showToast('Documento registrado en el Repositorio Documental de Planes de Mejora.');
+  };
+
+  const documentosRepoFiltrados = useMemo(() => {
+    const q = repoSearch.trim().toLowerCase();
+    return repoStore.documentos.filter((d) => {
+      if (repoFilterCargo !== 'TODOS' && d.cargo !== repoFilterCargo) return false;
+      if (repoFilterPlanId !== 'TODOS' && d.planId !== repoFilterPlanId) return false;
+      if (repoFilterTipo !== 'TODOS' && d.tipoDocumento !== repoFilterTipo) return false;
+      if (repoFilterDesde && d.fechaRegistro < repoFilterDesde) return false;
+      if (repoFilterHasta && d.fechaRegistro > repoFilterHasta) return false;
+      if (q) {
+        const blob = `${d.numeroRegistro} ${d.trabajadorNombre} ${d.cargo} ${d.nombrePlan} ${d.riesgoCodigo} ${d.nombreRiesgo} ${d.actividadNombre} ${d.nombreArchivo} ${d.observaciones}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [
+    repoStore.documentos,
+    repoSearch,
+    repoFilterCargo,
+    repoFilterPlanId,
+    repoFilterTipo,
+    repoFilterDesde,
+    repoFilterHasta,
+  ]);
+
+  const certPlanSeleccionado = useMemo(
+    () => planes.find((p) => p.id === certPlanFilterId) || planes[0] || null,
+    [planes, certPlanFilterId]
+  );
+
+  const participacionesCertPlan = useMemo(
+    () =>
+      certPlanSeleccionado
+        ? evaluarParticipacionTrabajadoresPlan(certPlanSeleccionado, actividadesPlan)
+        : [],
+    [certPlanSeleccionado, actividadesPlan]
+  );
+
   // ==========================================================================
   // VISTA DETALLE DE UN PLAN DE MEJORA POR RIESGO
   // ==========================================================================
-  if (planSeleccionado) {
+  if (subTab === 'planes' && planSeleccionado) {
     const badgeEst = getBadgeClassesEstadoFrikaz(planSeleccionado.estado);
     const cambioMtx = cambiosPorPlan[planSeleccionado.id];
     const formatosAsociados = planSeleccionado.formatosIds
@@ -812,25 +1203,40 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
                       Temas principales, explicación paso a paso en palabras sencillas, actividad corta, preguntas de evaluación y registro editable de asistencia (descargable en Word con Caja de Calidad).
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onAbrirCapacitacion(
-                        planSeleccionado.capacitacion,
-                        `Plan #${planSeleccionado.orden}: ${planSeleccionado.nombreRiesgo}`,
-                        (nextMat) => {
-                          updatePlan(
-                            { ...planSeleccionado, capacitacion: nextMat },
-                            `Asistencia / guía de capacitación guardada en "${planSeleccionado.nombreRiesgo}".`
-                          );
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onAbrirCapacitacion(
+                          planSeleccionado.capacitacion,
+                          `Plan #${planSeleccionado.orden}: ${planSeleccionado.nombreRiesgo}`,
+                          (nextMat) => {
+                            updatePlan(
+                              { ...planSeleccionado, capacitacion: nextMat },
+                              `Asistencia / guía de capacitación guardada en "${planSeleccionado.nombreRiesgo}".`
+                            );
+                          }
+                        )
+                      }
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#0f5b53] text-white font-black hover:bg-[#0c4842] inline-flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>Abrir Guía de Capacitación, Evaluación y Asistencia</span>
+                    </button>
+
+                    {onGenerarCertificado && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onGenerarCertificado(construirContextoCertPlan(planSeleccionado))
                         }
-                      )
-                    }
-                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#0f5b53] text-white font-black hover:bg-[#0c4842] inline-flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    <span>Abrir Guía de Capacitación, Evaluación y Asistencia</span>
-                  </button>
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] inline-flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Award className="h-4 w-4" />
+                        <span>GENERAR CERTIFICADO</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <p className="text-slate-600">
@@ -1091,7 +1497,7 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
   }
 
   // ==========================================================================
-  // VISTA PRINCIPAL: LISTADO DE PLANES DE MEJORA POR RIESGO (UNO POR CADA RIESGO)
+  // VISTA PRINCIPAL: PLANES + CERTIFICADOS + REPOSITORIO + TRAZABILIDAD EXCEL
   // ==========================================================================
   return (
     <div className="space-y-4 text-xs">
@@ -1104,11 +1510,25 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
               <span>PLANES DE MEJORA POR RIESGO — Frikaz S.A.S.</span>
             </h3>
             <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
-              Cada peligro tiene su propio plan individual conectado con la Matriz GTC 45, con explicación sencilla, medidas reales para 10 trabajadores, capacitación completa y formatos descargables en Word.
+              Cada peligro tiene su propio plan individual conectado con la Matriz GTC 45, con emisión de certificados reales por asistencia verificada, repositorio documental de 13 columnas y trazabilidad completa en Excel.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleDescargarExcelTrazabilidad}
+              disabled={exportandoExcel}
+              className="px-3.5 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] inline-flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-60"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              <span>
+                {exportandoExcel
+                  ? 'Generando Excel...'
+                  : 'DESCARGAR TRAZABILIDAD EN EXCEL'}
+              </span>
+            </button>
+
             {riesgosSinPlan.length > 0 && (
               <button
                 type="button"
@@ -1124,236 +1544,1171 @@ export const PlanAnualPlanesMejoraRiesgoTab: React.FC<PlanAnualPlanesMejoraRiesg
           </div>
         </div>
 
-        {/* KPI rápidos */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-xl bg-[#f4faf8] border border-[#cfe5df] p-3">
-            <span className="text-[11px] font-bold text-[#3f6660] block">Planes individuales</span>
-            <span className="text-xl font-black font-mono text-[#0d3b36]">{metricas.total}</span>
-          </div>
-          <div className="rounded-xl bg-emerald-50/70 border border-emerald-200 p-3">
-            <span className="text-[11px] font-bold text-emerald-800 block">
-              Confirmados en planta
-            </span>
-            <span className="text-xl font-black font-mono text-emerald-900">
-              {metricas.confirmados}
-            </span>
-          </div>
-          <div className="rounded-xl bg-amber-50/80 border border-amber-200 p-3">
-            <span className="text-[11px] font-bold text-amber-900 block">
-              Pendientes de validación
-            </span>
-            <span className="text-xl font-black font-mono text-amber-950">
-              {metricas.pendientesVal}
-            </span>
-          </div>
-          <div className="rounded-xl bg-[#f4faf8] border border-[#cfe5df] p-3">
-            <span className="text-[11px] font-bold text-[#3f6660] block">
-              Aprobados / Cumplidos
-            </span>
-            <span className="text-xl font-black font-mono text-[#0f6b61]">
-              {metricas.aprobados}{' '}
-              <span className="text-[11px] font-normal text-slate-500">
-                ({metricas.enRevision} por revisar)
-              </span>
-            </span>
-          </div>
+        {/* Sub-pestañas internas: Planes de mejora / Certificados / Repositorio documental */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+          {[
+            {
+              id: 'planes' as const,
+              label: 'Planes de mejora',
+              badge: planes.length,
+              icon: ShieldAlert,
+            },
+            {
+              id: 'certificados' as const,
+              label: 'Certificados',
+              badge: repoStore.certificados.length,
+              icon: Award,
+            },
+            {
+              id: 'repositorio' as const,
+              label: 'Repositorio documental',
+              badge: repoStore.documentos.length,
+              icon: Archive,
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            const active = subTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setSubTab(item.id);
+                  if (item.id !== 'planes') setSelectedId(null);
+                }}
+                className={`px-3 py-2 rounded-xl border font-bold flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+                  active
+                    ? 'bg-[#0f5b53] text-white border-[#0f5b53]'
+                    : 'bg-[#f4faf8] text-[#173f3a] border-[#cfe5df] hover:bg-[#e5f3ef]'
+                }`}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon className={`h-3.5 w-3.5 ${active ? 'text-[#fed7aa]' : 'text-[#0f6b61]'}`} />
+                  <span>{item.label}</span>
+                </span>
+                <span
+                  className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-black ${
+                    active ? 'bg-white/20 text-white' : 'bg-white text-[#0d3b36]'
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {totalCambiosMatriz > 0 && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 flex items-center gap-2.5 text-amber-950 font-bold">
-            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>
-              Hay {totalCambiosMatriz} plan(es) con cambios detectados en la Matriz de Riesgos GTC 45. Ábralos para revisar y sincronizar si aplica.
-            </span>
+        {feedbackMsg && (
+          <div className="rounded-xl bg-emerald-50 border border-emerald-300 px-4 py-2.5 text-emerald-900 font-bold flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-700 shrink-0" />
+            <span>{feedbackMsg}</span>
           </div>
         )}
 
-        {/* Filtros */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1">
-          <div className="relative">
-            <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar riesgo, cargo o medida..."
-              className="w-full rounded-xl border border-slate-300 pl-8 pr-3 py-1.5 bg-white"
-            />
-          </div>
-
-          <select
-            value={filtroCargo}
-            onChange={(e) => setFiltroCargo(e.target.value)}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
-          >
-            <option value="TODOS">Cargo oficial: Todos (6)</option>
-            {CARGOS_OFICIALES_NOMBRES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filtroValidacion}
-            onChange={(e) => setFiltroValidacion(e.target.value as typeof filtroValidacion)}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
-          >
-            <option value="TODOS">Validación real: Todos</option>
-            <option value="CONFIRMADO">Confirmados en planta</option>
-            <option value="PENDIENTE_VALIDACION">Pendientes de validación</option>
-          </select>
-
-          <select
-            value={filtroNivel}
-            onChange={(e) => setFiltroNivel(e.target.value as typeof filtroNivel)}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
-          >
-            <option value="TODOS">Nivel GTC 45: Todos</option>
-            <option value="I">Nivel I (Crítico)</option>
-            <option value="II">Nivel II (Alto)</option>
-            <option value="III_IV">Nivel III / IV</option>
-          </select>
-
-          <select
-            value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value as typeof filtroEstado)}
-            className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
-          >
-            <option value="TODOS">Estado: Todos</option>
-            {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
-              <option key={est} value={est}>
-                {est}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Lista de tarjetas individuales (sin mezclar riesgos) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-        {planesFiltrados.map((plan) => {
-          const badgeEst = getBadgeClassesEstadoFrikaz(plan.estado);
-          const cambio = cambiosPorPlan[plan.id];
-          return (
-            <div
-              key={plan.id}
-              className="rounded-2xl border border-[#b9dad3] bg-white p-4 shadow-xs flex flex-col justify-between space-y-3 hover:border-[#0f6b61] transition-colors"
-            >
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded-md bg-[#0f5b53] text-white font-mono font-black text-[10px]">
-                      #{plan.orden} · {plan.riesgoCodigo}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${
-                        plan.nivelRiesgoMatriz === 'I'
-                          ? 'bg-rose-100 text-rose-800 border-rose-300'
-                          : 'bg-amber-100 text-amber-800 border-amber-300'
-                      }`}
-                    >
-                      Nivel {plan.nivelRiesgoMatriz}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${
-                        plan.estadoValidacionReal === 'CONFIRMADO'
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                          : 'bg-amber-100 text-amber-900 border-amber-300'
-                      }`}
-                    >
-                      {plan.estadoValidacionReal === 'CONFIRMADO'
-                        ? 'Confirmado'
-                        : 'Pendiente de validación'}
-                    </span>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${badgeEst.light}`}
-                  >
-                    {badgeEst.label}
-                  </span>
-                </div>
-
-                <h4 className="text-sm font-black text-[#0d3b36] leading-snug">
-                  {plan.nombreRiesgo}
-                </h4>
-
-                <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-2">
-                  {plan.actividadMejoraPropuesta}
-                </p>
-
-                <div className="rounded-xl bg-[#f4faf8] border border-[#d6ebe5] p-2.5 text-[11px] space-y-0.5 text-[#173f3a]">
-                  <p className="truncate" title={plan.cargoMatriz}>
-                    <strong>Cargos oficiales expuestos:</strong> {plan.cargoMatriz}
-                  </p>
-                  {plan.capacitacion.requiereCapacitacion && (
-                    <p className="truncate text-[10px] text-[#0f5b53]">
-                      <strong>Capacitación:</strong> {plan.capacitacion.nombre}
-                    </p>
-                  )}
-                  <p className="flex flex-wrap items-center gap-2 text-[10px] text-slate-600">
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3 w-3" /> {plan.fechaInicio} → {plan.fechaFin}
-                    </span>
-                    <span>·</span>
-                    <span>
-                      {plan.formatosIds.length} formato(s) ·{' '}
-                      {plan.evidenciasAdjuntas.length} soporte(s)
-                    </span>
-                  </p>
-                </div>
-
-                {cambio?.cambiado && (
-                  <p className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    <span>Hubo cambios recientes en este riesgo en la Matriz GTC 45.</span>
-                  </p>
-                )}
+        {subTab === 'planes' && (
+          <>
+            {/* KPI rápidos */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl bg-[#f4faf8] border border-[#cfe5df] p-3">
+                <span className="text-[11px] font-bold text-[#3f6660] block">Planes individuales</span>
+                <span className="text-xl font-black font-mono text-[#0d3b36]">{metricas.total}</span>
               </div>
-
-              <div className="pt-2 border-t border-[#e8f2ef] flex flex-wrap items-center justify-between gap-2">
-                {plan.vinculadoAPlanEmergencias ? (
-                  <button
-                    type="button"
-                    onClick={onIrAPlanEmergencias}
-                    className="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-black hover:bg-rose-100 inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <Flame className="h-3.5 w-3.5" />
-                    <span>Ir a Plan de Emergencias</span>
-                  </button>
-                ) : (
-                  <span className="text-[10px] text-slate-500 font-semibold truncate max-w-[180px]">
-                    Resp: {plan.responsable}
+              <div className="rounded-xl bg-emerald-50/70 border border-emerald-200 p-3">
+                <span className="text-[11px] font-bold text-emerald-800 block">
+                  Confirmados en planta
+                </span>
+                <span className="text-xl font-black font-mono text-emerald-900">
+                  {metricas.confirmados}
+                </span>
+              </div>
+              <div className="rounded-xl bg-amber-50/80 border border-amber-200 p-3">
+                <span className="text-[11px] font-bold text-amber-900 block">
+                  Pendientes de validación
+                </span>
+                <span className="text-xl font-black font-mono text-amber-950">
+                  {metricas.pendientesVal}
+                </span>
+              </div>
+              <div className="rounded-xl bg-[#f4faf8] border border-[#cfe5df] p-3">
+                <span className="text-[11px] font-bold text-[#3f6660] block">
+                  Aprobados / Cumplidos
+                </span>
+                <span className="text-xl font-black font-mono text-[#0f6b61]">
+                  {metricas.aprobados}{' '}
+                  <span className="text-[11px] font-normal text-slate-500">
+                    ({metricas.enRevision} por revisar)
                   </span>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(plan.id)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#0f5b53] text-white font-black hover:bg-[#0c4842] inline-flex items-center gap-1.5 cursor-pointer ml-auto"
-                >
-                  <span>Abrir plan completo</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+                </span>
               </div>
             </div>
-          );
-        })}
+
+            {totalCambiosMatriz > 0 && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 flex items-center gap-2.5 text-amber-950 font-bold">
+                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                <span>
+                  Hay {totalCambiosMatriz} plan(es) con cambios detectados en la Matriz de Riesgos GTC 45. Ábralos para revisar y sincronizar si aplica.
+                </span>
+              </div>
+            )}
+
+            {/* Filtros */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1">
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar riesgo, cargo o medida..."
+                  className="w-full rounded-xl border border-slate-300 pl-8 pr-3 py-1.5 bg-white"
+                />
+              </div>
+
+              <select
+                value={filtroCargo}
+                onChange={(e) => setFiltroCargo(e.target.value)}
+                className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
+              >
+                <option value="TODOS">Cargo oficial: Todos (6)</option>
+                {CARGOS_OFICIALES_NOMBRES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={filtroValidacion}
+                onChange={(e) => setFiltroValidacion(e.target.value as typeof filtroValidacion)}
+                className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
+              >
+                <option value="TODOS">Validación real: Todos</option>
+                <option value="CONFIRMADO">Confirmados en planta</option>
+                <option value="PENDIENTE_VALIDACION">Pendientes de validación</option>
+              </select>
+
+              <select
+                value={filtroNivel}
+                onChange={(e) => setFiltroNivel(e.target.value as typeof filtroNivel)}
+                className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
+              >
+                <option value="TODOS">Nivel GTC 45: Todos</option>
+                <option value="I">Nivel I (Crítico)</option>
+                <option value="II">Nivel II (Alto)</option>
+                <option value="III_IV">Nivel III / IV</option>
+              </select>
+
+              <select
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value as typeof filtroEstado)}
+                className="rounded-xl border border-slate-300 px-3 py-1.5 bg-white font-bold text-slate-700"
+              >
+                <option value="TODOS">Estado: Todos</option>
+                {ESTADOS_ESTANDAR_FRIKAZ.map((est) => (
+                  <option key={est} value={est}>
+                    {est}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
       </div>
 
-      {planesFiltrados.length === 0 && (
-        <div className="rounded-2xl border border-[#b9dad3] bg-white p-8 text-center text-slate-500">
-          No hay planes que coincidan con los filtros seleccionados.
+      {/* ==================================================================== */}
+      {/* SUB-VISTA 1: LISTADO DE PLANES DE MEJORA POR RIESGO                  */}
+      {/* ==================================================================== */}
+      {subTab === 'planes' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {planesFiltrados.map((plan) => {
+              const badgeEst = getBadgeClassesEstadoFrikaz(plan.estado);
+              const cambio = cambiosPorPlan[plan.id];
+              return (
+                <div
+                  key={plan.id}
+                  className="rounded-2xl border border-[#b9dad3] bg-white p-4 shadow-xs flex flex-col justify-between space-y-3 hover:border-[#0f6b61] transition-colors"
+                >
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md bg-[#0f5b53] text-white font-mono font-black text-[10px]">
+                          #{plan.orden} · {plan.riesgoCodigo}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${
+                            plan.nivelRiesgoMatriz === 'I'
+                              ? 'bg-rose-100 text-rose-800 border-rose-300'
+                              : 'bg-amber-100 text-amber-800 border-amber-300'
+                          }`}
+                        >
+                          Nivel {plan.nivelRiesgoMatriz}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${
+                            plan.estadoValidacionReal === 'CONFIRMADO'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-amber-100 text-amber-900 border-amber-300'
+                          }`}
+                        >
+                          {plan.estadoValidacionReal === 'CONFIRMADO'
+                            ? 'Confirmado'
+                            : 'Pendiente de validación'}
+                        </span>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${badgeEst.light}`}
+                      >
+                        {badgeEst.label}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-black text-[#0d3b36] leading-snug">
+                      {plan.nombreRiesgo}
+                    </h4>
+
+                    <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-2">
+                      {plan.actividadMejoraPropuesta}
+                    </p>
+
+                    <div className="rounded-xl bg-[#f4faf8] border border-[#d6ebe5] p-2.5 text-[11px] space-y-0.5 text-[#173f3a]">
+                      <p className="truncate" title={plan.cargoMatriz}>
+                        <strong>Cargos oficiales expuestos:</strong> {plan.cargoMatriz}
+                      </p>
+                      {plan.capacitacion.requiereCapacitacion && (
+                        <p className="truncate text-[10px] text-[#0f5b53]">
+                          <strong>Capacitación:</strong> {plan.capacitacion.nombre}
+                        </p>
+                      )}
+                      <p className="flex flex-wrap items-center gap-2 text-[10px] text-slate-600">
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> {plan.fechaInicio} → {plan.fechaFin}
+                        </span>
+                        <span>·</span>
+                        <span>
+                          {plan.formatosIds.length} formato(s) ·{' '}
+                          {plan.evidenciasAdjuntas.length} soporte(s)
+                        </span>
+                      </p>
+                    </div>
+
+                    {cambio?.cambiado && (
+                      <p className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        <span>Hubo cambios recientes en este riesgo en la Matriz GTC 45.</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-[#e8f2ef] flex flex-wrap items-center justify-between gap-2">
+                    {plan.vinculadoAPlanEmergencias ? (
+                      <button
+                        type="button"
+                        onClick={onIrAPlanEmergencias}
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-black hover:bg-rose-100 inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Flame className="h-3.5 w-3.5" />
+                        <span>Ir a Plan de Emergencias</span>
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-slate-500 font-semibold truncate max-w-[180px]">
+                        Resp: {plan.responsable}
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(plan.id)}
+                      className="px-3.5 py-1.5 rounded-xl bg-[#0f5b53] text-white font-black hover:bg-[#0c4842] inline-flex items-center gap-1.5 cursor-pointer ml-auto"
+                    >
+                      <span>Abrir plan completo</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {planesFiltrados.length === 0 && (
+            <div className="rounded-2xl border border-[#b9dad3] bg-white p-8 text-center text-slate-500">
+              No hay planes que coincidan con los filtros seleccionados.
+            </div>
+          )}
+
+          <div className="rounded-xl bg-[#f4faf8] border border-[#cfe5df] p-3 text-[11px] text-[#173f3a] flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#0f6b61] shrink-0" />
+            <span>
+              Los trabajadores pueden abrir guías de capacitación, llenar formatos y subir soportes. Únicamente <strong>Andrea Orjuela – Gerente</strong> puede aprobar o marcar como Cumplido un plan de mejora.
+            </span>
+          </div>
+        </>
+      )}
+
+      {/* ==================================================================== */}
+      {/* SUB-VISTA 2: CERTIFICADOS (SOLO CON ASISTENCIA REAL VERIFICADA)      */}
+      {/* ==================================================================== */}
+      {subTab === 'certificados' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-5 shadow-xs space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm sm:text-base font-black text-[#0d3b36] flex items-center gap-2">
+                  <Award className="h-4 w-4 text-[#f97316]" />
+                  <span>Emisión de Certificados por Asistencia Real Verificada</span>
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Solo es posible generar certificado cuando el trabajador aparece con <strong>asistencia confirmada (asistió = Sí)</strong> y fecha real en la actividad del plan. Cada certificado emitido en PDF se archiva automáticamente en el Repositorio Documental.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {onGenerarCertificado && certPlanSeleccionado && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onGenerarCertificado(construirContextoCertPlan(certPlanSeleccionado))
+                    }
+                    className="px-3.5 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Award className="h-3.5 w-3.5" />
+                    <span>GENERAR CERTIFICADO</span>
+                  </button>
+                )}
+                {repoStore.certificados.filter((c) => c.planId === certPlanSeleccionado?.id).length > 0 &&
+                  certPlanSeleccionado && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        descargarCertificadosPlanPdfConjunto(
+                          repoStore.certificados.filter((c) => c.planId === certPlanSeleccionado.id),
+                          `Plan_${certPlanSeleccionado.orden}_${certPlanSeleccionado.riesgoCodigo}`
+                        )
+                      }
+                      className="px-3.5 py-2 rounded-xl bg-[#0f5b53] text-white font-black hover:bg-[#0c4842] inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Descargar lote PDF de este plan</span>
+                    </button>
+                  )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-[#f4faf8] border border-[#d6ebe5] p-3.5 rounded-xl">
+              <div className="sm:col-span-2">
+                <label className="font-bold text-[#0d3b36] block mb-1">
+                  Seleccionar plan de mejora para revisar asistencia:
+                </label>
+                <select
+                  value={certPlanSeleccionado?.id || ''}
+                  onChange={(e) => setCertPlanFilterId(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+                >
+                  {planes.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      #{p.orden} · {p.riesgoCodigo} — {p.nombreRiesgo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="font-bold text-[#0d3b36] block mb-1">
+                  Intensidad horaria (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={certIntensidadHoraria}
+                  onChange={(e) => setCertIntensidadHoraria(e.target.value)}
+                  placeholder="Ej. 2 horas (dejar vacío si no aplica)"
+                  className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-[#0d3b36] block mb-1">
+                  Tema desarrollado (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={certTemaOverride}
+                  onChange={(e) => setCertTemaOverride(e.target.value)}
+                  placeholder={certPlanSeleccionado?.capacitacion?.nombre || 'Tema del plan'}
+                  className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="font-bold text-[#0d3b36] block mb-1">
+                  Nombre de quien certifica (opcional, sin inventar)
+                </label>
+                <input
+                  type="text"
+                  value={certificadorNombre}
+                  onChange={(e) => setCertificadorNombre(e.target.value)}
+                  placeholder="Ej. Responsable / Instructor externo"
+                  className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="font-bold text-[#0d3b36] block mb-1">
+                  Cargo de quien certifica (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={certificadorCargo}
+                  onChange={(e) => setCertificadorCargo(e.target.value)}
+                  placeholder="Ej. Instructor SST / Gerente"
+                  className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                />
+              </div>
+            </div>
+
+            {certPlanSeleccionado && (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-black text-[#0d3b36]">
+                    Trabajadores registrados en asistencia del Plan #{certPlanSeleccionado.orden} (
+                    {participacionesCertPlan.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubTab('planes');
+                      setSelectedId(certPlanSeleccionado.id);
+                    }}
+                    className="text-[11px] font-black text-[#f97316] hover:underline cursor-pointer"
+                  >
+                    Ir al plan para registrar/actualizar asistencia →
+                  </button>
+                </div>
+
+                {participacionesCertPlan.length === 0 ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+                    Este plan aún no tiene lista de asistencia diligenciada en su guía de capacitación. Registra primero la asistencia real (trabajador, cargo oficial, fecha y check de asistió) para habilitar la emisión de certificados.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left border-collapse text-[11px]">
+                      <thead>
+                        <tr className="bg-[#0f172a] text-white text-[10px] uppercase">
+                          <th className="p-2.5">Trabajador</th>
+                          <th className="p-2.5">Cargo oficial</th>
+                          <th className="p-2.5">Fecha real</th>
+                          <th className="p-2.5">Asistencia</th>
+                          <th className="p-2.5">Estado certificado</th>
+                          <th className="p-2.5 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {participacionesCertPlan.map((part) => {
+                          const certExistente = repoStore.certificados.find(
+                            (c) =>
+                              c.planId === certPlanSeleccionado.id &&
+                              c.trabajadorNombre.toLowerCase() ===
+                                part.trabajadorNombre.toLowerCase()
+                          );
+                          const keyBtn = `${certPlanSeleccionado.id}::${part.trabajadorNombre.toLowerCase()}`;
+                          return (
+                            <tr key={part.trabajadorNombre} className="hover:bg-slate-50">
+                              <td className="p-2.5 font-bold text-slate-900">
+                                {part.trabajadorNombre}
+                              </td>
+                              <td className="p-2.5 text-slate-700">{part.cargo}</td>
+                              <td className="p-2.5 font-mono text-slate-600">
+                                {part.fechaRealizacion || 'Pendiente de registro'}
+                              </td>
+                              <td className="p-2.5">
+                                {part.cumpleCondicion ? (
+                                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                                    Asistió ({part.sesionesAsistidas}/{part.totalSesionesRegistradas})
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">
+                                    {part.motivoBloqueo || 'No elegible'}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-2.5">
+                                {certExistente ? (
+                                  <div className="space-y-0.5">
+                                    <span
+                                      className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
+                                        certExistente.estadoValidez === 'VIGENTE'
+                                          ? 'bg-teal-100 text-teal-900'
+                                          : 'bg-amber-100 text-amber-900'
+                                      }`}
+                                    >
+                                      {certExistente.codigoCertificado} ·{' '}
+                                      {certExistente.estadoValidez === 'VIGENTE'
+                                        ? 'Vigente'
+                                        : 'Revisar asistencia'}
+                                    </span>
+                                    {certExistente.motivoAlertaValidez && (
+                                      <p className="text-[10px] text-amber-800">
+                                        {certExistente.motivoAlertaValidez}
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400">Sin emitir</span>
+                                )}
+                              </td>
+                              <td className="p-2.5 text-right whitespace-nowrap">
+                                <div className="inline-flex items-center gap-1.5">
+                                  {certExistente && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleVerCertificadoPdf(certExistente)}
+                                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Eye className="h-3 w-3" />
+                                        <span>Ver / Imprimir</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => descargarCertificadoPdf(certExistente)}
+                                        className="px-2.5 py-1 rounded-lg bg-[#0f5b53] hover:bg-[#0c4842] text-white font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Download className="h-3 w-3" />
+                                        <span>PDF</span>
+                                      </button>
+                                    </>
+                                  )}
+                                  <button
+                                    type="button"
+                                    disabled={!part.cumpleCondicion || generandoCertKey === keyBtn}
+                                    onClick={() =>
+                                      handleEmitirCertificado(certPlanSeleccionado, part)
+                                    }
+                                    className="px-2.5 py-1 rounded-lg bg-[#f97316] hover:bg-[#ea580c] text-white font-black text-[10px] inline-flex items-center gap-1 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                                  >
+                                    <Award className="h-3 w-3" />
+                                    <span>
+                                      {generandoCertKey === keyBtn
+                                        ? 'Generando...'
+                                        : certExistente
+                                        ? 'Re-emitir PDF'
+                                        : 'Emitir Certificado PDF'}
+                                    </span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Historial consolidado de todos los certificados emitidos */}
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-5 shadow-xs space-y-3">
+            <h4 className="text-sm font-black text-[#0d3b36]">
+              Histórico de certificados emitidos ({repoStore.certificados.length})
+            </h4>
+            {repoStore.certificados.length === 0 ? (
+              <p className="text-[11px] text-slate-500 py-4 text-center">
+                Aún no se han emitido certificados en los planes de mejora por riesgo.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {repoStore.certificados.map((c) => (
+                  <div
+                    key={c.id}
+                    className={`rounded-xl border p-3 flex items-start justify-between gap-2 ${
+                      c.estadoValidez === 'VIGENTE'
+                        ? 'border-slate-200 bg-slate-50/70'
+                        : 'border-amber-300 bg-amber-50/70'
+                    }`}
+                  >
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-mono font-black text-[#0f5b53] text-[10px]">
+                          {c.codigoCertificado}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            c.estadoValidez === 'VIGENTE'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-200 text-amber-950'
+                          }`}
+                        >
+                          {c.estadoValidez === 'VIGENTE' ? 'Vigente' : 'Revisar asistencia'}
+                        </span>
+                      </div>
+                      <p className="font-black text-slate-900 truncate">{c.trabajadorNombre}</p>
+                      <p className="text-[10px] text-slate-600 truncate">
+                        {c.cargo} · {c.nombrePlan}
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Realizado: {c.fechaRealizacion || 'Sin fecha'} · Emitido: {c.fechaEmision}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleVerCertificadoPdf(c)}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-800 font-bold text-[10px] cursor-pointer hover:bg-slate-100"
+                      >
+                        Ver PDF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => imprimirCertificadosCarta([c])}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold text-[10px] cursor-pointer hover:bg-slate-900"
+                      >
+                        Imprimir
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => descargarCertificadoPdf(c)}
+                        className="px-2.5 py-1 rounded-lg bg-[#0f5b53] text-white font-bold text-[10px] cursor-pointer hover:bg-[#0c4842]"
+                      >
+                        Descargar PDF
+                      </button>
+                      {onGenerarCertificado && (
+                        <button
+                          type="button"
+                          onClick={() => onGenerarCertificado(construirContextoEdicionCert(c))}
+                          className="px-2.5 py-1 rounded-lg bg-[#f97316] text-white font-bold text-[10px] cursor-pointer hover:bg-[#ea580c]"
+                        >
+                          Editar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Aviso de seguridad de permisos */}
-      <div className="rounded-xl bg-[#f4faf8] border border-[#cfe5df] p-3 text-[11px] text-[#173f3a] flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4 text-[#0f6b61] shrink-0" />
-        <span>
-          Los trabajadores pueden abrir guías de capacitación, llenar formatos y subir soportes. Únicamente <strong>Andrea Orjuela – Gerente</strong> puede aprobar o marcar como Cumplido un plan de mejora.
-        </span>
-      </div>
+      {/* ==================================================================== */}
+      {/* SUB-VISTA 3: REPOSITORIO DOCUMENTAL (13 COLUMNAS + FILTROS + CARGA)  */}
+      {/* ==================================================================== */}
+      {subTab === 'repositorio' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-5 shadow-xs space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm sm:text-base font-black text-[#0d3b36] flex items-center gap-2">
+                  <Archive className="h-4 w-4 text-[#0f6b61]" />
+                  <span>Repositorio Documental Trazable de Planes de Mejora</span>
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Centraliza soportes, listas de asistencia, evaluaciones y certificados generados automáticamente (13 columnas trazables).
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRepoHistorial(!showRepoHistorial)}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  <span>Bitácora ({repoStore.historial.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRepoForm(!showRepoForm)}
+                  className="px-3.5 py-2 rounded-xl bg-[#0f5b53] hover:bg-[#0c4842] text-white font-black inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{showRepoForm ? 'Cerrar formulario' : 'Registrar documento'}</span>
+                </button>
+              </div>
+            </div>
+
+            {showRepoForm && (
+              <form
+                onSubmit={handleRegistrarDocRepositorio}
+                className="rounded-xl border border-[#b9dad3] bg-[#f4faf8] p-4 space-y-3"
+              >
+                <h5 className="font-black text-[#0d3b36]">
+                  Nuevo soporte en Repositorio Documental
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Trabajador *
+                    </label>
+                    <input
+                      type="text"
+                      list="repo-trabajadores-list"
+                      value={repoForm.trabajadorNombre}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const found = trabajadores.find(
+                          (t) => t.nombreCompleto.toLowerCase() === val.trim().toLowerCase()
+                        );
+                        setRepoForm({
+                          ...repoForm,
+                          trabajadorNombre: val,
+                          cargo: found?.cargoNombre || repoForm.cargo,
+                        });
+                      }}
+                      placeholder="Nombre del trabajador"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                      required
+                    />
+                    <datalist id="repo-trabajadores-list">
+                      {trabajadores.map((t) => (
+                        <option key={t.id} value={t.nombreCompleto} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Cargo oficial *
+                    </label>
+                    <select
+                      value={repoForm.cargo}
+                      onChange={(e) => setRepoForm({ ...repoForm, cargo: e.target.value })}
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+                    >
+                      {CARGOS_OFICIALES_NOMBRES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Plan de mejora *
+                    </label>
+                    <select
+                      value={repoForm.planId}
+                      onChange={(e) => setRepoForm({ ...repoForm, planId: e.target.value })}
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+                    >
+                      {planes.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          #{p.orden} · {p.riesgoCodigo} — {p.nombreRiesgo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Tipo de documento *
+                    </label>
+                    <select
+                      value={repoForm.tipoDocumento}
+                      onChange={(e) =>
+                        setRepoForm({
+                          ...repoForm,
+                          tipoDocumento: e.target.value as TipoDocumentoRepositorioMejora,
+                        })
+                      }
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+                    >
+                      {TIPOS_DOC_REPO.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Actividad relacionada
+                    </label>
+                    <input
+                      type="text"
+                      value={repoForm.actividadNombre}
+                      onChange={(e) =>
+                        setRepoForm({ ...repoForm, actividadNombre: e.target.value })
+                      }
+                      placeholder="Nombre de la actividad o charla"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Fecha de la actividad
+                    </label>
+                    <input
+                      type="date"
+                      value={repoForm.fechaActividad}
+                      onChange={(e) =>
+                        setRepoForm({ ...repoForm, fechaActividad: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Nombre del archivo *
+                    </label>
+                    <input
+                      type="text"
+                      value={repoForm.nombreArchivo}
+                      onChange={(e) =>
+                        setRepoForm({ ...repoForm, nombreArchivo: e.target.value })
+                      }
+                      placeholder="Ej. Lista_Asistencia_Mayo_2027.pdf"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Adjuntar archivo real
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold cursor-pointer hover:bg-slate-50 w-full">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span className="truncate">
+                        {repoForm.archivoDataUrl ? 'Archivo cargado' : 'Seleccionar archivo...'}
+                      </span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          const r = new FileReader();
+                          r.onload = () => {
+                            if (typeof r.result === 'string') {
+                              setRepoForm((prev) => ({
+                                ...prev,
+                                nombreArchivo: prev.nombreArchivo || f.name,
+                                archivoDataUrl: r.result as string,
+                              }));
+                            }
+                          };
+                          r.readAsDataURL(f);
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <input
+                    type="text"
+                    value={repoForm.observaciones}
+                    onChange={(e) =>
+                      setRepoForm({ ...repoForm, observaciones: e.target.value })
+                    }
+                    placeholder="Observaciones adicionales (opcional)"
+                    className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white font-black cursor-pointer"
+                  >
+                    Guardar en repositorio
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Filtros de repositorio */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+              <div className="relative lg:col-span-2">
+                <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={repoSearch}
+                  onChange={(e) => setRepoSearch(e.target.value)}
+                  placeholder="Buscar por código, trabajador, archivo..."
+                  className="w-full rounded-xl border border-slate-300 pl-8 pr-3 py-1.5 bg-white"
+                />
+              </div>
+              <select
+                value={repoFilterCargo}
+                onChange={(e) => setRepoFilterCargo(e.target.value)}
+                className="rounded-xl border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+              >
+                <option value="TODOS">Cargo: Todos (6)</option>
+                {CARGOS_OFICIALES_NOMBRES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={repoFilterTipo}
+                onChange={(e) => setRepoFilterTipo(e.target.value)}
+                className="rounded-xl border border-slate-300 px-2.5 py-1.5 bg-white font-bold"
+              >
+                <option value="TODOS">Tipo: Todos</option>
+                {TIPOS_DOC_REPO.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="date"
+                value={repoFilterDesde}
+                onChange={(e) => setRepoFilterDesde(e.target.value)}
+                title="Fecha registro desde"
+                className="rounded-xl border border-slate-300 px-2.5 py-1.5 bg-white"
+              />
+              <input
+                type="date"
+                value={repoFilterHasta}
+                onChange={(e) => setRepoFilterHasta(e.target.value)}
+                title="Fecha registro hasta"
+                className="rounded-xl border border-slate-300 px-2.5 py-1.5 bg-white"
+              />
+            </div>
+
+            {showRepoHistorial && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5 max-h-48 overflow-y-auto">
+                <p className="font-black text-slate-800 text-[11px]">
+                  Bitácora de trazabilidad documental
+                </p>
+                {repoStore.historial.length === 0 ? (
+                  <p className="text-[11px] text-slate-500">Sin movimientos registrados aún.</p>
+                ) : (
+                  repoStore.historial.map((h) => (
+                    <div
+                      key={h.id}
+                      className="text-[11px] bg-white rounded-lg border border-slate-200 px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2"
+                    >
+                      <span>
+                        <strong>{h.accion}:</strong> {h.detalle}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {h.fecha} · {h.usuario}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Tabla de 13 columnas trazables */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="bg-[#0f172a] text-white text-[10px] uppercase">
+                    <th className="p-2.5">N° Registro</th>
+                    <th className="p-2.5">Trabajador</th>
+                    <th className="p-2.5">Cargo</th>
+                    <th className="p-2.5">Plan de mejora</th>
+                    <th className="p-2.5">Riesgo</th>
+                    <th className="p-2.5">Actividad</th>
+                    <th className="p-2.5">Tipo doc.</th>
+                    <th className="p-2.5">Archivo</th>
+                    <th className="p-2.5">Fecha activ.</th>
+                    <th className="p-2.5">Fecha reg.</th>
+                    <th className="p-2.5">Estado</th>
+                    <th className="p-2.5">Responsable</th>
+                    <th className="p-2.5">Observaciones / Ver</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {documentosRepoFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan={13} className="p-6 text-center text-slate-500">
+                        No hay documentos registrados en el repositorio con los filtros actuales.
+                      </td>
+                    </tr>
+                  ) : (
+                    documentosRepoFiltrados.map((d) => (
+                      <tr key={d.id} className="hover:bg-slate-50">
+                        <td className="p-2.5 font-mono font-black text-[#0f5b53] whitespace-nowrap">
+                          {d.numeroRegistro}
+                        </td>
+                        <td className="p-2.5 font-bold text-slate-900">{d.trabajadorNombre}</td>
+                        <td className="p-2.5 text-slate-700">{d.cargo}</td>
+                        <td className="p-2.5 max-w-[170px] truncate" title={d.nombrePlan}>
+                          {d.nombrePlan}
+                        </td>
+                        <td className="p-2.5 whitespace-nowrap font-mono text-[10px]">
+                          {d.riesgoCodigo}
+                        </td>
+                        <td className="p-2.5 max-w-[170px] truncate" title={d.actividadNombre}>
+                          {d.actividadNombre}
+                        </td>
+                        <td className="p-2.5">
+                          <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-900 border border-teal-200 font-bold text-[10px]">
+                            {d.tipoDocumento}
+                          </span>
+                        </td>
+                        <td className="p-2.5 max-w-[160px] truncate font-medium" title={d.nombreArchivo}>
+                          {d.nombreArchivo}
+                        </td>
+                        <td className="p-2.5 font-mono text-[10px] whitespace-nowrap">
+                          {d.fechaActividad}
+                        </td>
+                        <td className="p-2.5 font-mono text-[10px] whitespace-nowrap">
+                          {d.fechaRegistro}
+                        </td>
+                        <td className="p-2.5">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold text-[10px]">
+                            {d.estadoDocumento}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-slate-700">{d.responsableRegistro}</td>
+                        <td className="p-2.5">
+                          {(() => {
+                            const certVinculado = d.certificadoId
+                              ? repoStore.certificados.find((c) => c.id === d.certificadoId)
+                              : undefined;
+                            return (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className="text-[10px] text-slate-600 max-w-[140px] truncate"
+                                  title={d.observaciones}
+                                >
+                                  {d.observaciones || '—'}
+                                </span>
+                                {d.archivoDataUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewDocRepo(d)}
+                                    className="px-2 py-0.5 rounded bg-[#0f5b53] text-white font-bold text-[10px] cursor-pointer shrink-0"
+                                  >
+                                    Ver
+                                  </button>
+                                )}
+                                {certVinculado && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => imprimirCertificadosCarta([certVinculado])}
+                                      className="px-2 py-0.5 rounded bg-slate-800 text-white font-bold text-[10px] cursor-pointer shrink-0"
+                                    >
+                                      Imprimir
+                                    </button>
+                                    {onGenerarCertificado && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          onGenerarCertificado(
+                                            construirContextoEdicionCert(certVinculado)
+                                          )
+                                        }
+                                        className="px-2 py-0.5 rounded bg-[#f97316] text-white font-bold text-[10px] cursor-pointer shrink-0"
+                                      >
+                                        Editar
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de vista previa / impresión de Certificado PDF */}
+      {previewCertPdf && (
+        <div className="fixed inset-0 z-[140] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#0f5b53] text-white">
+              <div>
+                <h4 className="font-black text-sm">
+                  Certificado {previewCertPdf.cert.codigoCertificado} —{' '}
+                  {previewCertPdf.cert.trabajadorNombre}
+                </h4>
+                <p className="text-[11px] text-teal-100">
+                  {previewCertPdf.cert.nombrePlan} · Emitido {previewCertPdf.cert.fechaEmision}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iframe = document.getElementById('cert-pdf-frame') as HTMLIFrameElement | null;
+                    iframe?.contentWindow?.print();
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 font-bold inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>Imprimir</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => descargarCertificadoPdf(previewCertPdf.cert)}
+                  className="px-3 py-1.5 rounded-lg bg-[#f97316] hover:bg-[#ea580c] text-white font-black inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Descargar PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewCertPdf(null)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <iframe
+              id="cert-pdf-frame"
+              src={previewCertPdf.dataUrl}
+              title={previewCertPdf.cert.codigoCertificado}
+              className="w-full h-[72vh] bg-slate-100"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal de vista previa de Documento de Repositorio */}
+      {previewDocRepo && previewDocRepo.archivoDataUrl && (
+        <div className="fixed inset-0 z-[140] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#0f172a] text-white">
+              <div>
+                <h4 className="font-black text-sm">
+                  {previewDocRepo.numeroRegistro} — {previewDocRepo.nombreArchivo}
+                </h4>
+                <p className="text-[11px] text-slate-300">
+                  {previewDocRepo.trabajadorNombre} ({previewDocRepo.cargo}) ·{' '}
+                  {previewDocRepo.tipoDocumento}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewDocRepo.archivoDataUrl}
+                  download={previewDocRepo.nombreArchivo}
+                  className="px-3 py-1.5 rounded-lg bg-[#f97316] text-white font-black inline-flex items-center gap-1"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Descargar</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDocRepo(null)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            {previewDocRepo.archivoDataUrl.startsWith('data:image/') ? (
+              <div className="p-4 flex items-center justify-center bg-slate-100 overflow-auto max-h-[72vh]">
+                <img
+                  src={previewDocRepo.archivoDataUrl}
+                  alt={previewDocRepo.nombreArchivo}
+                  className="max-w-full max-h-[65vh] rounded-lg shadow"
+                />
+              </div>
+            ) : (
+              <iframe
+                src={previewDocRepo.archivoDataUrl}
+                title={previewDocRepo.nombreArchivo}
+                className="w-full h-[72vh] bg-slate-100"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

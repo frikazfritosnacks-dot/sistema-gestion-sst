@@ -4,7 +4,8 @@ export type MainTabView =
   | 'matriz_tabla'
   | 'matriz_excel'
   | 'ficha_empresa'
-  | 'matriz_riesgos';
+  | 'matriz_riesgos'
+  | 'copasst';
 
 export type SeccionPlanAnualNav =
   | 'resumen'
@@ -15,7 +16,9 @@ export type SeccionPlanAnualNav =
   | 'presupuesto'
   | 'conexiones'
   | 'planes_riesgo'
-  | 'plan_emergencias';
+  | 'plan_emergencias'
+  | 'riesgo_psicosocial'
+  | 'copasst';
 
 export type EmpresaSubcategoriaNav =
   | 'organigrama'
@@ -40,6 +43,17 @@ export interface AssistantNavigationTarget {
   subIndicadores?: 'tablero' | 'captura' | 'riesgos' | 'estandares';
   subPresupuesto?: 'recursos' | 'reportes';
   subConexiones?: 'riesgosNormas' | 'personal' | 'puestos' | 'mejoras';
+  subPlanesMejora?: 'planes' | 'certificados' | 'repositorio';
+  subPsicosocial?: 'registro' | 'aplicacion' | 'repositorio' | 'consolidado' | 'excel';
+  subCopasst?:
+    | 'conformacion'
+    | 'votacion'
+    | 'miembros'
+    | 'funciones'
+    | 'notificaciones'
+    | 'simulacion'
+    | 'repositorio';
+  cargoPeligrosId?: string;
   subEmergencias?:
     | 'documento'
     | 'amenazas'

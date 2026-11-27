@@ -1,0 +1,1123 @@
+PROMPT GENERAL DE MEJORAS E INTEGRACIÓN DE FUNCIONES – HERRAMIENTA SG-SST FRIKAZ S.A.S.
+
+Necesito realizar una serie de mejoras y ajustes en la herramienta del Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST) de Frikaz S.A.S.
+
+Quiero que revises la estructura actual de la herramienta e integres las funciones que describo a continuación, respetando los apartados existentes y conectando la información para evitar registros duplicados.
+
+IMPORTANTE: No quiero que reconstruyas la herramienta desde cero ni que cambies su estructura general. Las mejoras deben realizarse sobre la aplicación que ya existe, conservando su diseño, colores, navegación, información, módulos y funciones que actualmente trabajan correctamente.
+
+CONDICIONES GENERALES OBLIGATORIAS
+
+Antes de realizar cualquier modificación, ten en cuenta lo siguiente:
+
+Conserva la estructura actual de la herramienta.
+
+No elimines información, registros, documentos ni evidencias existentes.
+
+No dupliques trabajadores, cargos, planes de mejora, indicadores ni registros.
+
+No crees módulos principales adicionales cuando se haya indicado que la función debe quedar dentro de un apartado existente.
+
+Reutiliza la información que ya está almacenada y relaciona los registros entre las diferentes secciones.
+
+Mantén los permisos de administración que tiene Andrea Orjuela como gerente.
+
+No inventes nombres, correos, fechas, resultados, asistencias, documentos, puntuaciones, niveles de riesgo ni información legal.
+
+Cuando falte información, utiliza el estado «Pendiente de verificación» o deja el campo editable para completarlo.
+
+Conserva los historiales de cambios y evita que una modificación elimine registros anteriores.
+
+Todos los botones, formularios, filtros, descargas, envíos de correo y funciones deben trabajar realmente. No quiero funciones decorativas ni simulaciones que aparenten realizar acciones.
+
+Utiliza el almacenamiento real de la aplicación para guardar los documentos y registros. No guardes información únicamente de manera temporal en la pantalla.
+
+Mantén la herramienta rápida y fluida, evitando recargas completas innecesarias al cambiar de apartado.
+
+La información debe estar organizada, ser fácil de consultar y utilizar un lenguaje claro y sencillo.
+
+INFORMACIÓN OFICIAL DE FRIKAZ S.A.S.
+
+La herramienta debe conservar los seis cargos operativos y administrativos oficiales que ya aparecen en el apartado «1. Equipo y responsabilidades SST»:
+
+Gerente.
+
+Operario de selección.
+
+Operario de pelado.
+
+Operario de frito.
+
+Operario de empaque.
+
+Conductor.
+
+El Vigía SST y los integrantes del COPASST son figuras de responsabilidad y representación dentro del SG-SST. No deben convertirse en cargos operativos adicionales ni reemplazar los seis cargos oficiales.
+
+1. EQUIPO Y RESPONSABILIDADES SST – REINCORPORAR EL VIGÍA SST
+
+Realiza este ajuste únicamente dentro del apartado existente «1. Equipo y responsabilidades SST».
+
+1.1. Agregar nuevamente al Vigía SST en el organigrama
+
+Incorpora nuevamente la figura del Vigía de Seguridad y Salud en el Trabajo.
+
+Debe aparecer de manera clara y organizada dentro del organigrama.
+
+Mantén los seis cargos oficiales existentes.
+
+El Vigía debe aparecer como una figura adicional de responsabilidad en SST, no como un nuevo cargo operativo ni como reemplazo de alguno de los seis cargos.
+
+Conserva el diseño visual actual y adapta su ubicación para que quede integrado con los demás responsables.
+
+1.2. Incluir las responsabilidades del Vigía SST
+
+Agrega un espacio donde se puedan consultar y editar sus responsabilidades.
+
+Incluye las siguientes:
+
+Apoyar la promoción de la seguridad y salud en el trabajo dentro de la empresa.
+
+Comunicar a la gerencia las condiciones inseguras y los posibles riesgos identificados.
+
+Promover la participación de los trabajadores en las actividades de SST.
+
+Apoyar la identificación de peligros y comunicar situaciones que puedan afectar la seguridad y salud de los trabajadores.
+
+Realizar seguimiento a las recomendaciones y acciones de mejora relacionadas con SST.
+
+Apoyar las actividades de prevención de accidentes y enfermedades laborales.
+
+Participar en las actividades de capacitación y socialización del SG-SST.
+
+Apoyar la comunicación de inquietudes, sugerencias y necesidades de los trabajadores en materia de SST.
+
+No inventes el nombre, correo ni datos personales del Vigía. Estos datos deben poder registrarse cuando estén disponibles.
+
+1.3. Enviar las responsabilidades al correo electrónico
+
+Agrega un botón visible llamado «ENVIAR RESPONSABILIDADES AL CORREO».
+
+Debe permitir:
+
+Ingresar o consultar el correo electrónico del Vigía.
+
+Mostrar las responsabilidades que se enviarán antes de realizar el envío.
+
+Enviar un correo con el nombre de Frikaz S.A.S. y las responsabilidades correspondientes.
+
+Utilizar un asunto como: «Responsabilidades del Vigía de Seguridad y Salud en el Trabajo – Frikaz S.A.S.».
+
+Presentar las responsabilidades de manera organizada y fácil de leer.
+
+Mostrar confirmación cuando el correo se envíe correctamente y un mensaje de error cuando falle.
+
+El envío debe realizarse realmente mediante el servicio de correo que ya esté configurado en la herramienta.
+
+2. PLAN ANUAL → PLANES MEJORA RIESGO
+
+Realiza las siguientes mejoras dentro del apartado existente «Planes mejora riesgo», donde actualmente aparecen los 10 planes de mejora.
+
+No crees otro módulo principal. Conserva los 10 planes existentes, sus datos, actividades y registros.
+
+Organiza este apartado mediante tres secciones o pestañas:
+
+Planes de mejora.
+
+Certificados.
+
+Repositorio documental.
+
+2.1. Conservar los 10 planes de mejora
+
+Mantén los 10 planes registrados.
+
+Permite consultar sus actividades, responsables, riesgos, evidencias y estados.
+
+No crees planes duplicados.
+
+Utiliza los registros existentes como fuente de información para las nuevas funciones.
+
+2.2. Generación de certificados de participación
+
+Crea una función para generar certificados de participación relacionados con los 10 planes de mejora.
+
+El funcionamiento debe ser:
+
+Seleccionar uno de los 10 planes.
+
+Consultar las actividades relacionadas.
+
+Consultar los registros de asistencia de cada actividad.
+
+Identificar los trabajadores que realmente participaron.
+
+Permitir generar un certificado individual para cada trabajador que tenga asistencia registrada y cumpla las condiciones de participación.
+
+Guardar automáticamente el certificado en el repositorio documental.
+
+Cada certificado debe contener:
+
+Logo de Frikaz S.A.S.
+
+Nombre de la empresa.
+
+Título «CERTIFICADO DE PARTICIPACIÓN».
+
+Nombre completo del trabajador.
+
+Cargo.
+
+Nombre del plan de mejora.
+
+Riesgo que se busca prevenir o controlar.
+
+Nombre de la actividad realizada.
+
+Fecha de realización.
+
+Intensidad horaria, únicamente si está registrada.
+
+Descripción breve del tema desarrollado.
+
+Nombre y cargo de quien certifica, si están registrados.
+
+Espacio para firma o aprobación.
+
+El certificado debe tener una presentación formal, estar organizado y permitir descargarlo en PDF e imprimirlo.
+
+Permite generar certificados individuales y descargar en conjunto los certificados disponibles de un plan de mejora.
+
+Reglas obligatorias:
+
+No generar certificados sin asistencia registrada.
+
+No inventar fechas, horas, actividades ni nombres.
+
+No considerar que una persona asistió solamente por pertenecer a la empresa.
+
+Si existen varias sesiones, consultar las asistencias de cada una.
+
+Evitar certificados duplicados por la misma participación.
+
+Si una asistencia se modifica después de emitir un certificado, advertir que puede afectar su validez y conservar el historial de cambios.
+
+2.3. Crear el repositorio documental
+
+Dentro de «Planes mejora riesgo», crea una sección llamada «Repositorio documental».
+
+Debe permitir almacenar:
+
+Registros de asistencia.
+
+Documentos cargados por los trabajadores.
+
+Evidencias de las actividades realizadas.
+
+Registros de capacitación.
+
+Evaluaciones de las actividades.
+
+Certificados generados.
+
+Otros soportes relacionados con los planes de mejora.
+
+Cada documento debe quedar relacionado con el trabajador, plan, riesgo y actividad que corresponda.
+
+Información que debe mostrar cada registro:
+
+Número de registro.
+
+Nombre del trabajador que lo registró.
+
+Cargo.
+
+Plan de mejora.
+
+Riesgo relacionado.
+
+Actividad correspondiente.
+
+Tipo de documento.
+
+Nombre del archivo.
+
+Fecha de la actividad.
+
+Fecha de registro.
+
+Estado del documento.
+
+Responsable del registro.
+
+Observaciones.
+
+Funciones necesarias:
+
+Cargar documentos desde el computador.
+
+Consultar y visualizar documentos.
+
+Descargar documentos individualmente.
+
+Buscar por trabajador.
+
+Filtrar por plan de mejora, riesgo, actividad y tipo de documento.
+
+Consultar documentos por fechas.
+
+Identificar quién cargó cada documento.
+
+Conservar el historial de documentos registrados.
+
+Los documentos deben permanecer almacenados al cambiar de sección o actualizar la herramienta.
+
+2.4. Descargar la trazabilidad en Excel
+
+Agrega un botón visible llamado:
+
+«DESCARGAR TRAZABILIDAD EN EXCEL».
+
+El archivo debe generarse con la información real y actualizada del repositorio.
+
+Incluye estas columnas:
+
+Número de registro.
+
+Nombre completo del trabajador.
+
+Cargo.
+
+Plan de mejora.
+
+Riesgo relacionado.
+
+Actividad realizada.
+
+Tipo de documento.
+
+Nombre del archivo.
+
+Fecha de realización.
+
+Fecha de registro.
+
+Estado de asistencia.
+
+Estado del certificado.
+
+Responsable del registro.
+
+Observaciones.
+
+Cuando sea posible, organiza el archivo en cuatro hojas:
+
+Hoja 1. Trazabilidad general: todos los registros relacionados con los 10 planes.
+
+Hoja 2. Asistencias: trabajadores y actividades en las que participaron.
+
+Hoja 3. Certificados: certificados generados, trabajador, plan y fecha de emisión.
+
+Hoja 4. Repositorio documental: documentos cargados, tipo de documento y responsable.
+
+Incluye encabezados claros, filtros y presentación organizada.
+
+El archivo debe actualizarse cada vez que se descargue, sin borrar ni reemplazar los registros del repositorio. Incluye referencias o enlaces a los documentos almacenados cuando sea posible.
+
+3. PLAN ANUAL → BATERÍA DE RIESGO PSICOSOCIAL
+
+Dentro de PLAN ANUAL, incorpora un apartado llamado «BATERÍA DE RIESGO PSICOSOCIAL».
+
+No lo conviertas en un módulo principal adicional. Debe quedar integrado en PLAN ANUAL y conservar el diseño actual.
+
+Organiza el apartado con las siguientes secciones:
+
+Registro de trabajadores.
+
+Aplicación y seguimiento.
+
+Repositorio de evaluaciones.
+
+Consolidado general.
+
+Descarga de Excel.
+
+3.1. Registro individual de trabajadores
+
+Permite registrar:
+
+Nombres y apellidos.
+
+Tipo de documento.
+
+Número de documento.
+
+Cargo.
+
+Área o proceso.
+
+Fecha de ingreso, si corresponde.
+
+Tipo de vinculación, si corresponde.
+
+Fecha de aplicación de la batería.
+
+Tipo de evaluación realizada.
+
+Profesional responsable.
+
+Estado de la evaluación.
+
+Relaciona los registros con los seis cargos oficiales de Frikaz S.A.S. No agregues cargos diferentes ni dupliques trabajadores.
+
+3.2. Aplicación y seguimiento de la batería
+
+Permite registrar el tipo de instrumento utilizado y los componentes que correspondan según la metodología autorizada:
+
+Forma A.
+
+Forma B.
+
+Evaluación de factores intralaborales.
+
+Evaluación de factores extralaborales.
+
+Evaluación de estrés.
+
+Otros instrumentos o componentes que correspondan.
+
+No inventes preguntas, formularios, puntuaciones, resultados ni interpretaciones.
+
+Permite adjuntar los documentos originales y soportes de aplicación. Si se incorpora un cuestionario, debe corresponder al instrumento oficial autorizado, conservando su contenido, estructura, instrucciones y forma de calificación.
+
+La aplicación, calificación e interpretación deben estar a cargo de un profesional competente y autorizado, de acuerdo con la normativa colombiana vigente.
+
+3.3. Repositorio de evaluaciones
+
+Crea una sección llamada «Repositorio de evaluaciones».
+
+Debe permitir:
+
+Guardar los registros individuales.
+
+Adjuntar documentos de cada evaluación.
+
+Almacenar soportes de aplicación.
+
+Consultar la fecha de evaluación.
+
+Identificar el tipo de instrumento aplicado.
+
+Consultar el estado del registro.
+
+Identificar al profesional responsable.
+
+Consultar y descargar documentos cuando el usuario tenga autorización.
+
+Buscar por trabajador, cargo, fecha o estado.
+
+Los documentos deben quedar almacenados permanentemente en el sistema de almacenamiento real de la aplicación.
+
+3.4. Consolidado de riesgo psicosocial
+
+Crea una sección llamada «Consolidado de riesgo psicosocial».
+
+Debe mostrar:
+
+Total de trabajadores registrados.
+
+Total de trabajadores evaluados.
+
+Evaluaciones pendientes.
+
+Evaluaciones realizadas.
+
+Evaluaciones con documentos pendientes.
+
+Fechas de aplicación.
+
+Distribución de registros por cargo.
+
+Estado general del proceso.
+
+Cuando existan resultados calificados por el profesional responsable, permite incorporar los niveles de riesgo correspondientes, siempre respaldados por resultados oficiales.
+
+El consolidado general no debe exponer innecesariamente información individual.
+
+No calcules niveles de riesgo, promedios ni porcentajes si no cuentas con los datos y reglas oficiales necesarias.
+
+3.5. Descargar consolidado en Excel
+
+Agrega un botón llamado «DESCARGAR CONSOLIDADO EN EXCEL».
+
+Organiza el archivo en cuatro hojas:
+
+Hoja 1. Consolidado general: total de trabajadores, evaluaciones realizadas, pendientes, distribución por cargo y estado general.
+
+Hoja 2. Registro de trabajadores: código interno, nombre, cargo, área o proceso, fecha de evaluación, tipo de evaluación y estado.
+
+Hoja 3. Seguimiento de evaluaciones: código, tipo de instrumento, fecha, profesional responsable, estado de evaluación, estado documental y observaciones administrativas.
+
+Hoja 4. Resultados generales: tipo de factor, cantidad de evaluaciones, resultados disponibles, nivel de riesgo oficialmente determinado y fecha de consolidación.
+
+El Excel debe utilizar los datos reales y actualizados, con filtros y encabezados claros.
+
+La exportación general debe priorizar información consolidada y sin identificación personal. La descarga de nombres, documentos de identidad y resultados individuales debe estar restringida a usuarios autorizados.
+
+3.6. Confidencialidad y protección de datos
+
+Este requisito es obligatorio.
+
+La información de riesgo psicosocial contiene datos personales sensibles. Por ello:
+
+No permitas que los trabajadores consulten las evaluaciones individuales de sus compañeros.
+
+Restringe los resultados individuales al personal autorizado y al profesional competente.
+
+No muestres resultados individuales en tableros generales.
+
+Restringe la descarga de información confidencial.
+
+Registra quién consulta, modifica o descarga información.
+
+Protege los documentos almacenados.
+
+No utilices los resultados para calificar, sancionar o discriminar trabajadores.
+
+No envíes resultados individuales por correo sin autorización y medidas de seguridad.
+
+Gestiona la información de acuerdo con la normativa colombiana vigente sobre factores de riesgo psicosocial, confidencialidad y protección de datos personales.
+
+4. PLAN ANUAL → INDICADORES
+
+Mejora el apartado existente «INDICADORES» dentro de PLAN ANUAL.
+
+Conserva los indicadores que ya existen y permite diligenciarlos directamente desde la herramienta.
+
+4.1. Información de cada indicador
+
+Cada indicador debe permitir registrar:
+
+Nombre.
+
+Objetivo.
+
+Qué permite medir.
+
+Fórmula de cálculo.
+
+Numerador.
+
+Denominador.
+
+Resultado obtenido.
+
+Unidad de medida.
+
+Meta establecida.
+
+Periodicidad.
+
+Fecha de medición.
+
+Responsable.
+
+Observaciones.
+
+Evidencia o documento de soporte.
+
+Los campos deben poder guardarse, consultarse y actualizarse.
+
+Cuando se diligencien los datos necesarios, calcula automáticamente el resultado mediante la fórmula correspondiente.
+
+Si faltan datos, indica qué información está pendiente. No muestres resultados inventados ni conviertas automáticamente un indicador sin datos en resultado cero.
+
+4.2. Explicación de cada indicador
+
+Agrega un espacio llamado «¿Qué permite medir este indicador?».
+
+Incluye una explicación corta y sencilla que indique:
+
+Qué aspecto del SG-SST evalúa.
+
+Qué información proporciona.
+
+Para qué le sirve a Frikaz S.A.S.
+
+Qué permite identificar con el resultado.
+
+Esta explicación debe ser visible al consultar cada indicador, sin recargar la pantalla.
+
+4.3. Indicadores relacionados con simulacros de emergencia
+
+Relaciona los indicadores con los simulacros que estén realmente programados o registrados en el Plan de Emergencias.
+
+Cuando existan datos, permite hacer seguimiento a:
+
+Participación de los trabajadores.
+
+Cumplimiento de simulacros programados.
+
+Tiempo de evacuación, cuando se haya medido.
+
+Dificultades identificadas durante la evacuación.
+
+Cumplimiento de procedimientos.
+
+Hallazgos y oportunidades de mejora.
+
+Explica brevemente qué permite evaluar cada indicador.
+
+No agregues simulacros que no estén programados ni registrados. No inventes tiempos, porcentajes ni resultados.
+
+4.4. Relacionar los indicadores con los demás registros
+
+Reutiliza la información existente de:
+
+Plan Anual.
+
+Actividades realizadas.
+
+Planes de mejora por riesgo.
+
+Plan de emergencias.
+
+Registros de asistencia.
+
+Capacitaciones.
+
+Inspecciones.
+
+Evidencias.
+
+Evaluaciones y seguimientos.
+
+No solicites registrar dos veces la misma información cuando pueda obtenerse de un registro existente.
+
+4.5. Seguimiento y visualización
+
+Permite identificar:
+
+Indicadores diligenciados.
+
+Indicadores pendientes.
+
+Indicadores que cumplen la meta.
+
+Indicadores que no cumplen la meta.
+
+Última fecha de medición.
+
+Evolución de resultados cuando existan mediciones anteriores.
+
+Utiliza gráficos sencillos únicamente cuando existan datos suficientes.
+
+Los indicadores sin información deben aparecer como «Pendiente de diligenciamiento», no como si tuvieran un resultado de cero.
+
+Conserva los registros anteriores y realiza los ajustes únicamente dentro del apartado INDICADORES.
+
+5. CREAR APARTADO COPASST
+
+Crea un apartado llamado «COPASST – Comité Paritario de Seguridad y Salud en el Trabajo» dentro de la herramienta de Frikaz S.A.S.
+
+Este apartado debe permitir organizar el comité, realizar el proceso de votación, registrar integrantes, consultar funciones, enviar notificaciones y realizar una simulación visual sobre el organigrama actual.
+
+5.1. Organización del apartado
+
+Organiza el contenido en:
+
+Conformación del comité.
+
+Votación y elección.
+
+Miembros del COPASST.
+
+Funciones y responsabilidades.
+
+Notificaciones por correo.
+
+Simulación del COPASST en el organigrama.
+
+Repositorio de documentos.
+
+5.2. Votación y elección
+
+Permite:
+
+Registrar fecha de convocatoria.
+
+Establecer fecha de votación.
+
+Registrar candidatos.
+
+Consultar nombre y cargo de cada candidato.
+
+Permitir que los trabajadores participen en la votación.
+
+Registrar los votos.
+
+Mostrar resultados.
+
+Identificar representante principal y suplente de los trabajadores, según el resultado y las reglas de elección aplicables.
+
+Generar un acta con los resultados.
+
+La votación debe garantizar libertad de elección y confidencialidad del voto. No debe permitir que una persona vote más de una vez.
+
+Incluye un espacio para registrar los representantes designados directamente por el empleador.
+
+Para los 10 trabajadores de Frikaz S.A.S., configura inicialmente la estructura correspondiente a su rango de personal, de acuerdo con la normativa aplicable: un representante principal del empleador y un suplente, y un representante principal de los trabajadores y un suplente.
+
+No asignes automáticamente los integrantes. Los nombres deben registrarse después de la elección o designación correspondiente.
+
+Verifica la normativa colombiana vigente antes de establecer requisitos legales, periodos, composición y procedimientos. Si algún dato requiere confirmación, indícalo como pendiente de verificación.
+
+5.3. Registro de miembros
+
+Permite registrar:
+
+Nombre completo.
+
+Número de identificación.
+
+Cargo dentro de Frikaz S.A.S.
+
+Correo electrónico.
+
+Representación: empleador o trabajadores.
+
+Tipo de participación: principal o suplente.
+
+Fecha de elección o designación.
+
+Fecha de inicio del periodo.
+
+Fecha de finalización del periodo.
+
+Estado: activo o inactivo.
+
+Los cargos deben seleccionarse de los seis cargos oficiales existentes.
+
+Permite editar y consultar la información, conservando el historial de periodos anteriores.
+
+5.4. Funciones y responsabilidades
+
+Incluye una sección para consultar las funciones del COPASST de forma sencilla.
+
+Incorpora, según la normativa aplicable:
+
+Proponer actividades que ayuden a mejorar la seguridad y salud de los trabajadores.
+
+Promover la participación de los trabajadores en las actividades de SST.
+
+Apoyar las inspecciones de seguridad.
+
+Revisar las condiciones de trabajo e informar sobre posibles peligros.
+
+Participar en la investigación de accidentes de trabajo cuando corresponda.
+
+Proponer medidas para prevenir accidentes y enfermedades laborales.
+
+Apoyar las actividades de capacitación y promoción de SST.
+
+Realizar seguimiento a las recomendaciones relacionadas con SST.
+
+Participar en las reuniones y dejar registro de los temas tratados.
+
+Comunicar a la gerencia las situaciones que requieran atención.
+
+Permite consultar las funciones, asignar responsables cuando corresponda y registrar las actividades realizadas.
+
+5.5. Notificaciones por correo electrónico
+
+Agrega una función llamada «ENVIAR NOTIFICACIÓN AL CORREO».
+
+Debe permitir enviar comunicaciones a integrantes del COPASST y trabajadores cuando corresponda.
+
+Incluye opciones para notificar:
+
+Convocatoria a elecciones.
+
+Apertura del proceso de votación.
+
+Fecha y horario de votación.
+
+Resultados de elección.
+
+Designación de representantes del empleador.
+
+Conformación oficial del comité.
+
+Convocatorias a reuniones.
+
+Recordatorios de actividades.
+
+Comunicación de funciones y responsabilidades.
+
+Antes de enviar, permite visualizar el contenido y seleccionar los destinatarios.
+
+Utiliza el servicio de correo ya configurado en la herramienta. El envío debe ser real y mostrar confirmación o error según el resultado.
+
+5.6. Simulación del COPASST en el organigrama
+
+Agrega un botón llamado:
+
+«SIMULAR COPASST EN EL ORGANIGRAMA».
+
+Al seleccionarlo, abre una representación visual del organigrama que ya existe en Frikaz S.A.S.
+
+No crees un organigrama diferente.
+
+La simulación debe permitir:
+
+Seleccionar trabajadores de los registros existentes.
+
+Visualizar sus nombres y cargos.
+
+Identificar representante del empleador.
+
+Identificar representante de los trabajadores.
+
+Diferenciar principales y suplentes.
+
+Resaltar visualmente a las personas seleccionadas.
+
+Mostrar la etiqueta «POSIBLE INTEGRANTE DEL COPASST».
+
+Identificar fácilmente a los posibles integrantes dentro del organigrama.
+
+Utiliza distintivos visuales diferentes para:
+
+Representante principal del empleador.
+
+Suplente del empleador.
+
+Representante principal de los trabajadores.
+
+Suplente de los trabajadores.
+
+La simulación es únicamente una propuesta visual. No debe convertir automáticamente a los seleccionados en integrantes oficiales.
+
+Después de realizar la elección y designación, debe existir una opción para confirmar la conformación oficial. Solo después de esa confirmación se actualizarán los registros oficiales del comité.
+
+5.7. Repositorio documental del COPASST
+
+Permite conservar y consultar:
+
+Convocatorias.
+
+Listados de candidatos.
+
+Registros de votación.
+
+Actas de elección.
+
+Actas de conformación.
+
+Designaciones del empleador.
+
+Registro de integrantes.
+
+Actas de reuniones.
+
+Evidencias de actividades.
+
+Capacitaciones relacionadas con el comité.
+
+Permite descargar documentos y conservar su historial.
+
+5.8. Relación con el SG-SST
+
+Relaciona la información del COPASST con:
+
+Equipo y responsabilidades SST.
+
+Identificación de peligros y evaluación de riesgos.
+
+Plan Anual.
+
+Planes de mejora por riesgo.
+
+Plan de emergencias.
+
+Capacitaciones.
+
+Inspecciones.
+
+Indicadores.
+
+Evidencias.
+
+No dupliques registros ni inventes integrantes, resultados de votación, fechas o designaciones.
+
+6. ORGANIGRAMA → PELIGROS Y RIESGOS POR CARGO
+
+Realiza una mejora en el organigrama existente de Frikaz S.A.S. para que cada uno de los seis cargos oficiales tenga un apartado donde se puedan consultar los peligros y riesgos relacionados con sus actividades.
+
+No crees otro organigrama ni modifiques la estructura visual actual.
+
+6.1. Apartado de riesgos para cada cargo
+
+Al seleccionar cualquiera de los seis cargos, debe abrirse una ventana o panel con una opción llamada:
+
+«PELIGROS Y RIESGOS DEL CARGO».
+
+Los seis cargos son:
+
+Gerente.
+
+Operario de selección.
+
+Operario de pelado.
+
+Operario de frito.
+
+Operario de empaque.
+
+Conductor.
+
+Cada cargo debe mostrar información relacionada únicamente con las actividades que realmente realiza.
+
+6.2. Información que debe mostrar cada cargo
+
+Al ingresar a un cargo, presenta:
+
+Nombre del cargo.
+
+Descripción de las actividades que realiza.
+
+Peligros identificados.
+
+Riesgos asociados a cada peligro.
+
+Posibles consecuencias para la seguridad y salud del trabajador.
+
+Medidas de prevención y control.
+
+Elementos de protección personal requeridos, cuando correspondan.
+
+Nivel de riesgo registrado en la matriz de peligros.
+
+Evidencias o documentos relacionados.
+
+Organiza la información en una tabla clara y fácil de consultar.
+
+6.3. Relación obligatoria con la matriz de peligros
+
+Esta es una condición fundamental.
+
+No inventes una lista de riesgos independiente para cada cargo.
+
+La información debe obtenerse de la matriz de identificación de peligros y evaluación de riesgos que ya existe en la herramienta.
+
+El funcionamiento debe ser:
+
+Consultar los peligros y riesgos registrados en la matriz.
+
+Identificar las actividades relacionadas con cada peligro.
+
+Relacionar las actividades con los cargos que realmente las realizan.
+
+Mostrar los riesgos correspondientes dentro del apartado de cada cargo.
+
+Actualizar la información cuando se modifique la matriz.
+
+No asignes todos los riesgos a todos los cargos.
+
+Cada cargo debe mostrar únicamente los peligros y riesgos relacionados con sus actividades y exposición real.
+
+Si un riesgo no tiene una relación clara con un cargo, debe aparecer como «Pendiente de validación» y no asignarse automáticamente.
+
+6.4. Presentación visual de los riesgos
+
+Utiliza tarjetas o tablas con la siguiente información:
+
+Actividad: actividad que realiza el trabajador.
+
+Peligro: fuente o situación que puede causar daño.
+
+Riesgo: posible situación de daño o exposición.
+
+Consecuencia: posible afectación.
+
+Control: medida para prevenir o reducir el riesgo.
+
+Nivel de riesgo: resultado registrado en la matriz.
+
+Utiliza los colores del semáforo de riesgos que ya maneja la herramienta, respetando los niveles registrados en la matriz.
+
+No cambies ni recalcules los niveles de riesgo sin contar con los datos y criterios correspondientes.
+
+6.5. Consulta desde el organigrama
+
+Cuando el usuario seleccione un cargo, debe poder consultar:
+
+Información general del cargo.
+
+Actividades que realiza.
+
+Peligros a los que está expuesto.
+
+Riesgos asociados.
+
+Controles establecidos.
+
+Recomendaciones de prevención.
+
+Agrega un botón para regresar al organigrama sin perder la información ni tener que volver a cargar toda la herramienta.
+
+6.6. Relación con los demás apartados
+
+Relaciona la información de cada cargo con:
+
+Matriz de identificación de peligros y evaluación de riesgos.
+
+Equipo y responsabilidades SST.
+
+Plan Anual.
+
+Planes de mejora por riesgo.
+
+Capacitaciones.
+
+Entrega de elementos de protección personal.
+
+Inspecciones.
+
+Indicadores.
+
+Plan de emergencias.
+
+Ejemplo: si el operario de frito tiene un riesgo asociado a las altas temperaturas, debe poder relacionarse con las actividades de prevención, controles, capacitaciones y planes de mejora correspondientes, cuando existan registros.
+
+No dupliques información. Utiliza los mismos registros almacenados en la herramienta.
+
+6.7. Actualización automática de la consulta
+
+Cuando se actualice la matriz de peligros, los apartados de los cargos deben reflejar los cambios correspondientes.
+
+Si se modifica una actividad, peligro o control, actualiza su relación con el cargo correspondiente.
+
+Conserva el historial de cambios y no elimines registros anteriores.
+
+7. CONEXIÓN GENERAL ENTRE LOS APARTADOS
+
+Todas las mejoras anteriores deben funcionar de manera relacionada.
+
+La información no debe quedar aislada en cada sección.
+
+Conecta los registros cuando corresponda:
+
+El organigrama debe consultar los seis cargos oficiales.
+
+La matriz de peligros debe alimentar la consulta de riesgos por cargo.
+
+Los riesgos priorizados deben relacionarse con los planes de mejora.
+
+Los planes de mejora deben relacionarse con actividades, asistencias, evidencias y certificados.
+
+Los documentos deben conservarse en sus repositorios correspondientes.
+
+Los indicadores deben consultar los registros reales de actividades, inspecciones, capacitaciones y simulacros.
+
+El COPASST debe poder consultar información pertinente del SG-SST y registrar sus actividades.
+
+El Vigía SST debe poder consultar sus responsabilidades y recibirlas por correo.
+
+La batería de riesgo psicosocial debe conservar su información individual bajo controles especiales de confidencialidad.
+
+Evita que un mismo dato tenga que registrarse varias veces.
+
+Cuando una información ya exista en otro apartado, permite consultarla o relacionarla desde allí.
+
+8. DISEÑO, SEGURIDAD Y FUNCIONAMIENTO
+
+Conserva la identidad visual de Frikaz S.A.S., sus colores, estilos, organización y navegación.
+
+Las nuevas funciones deben integrarse de manera ordenada, profesional y sencilla.
+
+Verifica que funcionen realmente:
+
+Organigrama y consulta de riesgos por cargo.
+
+Registro y consulta del Vigía SST.
+
+Envío de responsabilidades al correo.
+
+Consulta de los 10 planes de mejora.
+
+Registro de asistencias.
+
+Generación y descarga de certificados PDF.
+
+Carga, almacenamiento y descarga de documentos.
+
+Exportación de trazabilidad a Excel.
+
+Registro y seguimiento de riesgo psicosocial.
+
+Protección de la información confidencial.
+
+Diligenciamiento y cálculo de indicadores.
+
+Relación de indicadores con simulacros.
+
+Votación y elección del COPASST.
+
+Registro de integrantes.
+
+Simulación del COPASST en el organigrama.
+
+Envío real de notificaciones.
+
+Repositorios y conservación de documentos.
+
+Protege los datos personales de los trabajadores y respeta los permisos de cada usuario.
+
+Mantén los permisos de edición y administración que ya tiene Andrea Orjuela como gerente.
+
+No expongas información médica o psicosocial individual a usuarios no autorizados.
+
+No permitas que un usuario sin autorización apruebe, elimine o modifique información que no le corresponda.
+
+9. VERIFICACIÓN ANTES DE FINALIZAR
+
+Antes de dar por terminadas las mejoras, revisa cada función y comprueba que realmente trabaja.
+
+No basta con mostrar botones o pantallas.
+
+Verifica que:
+
+Los registros se guarden y permanezcan después de actualizar la herramienta.
+
+Los documentos se almacenen en el sistema real.
+
+Los correos se envíen realmente y se informe si el envío falla.
+
+Los certificados se generen únicamente con asistencias válidas.
+
+Los Excel se descarguen con información real y actualizada.
+
+Los indicadores calculen resultados únicamente cuando existan datos suficientes.
+
+La información de riesgo psicosocial permanezca protegida.
+
+La votación del COPASST respete la confidencialidad y evite votos duplicados.
+
+La simulación del COPASST no cambie automáticamente la conformación oficial.
+
+Los riesgos por cargo provengan de la matriz existente.
+
+Las modificaciones conserven el historial de información.
+
+Las funciones anteriores de la herramienta continúen trabajando correctamente.
+
+Si una función depende de un servicio externo que no está configurado, no simules que funciona. Identifica claramente qué falta para habilitarla y conserva las demás funciones operativas.
+
+RESULTADO FINAL ESPERADO
+
+Quiero que la herramienta de Frikaz S.A.S. quede mejor organizada y conectada, incorporando las mejoras del Vigía SST, los 10 planes de mejora con certificados y repositorio documental, la batería de riesgo psicosocial, los indicadores, el COPASST y la consulta de peligros y riesgos por cada uno de los seis cargos del organigrama.
+
+Todo debe funcionar utilizando los datos reales que ya existen en la aplicación, conservando la información anterior, evitando duplicidades, protegiendo los datos personales y manteniendo el diseño actual de Frikaz S.A.S.
+
+No reconstruyas la herramienta ni elimines sus funciones actuales. Integra estas mejoras dentro de la estructura existente y verifica cada función antes de finalizar.

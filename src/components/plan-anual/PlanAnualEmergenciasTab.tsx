@@ -1,5 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { ActividadPlanAnual, EvidenciaActividad } from '../../types/planAnual';
+import type {
+  ActividadPlanAnual,
+  EvidenciaActividad,
+  TrabajadorFichaSST,
+} from '../../types/planAnual';
 import type {
   ActividadCapacitacionSimulacro,
   EscenarioEmergenciaFrikaz,
@@ -19,9 +23,12 @@ import {
   useGerenteAutorizado,
   type EstadoEstandarFrikaz,
 } from '../../services/gerenteControlService';
+import type { CapacitacionCertificadoContext } from '../../types/planMejoraRepositorio';
 import { CajaCalidadVisualCard } from './PlanAnualCajaCalidadEditor';
+import { PlanAnualEmergenciasPrimerosAuxiliosPanel } from './PlanAnualEmergenciasPrimerosAuxiliosPanel';
 import {
   AlertTriangle,
+  Award,
   BookOpen,
   Calendar,
   CheckCircle2,
@@ -29,6 +36,7 @@ import {
   Download,
   FileText,
   Flame,
+  HeartPulse,
   MapPin,
   Paperclip,
   PhoneCall,
@@ -43,6 +51,7 @@ import {
 interface PlanAnualEmergenciasTabProps {
   planEmergencias: PlanEmergenciasFrikaz;
   formatos: Record<string, FormatoEditableDocumento>;
+  trabajadores?: TrabajadorFichaSST[];
   actividadesPlan?: ActividadPlanAnual[];
   onAbrirActividadPlan?: (
     act: ActividadPlanAnual,
@@ -58,6 +67,7 @@ interface PlanAnualEmergenciasTabProps {
     contexto: string,
     onSave: (nextMat: MaterialCapacitacionPlan) => void
   ) => void;
+  onGenerarCertificado?: (ctx: CapacitacionCertificadoContext) => void;
 }
 
 export type SubVistaEmergencias =
@@ -65,11 +75,13 @@ export type SubVistaEmergencias =
   | 'amenazas'
   | 'recursos_org'
   | 'capacitaciones'
+  | 'primeros_auxilios'
   | 'formatos_cierre';
 
 export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = ({
   planEmergencias,
   formatos,
+  trabajadores = [],
   actividadesPlan = [],
   onAbrirActividadPlan,
   externalSubVista,
@@ -78,6 +90,7 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
   onSavePlanEmergencias,
   onAbrirFormato,
   onAbrirCapacitacion,
+  onGenerarCertificado,
 }) => {
   const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
   const [subVista, setSubVista] = useState<SubVistaEmergencias>(externalSubVista || 'amenazas');
@@ -409,6 +422,11 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
             { id: 'documento' as const, label: 'Documento completo (20 puntos)', icon: FileText },
             { id: 'recursos_org' as const, label: 'Equipos, Rutas y Roles (10 trab.)', icon: Users },
             { id: 'capacitaciones' as const, label: 'Capacitaciones y Simulacros', icon: BookOpen },
+            {
+              id: 'primeros_auxilios' as const,
+              label: `Primeros Auxilios (Brigada) (${(planEmergencias.actividadesPrimerosAuxilios || []).length})`,
+              icon: HeartPulse,
+            },
             { id: 'formatos_cierre' as const, label: 'Formatos, Soportes y Aprobación', icon: ClipboardCheck },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -1194,6 +1212,203 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
                         </select>
                       </div>
                     </div>
+                    {act.tipo === 'SIMULACRO' && (
+                      <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3 space-y-2 mt-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-black text-rose-900">
+                            Registro real de ejecución del simulacro (alimenta Indicadores)
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-600">
+                            {act.registroSimulacro?.fechaEjecucionReal
+                              ? `Ejecutado: ${act.registroSimulacro.fechaEjecucionReal}`
+                              : 'Pendiente de ejecución'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                              Fecha real ejecutada
+                            </label>
+                            <input
+                              type="date"
+                              value={act.registroSimulacro?.fechaEjecucionReal || ''}
+                              onChange={(e) =>
+                                handleUpdateActividadCap(act, {
+                                  registroSimulacro: {
+                                    ...act.registroSimulacro,
+                                    fechaEjecucionReal: e.target.value,
+                                    fechaRegistro: new Date().toISOString().split('T')[0],
+                                  },
+                                })
+                              }
+                              className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                              Participantes esperados
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={act.registroSimulacro?.participantesEsperados ?? ''}
+                              placeholder="Ej. 10"
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const val = raw.trim() === '' ? null : Math.max(0, Number(raw));
+                                handleUpdateActividadCap(act, {
+                                  registroSimulacro: {
+                                    ...act.registroSimulacro,
+                                    participantesEsperados: val,
+                                    fechaRegistro: new Date().toISOString().split('T')[0],
+                                  },
+                                });
+                              }}
+                              className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                              Participantes reales
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={act.registroSimulacro?.participantesReales ?? ''}
+                              placeholder="Sin dato"
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const val = raw.trim() === '' ? null : Math.max(0, Number(raw));
+                                handleUpdateActividadCap(act, {
+                                  registroSimulacro: {
+                                    ...act.registroSimulacro,
+                                    participantesReales: val,
+                                    fechaRegistro: new Date().toISOString().split('T')[0],
+                                  },
+                                });
+                              }}
+                              className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                              Tiempo evac. (min)
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={act.registroSimulacro?.tiempoEvacuacionMinutos ?? ''}
+                              placeholder="Min"
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const val = raw.trim() === '' ? null : Math.max(0, Number(raw));
+                                handleUpdateActividadCap(act, {
+                                  registroSimulacro: {
+                                    ...act.registroSimulacro,
+                                    tiempoEvacuacionMinutos: val,
+                                    fechaRegistro: new Date().toISOString().split('T')[0],
+                                  },
+                                });
+                              }}
+                              className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                              Tiempo evac. (seg)
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={59}
+                              value={act.registroSimulacro?.tiempoEvacuacionSegundos ?? ''}
+                              placeholder="Seg"
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const val = raw.trim() === '' ? null : Math.max(0, Math.min(59, Number(raw)));
+                                handleUpdateActividadCap(act, {
+                                  registroSimulacro: {
+                                    ...act.registroSimulacro,
+                                    tiempoEvacuacionSegundos: val,
+                                    fechaRegistro: new Date().toISOString().split('T')[0],
+                                  },
+                                });
+                              }}
+                              className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                              Cumplimiento procedim.
+                            </label>
+                            <select
+                              value={
+                                act.registroSimulacro?.cumplimientoProcedimientos ||
+                                'Pendiente de verificación'
+                              }
+                              onChange={(e) =>
+                                handleUpdateActividadCap(act, {
+                                  registroSimulacro: {
+                                    ...act.registroSimulacro,
+                                    cumplimientoProcedimientos: e.target.value as
+                                      | 'Cumplido'
+                                      | 'Cumplido parcialmente'
+                                      | 'No cumplido'
+                                      | 'Pendiente de verificación',
+                                    fechaRegistro: new Date().toISOString().split('T')[0],
+                                  },
+                                })
+                              }
+                              className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white font-bold"
+                            >
+                              <option value="Pendiente de verificación">Pendiente de verificación</option>
+                              <option value="Cumplido">Cumplido</option>
+                              <option value="Cumplido parcialmente">Cumplido parcialmente</option>
+                              <option value="No cumplido">No cumplido</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={act.registroSimulacro?.dificultadesIdentificadas || ''}
+                            onChange={(e) =>
+                              handleUpdateActividadCap(act, {
+                                registroSimulacro: {
+                                  ...act.registroSimulacro,
+                                  dificultadesIdentificadas: e.target.value,
+                                  fechaRegistro: new Date().toISOString().split('T')[0],
+                                },
+                              })
+                            }
+                            placeholder="Dificultades identificadas en planta..."
+                            className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white"
+                          />
+                          <input
+                            type="text"
+                            value={act.registroSimulacro?.hallazgosYOportunidades || ''}
+                            onChange={(e) =>
+                              handleUpdateActividadCap(act, {
+                                registroSimulacro: {
+                                  ...act.registroSimulacro,
+                                  hallazgosYOportunidades: e.target.value,
+                                  fechaRegistro: new Date().toISOString().split('T')[0],
+                                },
+                              })
+                            }
+                            placeholder="Hallazgos y oportunidades de mejora..."
+                            className="w-full rounded-lg border border-slate-300 px-2 py-1 text-[11px] bg-white"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-2 border-t border-[#e8f2ef] flex flex-wrap gap-2">
@@ -1216,6 +1431,46 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
                         <span>Abrir Guía y Asistencia</span>
                       </button>
                     )}
+
+                    {onGenerarCertificado &&
+                      (act.tipo === 'CAPACITACION' || Boolean(act.materialCapacitacion)) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const fechaConfirmada =
+                              act.materialCapacitacion?.asistenciaRegistrada?.find(
+                                (a) => a.asistio && a.fecha
+                              )?.fecha ||
+                              act.registroSimulacro?.fechaEjecucionReal ||
+                              '';
+                            onGenerarCertificado({
+                              capacitacionKey: `EMG:${act.id}`,
+                              origenModulo: 'PLAN_EMERGENCIAS',
+                              planId: `EMG:${act.id}`,
+                              nombrePlan:
+                                'Plan de Prevención, Preparación y Respuesta ante Emergencias',
+                              riesgoCodigo: 'EMERGENCIAS',
+                              nombreRiesgo: act.titulo,
+                              actividadId: act.id,
+                              nombreCapacitacion:
+                                act.materialCapacitacion?.nombre || act.titulo,
+                              fechaRealizacion: fechaConfirmada,
+                              duracionHoras: act.materialCapacitacion?.duracionSugerida || '',
+                              responsableNombre: act.responsable?.includes('Andrea Orjuela')
+                                ? 'Andrea Orjuela'
+                                : '',
+                              responsableCargo: act.responsable || '',
+                              observaciones: '',
+                              asistenciaRegistrada:
+                                act.materialCapacitacion?.asistenciaRegistrada,
+                            });
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Award className="h-3.5 w-3.5" />
+                          <span>GENERAR CERTIFICADO</span>
+                        </button>
+                      )}
 
                     {act.tipo === 'SIMULACRO' && (
                       <>
@@ -1334,6 +1589,28 @@ export const PlanAnualEmergenciasTab: React.FC<PlanAnualEmergenciasTabProps> = (
             </div>
           </div>
         </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* SUB-VISTA 4B: PRIMEROS AUXILIOS (BRIGADA DE EMERGENCIAS)             */}
+      {/* ==================================================================== */}
+      {subVista === 'primeros_auxilios' && (
+        <PlanAnualEmergenciasPrimerosAuxiliosPanel
+          actividades={planEmergencias.actividadesPrimerosAuxilios || []}
+          trabajadores={trabajadores}
+          actividadesPlan={actividadesPlan}
+          onAbrirActividadPlan={onAbrirActividadPlan}
+          onSaveActividades={(nextActividades, auditDetail) => {
+            onSavePlanEmergencias(
+              {
+                ...planEmergencias,
+                actividadesPrimerosAuxilios: nextActividades,
+              },
+              auditDetail
+            );
+            showToast(auditDetail || 'Actividades de Primeros Auxilios (Brigada) actualizadas.');
+          }}
+        />
       )}
 
       {/* ==================================================================== */}

@@ -133,10 +133,39 @@ export interface RiesgoGTC45Item {
   medidaControlesIngenieria: string;
   medidaControlesAdministrativos: string;
   medidaEquiposEPP: string;
+  eppItems?: EppItemRiesgo[];
 
   // Metadata opcional
   observaciones?: string;
   fechaEvaluacion?: string;
   estadoControl?: EstadoEstandarFrikaz;
   revisionGerente?: RegistroRevisionGerente;
+}
+
+export type EstadoEntregaEppRiesgo =
+  | 'Pendiente de registro'
+  | 'Pendiente de entrega'
+  | 'Entregado parcialmente'
+  | 'Entregado'
+  | 'No aplica';
+
+export interface EvidenciaEppRiesgo {
+  id: string;
+  nombreArchivo: string;
+  descripcion?: string;
+  fechaCarga: string;
+  archivoDataUrl?: string;
+}
+
+export interface EppItemRiesgo {
+  id: string;
+  aplicaEpp: boolean;
+  nombreEpp: string;
+  justificacionUso: string;
+  cargosEspecificos: string[];
+  estadoEntrega: EstadoEntregaEppRiesgo;
+  fechaEntrega?: string;
+  responsableEntrega: string;
+  evidencias: EvidenciaEppRiesgo[];
+  observaciones?: string;
 }

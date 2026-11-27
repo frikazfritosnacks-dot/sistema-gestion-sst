@@ -26,6 +26,7 @@ import {
   ShieldAlert,
   Scale,
   UserCheck,
+  Award,
 } from 'lucide-react';
 
 interface PlanAnualCronogramaTabProps {
@@ -37,9 +38,17 @@ interface PlanAnualCronogramaTabProps {
     initialTab?: 'datos' | 'evidencias' | 'historial'
   ) => void;
   onEliminarActividad: (actividadId: string) => void;
+  onGenerarCertificado?: (act: ActividadPlanAnual) => void;
   externalSearch?: string;
   externalEstadoFiltro?: string;
   navNonce?: number;
+}
+
+export function esActividadCapacitacion(act: ActividadPlanAnual): boolean {
+  return Boolean(
+    act.capacitacionNombre ||
+      /capacit|charla|inducci|orientaci|socializaci/i.test(act.nombre)
+  );
 }
 
 const MESES_CORTOS = [
@@ -58,12 +67,14 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
   onNuevaActividad,
   onAbrirActividad,
   onEliminarActividad,
+  onGenerarCertificado,
   externalSearch,
   externalEstadoFiltro,
   navNonce,
 }) => {
   const [vista, setVista] = useState<'gantt' | 'calendario' | 'lista'>('gantt');
   const [busqueda, setBusqueda] = useState(externalSearch || '');
+  const [soloCapacitaciones, setSoloCapacitaciones] = useState(false);
   const [filtroMes, setFiltroMes] = useState<string>('TODOS');
   const [filtroTrimestre, setFiltroTrimestre] = useState<'TODOS' | 'Q1' | 'Q2' | 'Q3' | 'Q4'>('TODOS');
   const [filtroArea, setFiltroArea] = useState<AreaPlanAnual | 'TODAS'>('TODAS');
@@ -127,6 +138,7 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
         filtroEstado === 'TODOS' || normalizarEstadoEstandar(a.estado) === filtroEstado;
       const matchResp =
         filtroResponsable === 'TODOS' || a.responsableNombre === filtroResponsable;
+      const matchCap = !soloCapacitaciones || esActividadCapacitacion(a);
       return (
         matchQ &&
         matchMes &&
@@ -135,12 +147,14 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
         matchOrigen &&
         matchRec &&
         matchEstado &&
-        matchResp
+        matchResp &&
+        matchCap
       );
     });
   }, [
     plan.actividades,
     busqueda,
+    soloCapacitaciones,
     filtroMes,
     filtroTrimestre,
     filtroArea,
@@ -215,14 +229,29 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={onNuevaActividad}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] shadow-xs cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ Nueva Tarea</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSoloCapacitaciones((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl font-black border cursor-pointer transition-colors ${
+                soloCapacitaciones
+                  ? 'bg-[#0f5b53] text-white border-[#0f5b53]'
+                  : 'bg-[#f4faf8] text-[#0d3b36] border-[#b9dad3] hover:bg-[#e5f3ef]'
+              }`}
+              title="Filtrar solo las capacitaciones para generar certificados"
+            >
+              <Award className="h-4 w-4 text-[#f97316]" />
+              <span>Solo capacitaciones</span>
+            </button>
+            <button
+              type="button"
+              onClick={onNuevaActividad}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Nueva Tarea</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100">
@@ -467,6 +496,17 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                       })}
                       <td className="p-3 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1">
+                          {onGenerarCertificado && esActividadCapacitacion(act) && (
+                            <button
+                              type="button"
+                              onClick={() => onGenerarCertificado(act)}
+                              className="px-2 py-1 rounded-lg bg-[#f97316] hover:bg-[#ea580c] text-white font-black text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                              title="Generar certificado de participación"
+                            >
+                              <Award className="h-3 w-3" />
+                              <span>GENERAR CERTIFICADO</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => onAbrirActividad(act, 'evidencias')}
@@ -626,7 +666,17 @@ export const PlanAnualCronogramaTab: React.FC<PlanAnualCronogramaTabProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    {onGenerarCertificado && esActividadCapacitacion(act) && (
+                      <button
+                        type="button"
+                        onClick={() => onGenerarCertificado(act)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f97316] text-white font-black hover:bg-[#ea580c] cursor-pointer"
+                      >
+                        <Award className="h-3.5 w-3.5" />
+                        <span>GENERAR CERTIFICADO</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onAbrirActividad(act, 'evidencias')}

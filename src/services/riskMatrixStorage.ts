@@ -10,6 +10,7 @@ import {
   normalizarTextoCargo,
   resolverCargoPrincipalYExpuestos,
 } from '../data/cargosOficiales';
+import { asegurarEppItemsEnRiesgo } from './eppRiesgoCatalogoService';
 
 const STORAGE_KEY = 'frikaz_gtc45_matrix_v2';
 const STORAGE_KEY_BACKUP = 'frikaz_gtc45_backup_pre6cargos_v1';
@@ -113,6 +114,13 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
             };
           }
 
+          if (!Array.isArray(nextItem.eppItems) || nextItem.eppItems.length === 0) {
+            nextItem = {
+              ...nextItem,
+              eppItems: asegurarEppItemsEnRiesgo(nextItem),
+            };
+          }
+
           return nextItem;
         });
 
@@ -148,6 +156,7 @@ export function loadStoredRisks(): RiesgoGTC45Item[] {
   }
   return RIESGOS_GTC45_DATASET.map((r) => ({
     ...r,
+    eppItems: asegurarEppItemsEnRiesgo(r),
     estadoControl: normalizarEstadoEstandar(r.estadoControl || 'Por hacer'),
   }));
 }

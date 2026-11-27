@@ -45,6 +45,7 @@ const STORAGE_KEY_MEJORA_EMERGENCIAS = 'frikaz_planes_mejora_emergencias_v1';
 const STORAGE_KEY_MEJORA_BACKUP_CARGOS = 'frikaz_mejora_emg_backup_pre6cargos_v1';
 const REORG_2027_FLAG_MEJORA = 'frikaz_mejora_emg_2027_reorg_v1';
 const CARGOS_6_FLAG_MEJORA = 'frikaz_mejora_emg_6_cargos_v1';
+const CALOR_30MIN_MIGRATION_FLAG = 'frikaz_calor_extremo_30min_v1';
 
 // ============================================================================
 // 1. PERSISTENCIA Y SINCRONIZACIÓN CON LA MATRIZ DE RIESGOS GTC 45
@@ -89,6 +90,11 @@ export function loadPlanesMejoraEmergenciasStore(
       ? {
           ...emergenciasSeed,
           ...parsed.planEmergencias,
+          actividadesPrimerosAuxilios:
+            Array.isArray(parsed.planEmergencias.actividadesPrimerosAuxilios) &&
+            parsed.planEmergencias.actividadesPrimerosAuxilios.length > 0
+              ? parsed.planEmergencias.actividadesPrimerosAuxilios
+              : emergenciasSeed.actividadesPrimerosAuxilios || [],
           cajaCalidad: {
             ...emergenciasSeed.cajaCalidad,
             ...(parsed.planEmergencias.cajaCalidad || {}),
@@ -263,6 +269,31 @@ export function loadPlanesMejoraEmergenciasStore(
       };
 
       localStorage.setItem(CARGOS_6_FLAG_MEJORA, '1');
+      dirty = true;
+    }
+
+    if (localStorage.getItem(CALOR_30MIN_MIGRATION_FLAG) !== '1') {
+      const seedCalor = planesSeed.find((s) => s.claveReferencia === 'calor_extremo');
+      const frase30Min =
+        'Establecer intervalos de descanso de 30 minutos para favorecer la aclimatación al calor, organizando pausas en espacios frescos y ventilados, con acceso a hidratación y seguimiento de las condiciones de exposición de los trabajadores.';
+
+      mergedPlanes = mergedPlanes.map((p) => {
+        if (p.claveReferencia !== 'calor_extremo' && p.id !== 'pmr-calor_extremo') {
+          return p;
+        }
+        const yaTiene30Min = p.actividadMejoraPropuesta
+          .toLowerCase()
+          .includes('intervalos de descanso de 30 minutos');
+        const nuevaActividad = yaTiene30Min
+          ? p.actividadMejoraPropuesta
+          : `${frase30Min} ${p.actividadMejoraPropuesta}`.trim();
+        return {
+          ...p,
+          actividadMejoraPropuesta: nuevaActividad,
+          calorExtremoControl: p.calorExtremoControl || seedCalor?.calorExtremoControl,
+        };
+      });
+      localStorage.setItem(CALOR_30MIN_MIGRATION_FLAG, '1');
       dirty = true;
     }
 
@@ -1038,6 +1069,19 @@ export async function exportarPlanEmergenciasCompletoWordDocx(
         c.fechaProgramada,
         c.responsable,
         c.estado,
+      ])
+    ),
+
+    headingSec('17B. PRIMEROS AUXILIOS (BRIGADA DE EMERGENCIAS)'),
+    crearTablaSimpleDocx(
+      ['Actividad', 'Tipo', 'Programada', 'Realización', 'Responsable', 'Estado'],
+      (plan.actividadesPrimerosAuxilios || []).map((pa) => [
+        pa.nombre,
+        pa.tipoActividad,
+        pa.fechaProgramada || 'Pendiente',
+        pa.fechaRealizacion || 'Pendiente de registro',
+        pa.responsable,
+        pa.estado,
       ])
     ),
 

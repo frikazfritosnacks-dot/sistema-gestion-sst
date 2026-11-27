@@ -10,6 +10,7 @@ import {
 } from '../../services/planMejoraEmergenciasService';
 import { crearCajaCalidadEditable } from '../../services/planMejoraEmergenciasData';
 import {
+  Award,
   BookOpen,
   CheckCircle2,
   Download,
@@ -486,6 +487,7 @@ interface MaterialCapacitacionModalProps {
   tituloContexto?: string;
   onClose: () => void;
   onSaveMaterial: (next: MaterialCapacitacionPlan) => void;
+  onGenerarCertificado?: () => void;
 }
 
 export const MaterialCapacitacionModal: React.FC<MaterialCapacitacionModalProps> = ({
@@ -493,6 +495,7 @@ export const MaterialCapacitacionModal: React.FC<MaterialCapacitacionModalProps>
   tituloContexto,
   onClose,
   onSaveMaterial,
+  onGenerarCertificado,
 }) => {
   const [draft, setDraft] = useState<MaterialCapacitacionPlan | null>(material);
   const [caja, setCaja] = useState<CajaCalidadEditable>(() =>
@@ -544,6 +547,16 @@ export const MaterialCapacitacionModal: React.FC<MaterialCapacitacionModalProps>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {onGenerarCertificado && (
+              <button
+                type="button"
+                onClick={onGenerarCertificado}
+                className="px-3 py-1.5 rounded-xl bg-[#0f172a] text-white font-black hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Award className="h-3.5 w-3.5 text-[#fed7aa]" />
+                <span>GENERAR CERTIFICADO</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleGuardar}

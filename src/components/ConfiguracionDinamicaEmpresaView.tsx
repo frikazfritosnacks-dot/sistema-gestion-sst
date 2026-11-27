@@ -76,6 +76,7 @@ interface ConfiguracionDinamicaEmpresaViewProps {
   onOpenNormaModal: (norma: NormaPhvaItem) => void;
   onOpenMatrizExcel: () => void;
   navigationRequest?: AssistantNavigationTarget | null;
+  onNavigate?: (target: AssistantNavigationTarget) => void;
 }
 
 export const ConfiguracionDinamicaEmpresaView: React.FC<
@@ -87,6 +88,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
   onOpenNormaModal,
   onOpenMatrizExcel,
   navigationRequest,
+  onNavigate,
 }) => {
   // Subcategoría activa dentro de Configuración Dinámica (Organigrama, Políticas, Caracterización)
   const [subcategoriaActiva, setSubcategoriaActiva] = useState<SubcategoriaConfiguracionDinamica>('organigrama');
@@ -430,7 +432,7 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
               1. Equipo y Responsabilidades SST
             </span>
             <span className="block text-[10px] font-normal opacity-85 text-purple-200">
-              Quién cuida qué en los 7 cargos · Descarga en Word (.DOCX)
+              6 cargos oficiales + Vigía SST · Peligros · Word (.DOCX)
             </span>
           </div>
         </button>
@@ -522,7 +524,15 @@ export const ConfiguracionDinamicaEmpresaView: React.FC<
 
       {/* SUBCATEGORÍA 1: ORGANIGRAMA Y RESPONSABILIDADES SST */}
       {subcategoriaActiva === 'organigrama' && (
-        <OrganigramaInteractivoView onIrAPoliticas={() => setSubcategoriaActiva('politicas')} />
+        <OrganigramaInteractivoView
+          onIrAPoliticas={() => setSubcategoriaActiva('politicas')}
+          onNavigate={onNavigate}
+          initialCargoPeligrosId={
+            navigationRequest?.tab === 'ficha_empresa'
+              ? navigationRequest.cargoPeligrosId
+              : undefined
+          }
+        />
       )}
 
       {/* SUBCATEGORÍA 2: POLÍTICAS DEL SG-SST */}

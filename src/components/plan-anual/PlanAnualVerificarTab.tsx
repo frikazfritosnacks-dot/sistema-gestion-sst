@@ -5,30 +5,43 @@ import {
   AlertaPlanAnual,
   EvaluacionEstandarMinimo,
   HojaVidaIndicadorSST,
+  MedicionDirectaIndicador,
   PlanAnualVigencia,
   RegistroPeriodoIndicador,
   ResponsablePlanOption,
   TrabajadorFichaSST,
 } from '../../types/planAnual';
+import type {
+  PlanEmergenciasFrikaz,
+  PlanMejoraPorRiesgo,
+} from '../../types/planAnualMejoraEmergencias';
 import { RiesgoGTC45Item } from '../../types/gtc45RiskMatrix';
 import { CaracterizacionEmpresaDinamica } from '../../types/dynamicConfig';
 import {
   MESES_NOMBRES,
+  calcularResultadoDirectoIndicador,
   calcularResultadoIndicadorPeriodo,
   exportarIndicadoresExcel,
   obtenerSoportesRealesEstandar,
 } from '../../services/planAnualSgsstService';
-import { extraerMedidasRiesgo } from '../../services/planAnualService';
+import {
+  calcularResumenPresupuestoPlan,
+  extraerMedidasRiesgo,
+} from '../../services/planAnualService';
 import { PlanAnualAlertasEvidenciasTab } from './PlanAnualAlertasEvidenciasTab';
 import {
   Award,
+  CheckCircle2,
+  Clock,
   Database,
   Download,
   ExternalLink,
   FileCheck2,
   Filter,
+  Flame,
   Info,
   Layers,
+  Paperclip,
   Plus,
   RefreshCw,
   Save,
@@ -62,6 +75,9 @@ interface PlanAnualVerificarTabProps {
   onSaveRegistroPeriodo: (registro: RegistroPeriodoIndicador) => void;
   onSyncTrabajadoresPeriodos: (anio: number) => void;
   onAddIndicadorCustom: (nuevo: HojaVidaIndicadorSST) => void;
+  onUpdateHojaVidaIndicador?: (updated: HojaVidaIndicadorSST, auditDetail?: string) => void;
+  planesMejora?: PlanMejoraPorRiesgo[];
+  planEmergencias?: PlanEmergenciasFrikaz;
   onUpdateEstandar: (estandar: EvaluacionEstandarMinimo) => void;
   onAbrirActividad: (
     act: ActividadPlanAnual,
@@ -126,6 +142,9 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   onSaveRegistroPeriodo,
   onSyncTrabajadoresPeriodos,
   onAddIndicadorCustom,
+  onUpdateHojaVidaIndicador,
+  planesMejora = [],
+  planEmergencias,
   onUpdateEstandar,
   onAbrirActividad,
   onCrearAccionDesdeVerificar,
@@ -136,6 +155,21 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   const [hojaAbiertaId, setHojaAbiertaId] = useState<string | null>(null);
   const [mostrarArchivoAnteriores, setMostrarArchivoAnteriores] = useState(false);
   const [exportando, setExportando] = useState(false);
+  const [directSaveMsg, setDirectSaveMsg] = useState<string | null>(null);
+  const [directDrafts, setDirectDrafts] = useState<
+    Record<
+      string,
+      {
+        numerador: string;
+        denominador: string;
+        factor: string;
+        fecha: string;
+        obs: string;
+        evNombre: string;
+        evDataUrl: string;
+      }
+    >
+  >({});
 
   React.useEffect(() => {
     setSubTab(subTabInicial);
@@ -169,6 +203,186 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
   const [editingEstandarNum, setEditingEstandarNum] = useState<number | null>(null);
   const [estandarDraft, setEstandarDraft] = useState<EvaluacionEstandarMinimo | null>(null);
   const { esGerente, nombreGerente, solicitarAccesoGerente } = useGerenteAutorizado();
+
+  const getDirectDraft = (ind: HojaVidaIndicadorSST) => {
+    const existing = directDrafts[ind.id];
+    if (existing) return existing;
+    const defaultEscala =
+      ind.factorEscalaManual !== undefined
+        ? ind.factorEscalaManual
+        : ind.formula.includes('100.000')
+        ? 100000
+        : ind.formula.includes('100') || ind.unidadMedida.includes('%')
+        ? 100
+        : 1;
+    return {
+      numerador:
+        ind.numeradorManual !== null && ind.numeradorManual !== undefined
+          ? String(ind.numeradorManual)
+          : '',
+      denominador:
+        ind.denominadorManual !== null && ind.denominadorManual !== undefined
+          ? String(ind.denominadorManual)
+          : '',
+      factor: String(defaultEscala),
+      fecha: ind.fechaMedicionManual || new Date().toISOString().split('T')[0],
+      obs: ind.observacionesIndicador || '',
+      evNombre: ind.evidenciaSoporteNombre || '',
+      evDataUrl: ind.evidenciaSoporteDataUrl || '',
+    };
+  };
+
+  const updateDirectDraft = (
+    ind: HojaVidaIndicadorSST,
+    patch: Partial<{
+      numerador: string;
+      denominador: string;
+      factor: string;
+      fecha: string;
+      obs: string;
+      evNombre: string;
+      evDataUrl: string;
+    }>
+  ) => {
+    const base = getDirectDraft(ind);
+    setDirectDrafts((prev) => ({
+      ...prev,
+      [ind.id]: { ...base, ...patch },
+    }));
+  };
+
+  const handleGuardarMedicionDirecta = (ind: HojaVidaIndicadorSST) => {
+    if (!onUpdateHojaVidaIndicador) return;
+    const d = getDirectDraft(ind);
+    const numVal = d.numerador.trim() === '' ? null : Number(d.numerador);
+    const denVal = d.denominador.trim() === '' ? null : Number(d.denominador);
+    const factorVal = d.factor.trim() === '' ? undefined : Number(d.factor);
+    const nextInd: HojaVidaIndicadorSST = {
+      ...ind,
+      numeradorManual: numVal !== null && !Number.isNaN(numVal) && numVal >= 0 ? numVal : null,
+      denominadorManual: denVal !== null && !Number.isNaN(denVal) && denVal >= 0 ? denVal : null,
+      factorEscalaManual:
+        factorVal !== undefined && !Number.isNaN(factorVal) && factorVal > 0 ? factorVal : undefined,
+      fechaMedicionManual: d.fecha || undefined,
+      observacionesIndicador: d.obs.trim() || undefined,
+      evidenciaSoporteNombre: d.evNombre || undefined,
+      evidenciaSoporteDataUrl: d.evDataUrl || undefined,
+    };
+    const resDirecto = calcularResultadoDirectoIndicador(nextInd);
+    if (resDirecto.tieneDatosSuficientes && resDirecto.valorCalculado !== null) {
+      const nuevaMedicion: MedicionDirectaIndicador = {
+        id: `med-${ind.id}-${Date.now()}`,
+        fecha: d.fecha || new Date().toISOString().split('T')[0],
+        numerador: nextInd.numeradorManual as number,
+        denominador: nextInd.denominadorManual as number,
+        factorEscala:
+          nextInd.factorEscalaManual ??
+          (ind.formula.includes('100.000')
+            ? 100000
+            : ind.formula.includes('100') || ind.unidadMedida.includes('%')
+            ? 100
+            : 1),
+        resultado: resDirecto.valorCalculado,
+        observaciones: d.obs.trim() || undefined,
+        evidenciaNombre: d.evNombre || undefined,
+        responsable: esGerente ? nombreGerente : 'Equipo SST Frikaz S.A.S.',
+      };
+      nextInd.historicoMedicionesManuales = [
+        nuevaMedicion,
+        ...(ind.historicoMedicionesManuales || []),
+      ].slice(0, 24);
+    }
+    onUpdateHojaVidaIndicador(
+      nextInd,
+      resDirecto.tieneDatosSuficientes
+        ? `${ind.codigo}: ${resDirecto.valorCalculado} ${ind.unidadMedida}`
+        : `${ind.codigo}: Pendiente de diligenciamiento`
+    );
+    setDirectSaveMsg(
+      resDirecto.tieneDatosSuficientes
+        ? `Medición de ${ind.codigo} guardada (${resDirecto.valorCalculado} ${ind.unidadMedida}).`
+        : `Cambios de ${ind.codigo} guardados (estado: ${resDirecto.estadoEtiqueta}).`
+    );
+  };
+
+  const resumenOperativoPlan = useMemo(() => {
+    const total = plan.actividades.length;
+    const cumplidas = plan.actividades.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
+    const enProceso = plan.actividades.filter(
+      (a) => normalizarEstadoEstandar(a.estado) === 'En proceso'
+    ).length;
+    const pendientes = plan.actividades.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return est === 'Por hacer' || est === 'Pendiente de revisión' || est === 'Devuelto para ajustes';
+    }).length;
+    const reprogramadas = plan.actividades.filter(
+      (a) => Boolean(a.reprogramacionOrigen) || Boolean(a.reprogramadaParaAnio)
+    ).length;
+    const presupuesto = calcularResumenPresupuestoPlan(
+      plan.actividades,
+      plan.presupuestoGeneralAprobado || 0
+    );
+    const pctCumplimiento = total > 0 ? Math.round((cumplidas / total) * 1000) / 10 : null;
+    const planesCerrados = planesMejora.filter((p) => {
+      const est = normalizarEstadoEstandar(p.estado);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
+    const accionesCerradas = accionesMejora.filter((a) => {
+      const est = normalizarEstadoEstandar(a.estado);
+      return est === 'Cumplido' || est === 'Aprobado';
+    }).length;
+    return {
+      total,
+      cumplidas,
+      enProceso,
+      pendientes,
+      reprogramadas,
+      pctCumplimiento,
+      presupuesto,
+      planesTotal: planesMejora.length,
+      planesCerrados,
+      accionesTotal: accionesMejora.length,
+      accionesCerradas,
+    };
+  }, [plan.actividades, plan.presupuestoGeneralAprobado, planesMejora, accionesMejora]);
+
+  const resumenSimulacros = useMemo(() => {
+    const simulacros = (planEmergencias?.programaCapacitacionSimulacros || []).filter(
+      (a) => a.tipo === 'SIMULACRO'
+    );
+    const ejecutados = simulacros.filter((s) => Boolean(s.registroSimulacro?.fechaEjecucionReal));
+    const participantesEsp = simulacros.reduce(
+      (sum, s) => sum + (s.registroSimulacro?.participantesEsperados ?? 0),
+      0
+    );
+    const participantesReales = simulacros.reduce(
+      (sum, s) => sum + (s.registroSimulacro?.participantesReales ?? 0),
+      0
+    );
+    const coberturaPct =
+      participantesEsp > 0
+        ? Math.round((participantesReales / participantesEsp) * 1000) / 10
+        : null;
+    const brigadaActs = planEmergencias?.actividadesPrimerosAuxilios || [];
+    const brigadaRealizadas = brigadaActs.filter((a) => a.estado === 'Realizada').length;
+    const brigadaEnProceso = brigadaActs.filter((a) => a.estado === 'En proceso').length;
+    const brigadaPendientes = brigadaActs.filter((a) => a.estado === 'Pendiente').length;
+    return {
+      simulacros,
+      programados: simulacros.length,
+      ejecutadosCount: ejecutados.length,
+      coberturaPct,
+      participantesEsp,
+      participantesReales,
+      brigadaTotal: brigadaActs.length,
+      brigadaRealizadas,
+      brigadaEnProceso,
+      brigadaPendientes,
+    };
+  }, [planEmergencias]);
 
   const activosCount = useMemo(
     () => trabajadores.filter((t) => t.estadoLaboral === 'ACTIVO').length,
@@ -427,6 +641,121 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
       {/* =================================================================== */}
       {subTab === 'tablero' && (
         <div className="space-y-4">
+          {directSaveMsg && (
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2.5 text-emerald-950 font-bold flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                {directSaveMsg}
+              </span>
+              <button
+                type="button"
+                onClick={() => setDirectSaveMsg(null)}
+                className="text-[11px] underline cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          )}
+
+          {/* Barra superior KPI de resumen real (sin inventar ceros) */}
+          {(() => {
+            const evals = hojasVidaIndicadores.map((ind) => {
+              const directo = calcularResultadoDirectoIndicador(ind);
+              const esAnual = ind.periodicidad === 'ANUAL';
+              const regActual = esAnual
+                ? registroConsolidadoAnual
+                : filtroMes > 0
+                ? registrosAnio.find((r) => r.mes === filtroMes) || registroConsolidadoAnual
+                : [...registrosMensualesFiltrados].reverse().find((r) => r.validado) ||
+                  registrosMensualesFiltrados[registrosMensualesFiltrados.length - 1] ||
+                  registroConsolidadoAnual;
+              const perRes = calcularResultadoIndicadorPeriodo(ind, regActual, trabajadores, config);
+              const tieneDato = directo.tieneDatosSuficientes || perRes.valor !== null;
+              const cumple = directo.tieneDatosSuficientes
+                ? directo.cumpleMeta
+                : perRes.valor !== null
+                ? perRes.estadoSemaforo === 'VERDE'
+                : null;
+              return { tieneDato, cumple };
+            });
+            const diligenciados = evals.filter((e) => e.tieneDato).length;
+            const pendientesInd = hojasVidaIndicadores.length - diligenciados;
+            const cumpliendo = evals.filter((e) => e.cumple === true).length;
+            const atencion = evals.filter((e) => e.cumple === false).length;
+
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                <div className="rounded-xl border border-[#b9dad3] bg-white p-3">
+                  <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                    Total indicadores
+                  </span>
+                  <span className="text-lg font-black text-[#0f172a] font-mono">
+                    {hojasVidaIndicadores.length}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">Res. 0312 + propios</span>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                  <span className="text-[10px] font-bold uppercase text-emerald-800 block">
+                    Diligenciados
+                  </span>
+                  <span className="text-lg font-black text-emerald-950 font-mono">
+                    {diligenciados}
+                  </span>
+                  <span className="text-[10px] text-emerald-700 block">
+                    Pendientes: {pendientesInd}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                  <span className="text-[10px] font-bold uppercase text-amber-800 block">
+                    En meta / Atención
+                  </span>
+                  <span className="text-lg font-black text-amber-950 font-mono">
+                    {cumpliendo} / {atencion}
+                  </span>
+                  <span className="text-[10px] text-amber-800 block">
+                    {diligenciados === 0 ? 'Pendiente de diligenciamiento' : 'Según mediciones reales'}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-[#b9dad3] bg-white p-3">
+                  <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                    Plan Anual {anioActivo}
+                  </span>
+                  <span className="text-lg font-black text-[#0f5b53] font-mono">
+                    {resumenOperativoPlan.cumplidas}/{resumenOperativoPlan.total}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">
+                    {resumenOperativoPlan.pctCumplimiento !== null
+                      ? `${resumenOperativoPlan.pctCumplimiento}% cumplidas`
+                      : 'Pendiente de diligenciamiento'}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-[#b9dad3] bg-white p-3">
+                  <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                    Presupuesto ejec.
+                  </span>
+                  <span className="text-lg font-black text-[#0f172a] font-mono">
+                    ${resumenOperativoPlan.presupuesto.ejecutado.toLocaleString('es-CO')}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">
+                    De ${resumenOperativoPlan.presupuesto.aprobado.toLocaleString('es-CO')}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-3">
+                  <span className="text-[10px] font-bold uppercase text-orange-900 block">
+                    Simulacros {anioActivo}
+                  </span>
+                  <span className="text-lg font-black text-[#0f172a] font-mono">
+                    {resumenSimulacros.ejecutadosCount}/{resumenSimulacros.programados}
+                  </span>
+                  <span className="text-[10px] text-orange-800 block">
+                    {resumenSimulacros.ejecutadosCount === 0
+                      ? 'Pendiente de ejecución'
+                      : 'Ejecutados reales'}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Filtros de periodo y explicación de Semaforización */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
@@ -489,7 +818,7 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                   Rojo: Superamos el límite permitido; requiere acción en ACTUAR.
                 </span>
                 <span className="px-2 py-1 rounded bg-slate-200 text-slate-800 font-bold">
-                  Gris: Faltan datos por registrar (no se inventa un cero).
+                  Gris: Pendiente de diligenciamiento (no se inventa un cero).
                 </span>
               </div>
             </div>
@@ -662,13 +991,46 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                     calcularResultadoIndicadorPeriodo(ind, regM, trabajadores, config)
                   );
 
+              const directo = calcularResultadoDirectoIndicador(ind);
+              const draft = getDirectDraft(ind);
+              const draftNum = draft.numerador.trim() === '' ? null : Number(draft.numerador);
+              const draftDen = draft.denominador.trim() === '' ? null : Number(draft.denominador);
+              const draftFactor = draft.factor.trim() === '' ? undefined : Number(draft.factor);
+              const previewDirecto = calcularResultadoDirectoIndicador({
+                ...ind,
+                numeradorManual:
+                  draftNum !== null && !Number.isNaN(draftNum) && draftNum >= 0 ? draftNum : null,
+                denominadorManual:
+                  draftDen !== null && !Number.isNaN(draftDen) && draftDen >= 0 ? draftDen : null,
+                factorEscalaManual:
+                  draftFactor !== undefined && !Number.isNaN(draftFactor) && draftFactor > 0
+                    ? draftFactor
+                    : undefined,
+                fechaMedicionManual: draft.fecha || undefined,
+              });
+
               const maxValChart = Math.max(
                 1,
                 ind.metaValor || 1,
-                ...serie.map((s) => (s && s.valor !== null ? s.valor : 0))
+                ...serie.map((s) => (s && s.valor !== null ? s.valor : 0)),
+                ...(ind.historicoMedicionesManuales || []).map((m) => m.resultado)
               );
+              const tienePuntosSerie = serie.some((s) => s !== null && s.valor !== null);
+              const tieneHistoricoDirecto = (ind.historicoMedicionesManuales || []).length > 0;
               const hojaAbierta = hojaAbiertaId === ind.id;
-              const semStyle = COLOR_SEMAFORO[resultado.estadoSemaforo];
+
+              const valorMostrar =
+                directo.tieneDatosSuficientes && directo.valorCalculado !== null
+                  ? directo.valorCalculado
+                  : resultado.valor;
+
+              const estadoSemaforoEfectivo: 'VERDE' | 'AMARILLO' | 'ROJO' | 'GRIS' =
+                directo.tieneDatosSuficientes
+                  ? directo.cumpleMeta
+                    ? 'VERDE'
+                    : 'ROJO'
+                  : resultado.estadoSemaforo;
+              const semStyle = COLOR_SEMAFORO[estadoSemaforoEfectivo];
 
               return (
                 <div
@@ -705,25 +1067,27 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                       <p className="text-[11px] text-slate-600">{ind.definicion}</p>
                     </div>
 
-                    {/* Resultado real o estado faltante */}
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 min-w-[230px] text-right shrink-0">
+                    {/* Resultado real o estado faltante (nunca inventa 0) */}
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 min-w-[240px] text-right shrink-0">
                       <span className="text-[10px] font-bold uppercase text-slate-500 block">
-                        Periodo mostrado: {resultado.periodoLabel}
+                        {directo.tieneDatosSuficientes
+                          ? `Medición directa (${ind.fechaMedicionManual || 'Registrada'})`
+                          : `Periodo mostrado: ${resultado.periodoLabel}`}
                       </span>
-                      {resultado.valor !== null ? (
+                      {valorMostrar !== null ? (
                         <span className="text-2xl font-black font-mono text-[#0f172a]">
-                          {resultado.valor}{' '}
+                          {valorMostrar}{' '}
                           <span className="text-xs font-bold text-slate-500">
                             {ind.unidadMedida}
                           </span>
                         </span>
                       ) : (
                         <span className="text-xs font-black text-amber-800 block mt-1">
-                          {resultado.estadoCalculo === 'PENDIENTE_REGISTRO'
-                            ? 'Información pendiente de registro'
+                          {directo.estadoEtiqueta === 'Denominador en cero'
+                            ? 'Denominador en cero (no divisible)'
                             : resultado.estadoCalculo === 'PENDIENTE_VALIDACION'
                             ? 'Pendiente de validación'
-                            : 'Cálculo no disponible (denominador 0)'}
+                            : 'Pendiente de diligenciamiento'}
                         </span>
                       )}
                       <span className="text-[10px] text-slate-500 block mt-1">
@@ -732,11 +1096,172 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                     </div>
                   </div>
 
+                  {/* ¿Qué permite medir este indicador? (siempre visible en cada tarjeta) */}
+                  <div className="rounded-xl border border-[#cce3dd] bg-[#f4faf8] p-3.5 space-y-1.5">
+                    <p className="text-[11px] font-black text-[#0d3b36] flex items-center gap-1.5">
+                      <Info className="h-3.5 w-3.5 text-[#0f6b61] shrink-0" />
+                      <span>¿Qué permite medir este indicador?</span>
+                    </p>
+                    {ind.quePermiteMedir ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+                        <div>
+                          <strong className="text-[#0f5b53]">Aspecto que evalúa: </strong>
+                          {ind.quePermiteMedir.aspectoEvalua}
+                        </div>
+                        <div>
+                          <strong className="text-[#0f5b53]">Información que proporciona: </strong>
+                          {ind.quePermiteMedir.informacionProporciona}
+                        </div>
+                        <div>
+                          <strong className="text-[#0f5b53]">Utilidad en Frikaz S.A.S.: </strong>
+                          {ind.quePermiteMedir.utilidadFrikaz}
+                        </div>
+                        <div>
+                          <strong className="text-[#0f5b53]">Qué permite identificar: </strong>
+                          {ind.quePermiteMedir.quePermiteIdentificar}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-700">
+                        {ind.objetivo || ind.definicion} — {ind.interpretacionBase}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Diligenciamiento directo dentro de la tarjeta */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-black text-[#0f172a]">
+                        Diligenciamiento directo del indicador ({ind.formula})
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                          previewDirecto.tieneDatosSuficientes
+                            ? previewDirecto.cumpleMeta
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                              : 'bg-rose-100 text-rose-900 border-rose-300'
+                            : 'bg-amber-50 text-amber-900 border-amber-200'
+                        }`}
+                      >
+                        {previewDirecto.tieneDatosSuficientes
+                          ? `Cálculo en vivo: ${previewDirecto.valorCalculado} ${ind.unidadMedida}`
+                          : previewDirecto.estadoEtiqueta}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                          Numerador
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={draft.numerador}
+                          onChange={(e) => updateDirectDraft(ind, { numerador: e.target.value })}
+                          placeholder="Pendiente"
+                          className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                          Denominador
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={draft.denominador}
+                          onChange={(e) => updateDirectDraft(ind, { denominador: e.target.value })}
+                          placeholder="Pendiente"
+                          className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                          Escala fórmula
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={draft.factor}
+                          onChange={(e) => updateDirectDraft(ind, { factor: e.target.value })}
+                          className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
+                          Fecha de medición
+                        </label>
+                        <input
+                          type="date"
+                          value={draft.fecha}
+                          onChange={(e) => updateDirectDraft(ind, { fecha: e.target.value })}
+                          className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={() => handleGuardarMedicionDirecta(ind)}
+                          disabled={!onUpdateHojaVidaIndicador}
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0f5b53] hover:bg-[#0d4a44] text-white font-black text-xs cursor-pointer disabled:opacity-50"
+                        >
+                          <Save className="h-3.5 w-3.5" />
+                          <span>Guardar medición</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={draft.obs}
+                        onChange={(e) => updateDirectDraft(ind, { obs: e.target.value })}
+                        placeholder="Observaciones reales de la medición o fuente verificada..."
+                        className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-[11px] font-bold text-slate-700 hover:bg-slate-100 cursor-pointer shrink-0">
+                          <Paperclip className="h-3.5 w-3.5 text-[#0f6b61]" />
+                          <span>{draft.evNombre ? 'Cambiar soporte' : 'Adjuntar soporte'}</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg,.xlsx,.docx"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (!f) return;
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                updateDirectDraft(ind, {
+                                  evNombre: f.name,
+                                  evDataUrl: typeof reader.result === 'string' ? reader.result : '',
+                                });
+                              };
+                              reader.readAsDataURL(f);
+                            }}
+                          />
+                        </label>
+                        {draft.evNombre && (
+                          <span className="text-[11px] text-[#0f5b53] font-bold truncate">
+                            {draft.evNombre}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Interpretación automática en lenguaje sencillo */}
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <strong className="text-[#0f172a]">Qué significa este resultado: </strong>
-                      {resultado.interpretacionAutomatica}
+                      {directo.tieneDatosSuficientes
+                        ? `Con numerador ${ind.numeradorManual} y denominador ${ind.denominadorManual}, el resultado directo calculado es ${directo.valorCalculado} ${ind.unidadMedida} (${directo.cumpleMeta ? 'cumple meta' : 'requiere revisión frente a la meta'} ${ind.metaTexto}).`
+                        : resultado.valor !== null
+                        ? resultado.interpretacionAutomatica
+                        : 'Pendiente de diligenciamiento. Registra los valores reales en los campos de arriba o en Captura de datos mensuales para calcular automáticamente.'}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
@@ -746,15 +1271,19 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                       >
                         {hojaAbierta ? 'Ocultar Hoja de Vida' : 'Ver Hoja de Vida Completa'}
                       </button>
-                      {(resultado.estadoSemaforo === 'ROJO' ||
-                        resultado.estadoSemaforo === 'AMARILLO') && (
+                      {(estadoSemaforoEfectivo === 'ROJO' ||
+                        estadoSemaforoEfectivo === 'AMARILLO') && (
                         <button
                           type="button"
                           onClick={() =>
                             onCrearAccionDesdeVerificar({
                               origen: 'INDICADORES',
                               tipo: 'CORRECTIVA',
-                              situacionEncontrada: `Resultado del indicador ${ind.codigo} (${ind.nombre}) en ${resultado.periodoLabel}: ${resultado.interpretacionAutomatica}`,
+                              situacionEncontrada: `Resultado del indicador ${ind.codigo} (${ind.nombre}) en ${resultado.periodoLabel}: ${
+                                directo.tieneDatosSuficientes
+                                  ? `${directo.valorCalculado} ${ind.unidadMedida}`
+                                  : resultado.interpretacionAutomatica
+                              }`,
                               queSeNecesitaCorregir: `Analizar causas y llevar el indicador dentro de la meta (${ind.metaTexto}).`,
                               actividadARealizar: `Revisar novedades de ${resultado.periodoLabel} e implementar medidas de prevención en planta.`,
                             })
@@ -767,75 +1296,102 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                     </div>
                   </div>
 
-                  {/* Gráfico SVG limpio de comportamiento en el tiempo */}
+                  {/* Gráfico SVG limpio solo cuando exista al menos una medición real */}
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 space-y-2">
                     <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold">
                       <span>
                         Comportamiento {esAnual ? 'por Año' : `mes a mes (${anioActivo})`} — Actualizado:{' '}
-                        {resultado.fechaActualizacion}
+                        {ind.fechaMedicionManual || resultado.fechaActualizacion}
                       </span>
-                      <span>Hover / toca una barra para ver el detalle</span>
+                      <span>
+                        {tienePuntosSerie || tieneHistoricoDirecto
+                          ? 'Hover / toca una barra para ver el detalle'
+                          : 'Sin mediciones registradas aún'}
+                      </span>
                     </div>
-                    <svg
-                      viewBox={`0 0 ${Math.max(serie.length * 46, 260)} 86`}
-                      className="w-full h-22 overflow-visible"
-                      role="img"
-                      aria-label={`Gráfico de tendencia para ${ind.nombre}`}
-                    >
-                      {serie.map((punto, idx) => {
-                        const x = idx * 46 + 10;
-                        const labelCorto = punto
-                          ? esAnual
-                            ? String(punto.anio)
-                            : MESES_NOMBRES[(punto.mes || 1) - 1].slice(0, 3)
-                          : String(aniosDisponibles[idx] || '');
-                        const val = punto && punto.valor !== null ? punto.valor : null;
-                        const h =
-                          val !== null ? Math.max(8, Math.round((val / maxValChart) * 50)) : 12;
-                        const y = 58 - h;
-                        const fill = punto ? COLOR_SEMAFORO[punto.estadoSemaforo].bar : '#e2e8f0';
-                        return (
-                          <g key={`${ind.id}-bar-${idx}`}>
-                            <title>
-                              {punto
-                                ? `${punto.periodoLabel}: ${
-                                    val !== null ? `${val} ${ind.unidadMedida}` : punto.textoSemaforo
-                                  }`
-                                : 'Sin registro'}
-                            </title>
-                            <rect
-                              x={x}
-                              y={y}
-                              width={26}
-                              height={h}
-                              rx={5}
-                              fill={fill}
-                              opacity={val !== null ? 0.92 : 0.45}
-                            />
-                            <text
-                              x={x + 13}
-                              y={Math.max(10, y - 3)}
-                              textAnchor="middle"
-                              fontSize="8.5"
-                              fontWeight="700"
-                              fill="#0f172a"
-                            >
-                              {val !== null ? val : '—'}
-                            </text>
-                            <text
-                              x={x + 13}
-                              y={74}
-                              textAnchor="middle"
-                              fontSize="9"
-                              fontWeight="600"
-                              fill="#475569"
-                            >
-                              {labelCorto}
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </svg>
+                    {tienePuntosSerie ? (
+                      <svg
+                        viewBox={`0 0 ${Math.max(serie.length * 46, 260)} 86`}
+                        className="w-full h-22 overflow-visible"
+                        role="img"
+                        aria-label={`Gráfico de tendencia para ${ind.nombre}`}
+                      >
+                        {serie.map((punto, idx) => {
+                          const x = idx * 46 + 10;
+                          const labelCorto = punto
+                            ? esAnual
+                              ? String(punto.anio)
+                              : MESES_NOMBRES[(punto.mes || 1) - 1].slice(0, 3)
+                            : String(aniosDisponibles[idx] || '');
+                          const val = punto && punto.valor !== null ? punto.valor : null;
+                          const h =
+                            val !== null ? Math.max(8, Math.round((val / maxValChart) * 50)) : 12;
+                          const y = 58 - h;
+                          const fill = punto ? COLOR_SEMAFORO[punto.estadoSemaforo].bar : '#e2e8f0';
+                          return (
+                            <g key={`${ind.id}-bar-${idx}`}>
+                              <title>
+                                {punto
+                                  ? `${punto.periodoLabel}: ${
+                                      val !== null ? `${val} ${ind.unidadMedida}` : punto.textoSemaforo
+                                    }`
+                                  : 'Sin registro'}
+                              </title>
+                              <rect
+                                x={x}
+                                y={y}
+                                width={26}
+                                height={h}
+                                rx={5}
+                                fill={fill}
+                                opacity={val !== null ? 0.92 : 0.45}
+                              />
+                              <text
+                                x={x + 13}
+                                y={Math.max(10, y - 3)}
+                                textAnchor="middle"
+                                fontSize="8.5"
+                                fontWeight="700"
+                                fill="#0f172a"
+                              >
+                                {val !== null ? val : '—'}
+                              </text>
+                              <text
+                                x={x + 13}
+                                y={74}
+                                textAnchor="middle"
+                                fontSize="9"
+                                fontWeight="600"
+                                fill="#475569"
+                              >
+                                {labelCorto}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    ) : tieneHistoricoDirecto ? (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {(ind.historicoMedicionesManuales || []).slice(0, 8).map((m) => (
+                          <div
+                            key={m.id}
+                            className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-[10px]"
+                          >
+                            <span className="font-mono font-bold text-[#0f5b53]">{m.fecha}</span>:{' '}
+                            <strong className="text-[#0f172a]">
+                              {m.resultado} {ind.unidadMedida}
+                            </strong>{' '}
+                            <span className="text-slate-500">
+                              ({m.numerador}/{m.denominador})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-500 italic py-2 text-center">
+                        Gráfico disponible cuando exista al menos una medición real registrada.
+                      </p>
+                    )}
                   </div>
 
                   {/* Hoja de vida completa expandible */}
@@ -891,6 +1447,233 @@ export const PlanAnualVerificarTab: React.FC<PlanAnualVerificarTabProps> = ({
                 </div>
               );
             })}
+          </div>
+
+          {/* Bloque 1: Indicadores Operativos del Plan Anual 2027 */}
+          <div className="rounded-2xl border border-[#b9dad3] bg-white p-5 shadow-xs space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8f2ef] pb-2">
+              <div>
+                <h4 className="text-sm font-black text-[#0d3b36] flex items-center gap-1.5">
+                  <TrendingUp className="h-4 w-4 text-[#0f6b61]" />
+                  <span>Indicadores Operativos del Plan Anual {anioActivo}</span>
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Cálculo automático en tiempo real a partir de actividades, presupuesto, planes de mejora y acciones correctivas.
+                </p>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-lg bg-[#eef6f4] text-[#0f5b53] font-bold text-[10px]">
+                Datos reales del Plan {anioActivo}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Cumplimiento actividades
+                </span>
+                <span className="text-lg font-black font-mono text-[#0f5b53]">
+                  {resumenOperativoPlan.pctCumplimiento !== null
+                    ? `${resumenOperativoPlan.pctCumplimiento}%`
+                    : 'Pendiente'}
+                </span>
+                <span className="text-[10px] text-slate-600 block">
+                  {resumenOperativoPlan.cumplidas} cumplidas · {resumenOperativoPlan.enProceso} en proceso · {resumenOperativoPlan.pendientes} pendientes
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Reprogramación 2026 → 2027
+                </span>
+                <span className="text-lg font-black font-mono text-[#0f172a]">
+                  {resumenOperativoPlan.reprogramadas}
+                </span>
+                <span className="text-[10px] text-slate-600 block">
+                  Actividades con trazabilidad de fecha
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Ejecución presupuestal
+                </span>
+                <span className="text-lg font-black font-mono text-[#0f172a]">
+                  ${resumenOperativoPlan.presupuesto.ejecutado.toLocaleString('es-CO')}
+                </span>
+                <span className="text-[10px] text-slate-600 block">
+                  Programado: ${resumenOperativoPlan.presupuesto.programado.toLocaleString('es-CO')} · Aprobado: ${resumenOperativoPlan.presupuesto.aprobado.toLocaleString('es-CO')}
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Planes de mejora por riesgo
+                </span>
+                <span className="text-lg font-black font-mono text-[#0f172a]">
+                  {resumenOperativoPlan.planesCerrados}/{resumenOperativoPlan.planesTotal}
+                </span>
+                <span className="text-[10px] text-slate-600 block">
+                  Planes cerrados vs activos
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Acciones de mejora (ACTUAR)
+                </span>
+                <span className="text-lg font-black font-mono text-[#0f172a]">
+                  {resumenOperativoPlan.accionesCerradas}/{resumenOperativoPlan.accionesTotal}
+                </span>
+                <span className="text-[10px] text-slate-600 block">
+                  {resumenOperativoPlan.accionesTotal === 0
+                    ? 'Sin acciones abiertas registradas'
+                    : 'Acciones cerradas vs totales'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bloque 2: Indicadores de Simulacros de Emergencia */}
+          <div className="rounded-2xl border border-orange-200 bg-white p-5 shadow-xs space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-100 pb-2">
+              <div>
+                <h4 className="text-sm font-black text-[#0f172a] flex items-center gap-1.5">
+                  <Flame className="h-4 w-4 text-[#f97316]" />
+                  <span>Indicadores de Simulacros de Emergencia ({anioActivo})</span>
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Alimentado directamente con los registros reales de ejecución en Plan de Emergencias → Capacitaciones y Simulacros.
+                </p>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-900 font-bold text-[10px]">
+                {resumenSimulacros.ejecutadosCount} ejecutado(s) de {resumenSimulacros.programados} programado(s)
+              </span>
+            </div>
+
+            {resumenSimulacros.simulacros.length === 0 ? (
+              <p className="text-[11px] text-slate-500 italic">
+                Pendiente de programación de simulacros en el Plan de Emergencias.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                      Simulacros ejecutados vs programados
+                    </span>
+                    <span className="text-base font-black font-mono text-[#0f172a]">
+                      {resumenSimulacros.ejecutadosCount} / {resumenSimulacros.programados}
+                    </span>
+                    <span className="text-[10px] text-slate-600 block">
+                      {resumenSimulacros.ejecutadosCount === 0
+                        ? 'Pendiente de diligenciamiento en planta'
+                        : 'Con fecha de ejecución real registrada'}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                      Cobertura de participación
+                    </span>
+                    <span className="text-base font-black font-mono text-[#0f172a]">
+                      {resumenSimulacros.coberturaPct !== null
+                        ? `${resumenSimulacros.coberturaPct}%`
+                        : 'Pendiente de diligenciamiento'}
+                    </span>
+                    <span className="text-[10px] text-slate-600 block">
+                      {resumenSimulacros.participantesEsp > 0
+                        ? `${resumenSimulacros.participantesReales} de ${resumenSimulacros.participantesEsp} participantes`
+                        : 'Sin asistencia real registrada aún'}
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <span className="text-[10px] font-bold uppercase text-slate-500 block">
+                      Soportes fotográficos / actas
+                    </span>
+                    <span className="text-base font-black font-mono text-[#0f172a]">
+                      {resumenSimulacros.simulacros.reduce((s, x) => s + x.evidencias.length, 0)}
+                    </span>
+                    <span className="text-[10px] text-slate-600 block">
+                      Evidencias adjuntas en simulacros
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-3">
+                    <span className="text-[10px] font-bold uppercase text-rose-900 block">
+                      Brigada · Primeros Auxilios
+                    </span>
+                    <span className="text-base font-black font-mono text-rose-950">
+                      {resumenSimulacros.brigadaRealizadas} / {resumenSimulacros.brigadaTotal} realizadas
+                    </span>
+                    <span className="text-[10px] text-rose-800 block">
+                      {resumenSimulacros.brigadaEnProceso} en proceso · {resumenSimulacros.brigadaPendientes} pendientes
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {resumenSimulacros.simulacros.map((sim) => {
+                    const reg = sim.registroSimulacro;
+                    const tieneTiempo =
+                      reg &&
+                      ((reg.tiempoEvacuacionMinutos !== null &&
+                        reg.tiempoEvacuacionMinutos !== undefined) ||
+                        (reg.tiempoEvacuacionSegundos !== null &&
+                          reg.tiempoEvacuacionSegundos !== undefined));
+                    return (
+                      <div
+                        key={sim.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-1 text-[11px]"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <strong className="text-[#0f172a]">{sim.titulo}</strong>
+                          <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-bold text-slate-700">
+                            {reg?.cumplimientoProcedimientos || 'Pendiente de verificación'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-600 flex flex-wrap gap-x-3 gap-y-0.5">
+                          <span>
+                            Fecha real:{' '}
+                            <strong>{reg?.fechaEjecucionReal || 'Pendiente de diligenciamiento'}</strong>
+                          </span>
+                          <span>
+                            Participación:{' '}
+                            <strong>
+                              {reg?.participantesReales !== null &&
+                              reg?.participantesReales !== undefined &&
+                              reg?.participantesEsperados !== null &&
+                              reg?.participantesEsperados !== undefined
+                                ? `${reg.participantesReales}/${reg.participantesEsperados}`
+                                : 'Pendiente de diligenciamiento'}
+                            </strong>
+                          </span>
+                          <span>
+                            Tiempo evacuación:{' '}
+                            <strong>
+                              {tieneTiempo
+                                ? `${reg?.tiempoEvacuacionMinutos ?? 0}m ${reg?.tiempoEvacuacionSegundos ?? 0}s`
+                                : 'Pendiente de diligenciamiento'}
+                            </strong>
+                          </span>
+                        </div>
+                        {(reg?.dificultadesIdentificadas || reg?.hallazgosYOportunidades) && (
+                          <p className="text-[10px] text-slate-700 bg-white rounded-lg p-2 border border-slate-200 mt-1">
+                            {reg.dificultadesIdentificadas && (
+                              <span className="block">
+                                <strong>Dificultades:</strong> {reg.dificultadesIdentificadas}
+                              </span>
+                            )}
+                            {reg.hallazgosYOportunidades && (
+                              <span className="block">
+                                <strong>Hallazgos / Oportunidades:</strong> {reg.hallazgosYOportunidades}
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Archivo colapsable de indicadores históricos anteriores (sin perder información guardada) */}

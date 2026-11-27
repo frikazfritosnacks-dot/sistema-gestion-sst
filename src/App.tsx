@@ -567,16 +567,16 @@ export default function App() {
       <header className="sticky top-0 z-30 bg-[#0f172a] text-white border-b border-slate-800 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Fila 1: Identidad de Frikaz S.A.S. y Acciones Rápidas */}
-          <div className="flex items-center justify-between gap-4 py-2.5 sm:py-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-4 gap-y-2 py-2.5 sm:py-3">
             {/* Logo y Nombre de la Empresa */}
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3 flex-1 min-w-[220px]">
               <img
                 src="/frikaz_logo.jpg"
                 alt="Frikaz S.A.S. Logo"
                 className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl object-cover border border-orange-500/30 bg-white p-0.5 shadow-sm"
               />
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <div className="flex flex-nowrap items-center gap-2">
                   <h1 className="text-base sm:text-lg font-black tracking-tight text-white whitespace-nowrap leading-tight">
                     Frikaz S.A.S.
                   </h1>
@@ -823,7 +823,21 @@ export default function App() {
         {/* VIEW 1B: PLAN ANUAL INDEPENDIENTE */}
         {activeTab === 'plan_anual' && (
           <ErrorBoundary fallbackTitle="PLAN ANUAL — Frikaz S.A.S.">
-            <PlanAnualView normas={items} navigationRequest={assistantNavTarget} />
+            <PlanAnualView
+              normas={items}
+              navigationRequest={assistantNavTarget}
+              onNavigate={(target) => {
+                const isCopasst = target.tab === 'copasst';
+                const destTab: TabView = isCopasst ? 'plan_anual' : (target.tab as TabView);
+                setActiveTab(destTab);
+                setAssistantNavTarget({
+                  ...target,
+                  tab: isCopasst ? 'plan_anual' : target.tab,
+                  planSeccion: isCopasst ? 'copasst' : target.planSeccion,
+                  nonce: target.nonce || Date.now(),
+                });
+              }}
+            />
           </ErrorBoundary>
         )}
 
@@ -1010,6 +1024,20 @@ export default function App() {
               onOpenNormaModal={(norma) => handleOpenNorma(norma, false)}
               onOpenMatrizExcel={() => setActiveTab('matriz_excel')}
               navigationRequest={assistantNavTarget}
+              onNavigate={(target) => {
+                if (target.tab === 'copasst') {
+                  setActiveTab('plan_anual');
+                  setAssistantNavTarget({
+                    ...target,
+                    tab: 'plan_anual',
+                    planSeccion: 'copasst',
+                    nonce: target.nonce || Date.now(),
+                  });
+                } else {
+                  setActiveTab(target.tab);
+                  setAssistantNavTarget({ ...target, nonce: target.nonce || Date.now() });
+                }
+              }}
             />
           </ErrorBoundary>
         )}
@@ -1197,16 +1225,25 @@ export default function App() {
             return;
           }
 
-          setActiveTab(target.tab);
-          if (target.tab === 'matriz_tabla' && target.searchQuery !== undefined) {
-            setSearchTermMatriz(target.searchQuery);
+          const isCopasst = target.tab === 'copasst';
+          const destTab: TabView = isCopasst ? 'plan_anual' : (target.tab as TabView);
+          const normalizedTarget: typeof target = isCopasst
+            ? { ...target, tab: 'plan_anual', planSeccion: 'copasst' }
+            : target;
+
+          setActiveTab(destTab);
+          if (normalizedTarget.tab === 'matriz_tabla' && normalizedTarget.searchQuery !== undefined) {
+            setSearchTermMatriz(normalizedTarget.searchQuery);
             setAreaFilterMatriz('TODAS');
           }
-          if (target.normaId) {
-            const matchedNorma = items.find((n) => n.id === target.normaId);
+          if (normalizedTarget.normaId) {
+            const matchedNorma = items.find((n) => n.id === normalizedTarget.normaId);
             if (matchedNorma) handleOpenNorma(matchedNorma, false);
           }
-          setAssistantNavTarget({ ...target, nonce: target.nonce || Date.now() });
+          setAssistantNavTarget({
+            ...normalizedTarget,
+            nonce: normalizedTarget.nonce || Date.now(),
+          });
         }}
       />
     </div>

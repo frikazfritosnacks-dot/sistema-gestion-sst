@@ -25,7 +25,9 @@ import {
   FileText,
   ExternalLink,
   Mail,
+  Award,
 } from 'lucide-react';
+import { esActividadCapacitacion } from './PlanAnualCronogramaTab';
 import {
   esEstadoExclusivoGerente,
   getBadgeClassesEstadoFrikaz,
@@ -53,6 +55,7 @@ interface PlanAnualActividadModalProps {
     evidenciaId: string,
     comentarioRevisor: string
   ) => void;
+  onGenerarCertificado?: (act: ActividadPlanAnual) => void;
 }
 
 const MESES_CORTOS = [
@@ -73,6 +76,7 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
   onSave,
   onAprobarYCerrar,
   onDevolverEvidencia,
+  onGenerarCertificado,
 }) => {
   const [tab, setTab] = useState<'datos' | 'evidencias' | 'historial'>(initialTab);
   const [form, setForm] = useState<ActividadPlanAnual | null>(null);
@@ -333,13 +337,25 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
               {form.nombre || 'Nueva Actividad del Plan Anual'}
             </h3>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {onGenerarCertificado && esActividadCapacitacion(form) && (
+              <button
+                type="button"
+                onClick={() => onGenerarCertificado(form)}
+                className="px-3 py-1.5 rounded-lg bg-[#0f5b53] hover:bg-[#0c4842] text-white text-[11px] font-black inline-flex items-center gap-1.5 cursor-pointer border border-teal-400/40"
+              >
+                <Award className="h-3.5 w-3.5 text-[#fed7aa]" />
+                <span>GENERAR CERTIFICADO</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Internal Tabs */}
@@ -459,6 +475,18 @@ export const PlanAnualActividadModal: React.FC<PlanAnualActividadModalProps> = (
                       <strong>Estado de vigencia:</strong> Actividad sin ejecución confirmada en{' '}
                       {vigencia}; reprogramada para el Plan Anual {form.reprogramadaParaAnio}.
                     </p>
+                  )}
+                  {onGenerarCertificado && esActividadCapacitacion(form) && (
+                    <div className="pt-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onGenerarCertificado(form)}
+                        className="px-3 py-1.5 rounded-lg bg-[#0f5b53] hover:bg-[#0c4842] text-white text-[11px] font-black inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Award className="h-3.5 w-3.5 text-[#fed7aa]" />
+                        <span>GENERAR CERTIFICADO</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

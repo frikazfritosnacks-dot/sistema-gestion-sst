@@ -2,6 +2,7 @@ import {
   CargoSST,
   PoliticaSSTData,
   RegistroHistorialPolitica,
+  VigiaSSTData,
 } from '../types/organigramaSst';
 import {
   Document,
@@ -1444,5 +1445,244 @@ export async function generarPoliticaWordBase64(
   const base64 = await Packer.toBase64String(doc);
   const filename = `Politica_SST_Frikaz_SAS_${new Date().toISOString().split('T')[0]}.docx`;
   return { base64, filename };
+}
+
+// ============================================================================
+// VIGÍA DE SEGURIDAD Y SALUD EN EL TRABAJO (SST) — FIGURA DE RESPONSABILIDAD SST
+// (NO ES UN 7° CARGO OPERATIVO NI REEMPLAZA LOS 6 CARGOS OFICIALES)
+// ============================================================================
+
+const STORAGE_KEY_VIGIA_SST = 'frikaz_vigia_sst_v1';
+
+export const RESPONSABILIDADES_VIGIA_SST_INICIALES: string[] = [
+  'Apoyar la promoción de la seguridad y salud en el trabajo dentro de la empresa.',
+  'Comunicar a la gerencia las condiciones inseguras y los posibles riesgos identificados.',
+  'Promover la participación de los trabajadores en las actividades de SST.',
+  'Apoyar la identificación de peligros y comunicar situaciones que puedan afectar la seguridad y salud de los trabajadores.',
+  'Realizar seguimiento a las recomendaciones y acciones de mejora relacionadas con SST.',
+  'Apoyar las actividades de prevención de accidentes y enfermedades laborales.',
+  'Participar en las actividades de capacitación y socialización del SG-SST.',
+  'Apoyar la comunicación de inquietudes, sugerencias y necesidades de los trabajadores en materia de SST.',
+];
+
+export const VIGIA_SST_INICIAL: VigiaSSTData = {
+  id: 'vigia-sst-frikaz',
+  nombrePersona: '',
+  documento: '',
+  correo: '',
+  cargoBase: '',
+  fechaDesignacion: '',
+  estado: 'Por asignar',
+  responsabilidades: [...RESPONSABILIDADES_VIGIA_SST_INICIALES],
+  observaciones: 'Pendiente de asignar o confirmar datos reales del Vigía SST.',
+  historialCambios: [
+    {
+      id: 'vigia-init-01',
+      fecha: '2026-11-26',
+      usuario: 'Sistema SG-SST Frikaz S.A.S.',
+      accion: 'Incorporación de figura Vigía SST',
+      detalle:
+        'Figura de responsabilidad Vigía SST incorporada al organigrama sin crear un cargo operativo adicional (sin datos personales inventados).',
+    },
+  ],
+};
+
+export function getStoredVigiaSST(): VigiaSSTData {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_VIGIA_SST);
+    if (raw) {
+      const parsed = JSON.parse(raw) as VigiaSSTData;
+      if (parsed && Array.isArray(parsed.responsabilidades)) {
+        return {
+          ...VIGIA_SST_INICIAL,
+          ...parsed,
+          responsabilidades:
+            parsed.responsabilidades.length > 0
+              ? parsed.responsabilidades
+              : [...RESPONSABILIDADES_VIGIA_SST_INICIALES],
+          historialCambios: Array.isArray(parsed.historialCambios)
+            ? parsed.historialCambios
+            : [...VIGIA_SST_INICIAL.historialCambios],
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Error leyendo Vigía SST:', err);
+  }
+  return { ...VIGIA_SST_INICIAL };
+}
+
+export function saveVigiaSST(next: VigiaSSTData): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_VIGIA_SST, JSON.stringify(next));
+  } catch (err) {
+    console.error('Error guardando Vigía SST:', err);
+  }
+}
+
+export function construirCorreoResponsabilidadesVigia(vigia: VigiaSSTData): {
+  subject: string;
+  text: string;
+  html: string;
+} {
+  const subject = 'Responsabilidades del Vigía de Seguridad y Salud en el Trabajo – Frikaz S.A.S.';
+  const destinatarioNombre = vigia.nombrePersona?.trim() || 'Vigía de Seguridad y Salud en el Trabajo';
+  const cargoBaseTxt = vigia.cargoBase?.trim() ? ` (${vigia.cargoBase.trim()})` : '';
+
+  const text = [
+    `FRIKAZ S.A.S. — Sistema de Gestión de Seguridad y Salud en el Trabajo (SG-SST)`,
+    ``,
+    `Estimado(a) ${destinatarioNombre}${cargoBaseTxt}:`,
+    ``,
+    `En nombre de FRIKAZ S.A.S., compartimos formalmente las responsabilidades correspondientes al rol de Vigía de Seguridad y Salud en el Trabajo (SST) dentro de la empresa:`,
+    ``,
+    ...vigia.responsabilidades.map((r, i) => `${i + 1}. ${r}`),
+    ``,
+    `Datos registrados del rol:`,
+    `- Empresa: Frikaz S.A.S.`,
+    `- Vigía SST: ${vigia.nombrePersona?.trim() || 'Pendiente de verificación'}`,
+    `- Cargo oficial base: ${vigia.cargoBase?.trim() || 'Pendiente de verificación'}`,
+    `- Fecha de designación: ${vigia.fechaDesignacion?.trim() || 'Pendiente de verificación'}`,
+    ``,
+    `Cualquier inquietud o condición insegura identificada en planta o ruta debe reportarse oportunamente a la Gerencia.`,
+    ``,
+    `Cordialmente,`,
+    `Andrea Orjuela – Gerente`,
+    `Frikaz S.A.S.`,
+  ].join('\n');
+
+  const itemsHtml = vigia.responsabilidades
+    .map(
+      (r, i) =>
+        `<li style="margin-bottom:8px;line-height:1.5;"><strong>${i + 1}.</strong> ${r
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')}</li>`
+    )
+    .join('');
+
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#0f172a;max-width:640px;margin:0 auto;border:1px solid #cbd5e1;border-radius:12px;overflow:hidden;">
+      <div style="background:#0f5b53;color:#ffffff;padding:20px 24px;">
+        <p style="margin:0;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#99f6e4;font-weight:bold;">Frikaz S.A.S. · SG-SST</p>
+        <h2 style="margin:6px 0 0;font-size:18px;">Responsabilidades del Vigía de Seguridad y Salud en el Trabajo</h2>
+      </div>
+      <div style="padding:24px;background:#ffffff;font-size:14px;line-height:1.6;">
+        <p style="margin-top:0;">Estimado(a) <strong>${destinatarioNombre.replace(/</g, '&lt;')}</strong>${cargoBaseTxt}:</p>
+        <p>En nombre de <strong>Frikaz S.A.S.</strong>, compartimos sus responsabilidades como <strong>Vigía de Seguridad y Salud en el Trabajo (SST)</strong>:</p>
+        <ol style="padding-left:20px;background:#f4faf8;border:1px solid #cfe5df;border-radius:8px;padding:16px 24px;">
+          ${itemsHtml}
+        </ol>
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;background:#f8fafc;border:1px solid #e2e8f0;">
+          <tr><td style="padding:8px 12px;font-weight:bold;border-bottom:1px solid #e2e8f0;">Empresa</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">Frikaz S.A.S.</td></tr>
+          <tr><td style="padding:8px 12px;font-weight:bold;border-bottom:1px solid #e2e8f0;">Cargo oficial base</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">${vigia.cargoBase?.trim() || 'Pendiente de verificación'}</td></tr>
+          <tr><td style="padding:8px 12px;font-weight:bold;">Fecha de designación</td><td style="padding:8px 12px;">${vigia.fechaDesignacion?.trim() || 'Pendiente de verificación'}</td></tr>
+        </table>
+        <p style="margin-top:20px;margin-bottom:0;">Cordialmente,<br/><strong>Andrea Orjuela – Gerente</strong><br/>Frikaz S.A.S.</p>
+      </div>
+    </div>
+  `;
+
+  return { subject, text, html };
+}
+
+export async function exportarResponsabilidadesVigiaWord(vigia: VigiaSSTData): Promise<void> {
+  const logoBytes = await cargarLogoFrikazBytes();
+  const metaDoc = obtenerMetadatosDocumentoCalidad('RES-VIGIA-SST');
+  const fechaHoy = new Date().toLocaleDateString('es-CO');
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: DOCX_MARGIN_1_INCH,
+              right: DOCX_MARGIN_1_INCH,
+              bottom: DOCX_MARGIN_1_INCH,
+              left: DOCX_MARGIN_1_INCH,
+            },
+          },
+        },
+        children: [
+          crearCajaCalidadDocxTable({
+            ...metaDoc,
+            codigo: 'FRK-SST-VIG-01',
+            tituloDocumento: 'RESPONSABILIDADES DEL VIGÍA DE SEGURIDAD Y SALUD EN EL TRABAJO',
+            tipoDocumento: 'responsabilidades',
+            logoBytes,
+          }),
+          new Paragraph({ spacing: { after: 200 }, children: [] }),
+          new Paragraph({
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            spacing: { line: DOCX_LINE_SPACING_1_5, after: 200 },
+            children: [
+              new TextRun({
+                text: 'RESPONSABILIDADES DEL VIGÍA DE SEGURIDAD Y SALUD EN EL TRABAJO – FRIKAZ S.A.S.',
+                bold: true,
+                size: DOCX_FONT_SIZE_12,
+                font: DOCX_FONT,
+              }),
+            ],
+          }),
+          new Paragraph({
+            spacing: { line: DOCX_LINE_SPACING_1_5, after: 120 },
+            children: [
+              new TextRun({
+                text: `Vigía SST: ${vigia.nombrePersona?.trim() || 'Pendiente de verificación'}   |   Documento: ${vigia.documento?.trim() || 'Pendiente de verificación'}`,
+                size: DOCX_FONT_SIZE_12,
+                font: DOCX_FONT,
+              }),
+            ],
+          }),
+          new Paragraph({
+            spacing: { line: DOCX_LINE_SPACING_1_5, after: 180 },
+            children: [
+              new TextRun({
+                text: `Cargo oficial base: ${vigia.cargoBase?.trim() || 'Pendiente de verificación'}   |   Fecha de designación: ${vigia.fechaDesignacion?.trim() || 'Pendiente de verificación'}`,
+                size: DOCX_FONT_SIZE_12,
+                font: DOCX_FONT,
+              }),
+            ],
+          }),
+          ...vigia.responsabilidades.map(
+            (r, idx) =>
+              new Paragraph({
+                alignment: AlignmentType.JUSTIFIED,
+                spacing: { line: DOCX_LINE_SPACING_1_5, after: 100 },
+                children: [
+                  new TextRun({
+                    text: `${idx + 1}. ${r}`,
+                    size: DOCX_FONT_SIZE_12,
+                    font: DOCX_FONT,
+                  }),
+                ],
+              })
+          ),
+          new Paragraph({
+            spacing: { line: DOCX_LINE_SPACING_1_5, before: 300, after: 80 },
+            children: [
+              new TextRun({
+                text: `Emitido en Frikaz S.A.S. el ${fechaHoy} — Aprobación: Andrea Orjuela – Gerente.`,
+                size: DOCX_FONT_SIZE_12,
+                italics: true,
+                font: DOCX_FONT,
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `Responsabilidades_Vigia_SST_Frikaz_${new Date().toISOString().split('T')[0]}.docx`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 }
 

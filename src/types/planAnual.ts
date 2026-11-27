@@ -378,6 +378,25 @@ export interface PruebaComplementariaTrabajador {
   observaciones?: string;
 }
 
+export type FrecuenciaConsumoAgua =
+  | 'Varias veces durante la jornada'
+  | 'Cada hora'
+  | 'Cada dos horas'
+  | 'Solo durante los descansos'
+  | 'Ocasionalmente'
+  | 'Otra';
+
+export interface HistorialHabitoHidratacionTrabajador {
+  id: string;
+  fechaHora: string;
+  usuario: string;
+  consumeAguaJornada?: 'Sí' | 'No';
+  frecuenciaConsumoAgua?: FrecuenciaConsumoAgua;
+  frecuenciaConsumoAguaOtra?: string;
+  alimentacionSaludableDescripcion?: string;
+  resumenCambio: string;
+}
+
 export interface TrabajadorFichaSST {
   id: string;
   estadoLaboral: 'ACTIVO' | 'INACTIVO';
@@ -409,6 +428,13 @@ export interface TrabajadorFichaSST {
   otrasSustancias: string;
   actividadFisica: 'Sí, regular (3+ días/sem)' | 'Moderada (1-2 días/sem)' | 'Sedentario / No realiza' | 'Pendiente';
   nutricionHabitos: string;
+  // 2B. Hábitos de hidratación y alimentación saludable (individualizado por trabajador)
+  consumeAguaJornada?: 'Sí' | 'No';
+  frecuenciaConsumoAgua?: FrecuenciaConsumoAgua;
+  frecuenciaConsumoAguaOtra?: string;
+  alimentacionSaludableDescripcion?: string;
+  fechaRegistroHabitosHidratacion?: string;
+  historialHabitosHidratacion?: HistorialHabitoHidratacionTrabajador[];
 
   // 3. Morbilidad sentida y diagnosticada (Confidencial)
   morbilidadSentida: string;
@@ -461,14 +487,33 @@ export type CodigoIndicadorMinimo0312 =
   | 'IND-SST-05' // Incidencia de la enfermedad laboral
   | 'IND-SST-06'; // Ausentismo por causa médica
 
+export interface MedicionDirectaIndicador {
+  id: string;
+  fecha: string;
+  numerador: number;
+  denominador: number;
+  factorEscala: number;
+  resultado: number;
+  responsable: string;
+  observaciones?: string;
+  evidenciaNombre?: string;
+}
+
 export interface HojaVidaIndicadorSST {
   id: string;
   codigo: string;
   esNormativo0312: boolean;
   codigoNormativo0312?: CodigoIndicadorMinimo0312;
   nombre: string;
+  objetivo?: string;
   tipo: TipoIndicadorPlan;
   definicion: string;
+  quePermiteMedir?: {
+    aspectoEvalua: string;
+    informacionProporciona: string;
+    utilidadFrikaz: string;
+    quePermiteIdentificar: string;
+  };
   formula: string;
   variablesRequeridas: string[];
   metaValor: number;
@@ -481,6 +526,15 @@ export interface HojaVidaIndicadorSST {
   responsable: string;
   interpretacionBase: string;
   objetivoEspecificoId?: string;
+  // Diligenciamiento directo del indicador desde la herramienta
+  numeradorManual?: number | null;
+  denominadorManual?: number | null;
+  factorEscalaManual?: number; // ej. 100 por defecto o 1 si es razón directa
+  fechaMedicionManual?: string;
+  observacionesIndicador?: string;
+  evidenciaSoporteNombre?: string;
+  evidenciaSoporteDataUrl?: string;
+  historicoMedicionesManuales?: MedicionDirectaIndicador[];
 }
 
 export interface RegistroPeriodoIndicador {

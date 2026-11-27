@@ -72,3 +72,31 @@ export interface PoliticaSSTData {
   versionActual: string;
   historialCambios: RegistroHistorialPolitica[];
 }
+
+export interface VigiaSSTHistorialItem {
+  id: string;
+  fecha: string;
+  usuario: string;
+  accion: string;
+  detalle: string;
+}
+
+export interface VigiaSSTData {
+  id: string;
+  nombrePersona: string;
+  documento: string;
+  correo: string;
+  cargoBase: string;
+  fechaDesignacion: string;
+  estado: 'Por asignar' | 'Activo' | 'Pendiente de verificación';
+  responsabilidades: string[];
+  observaciones?: string;
+  ultimoEnvioCorreo?: {
+    fecha: string;
+    destinatario: string;
+    asunto: string;
+    canal: string;
+    trackingCode?: string;
+  };
+  historialCambios: VigiaSSTHistorialItem[];
+}

@@ -25,8 +25,10 @@ import {
   DollarSign,
   Users,
   Activity,
+  Brain,
   Flame,
   ShieldAlert,
+  Vote,
 } from 'lucide-react';
 
 export type SeccionPlanAnual =
@@ -38,13 +40,25 @@ export type SeccionPlanAnual =
   | 'presupuesto'
   | 'conexiones'
   | 'planes_riesgo'
-  | 'plan_emergencias';
+  | 'plan_emergencias'
+  | 'riesgo_psicosocial'
+  | 'copasst';
 
 export interface NavegacionPlanAnualOpciones {
   subActividades?: 'cronograma' | 'avances' | 'responsables';
   subIndicadores?: 'tablero' | 'captura' | 'riesgos' | 'estandares';
   subPresupuesto?: 'recursos' | 'reportes';
   subConexiones?: 'riesgosNormas' | 'personal' | 'mejoras';
+  subPlanesMejora?: 'planes' | 'certificados' | 'repositorio';
+  subPsicosocial?: 'registro' | 'aplicacion' | 'repositorio' | 'consolidado' | 'excel';
+  subCopasst?:
+    | 'conformacion'
+    | 'votacion'
+    | 'miembros'
+    | 'funciones'
+    | 'notificaciones'
+    | 'simulacion'
+    | 'repositorio';
 }
 
 interface PlanAnualPanelPrincipalProps {
@@ -715,6 +729,20 @@ export const PlanAnualPanelPrincipal: React.FC<PlanAnualPanelPrincipalProps> = (
               desc: 'Prevención, preparación, procedimientos seguros, simulacros y formatos.',
               dato: `${emergenciasEscenariosCount} escenarios`,
               icon: Flame,
+            },
+            {
+              id: 'riesgo_psicosocial' as const,
+              titulo: 'Batería de riesgo psicosocial',
+              desc: 'Cuestionarios Forma A y B, estrés, confidencialidad médica e informes.',
+              dato: `${trabajadoresActivosCount} trabajadores`,
+              icon: Brain,
+            },
+            {
+              id: 'copasst' as const,
+              titulo: 'COPASST – Comité Paritario SST',
+              desc: 'Votación, conformación, funciones, correos, repositorio y simulación en organigrama.',
+              dato: 'Interno Plan Anual',
+              icon: Vote,
             },
           ].map((sec) => {
             const Icon = sec.icon;

@@ -58,10 +58,18 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     esNormativo0312: true,
     codigoNormativo0312: 'IND-SST-01',
     nombre: 'Frecuencia de accidentalidad',
+    objetivo: 'Medir cuántas veces ocurren accidentes de trabajo en relación con el tamaño del equipo de Frikaz S.A.S.',
     tipo: 'RESULTADO',
     definicion: 'Número de veces que ocurre un accidente de trabajo en el mes.',
+    quePermiteMedir: {
+      aspectoEvalua: 'La ocurrencia mensual de accidentes de trabajo en planta y ruta.',
+      informacionProporciona: 'Cuántos accidentes se presentan por cada 100 trabajadores durante el periodo medido.',
+      utilidadFrikaz: 'Permite verificar si los controles en freidoras, pelado, selección, empaque y entregas están evitando lesiones reales.',
+      quePermiteIdentificar: 'Aumentos repentinos de accidentalidad, áreas críticas y necesidad de reforzar controles o capacitaciones.',
+    },
     formula:
       '(Número de accidentes de trabajo que se presentaron en el mes / Número de trabajadores en el mes) × 100',
+    factorEscalaManual: 100,
     variablesRequeridas: [
       'Número de accidentes de trabajo que se presentaron en el mes',
       'Número de trabajadores en el mes (se toma automáticamente de la ficha de trabajadores activos)',
@@ -85,10 +93,18 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     esNormativo0312: true,
     codigoNormativo0312: 'IND-SST-02',
     nombre: 'Severidad de accidentalidad',
+    objetivo: 'Evaluar la gravedad de los accidentes de trabajo según los días de incapacidad médica o días cargados generados.',
     tipo: 'RESULTADO',
     definicion: 'Número de días perdidos por accidentes de trabajo en el mes.',
+    quePermiteMedir: {
+      aspectoEvalua: 'La gravedad e impacto en días perdidos por accidentes laborales.',
+      informacionProporciona: 'Cuántos días de incapacidad o cargados se pierden por cada 100 trabajadores en el periodo.',
+      utilidadFrikaz: 'Ayuda a priorizar la atención sobre los riesgos que producen lesiones más graves (ej. quemaduras, atrapamientos o choques en ruta).',
+      quePermiteIdentificar: 'Puestos con lesiones incapacitantes y efectividad de las medidas de control aplicadas tras un evento.',
+    },
     formula:
       '((Número de días de incapacidad por accidente de trabajo en el mes + número de días cargados en el mes) / Número de trabajadores en el mes) × 100',
+    factorEscalaManual: 100,
     variablesRequeridas: [
       'Número de días de incapacidad por accidente de trabajo en el mes',
       'Número de días cargados en el mes (según tabla oficial si hubo pérdida permanente o fatalidad)',
@@ -113,10 +129,18 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     esNormativo0312: true,
     codigoNormativo0312: 'IND-SST-03',
     nombre: 'Proporción de accidentes de trabajo mortales',
+    objetivo: 'Vigilar y garantizar cero fatalidades derivadas de accidentes de trabajo en la operación anual.',
     tipo: 'RESULTADO',
     definicion: 'Número de accidentes de trabajo mortales en el año.',
+    quePermiteMedir: {
+      aspectoEvalua: 'La letalidad o presencia de accidentes mortales en relación con el total de accidentes ocurridos en el año.',
+      informacionProporciona: 'El porcentaje de accidentes laborales que tuvieron desenlace fatal.',
+      utilidadFrikaz: 'Permite verificar el cumplimiento del objetivo crítico de protección de la vida frente a riesgos graves (incendio, gas, electricidad, vial).',
+      quePermiteIdentificar: 'Fallas críticas en controles de alto riesgo que exigen intervención inmediata de la Gerencia.',
+    },
     formula:
       '(Número de accidentes de trabajo mortales que se presentaron en el año / Total de accidentes de trabajo que se presentaron en el año) × 100',
+    factorEscalaManual: 100,
     variablesRequeridas: [
       'Número de accidentes de trabajo mortales en el año',
       'Total de accidentes de trabajo que se presentaron en el año',
@@ -139,11 +163,19 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     esNormativo0312: true,
     codigoNormativo0312: 'IND-SST-04',
     nombre: 'Prevalencia de la enfermedad laboral',
+    objetivo: 'Identificar la carga total (casos nuevos y antiguos) de enfermedades laborales calificadas en la población trabajadora.',
     tipo: 'RESULTADO',
     definicion:
       'Número de casos de enfermedad laboral presentes en una población en un periodo de tiempo.',
+    quePermiteMedir: {
+      aspectoEvalua: 'La presencia acumulada de enfermedades de origen laboral (casos nuevos y antiguos) en los trabajadores.',
+      informacionProporciona: 'La tasa de casos totales vigentes por cada 100.000 trabajadores expuestos en el periodo.',
+      utilidadFrikaz: 'Permite hacer seguimiento a la salud osteomuscular, auditiva, dérmica o respiratoria en planta y ruta.',
+      quePermiteIdentificar: 'Exposiciones crónicas a ruido, posturas, movimientos repetitivos o calor que requieren vigilancia médica y adecuación de puestos.',
+    },
     formula:
       '(Número de casos nuevos y antiguos de enfermedad laboral en el periodo Z / Promedio de trabajadores en el periodo Z) × 100.000',
+    factorEscalaManual: 100000,
     variablesRequeridas: [
       'Número de casos nuevos y antiguos de enfermedad laboral calificados en el periodo Z',
       'Promedio de trabajadores en el periodo Z',
@@ -167,11 +199,19 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     esNormativo0312: true,
     codigoNormativo0312: 'IND-SST-05',
     nombre: 'Incidencia de la enfermedad laboral',
+    objetivo: 'Detectar oportunamente la aparición de nuevos casos de enfermedad laboral durante el año evaluado.',
     tipo: 'RESULTADO',
     definicion:
       'Número de casos nuevos de enfermedad laboral en una población determinada en un periodo de tiempo.',
+    quePermiteMedir: {
+      aspectoEvalua: 'La aparición de nuevos diagnósticos calificados como enfermedad laboral durante el periodo.',
+      informacionProporciona: 'La proporción de trabajadores sanos que desarrollaron una enfermedad laboral nueva (por 100.000 trabajadores).',
+      utilidadFrikaz: 'Sirve para evaluar si los programas de vigilancia médica, EPP y rotación de tareas evitan nuevas afectaciones.',
+      quePermiteIdentificar: 'Riesgos emergentes o fallas en la prevención higiénica y ergonómica que generan nuevos casos.',
+    },
     formula:
       '(Número de casos nuevos de enfermedad laboral en el periodo Z / Promedio de trabajadores en el periodo Z) × 100.000',
+    factorEscalaManual: 100000,
     variablesRequeridas: [
       'Número de casos nuevos de enfermedad laboral calificados en el periodo Z',
       'Promedio de trabajadores en el periodo Z',
@@ -195,10 +235,18 @@ export const INDICADORES_NORMATIVOS_0312: HojaVidaIndicadorSST[] = [
     esNormativo0312: true,
     codigoNormativo0312: 'IND-SST-06',
     nombre: 'Ausentismo por causa médica',
+    objetivo: 'Monitorear los días de trabajo perdidos por incapacidades médicas para prevenir recurrencias y cuidar el bienestar del equipo.',
     tipo: 'PROCESO',
     definicion: 'Ausentismo es la no asistencia al trabajo, con incapacidad médica.',
+    quePermiteMedir: {
+      aspectoEvalua: 'El porcentaje de tiempo laboral programado que se pierde debido a incapacidades médicas comunes o laborales.',
+      informacionProporciona: 'La proporción real de días ausentes frente al total de días programados de la planta y ruta.',
+      utilidadFrikaz: 'Facilita detectar afecciones recurrentes (lumbares, respiratorias, muñeca, fatiga) y planear acciones preventivas en salud.',
+      quePermiteIdentificar: 'Tendencias de incapacidad por periodos, posibles condiciones de trabajo por mejorar y necesidad de seguimiento médico.',
+    },
     formula:
       '(Número de días de ausencia por incapacidad laboral o común en el mes / Número de días de trabajo programados en el mes) × 100',
+    factorEscalaManual: 100,
     variablesRequeridas: [
       'Número de días de ausencia por incapacidad laboral o común en el mes',
       'Número de días de trabajo programados en el mes (para todo el equipo)',
@@ -1220,8 +1268,20 @@ export function loadSgsstData(
     if (raw) {
       const parsed = JSON.parse(raw) as PlanAnualSgsstData;
       if (parsed && Array.isArray(parsed.trabajadores) && Array.isArray(parsed.hojasVidaIndicadores)) {
+        const guardadosMap = new Map(parsed.hojasVidaIndicadores.map((i) => [i.id, i]));
+        const normativosCombinados = INDICADORES_NORMATIVOS_0312.map((base) => {
+          const prevInd = guardadosMap.get(base.id);
+          if (!prevInd) return base;
+          return {
+            ...base,
+            ...prevInd,
+            objetivo: prevInd.objetivo || base.objetivo,
+            quePermiteMedir: prevInd.quePermiteMedir || base.quePermiteMedir,
+            factorEscalaManual: prevInd.factorEscalaManual ?? base.factorEscalaManual ?? 100,
+          };
+        });
         const existenCustom = parsed.hojasVidaIndicadores.filter((i) => !i.esNormativo0312);
-        const hojasVida = [...INDICADORES_NORMATIVOS_0312, ...existenCustom];
+        const hojasVida = [...normativosCombinados, ...existenCustom];
         let needsSave = false;
         const needsCargos6 = localStorage.getItem(CARGOS_6_FLAG_SGSST) !== '1';
         if (needsCargos6 && !localStorage.getItem(STORAGE_KEY_SGSST_BACKUP_6)) {
@@ -1601,6 +1661,14 @@ export function evaluarCompletitudTrabajador(t: TrabajadorFichaSST): {
   if (t.consumoTabaco === 'Pendiente' || t.consumoAlcohol === 'Pendiente' || t.actividadFisica === 'Pendiente') {
     pendientes.push('Hábitos y estilos de vida');
   }
+  if (
+    !t.consumeAguaJornada ||
+    !t.frecuenciaConsumoAgua ||
+    (t.frecuenciaConsumoAgua === 'Otra' && !t.frecuenciaConsumoAguaOtra?.trim()) ||
+    !t.alimentacionSaludableDescripcion?.trim()
+  ) {
+    pendientes.push('Hábitos de hidratación y alimentación saludable');
+  }
   if (t.tipoUltimoExamen === 'Pendiente' || !t.fechaUltimoExamen || t.conceptoAptitud === 'Pendiente') {
     pendientes.push('Evaluación médica ocupacional');
   }
@@ -1610,7 +1678,7 @@ export function evaluarCompletitudTrabajador(t: TrabajadorFichaSST): {
   if (t.espirometria.estado === 'PENDIENTE') pendientes.push('Prueba de espirometría');
   if (t.laboratorio.estado === 'PENDIENTE') pendientes.push('Exámenes de laboratorio');
 
-  const totalChecks = 13;
+  const totalChecks = 14;
   const completados = Math.max(0, totalChecks - pendientes.length);
   const porcentaje = Math.round((completados / totalChecks) * 100);
   return { porcentaje, pendientes, completa: pendientes.length === 0 };
@@ -1794,6 +1862,79 @@ function construirSemaforo(
     return { color: 'AMARILLO', texto: 'Amarillo: En seguimiento; aún falta para alcanzar la meta.' };
   }
   return { color: 'ROJO', texto: 'Rojo: Muy por debajo de la meta; requiere intervención.' };
+}
+
+export interface ResultadoDirectoIndicador {
+  tieneDatosSuficientes: boolean;
+  valorCalculado: number | null;
+  estadoEtiqueta: 'Diligenciado' | 'Pendiente de diligenciamiento' | 'Denominador en cero';
+  cumpleMeta: boolean | null;
+  faltantes: string[];
+}
+
+export function calcularResultadoDirectoIndicador(
+  ind: HojaVidaIndicadorSST
+): ResultadoDirectoIndicador {
+  const faltantes: string[] = [];
+  if (ind.numeradorManual === null || ind.numeradorManual === undefined || Number.isNaN(ind.numeradorManual)) {
+    faltantes.push('Numerador');
+  }
+  if (ind.denominadorManual === null || ind.denominadorManual === undefined || Number.isNaN(ind.denominadorManual)) {
+    faltantes.push('Denominador');
+  }
+  if (!ind.fechaMedicionManual) {
+    faltantes.push('Fecha de medición');
+  }
+
+  if (
+    ind.numeradorManual === null ||
+    ind.numeradorManual === undefined ||
+    ind.denominadorManual === null ||
+    ind.denominadorManual === undefined
+  ) {
+    return {
+      tieneDatosSuficientes: false,
+      valorCalculado: null,
+      estadoEtiqueta: 'Pendiente de diligenciamiento',
+      cumpleMeta: null,
+      faltantes,
+    };
+  }
+
+  if (ind.denominadorManual <= 0) {
+    return {
+      tieneDatosSuficientes: false,
+      valorCalculado: null,
+      estadoEtiqueta: 'Denominador en cero',
+      cumpleMeta: null,
+      faltantes: ['Denominador mayor a 0'],
+    };
+  }
+
+  const escala =
+    ind.factorEscalaManual !== undefined
+      ? ind.factorEscalaManual
+      : ind.formula.includes('100.000')
+      ? 100000
+      : ind.formula.includes('100') || ind.unidadMedida.includes('%')
+      ? 100
+      : 1;
+
+  const valorCalculado = formatearNumero((ind.numeradorManual / ind.denominadorManual) * escala);
+  const cumpleMeta =
+    ind.metaOperador === '<='
+      ? valorCalculado <= ind.metaValor
+      : ind.metaOperador === '='
+      ? valorCalculado === ind.metaValor
+      : valorCalculado >= ind.metaValor;
+
+  return {
+    tieneDatosSuficientes: true,
+    valorCalculado,
+    estadoEtiqueta: 'Diligenciado',
+    cumpleMeta,
+    faltantes,
+  };
 }
 
 export function calcularResultadoIndicadorPeriodo(
